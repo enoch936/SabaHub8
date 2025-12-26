@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  mongo:
+    image: mongo:7
+    container_name: sabahub-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+  app:
+    build: .
+    container_name: sabahub-backend-spring
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/sabahub
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - APP_CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+volumes:
+  mongo_data:
