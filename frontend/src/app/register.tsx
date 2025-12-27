@@ -136,17 +136,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!baseUrl) {
-        setStatus({
-          type: "error",
-          message:
-            "NEXT_PUBLIC_API_BASE_URL is not set. Check frontend/.env.local",
-        });
-        return;
-      }
-
-      const response = await fetch(`${baseUrl}/auth/register`, {
+      const response = await fetch(`/api/auth-proxy/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -158,12 +148,15 @@ export default function RegisterPage() {
         }),
       });
 
-      const data = await response.json().catch(() => null);
+      // Try to parse JSON, fallback to text for non-JSON errors
+      const text = await response.text();
+      let data: any = undefined;
+      try { data = text ? JSON.parse(text) : undefined; } catch {}
 
       if (!response.ok) {
         setStatus({
           type: "error",
-          message: data?.error ?? data?.message ?? "Registration failed",
+          message: (data?.error ?? data?.message ?? text) || "Registration failed",
         });
         return;
       }
@@ -173,7 +166,7 @@ export default function RegisterPage() {
       }
 
       setStatus({ type: "success", message: "Registered successfully." });
-    } catch {
+    } catch (e) {
       setStatus({ type: "error", message: "Network error. Backend not reachable." });
     }
   };

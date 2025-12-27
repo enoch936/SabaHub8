@@ -12,7 +12,7 @@ Features
 - Cloudinary integration for media uploads
 - CORS enabled for localhost frontends
 - OpenAPI at /swagger-ui.html
-- Runs on port 3000
+- Runs on port 8080
 
 Requirements
 - Java 17+
@@ -31,11 +31,11 @@ Run
 - mvn spring-boot:run
 
 Test endpoints
-- curl http://localhost:3000/
-- curl http://localhost:3000/health
-- curl http://localhost:3000/actuator/health
-- curl http://localhost:3000/assets
-- curl -X POST http://localhost:3000/assets \
+- curl http://localhost:8080/
+- curl http://localhost:8080/health
+- curl http://localhost:8080/actuator/health
+- curl http://localhost:8080/assets
+- curl -X POST http://localhost:8080/assets \
   -F title="example" \
   -F file=@/path/to/file.png
 
@@ -45,4 +45,4 @@ Build a jar
 
 Notes on migration
 - Keep the old Nest backend (./backend) until you fully switch the frontend and infra to the Spring service.
-- The Spring app listens on port 3000 matching the previous Nest dev setup, minimizing frontend changes.
+- The Spring app listens on port 8080. Update frontend to point to this port.
