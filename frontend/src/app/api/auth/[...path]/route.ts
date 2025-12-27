@@ -45,8 +45,12 @@ async function proxy(request: Request, url: string) {
   });
 }
 
-export async function OPTIONS(request: Request, ctx: { params: { path?: string[] } }) {
-  const url = buildTargetUrl(ctx?.params?.path);
+export async function OPTIONS(
+  request: Request,
+  ctx: { params: Promise<{ path?: string[] }> },
+) {
+  const { path } = await ctx.params;
+  const url = buildTargetUrl(path);
   // Respond OK for preflight
   return new Response(null, {
     status: 204,
@@ -58,27 +62,47 @@ export async function OPTIONS(request: Request, ctx: { params: { path?: string[]
   });
 }
 
-export async function GET(request: Request, ctx: { params: { path?: string[] } }) {
-  const url = buildTargetUrl(ctx?.params?.path);
+export async function GET(
+  request: Request,
+  ctx: { params: Promise<{ path?: string[] }> },
+) {
+  const { path } = await ctx.params;
+  const url = buildTargetUrl(path);
   return proxy(request, url);
 }
 
-export async function POST(request: Request, ctx: { params: { path?: string[] } }) {
-  const url = buildTargetUrl(ctx?.params?.path);
+export async function POST(
+  request: Request,
+  ctx: { params: Promise<{ path?: string[] }> },
+) {
+  const { path } = await ctx.params;
+  const url = buildTargetUrl(path);
   return proxy(request, url);
 }
 
-export async function PUT(request: Request, ctx: { params: { path?: string[] } }) {
-  const url = buildTargetUrl(ctx?.params?.path);
+export async function PUT(
+  request: Request,
+  ctx: { params: Promise<{ path?: string[] }> },
+) {
+  const { path } = await ctx.params;
+  const url = buildTargetUrl(path);
   return proxy(request, url);
 }
 
-export async function PATCH(request: Request, ctx: { params: { path?: string[] } }) {
-  const url = buildTargetUrl(ctx?.params?.path);
+export async function PATCH(
+  request: Request,
+  ctx: { params: Promise<{ path?: string[] }> },
+) {
+  const { path } = await ctx.params;
+  const url = buildTargetUrl(path);
   return proxy(request, url);
 }
 
-export async function DELETE(request: Request, ctx: { params: { path?: string[] } }) {
-  const url = buildTargetUrl(ctx?.params?.path);
+export async function DELETE(
+  request: Request,
+  ctx: { params: Promise<{ path?: string[] }> },
+) {
+  const { path } = await ctx.params;
+  const url = buildTargetUrl(path);
   return proxy(request, url);
 }

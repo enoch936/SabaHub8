@@ -1,8 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { FormEvent, useMemo, useState } from "react";
+import { isAuthenticated } from "@/lib/auth";
 
 type FormState = {
   fullName: string;
@@ -112,12 +115,19 @@ function SocialButton({ label }: { label: string }) {
 }
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [form, setForm] = useState<FormState>(() => ({ ...defaultFormState }));
   const [status, setStatus] = useState<Status>({ type: "idle", message: "" });
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>(
     {},
   );
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.push("/dashboard");
+    }
+  }, [router]);
 
   const handleChange = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -163,9 +173,14 @@ export default function RegisterPage() {
 
       if (data?.token) {
         localStorage.setItem("auth_token", data.token);
+        setStatus({ type: "success", message: "Registered successfully. Redirecting..." });
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 500);
+        return;
       }
 
-      setStatus({ type: "success", message: "Registered successfully." });
+      setStatus({ type: "error", message: "Registration failed - no token received" });
     } catch (e) {
       setStatus({ type: "error", message: "Network error. Backend not reachable." });
     }

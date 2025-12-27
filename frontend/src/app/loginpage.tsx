@@ -1,8 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { FormEvent, useMemo, useState } from "react";
+import { isAuthenticated } from "@/lib/auth";
 
 type FormState = {
   email: string;
@@ -102,12 +105,19 @@ function SocialButton({ label }: { label: string }) {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [form, setForm] = useState<FormState>(() => ({ ...defaultFormState }));
   const [status, setStatus] = useState<Status>({ type: "idle", message: "" });
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>(
     {},
   );
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.push("/dashboard");
+    }
+  }, [router]);
 
   const handleChange = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -126,7 +136,7 @@ export default function LoginPage() {
     }
 
     try {
-      const response = await fetch(`/api/auth/login`, {
+      const response = await fetch(`/api/auth-proxy/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -150,9 +160,14 @@ export default function LoginPage() {
       // Expected backend response: { token, user: { email, fullName, roles } }
       if (data?.token) {
         localStorage.setItem("auth_token", data.token);
+        setStatus({ type: "success", message: "Logged in successfully. Redirecting..." });
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 500);
+        return;
       }
 
-      setStatus({ type: "success", message: "Logged in successfully." });
+      setStatus({ type: "error", message: "Login failed - no token received" });
     } catch {
       setStatus({ type: "error", message: "Network error. Backend not reachable." });
     }

@@ -1,17 +1,10 @@
 import type { NextConfig } from "next";
 
+// We serve API routes from the App Router (e.g., /api/auth-proxy/*), so we
+// do not need a global rewrite here. Removing the rewrite ensures the local
+// API handlers run instead of being bypassed.
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  async rewrites() {
-    // Evaluate at runtime, not build time
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${apiBase}/:path*`,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
