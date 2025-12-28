@@ -23,15 +23,18 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final AuditService auditService;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        AuthenticationManager authenticationManager,
-                       JwtService jwtService) {
+                       JwtService jwtService,
+                       AuditService auditService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -43,6 +46,13 @@ public class AuthService {
         User user = new User(request.email().toLowerCase(), request.fullName(), hashed, Set.of("ROLE_USER"));
         userRepository.save(user);
         String token = jwtService.generateToken(user.getEmail(), Map.of("role", "USER"));
+        
+        // Audit log: login successful
+        auditService.log("LOGIN", "USER", user.getId(), Map.of(
+            "email", user.getEmail(),
+            "status", "SUCCESS"
+        ));
+        
         return new AuthResponse(token, user.getEmail(), user.getFullName());
     }
 
@@ -53,6 +63,13 @@ public class AuthService {
         String email = authentication.getName();
         var user = userRepository.findByEmail(email).orElseThrow();
         String token = jwtService.generateToken(user.getEmail(), Map.of("role", "USER"));
+        
+        // Audit log: login successful
+        auditService.log("LOGIN", "USER", user.getId(), Map.of(
+            "email", user.getEmail(),
+            "status", "SUCCESS"
+        ));
+        
         return new AuthResponse(token, user.getEmail(), user.getFullName());
     }
 }

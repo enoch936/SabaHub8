@@ -13,25 +13,37 @@ public class Asset {
     private String id;
 
     @Indexed
+    private String ownerId;
+
+    /** PROFILE | PORTFOLIO | JOB | CHAT | DISPUTE | CONTENT */
+    private String scope;
+
     private String title;
 
-    private String url; // Cloudinary URL
+    private String url; // Cloudinary secure_url
 
     private String publicId; // Cloudinary public_id
+
+    /** image | raw | video */
+    private String resourceType;
+
+    private String mimeType;
+
+    private Long size;
 
     @CreatedDate
     private Instant createdAt;
 
     public Asset() {}
 
-    public Asset(String title, String url, String publicId) {
-        this.title = title;
-        this.url = url;
-        this.publicId = publicId;
-    }
-
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+
+    public String getOwnerId() { return ownerId; }
+    public void setOwnerId(String ownerId) { this.ownerId = ownerId; }
+
+    public String getScope() { return scope; }
+    public void setScope(String scope) { this.scope = scope; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -41,6 +53,15 @@ public class Asset {
 
     public String getPublicId() { return publicId; }
     public void setPublicId(String publicId) { this.publicId = publicId; }
+
+    public String getResourceType() { return resourceType; }
+    public void setResourceType(String resourceType) { this.resourceType = resourceType; }
+
+    public String getMimeType() { return mimeType; }
+    public void setMimeType(String mimeType) { this.mimeType = mimeType; }
+
+    public Long getSize() { return size; }
+    public void setSize(Long size) { this.size = size; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
