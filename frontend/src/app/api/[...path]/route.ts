@@ -5,7 +5,11 @@
 
 export const dynamic = "force-dynamic";
 
-const API_BASE = "http://localhost:8080";
+// Backend base URL. Can be overridden via NEXT_PUBLIC_BACKEND_URL or BACKEND_URL.
+const API_BASE =
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  "http://localhost:8080";
 
 function buildTargetUrl(pathParts?: string[]) {
   const path = Array.isArray(pathParts) ? pathParts.join("/") : "";
@@ -14,22 +18,45 @@ function buildTargetUrl(pathParts?: string[]) {
 
 async function proxy(request: Request, url: string) {
   const headers = new Headers(request.headers);
-  // Remove headers that cause issues
+
+  // Remove headers that can break proxying in Next.js / Node.
   headers.delete("host");
-  headers.delete("origin");
-  headers.delete("Origin");
+  headers.delete("connection");
+  headers.delete("content-length");
+
+  // Ensure we pass the real client IP info through (optional, but useful).
+  if (!headers.has("x-forwarded-host") && request.headers.get("host")) {
+    headers.set("x-forwarded-host", request.headers.get("host")!);
+  }
 
   const init: RequestInit = {
     method: request.method,
     headers,
     redirect: "manual",
+    // Forward cookies (if any). This is required when backend uses session cookies.
+    credentials: "include",
   };
 
   if (request.method !== "GET" && request.method !== "HEAD" && request.method !== "OPTIONS") {
     init.body = await request.text();
   }
 
-  const resp = await fetch(url, init);
+  let resp: Response;
+  try {
+    resp = await fetch(url, init);
+  } catch (e: any) {
+    // If backend is down/unreachable, don't crash the route (which becomes a 500 without context).
+    return Response.json(
+      {
+        error: "BACKEND_UNREACHABLE",
+        message: e?.message || "Failed to reach backend",
+        target: url,
+      },
+      { status: 502 }
+    );
+  }
+
+  // Copy response headers and ensure browser can read them.
   const respHeaders = new Headers(resp.headers);
   respHeaders.set("Access-Control-Allow-Origin", "*");
   respHeaders.set("Access-Control-Allow-Headers", "*");

@@ -1,43 +1,269 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWallet, initChapa, localTopupRequest } from "@/lib/api";
-import { useState } from "react";
+import { Card, Badge, Button, Input, Select, Progress, Skeleton } from "@/components/ui";
 
 export default function WalletPage() {
   const qc = useQueryClient();
   const wallet = useQuery({ queryKey: ["wallet"], queryFn: getWallet });
 
-  const [amount, setAmount] = useState(0);
-  const [currency, setCurrency] = useState("ETB");
-  const [referenceId, setReferenceId] = useState("");
+  const [amount, setAmount] = useState<number>(500);
+  const [currency, setCurrency] = useState<string>("ETB");
+  const [referenceId, setReferenceId] = useState<string>("");
+  const [method, setMethod] = useState<"chapa" | "local">("chapa");
 
   const chapa = useMutation({
     mutationFn: () => initChapa({ amount, currency }, crypto.randomUUID()),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["wallet"] }),
   });
+
   const localReq = useMutation({
     mutationFn: () => localTopupRequest({ amount, currency, referenceId }, crypto.randomUUID()),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["wallet"] }),
   });
 
-  return (
-    <main className="mx-auto max-w-4xl p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Wallet</h1>
-      <div className="rounded-xl border p-4">
-        <p className="text-lg">Balance: <strong>{wallet.data?.balance ?? 0} {wallet.data?.currency ?? "ETB"}</strong></p>
-      </div>
+  const balance = wallet.data?.balance ?? 0;
+  const currencyLabel = wallet.data?.currency ?? currency;
 
-      <section className="rounded-xl border p-4 space-y-3">
-        <h2 className="font-semibold">Top-up</h2>
-        <div className="flex flex-wrap gap-2">
-          <input type="number" className="w-40 rounded border p-2" value={amount} onChange={(e) => setAmount(Number(e.target.value))} placeholder="Amount" />
-          <input className="w-24 rounded border p-2" value={currency} onChange={(e) => setCurrency(e.target.value)} placeholder="Currency" />
-          <button onClick={() => chapa.mutate()} className="rounded bg-indigo-600 px-4 py-2 text-white">Chapa</button>
-          <input className="w-56 rounded border p-2" value={referenceId} onChange={(e) => setReferenceId(e.target.value)} placeholder="Local reference (receipt)" />
-          <button onClick={() => localReq.mutate()} className="rounded bg-slate-900 px-4 py-2 text-white">Local Request</button>
+  const transactions = (wallet.data?.transactions as Array<any>) || [];
+  const activity = useMemo(() => {
+    const income = transactions
+      .filter((t) => t.direction === "IN")
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+    const expense = transactions
+      .filter((t) => t.direction === "OUT")
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+    return { income, expense, net: income - expense };
+  }, [transactions]);
+
+  const topCards = [
+    { label: "Wallet Balance", value: `${currencyLabel} ${balance.toLocaleString()}`, color: "from-sky-500 to-blue-600" },
+    { label: "Income (30d)", value: `${currencyLabel} ${activity.income.toLocaleString()}`, color: "from-emerald-500 to-emerald-600" },
+    { label: "Spend (30d)", value: `${currencyLabel} ${activity.expense.toLocaleString()}`, color: "from-amber-500 to-orange-500" },
+    { label: "Net", value: `${currencyLabel} ${activity.net.toLocaleString()}`, color: activity.net >= 0 ? "from-emerald-500 to-emerald-600" : "from-rose-500 to-rose-600" },
+  ];
+
+  const spendBreakdown = useMemo(() => {
+    const buckets: Record<string, number> = {};
+    transactions.forEach((t) => {
+      const cat = t.category || t.reason || "Other";
+      buckets[cat] = (buckets[cat] || 0) + (t.amount || 0);
+    });
+    return Object.entries(buckets)
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  }, [transactions]);
+
+  const loading = wallet.isLoading;
+
+  const handleTopup = () => {
+    if (method === "chapa") return chapa.mutate();
+    return localReq.mutate();
+  };
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Wallet</h1>
+            <p className="text-slate-600">Manage balance, top-ups, and transaction insights.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="info">Currency: {currencyLabel}</Badge>
+          </div>
+        </header>
+
+        {/* Balance + KPIs */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {loading
+            ? [1, 2, 3, 4].map((i) => (
+                <Card key={i} className="p-4">
+                  <Skeleton className="h-10 w-24" />
+                  <Skeleton className="mt-2 h-4 w-32" />
+                </Card>
+              ))
+            : topCards.map((card) => (
+                <Card
+                  key={card.label}
+                  className="relative overflow-hidden rounded-2xl border-0 p-6 shadow-lg"
+                  variant="elevated"
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-90`} />
+                  <div className="relative text-white">
+                    <p className="text-sm opacity-90">{card.label}</p>
+                    <p className="mt-2 text-3xl font-bold">{card.value}</p>
+                  </div>
+                </Card>
+              ))}
         </div>
-      </section>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Balance Card */}
+          <Card className="lg:col-span-2 p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-slate-500">Available Balance</p>
+                <p className="text-4xl font-bold text-slate-900">
+                  {currencyLabel} {balance.toLocaleString()}
+                </p>
+                <p className="text-sm text-emerald-600">+0.8% since last week</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success">Verified</Badge>
+                <Badge variant="info">Instant payout</Badge>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-600">Escrow Held</p>
+                <p className="text-xl font-semibold text-slate-900">{currencyLabel} {(wallet.data?.escrowHeld ?? 0).toLocaleString()}</p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-600">Pending Payouts</p>
+                <p className="text-xl font-semibold text-slate-900">{currencyLabel} {(wallet.data?.pendingPayouts ?? 0).toLocaleString()}</p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-600">Holds</p>
+                <p className="text-xl font-semibold text-slate-900">{currencyLabel} {(wallet.data?.holds ?? 0).toLocaleString()}</p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Top-up Panel */}
+          <Card className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">Top-up Wallet</h3>
+              <Badge variant="info">Secure</Badge>
+            </div>
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-slate-700">Amount</label>
+              <Input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+            </div>
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-slate-700">Currency</label>
+              <Input value={currency} onChange={(e) => setCurrency(e.target.value)} />
+            </div>
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-slate-700">Method</label>
+              <Select value={method} onChange={(e) => setMethod(e.target.value as any)}>
+                <option value="chapa">Chapa Payment</option>
+                <option value="local">Local Transfer</option>
+              </Select>
+            </div>
+            {method === "local" && (
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-slate-700">Local Reference / Receipt</label>
+                <Input
+                  placeholder="Upload receipt reference"
+                  value={referenceId}
+                  onChange={(e) => setReferenceId(e.target.value)}
+                />
+              </div>
+            )}
+            <Button
+              onClick={handleTopup}
+              isLoading={chapa.isPending || localReq.isPending}
+              disabled={!amount || amount <= 0}
+              className="w-full"
+            >
+              {method === "chapa" ? "Pay with Chapa" : "Submit Local Request"}
+            </Button>
+            {(chapa.error || localReq.error) && (
+              <p className="text-sm text-rose-600">{(chapa.error as any)?.message || (localReq.error as any)?.message || "Top-up failed"}</p>
+            )}
+            {(chapa.isSuccess || localReq.isSuccess) && (
+              <p className="text-sm text-emerald-600">Request submitted. Balance will refresh automatically.</p>
+            )}
+          </Card>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Spending Breakdown */}
+          <Card className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">Spending Breakdown</h3>
+              <Badge variant="default">Last 30 days</Badge>
+            </div>
+            {spendBreakdown.length === 0 && (
+              <p className="text-sm text-slate-500">No spend data yet.</p>
+            )}
+            <div className="space-y-3">
+              {spendBreakdown.map((item) => {
+                const total = spendBreakdown.reduce((s, i) => s + i.value, 0) || 1;
+                const pct = Math.round((item.value / total) * 100);
+                return (
+                  <div key={item.label} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-slate-800">{item.label}</span>
+                      <span className="text-slate-600">{pct}%</span>
+                    </div>
+                    <Progress value={pct} size="sm" />
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          {/* Activity / Net */}
+          <Card className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">Activity</h3>
+              <Badge variant="info">Live</Badge>
+            </div>
+            <div className="space-y-3 text-sm text-slate-700">
+              <div className="flex items-center justify-between">
+                <span>Income</span>
+                <span className="font-semibold text-emerald-600">{currencyLabel} {activity.income.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Expense</span>
+                <span className="font-semibold text-rose-600">{currencyLabel} {activity.expense.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Net</span>
+                <span className={`font-semibold ${activity.net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                  {currencyLabel} {activity.net.toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <div className="mt-2 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
+              Track incoming escrow releases, payouts, and fees in real time.
+            </div>
+          </Card>
+
+          {/* Recent Transactions */}
+          <Card className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">Recent Transactions</h3>
+              <Badge variant="default">Ledger</Badge>
+            </div>
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+              {transactions.length === 0 && (
+                <p className="text-sm text-slate-500">No transactions yet.</p>
+              )}
+              {transactions.slice(0, 8).map((t) => (
+                <div key={t.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+                  <div>
+                    <p className="font-semibold text-slate-900">{t.reason || t.type || "Transaction"}</p>
+                    <p className="text-xs text-slate-500">{t.createdAt ? new Date(t.createdAt).toLocaleString() : ""}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-semibold ${t.direction === "IN" ? "text-emerald-600" : "text-rose-600"}`}>
+                      {t.direction === "IN" ? "+" : "-"}{currencyLabel} {(t.amount || 0).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-slate-500">{t.status || "PENDING"}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
     </main>
   );
 }
