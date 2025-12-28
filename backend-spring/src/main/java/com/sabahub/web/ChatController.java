@@ -6,6 +6,7 @@ import com.sabahub.service.ChatService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +22,12 @@ public class ChatController {
 
     @GetMapping("/threads")
     public ResponseEntity<List<ChatThread>> listThreads() {
-        return ResponseEntity.ok(chatService.listMyThreads());
+        try {
+            return ResponseEntity.ok(chatService.listMyThreads());
+        } catch (IllegalStateException e) {
+            // Return empty list for unauthenticated users (development mode)
+            return ResponseEntity.ok(new ArrayList<>());
+        }
     }
 
     @PostMapping("/threads")
@@ -37,7 +43,12 @@ public class ChatController {
 
     @GetMapping("/threads/{id}/messages")
     public ResponseEntity<List<ChatMessage>> listMessages(@PathVariable String id) {
-        return ResponseEntity.ok(chatService.listMessages(id));
+        try {
+            return ResponseEntity.ok(chatService.listMessages(id));
+        } catch (IllegalStateException e) {
+            // Return empty list for unauthenticated users (development mode)
+            return ResponseEntity.ok(new ArrayList<>());
+        }
     }
 
     @PostMapping("/threads/{id}/messages")

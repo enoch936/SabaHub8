@@ -1,0 +1,16 @@
+{
+  "name": "SabaHub Development",
+  "forwardPorts": [3000, 8080],
+  "portsAttributes": {
+    "3000": {
+      "label": "Frontend (Next.js)",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Backend (Spring Boot)",
+      "onAutoForward": "notify",
+      "visibility": "public"
+    }
+  },
+  "postCreateCommand": "echo 'Development environment ready'"
+}

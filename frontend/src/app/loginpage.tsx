@@ -136,7 +136,7 @@ export default function LoginPage() {
     }
 
     try {
-      const response = await fetch(`/api/auth-proxy/login`, {
+      const response = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -157,7 +157,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Expected backend response: { token, user: { email, fullName, roles } }
       if (data?.token) {
         localStorage.setItem("auth_token", data.token);
         setStatus({ type: "success", message: "Logged in successfully. Redirecting..." });

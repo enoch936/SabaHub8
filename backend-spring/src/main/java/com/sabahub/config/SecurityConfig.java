@@ -31,9 +31,12 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/", "/health", "/actuator/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/auth/**").permitAll()
+                .requestMatchers("/", "/health", "/actuator/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/auth/**", "/ws/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/assets/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/wallet").permitAll() // Development: allow unauthenticated wallet access
+                    .requestMatchers(HttpMethod.GET, "/api/jobs/**").permitAll() // Development: allow unauthenticated job browse
+                .requestMatchers("/api/chat/**").permitAll() // Development: allow unauthenticated chat access
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -20,6 +21,17 @@ public class WalletController {
 
     @GetMapping("/wallet")
     public ResponseEntity<Map<String, Object>> getWallet() {
-        return ResponseEntity.ok(walletService.getWallet());
+        try {
+            return ResponseEntity.ok(walletService.getWallet());
+        } catch (IllegalStateException e) {
+            // Return empty wallet for unauthenticated users (development mode)
+            Map<String, Object> emptyWallet = new HashMap<>();
+            emptyWallet.put("userId", null);
+            emptyWallet.put("balance", 0.0);
+            emptyWallet.put("currency", "ETB");
+            emptyWallet.put("entries", new java.util.ArrayList<>());
+            return ResponseEntity.ok(emptyWallet);
+        }
     }
 }
+

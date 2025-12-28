@@ -1,7 +1,7 @@
 # SabaHub (Freelance Platform) — Implementation Spec (Next.js + Spring Boot + MongoDB)
 
 ## 0) Purpose
- 
+
 Build an enterprise-grade freelance marketplace (Upwork/Fiverr-like) with **Admin / Employer / Freelancer** roles, **secure auth**, **escrow payments**, **real-time chat**, **Cloudinary file uploads**, **CRP (Customer Relationship Portal)**, **CMP (Content Management Portal)**, analytics, and strong security.
 
 This document is written as an **implementation-ready plan**: scope, architecture, data model, APIs, security, workflows, and milestones.
