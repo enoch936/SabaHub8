@@ -14,9 +14,10 @@ export default function AdminUsersPage() {
     setError(null);
     try {
       const data = await adminListUsers();
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || "Failed to load users");
+      setUsers([]);
     } finally {
       setLoading(false);
     }

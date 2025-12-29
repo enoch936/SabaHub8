@@ -50,6 +50,12 @@ const navSections = [
       { href: "/admin", label: "Admin", icon: Shield, roles: ["ADMIN"], badge: "new" },
     ],
   },
+  {
+    title: "Account",
+    items: [
+      { href: "/dashboard/settings", label: "Settings & Profile", icon: Settings, roles: ["ADMIN", "EMPLOYER", "FREELANCER"] },
+    ],
+  },
 ];
 
 export default function Sidebar() {

@@ -30,7 +30,7 @@ public class AdminInitializer {
                 }
 
                 String hashed = passwordEncoder.encode(adminPassword);
-                User admin = new User(adminEmail, "Administrator", hashed, Set.of("ROLE_ADMIN", "ROLE_USER"));
+                User admin = new User(adminEmail, "Administrator", hashed, Set.of("ROLE_ADMIN", "ROLE_USER", "ADMIN", "USER"));
                 userRepository.save(admin);
             } catch (DataAccessException ex) {
                 // Mongo is not reachable during startup; skip seeding so the app can still start.

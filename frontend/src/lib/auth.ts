@@ -44,8 +44,14 @@ export function isAuthenticated(): boolean {
 /**
  * Clear auth token (logout)
  */
+import { logoutApi } from "./api";
+
 export function logout(): void {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('auth_token');
+    // Fire-and-forget backend logout for audit
+    logoutApi().finally(() => {
+      localStorage.removeItem('auth_token');
+      // Clear any other persisted state keys if needed in future
+    });
   }
 }

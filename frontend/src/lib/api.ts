@@ -20,13 +20,36 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (r) => r,
+  (r) => {
+    // Normalize empty responses
+    if (r && (r.status === 204 || r.data === "")) {
+      r.data = null;
+    }
+    return r;
+  },
   (error) => {
-    if (error?.response?.status === 401 && typeof window !== "undefined") {
-      // Optionally redirect to login
+    const status = error?.response?.status;
+    // Reject only for network unreachable or true server errors
+    const networkUnreachable = !error?.response;
+    if (networkUnreachable || (typeof status === "number" && status >= 500)) {
+      return Promise.reject(error);
+    }
+    // For other statuses (e.g., 4xx), resolve with empty payload
+    const emptyResponse = {
+      data: null,
+      status: typeof status === "number" ? status : 0,
+      statusText: error?.response?.statusText ?? "EMPTY",
+      headers: error?.response?.headers ?? {},
+      config: error.config,
+      request: error.request,
+    } as typeof error.response;
+
+    // Optionally handle 401 navigation without throwing
+    if (status === 401 && typeof window !== "undefined") {
       // window.location.href = "/login";
     }
-    return Promise.reject(error);
+
+    return Promise.resolve(emptyResponse);
   }
 );
 
@@ -44,6 +67,78 @@ export async function login(input: { email: string; password: string }) {
 export async function register(input: { email: string; password: string; fullName: string }) {
   const { data } = await api.post("/auth/register", input);
   return data as { token: string; email: string; fullName: string };
+}
+
+export async function logoutApi() {
+  try {
+    await api.post("/auth/logout");
+  } catch {
+    // Ignore errors - client logout still proceeds
+  }
+}
+
+// User Settings & Profile
+export type UserProfile = {
+  bio?: string;
+  profilePictureUrl?: string;
+  location?: string;
+  timezone?: string;
+  phoneNumber?: string;
+  language?: string;
+  skills?: string[];
+  certifications?: string[];
+  expertise?: string;
+  yearsOfExperience?: number;
+  portfolioUrls?: string[];
+  completedProjects?: number;
+  averageRating?: number;
+  totalReviews?: number;
+  hourlyRate?: string;
+  availability?: string;
+  preferredCategories?: string[];
+  openToOpportunities?: boolean;
+  paymentMethod?: string;
+  taxId?: string;
+  emailNotifications?: boolean;
+  smsNotifications?: boolean;
+  hideProfile?: boolean;
+  showEarnings?: boolean;
+  preferredLanguage?: string;
+  phoneVerified?: boolean;
+  emailVerified?: boolean;
+  identityVerified?: boolean;
+  identityVerificationMethod?: string;
+  identityVerifiedAt?: number;
+  profileViewsCount?: number;
+  proposalsSentCount?: number;
+  contractsCompletedCount?: number;
+  totalEarnings?: number;
+  successRate?: number;
+};
+
+export async function getUserSettings() {
+  const { data } = await api.get("/user/settings");
+  return data as UserProfile;
+}
+
+export async function updateUserSettings(profile: Partial<UserProfile>) {
+  const { data } = await api.patch("/user/settings", profile);
+  return data as UserProfile;
+}
+
+export async function verifyPhone() {
+  const { data } = await api.post("/user/settings/verify-phone");
+  return data;
+}
+
+export async function verifyIdentity(method: string) {
+  const { data } = await api.post("/user/settings/verify-identity", {}, { params: { method } });
+  return data;
+}
+
+export async function getPublicProfile(userId: string) {
+  const { data } = await api.get(`/user/settings/public/${userId}`);
+  return data as UserProfile;
 }
 
 export async function me() {

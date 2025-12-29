@@ -5,6 +5,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,10 +21,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final AppUserDetailsService userDetailsService;
+    private final StringRedisTemplate redis;
 
-    public JwtAuthFilter(JwtService jwtService, AppUserDetailsService userDetailsService) {
+    public JwtAuthFilter(JwtService jwtService, AppUserDetailsService userDetailsService, ObjectProvider<StringRedisTemplate> redisProvider) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.redis = redisProvider.getIfAvailable();
     }
 
     @Override
@@ -35,6 +39,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
+        String jti = null;
+        try {
+            jti = jwtService.extractJti(token);
+        } catch (Exception ignored) {}
+        if (jti != null && redis != null) {
+            String bl = redis.opsForValue().get("bl:" + jti);
+            if (bl != null) {
+                // Token is blacklisted
+                filterChain.doFilter(request, response);
+                return;
+            }
+        }
+
         String email = jwtService.extractSubject(token);
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {

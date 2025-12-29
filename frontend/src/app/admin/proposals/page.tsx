@@ -15,9 +15,10 @@ export default function AdminProposalsPage() {
     setError(null);
     try {
       const data = await adminListProposals(status);
-      setItems(data);
+      setItems(Array.isArray(data) ? data : []);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || "Failed to load proposals");
+      setItems([]);
     } finally {
       setLoading(false);
     }

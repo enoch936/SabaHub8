@@ -26,6 +26,8 @@ public class User {
 
     private boolean documentsVerified;
 
+    private UserProfile profile;
+
     @CreatedDate
     private Instant createdAt;
 
@@ -62,4 +64,7 @@ public class User {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public UserProfile getProfile() { return profile; }
+    public void setProfile(UserProfile profile) { this.profile = profile; }
 }

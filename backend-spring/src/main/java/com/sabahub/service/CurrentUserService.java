@@ -25,7 +25,19 @@ public class CurrentUserService {
     }
 
     public boolean hasRole(User user, String role) {
-        return user.getRoles() != null && user.getRoles().contains(role);
+        if (user == null || user.getRoles() == null) return false;
+        String normalized = normalize(role);
+        for (String r : user.getRoles()) {
+            if (normalize(r).equals(normalized)) return true;
+        }
+        return false;
+    }
+
+    private String normalize(String role) {
+        if (role == null) return "";
+        String r = role.trim().toUpperCase();
+        if (r.startsWith("ROLE_")) r = r.substring(5);
+        return r;
     }
 
     public void requireRole(User user, String role) {

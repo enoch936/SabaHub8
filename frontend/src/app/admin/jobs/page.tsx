@@ -15,9 +15,10 @@ export default function AdminJobsPage() {
     setError(null);
     try {
       const data = await adminListJobs(status);
-      setJobs(data);
+      setJobs(Array.isArray(data) ? data : []);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || "Failed to load jobs");
+      setJobs([]);
     } finally {
       setLoading(false);
     }
