@@ -22,6 +22,10 @@ public class User {
 
     private Set<String> roles;
 
+    private boolean suspended;
+
+    private boolean documentsVerified;
+
     @CreatedDate
     private Instant createdAt;
 
@@ -49,6 +53,12 @@ public class User {
 
     public Set<String> getRoles() { return roles; }
     public void setRoles(Set<String> roles) { this.roles = roles; }
+
+    public boolean isSuspended() { return suspended; }
+    public void setSuspended(boolean suspended) { this.suspended = suspended; }
+
+    public boolean isDocumentsVerified() { return documentsVerified; }
+    public void setDocumentsVerified(boolean documentsVerified) { this.documentsVerified = documentsVerified; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

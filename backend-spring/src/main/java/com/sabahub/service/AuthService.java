@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.HashMap;
 
 @Service
 public class AuthService {
@@ -45,7 +46,13 @@ public class AuthService {
         String hashed = passwordEncoder.encode(request.password());
         User user = new User(request.email().toLowerCase(), request.fullName(), hashed, Set.of("ROLE_USER"));
         userRepository.save(user);
-        String token = jwtService.generateToken(user.getEmail(), Map.of("role", "USER"));
+        // Build JWT claims with roles
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", user.getRoles());
+        // Derive convenience single role for UI
+        String topRole = user.getRoles().contains("ROLE_ADMIN") ? "ADMIN" : "USER";
+        claims.put("role", topRole);
+        String token = jwtService.generateToken(user.getEmail(), claims);
         
         // Audit log: login successful
         auditService.log("LOGIN", "USER", user.getId(), Map.of(
@@ -62,7 +69,12 @@ public class AuthService {
         );
         String email = authentication.getName();
         var user = userRepository.findByEmail(email).orElseThrow();
-        String token = jwtService.generateToken(user.getEmail(), Map.of("role", "USER"));
+        // Build JWT claims with roles so frontend can detect admin
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", user.getRoles());
+        String topRole = user.getRoles() != null && user.getRoles().contains("ROLE_ADMIN") ? "ADMIN" : "USER";
+        claims.put("role", topRole);
+        String token = jwtService.generateToken(user.getEmail(), claims);
         
         // Audit log: login successful
         auditService.log("LOGIN", "USER", user.getId(), Map.of(

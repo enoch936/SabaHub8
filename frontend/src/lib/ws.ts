@@ -34,7 +34,6 @@ export function connectWs(): Promise<void> {
       brokerURL: wsUrl,
       connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
       reconnectDelay: 10000, // Retry every 10 seconds
-      maxWebSocketFrameSize: 128 * 1024,
       onConnect: () => { connected = true; resolve(); },
       onStompError: (frame) => { 
         console.warn("WebSocket STOMP error (port 8080 must be public in Codespaces):", frame.headers?.message);
@@ -51,6 +50,14 @@ export function connectWs(): Promise<void> {
 export function subscribeThread(threadId: string, onMessage: (body: any) => void): Subscription | null {
   if (!client || !connected) return null;
   const sub = client.subscribe(`/topic/threads/${threadId}/message.new`, (msg: IMessage) => {
+    try { onMessage(JSON.parse(msg.body)); } catch {}
+  });
+  return { unsubscribe: () => sub.unsubscribe() };
+}
+
+export function subscribeAnnouncements(onMessage: (body: any) => void): Subscription | null {
+  if (!client || !connected) return null;
+  const sub = client.subscribe(`/topic/announcements`, (msg: IMessage) => {
     try { onMessage(JSON.parse(msg.body)); } catch {}
   });
   return { unsubscribe: () => sub.unsubscribe() };

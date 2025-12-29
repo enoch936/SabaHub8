@@ -3,6 +3,7 @@ package com.sabahub.repository;
 import com.sabahub.domain.Transaction;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,4 +13,6 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
     Optional<Transaction> findByProviderAndProviderRef(Transaction.Provider provider, String providerRef);
 
     Optional<Transaction> findByIdempotencyKey(String idempotencyKey);
+
+    List<Transaction> findByCreatedAtAfter(Instant after);
 }

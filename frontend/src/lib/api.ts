@@ -58,6 +58,7 @@ export type Job = {
   description: string;
   budget?: { min?: number; max?: number; currency?: string };
   status?: string;
+  createdAt?: string;
 };
 
 export async function listJobs() {
@@ -266,4 +267,56 @@ export async function adminCreateContent(item: Partial<ContentItem>) {
 export async function adminUpdateContent(id: string, patch: Partial<ContentItem>) {
   const { data } = await api.patch(`/admin/content/${id}`, patch);
   return data as ContentItem;
+}
+
+// Admin Users
+export type AppUser = { id: string; email: string; fullName: string; roles: string[]; suspended?: boolean; documentsVerified?: boolean };
+
+export async function adminListUsers() {
+  const { data } = await api.get(`/admin/users`);
+  return data as AppUser[];
+}
+
+export async function adminPatchUser(id: string, patch: Partial<AppUser>) {
+  const { data } = await api.patch(`/admin/users/${id}`, patch);
+  return data as AppUser;
+}
+
+// Admin Jobs
+export async function adminListJobs(status?: string) {
+  const { data } = await api.get(`/admin/jobs`, { params: status ? { status } : undefined });
+  return data as Job[];
+}
+
+export async function adminPatchJob(id: string, patch: Partial<Job>) {
+  const { data } = await api.patch(`/admin/jobs/${id}`, patch);
+  return data as Job;
+}
+
+// Admin Proposals
+export async function adminListProposals(status?: string) {
+  const { data } = await api.get(`/admin/proposals`, { params: status ? { status } : undefined });
+  return data as Proposal[];
+}
+
+export async function adminPatchProposal(id: string, patch: Partial<Proposal>) {
+  const { data } = await api.patch(`/admin/proposals/${id}`, patch);
+  return data as Proposal;
+}
+
+// Admin Analytics
+export async function adminAnalyticsSummary() {
+  const { data } = await api.get(`/admin/analytics/summary`);
+  return data as { users: number; jobs: number; revenue: number; disputesOpen: number };
+}
+
+export async function adminAnalyticsDaily() {
+  const { data } = await api.get(`/admin/analytics/daily`);
+  return data as { dates: string[]; users: number[]; jobs: number[]; revenue: number[] };
+}
+
+// Admin Announcements
+export async function adminBroadcast(message: string) {
+  const { data } = await api.post(`/admin/announcements`, { message });
+  return data as { ok: boolean };
 }

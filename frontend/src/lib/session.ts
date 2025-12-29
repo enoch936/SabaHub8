@@ -34,7 +34,18 @@ export const useSession = create<SessionState>((set) => ({
         const payload = decodeToken(token) as any;
         email = payload?.sub ?? payload?.email;
         roles = (payload?.roles as string[]) || (payload?.role ? [payload.role] : undefined);
-        role = (roles?.[0] as Role) || undefined;
+        // Derive normalized role for UI
+        let derived: Role = undefined;
+        if (Array.isArray(roles)) {
+          if (roles.includes("ROLE_ADMIN") || roles.includes("ADMIN")) derived = "ADMIN";
+          else if (roles.includes("EMPLOYER")) derived = "EMPLOYER";
+          else if (roles.includes("FREELANCER")) derived = "FREELANCER";
+        }
+        const single = (payload?.role as string | undefined) || undefined;
+        if (!derived && (single === "ADMIN" || single === "EMPLOYER" || single === "FREELANCER")) {
+          derived = single as Role;
+        }
+        role = derived;
       }
     } catch {}
     set({ token, email, roles, role });

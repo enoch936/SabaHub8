@@ -47,9 +47,7 @@ const navSections = [
     items: [
       { href: "/dashboard/disputes", label: "Disputes", icon: AlertTriangle, roles: ["ADMIN", "EMPLOYER", "FREELANCER"] },
       { href: "/dashboard/proposals", label: "Proposals", icon: TrendingUp, roles: ["ADMIN", "EMPLOYER", "FREELANCER"] },
-      { href: "/dashboard/analytics", label: "Analytics", icon: Sparkles, roles: ["ADMIN"], badge: "pro" },
-      { href: "/dashboard/content", label: "Content", icon: FileImage, roles: ["ADMIN"] },
-      { href: "/dashboard/content/admin", label: "Users", icon: Users, roles: ["ADMIN"] },
+      { href: "/admin", label: "Admin", icon: Shield, roles: ["ADMIN"], badge: "new" },
     ],
   },
 ];

@@ -20,7 +20,7 @@ export default function JobsBrowsePage() {
   }) || [];
 
   const sortedJobs = [...filteredJobs].sort((a, b) => {
-    if (sortBy === "recent") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortBy === "recent") return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
     if (sortBy === "budget-high") return (b.budget?.max || 0) - (a.budget?.max || 0);
     if (sortBy === "budget-low") return (a.budget?.min || 0) - (b.budget?.min || 0);
     return 0;
