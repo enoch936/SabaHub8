@@ -89,4 +89,29 @@ public class AuthController {
                 "roles", user.getRoles()
         ));
     }
+
+    /**
+     * Reset password after OTP verification
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String password = request.get("password");
+
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
+        }
+        if (password == null || password.isBlank() || password.length() < 8) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Password must be at least 8 characters"));
+        }
+
+        try {
+            authService.resetPassword(email, password);
+            auditService.log("PASSWORD_RESET", "USER", email, Map.of("status", "SUCCESS"));
+            return ResponseEntity.ok(Map.of("message", "Password reset successfully", "success", true));
+        } catch (Exception e) {
+            auditService.log("PASSWORD_RESET", "USER", email, Map.of("status", "FAILED", "error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage(), "success", false));
+        }
+    }
 }

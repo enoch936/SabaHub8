@@ -249,7 +249,7 @@ export default function LoginPage() {
                 <span>Remember me</span>
               </label>
 
-              <a className="font-semibold text-sky-700 hover:text-sky-800" href="#">
+              <a className="font-semibold text-sky-700 hover:text-sky-800" href="/forgot-password">
                 Forgot password?
               </a>
             </div>

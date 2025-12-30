@@ -84,4 +84,19 @@ public class AuthService {
         
         return new AuthResponse(token, user.getEmail(), user.getFullName());
     }
+
+    /**
+     * Reset password after OTP verification
+     */
+    @Transactional
+    public void resetPassword(String email, String newPassword) {
+        User user = userRepository.findByEmail(email.toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Encode the new password
+        String hashedPassword = passwordEncoder.encode(newPassword);
+        user.setPasswordHash(hashedPassword);
+        
+        userRepository.save(user);
+    }
 }
