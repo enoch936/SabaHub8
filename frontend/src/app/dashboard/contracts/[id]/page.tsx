@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { completeContract, deliverContract, escrowFund, escrowRefund, escrowRelease, getContract } from "@/lib/api";
 import { useState } from "react";
 import Uploader from "@/components/Uploader";
+import Image from "next/image";
+import { Badge, Button, Input, Textarea } from "@/components/ui";
 
 export default function ContractDetailPage() {
   const params = useParams<{ id: string }>();
@@ -28,44 +30,79 @@ export default function ContractDetailPage() {
   if (!contract) return <p className="p-6">Not found</p>;
 
   return (
-    <main className="mx-auto max-w-4xl p-6 space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold">Contract {contract.id}</h1>
-        <p className="text-slate-700">Status: {contract.status}</p>
-        <p className="text-slate-700">Escrow: {contract.escrow?.totalHeld ?? 0} {contract.escrow?.currency ?? "ETB"}</p>
+    <main className="relative mx-auto max-w-5xl p-6 pb-12 space-y-6">
+      <div className="absolute inset-0 -z-10 opacity-80" style={{ backgroundImage: "url('/images/backgrounds/geo-light-grid.svg')" }} />
+      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.22),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(14,165,233,0.22),transparent_40%),radial-gradient(circle_at_40%_85%,rgba(16,185,129,0.18),transparent_35%)]" />
+
+      <header className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-indigo-500/10 backdrop-blur">
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="relative h-16 w-16 overflow-hidden rounded-xl border border-white/30 bg-white/60 shadow-inner">
+            <Image src="/images/badges/secure.png" alt="secure badge" fill className="object-contain" />
+          </div>
+          <div className="flex-1 space-y-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold text-slate-900">Contract {contract.id}</h1>
+              <Badge variant="outline" className="bg-emerald-50/80 text-emerald-700">{contract.status}</Badge>
+              <Badge variant="outline" className="bg-amber-50/80 text-amber-700">Sandbox flow</Badge>
+            </div>
+            <p className="text-slate-700">Escrow balance: {contract.escrow?.totalHeld ?? 0} {contract.escrow?.currency ?? "ETB"}</p>
+            <p className="text-xs text-slate-500">Prototype only — no real funds move until production payment rails are connected.</p>
+          </div>
+        </div>
       </header>
 
-      <section className="rounded-xl border p-4">
-        <h2 className="mb-2 font-semibold">Delivery (Freelancer)</h2>
-        <textarea className="w-full rounded border p-2" rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Delivery note" />
-        <input className="mt-2 w-full rounded border p-2" value={deliveryAssetId ?? ""} onChange={(e) => setDeliveryAssetId(e.target.value)} placeholder="Delivery assetId (optional)" />
-        <div className="mt-2">
-          <Uploader scope="JOB" accept="image/*,application/pdf" onUploaded={(asset) => setDeliveryAssetId(asset.id)} />
-          {deliveryAssetId ? (
-            <p className="mt-1 text-sm text-slate-700">Selected assetId: {deliveryAssetId}</p>
-          ) : (
-            <p className="mt-1 text-sm text-slate-500">You can paste an existing assetId or upload a file.</p>
-          )}
-        </div>
-        <button onClick={() => deliver.mutate()} className="mt-2 rounded bg-sky-600 px-4 py-2 text-white">Submit Delivery</button>
-      </section>
+      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-indigo-500/10 backdrop-blur">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">Delivery (Freelancer)</h2>
+            <Badge variant="outline" className="bg-slate-100 text-slate-700">Uploads stay in beta</Badge>
+          </div>
+          <div className="mt-4 space-y-3">
+            <Textarea className="min-h-[120px]" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Delivery note, links, and acceptance criteria coverage." />
+            <Input value={deliveryAssetId ?? ""} onChange={(e) => setDeliveryAssetId(e.target.value)} placeholder="Delivery assetId (optional)" />
+            <div className="rounded-xl border border-white/30 bg-white/70 p-3 shadow-inner">
+              <Uploader scope="JOB" accept="image/*,application/pdf" onUploaded={(asset) => setDeliveryAssetId(asset.id)} />
+              {deliveryAssetId ? (
+                <p className="mt-1 text-sm text-slate-700">Selected assetId: {deliveryAssetId}</p>
+              ) : (
+                <p className="mt-1 text-sm text-slate-500">Upload to generate an assetId or paste an existing one.</p>
+              )}
+            </div>
+            <Button onClick={() => deliver.mutate()} disabled={deliver.isPending}>Submit delivery</Button>
+          </div>
+        </section>
 
-      <section className="rounded-xl border p-4">
-        <h2 className="mb-2 font-semibold">Completion (Employer)</h2>
-        <button onClick={() => complete.mutate()} className="rounded bg-emerald-600 px-4 py-2 text-white">Mark Complete</button>
-      </section>
+        <section className="space-y-4">
+          <div className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-indigo-500/10 backdrop-blur">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">Completion (Employer)</h2>
+              <Badge variant="outline" className="bg-emerald-50/80 text-emerald-700">Manual accept</Badge>
+            </div>
+            <p className="mt-2 text-sm text-slate-600">Mark complete after you review the delivery in this beta environment.</p>
+            <Button className="mt-3" onClick={() => complete.mutate()} disabled={complete.isPending}>Mark complete</Button>
+          </div>
 
-      <section className="rounded-xl border p-4">
-        <h2 className="mb-2 font-semibold">Escrow</h2>
-        <div className="flex flex-wrap gap-2">
-          <input type="number" className="w-40 rounded border p-2" value={amount} onChange={(e) => setAmount(Number(e.target.value))} placeholder="Amount" />
-          <input className="w-24 rounded border p-2" value={currency} onChange={(e) => setCurrency(e.target.value)} placeholder="Currency" />
-          <button onClick={() => fund.mutate()} className="rounded bg-slate-900 px-4 py-2 text-white">Fund</button>
-          <input type="number" className="w-40 rounded border p-2" value={fee} onChange={(e) => setFee(Number(e.target.value))} placeholder="Platform fee" />
-          <button onClick={() => release.mutate()} className="rounded bg-indigo-600 px-4 py-2 text-white">Release</button>
-          <button onClick={() => refund.mutate()} className="rounded bg-rose-600 px-4 py-2 text-white">Refund</button>
-        </div>
-      </section>
+          <div className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-indigo-500/10 backdrop-blur">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">Escrow</h2>
+              <Badge variant="outline" className="bg-amber-50/80 text-amber-700">Demo rails</Badge>
+            </div>
+            <div className="mt-4 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} placeholder="Amount" />
+                <Input value={currency} onChange={(e) => setCurrency(e.target.value)} placeholder="Currency" />
+                <Button variant="secondary" onClick={() => fund.mutate()} disabled={fund.isPending}>Fund</Button>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Input type="number" value={fee} onChange={(e) => setFee(Number(e.target.value))} placeholder="Platform fee" />
+                <Button onClick={() => release.mutate()} disabled={release.isPending}>Release</Button>
+                <Button variant="destructive" onClick={() => refund.mutate()} disabled={refund.isPending}>Refund</Button>
+              </div>
+              <p className="text-xs text-slate-500">These controls hit sandbox endpoints; connect live payment provider to move funds.</p>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

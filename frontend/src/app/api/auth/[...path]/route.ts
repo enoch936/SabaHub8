@@ -8,12 +8,15 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API
 
 function buildTargetUrl(pathParts: string[] | undefined) {
   const path = Array.isArray(pathParts) ? pathParts.join("/") : "";
-  // Normalize slashes
-  return `${API_BASE.replace(/\/$/, "")}/auth/${path}`.replace(/([^:]\/)\/+/, "$1");
+  // Normalize slashes and ensure we always hit backend /api/auth
+  return `${API_BASE.replace(/\/$/, "")}/api/auth/${path}`.replace(/([^:]\/)\/+/, "$1");
 }
 
 async function proxy(request: Request, url: string) {
   const headers = new Headers(request.headers);
+  // Ensure auth header survives the proxy hop
+  const auth = request.headers.get("authorization");
+  if (auth) headers.set("authorization", auth);
   // Do not forward host header from Next.js runtime
   headers.delete("host");
   // Strip Origin to avoid triggering backend CORS on server-to-server call
@@ -32,7 +35,19 @@ async function proxy(request: Request, url: string) {
     init.body = await request.text();
   }
 
-  const resp = await fetch(url, init);
+  let resp: Response;
+  try {
+    resp = await fetch(url, init);
+  } catch (error: any) {
+    return Response.json(
+      {
+        error: "BACKEND_UNREACHABLE",
+        message: error?.message || "Failed to reach backend",
+        target: url,
+      },
+      { status: 502 },
+    );
+  }
   const respHeaders = new Headers(resp.headers);
   respHeaders.set("Access-Control-Allow-Origin", "*");
   respHeaders.set("Access-Control-Allow-Headers", "*");

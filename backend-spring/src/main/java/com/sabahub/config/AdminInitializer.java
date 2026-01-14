@@ -7,34 +7,46 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Set;
 
 @Configuration
 public class AdminInitializer {
 
+    @Value("${admin.email:admin@sabahub.local}")
+    private String adminEmail;
+
+    @Value("${admin.password:}")
+    private String adminPassword;
+
     @Bean
     CommandLineRunner ensureAdmin(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
-            String adminEmail = System.getenv().getOrDefault("ADMIN_EMAIL", "admin@sabahub.local");
-            String adminPassword = System.getenv().getOrDefault("ADMIN_PASSWORD", "");
+            // Use environment variables or properties
+            String email = System.getenv().getOrDefault("ADMIN_EMAIL", adminEmail);
+            String password = System.getenv().getOrDefault("ADMIN_PASSWORD", adminPassword);
 
             // Do not create an admin without an explicit password.
-            if (adminPassword.isBlank()) {
+            if (password.isBlank()) {
+                System.out.println("[AdminInitializer] ADMIN_PASSWORD not set; skipping admin creation");
                 return;
             }
 
             try {
-                if (userRepository.existsByEmail(adminEmail)) {
+                if (userRepository.existsByEmail(email)) {
+                    System.out.println("[AdminInitializer] Admin user already exists: " + email);
                     return;
                 }
 
-                String hashed = passwordEncoder.encode(adminPassword);
-                User admin = new User(adminEmail, "Administrator", hashed, Set.of("ROLE_ADMIN", "ROLE_USER", "ADMIN", "USER"));
+                String hashed = passwordEncoder.encode(password);
+                User admin = new User(email, "Administrator", hashed, Set.of("ROLE_ADMIN", "ROLE_USER", "ADMIN", "USER"));
                 userRepository.save(admin);
+                System.out.println("[AdminInitializer] Created admin user: " + email);
             } catch (DataAccessException ex) {
                 // Mongo is not reachable during startup; skip seeding so the app can still start.
                 // Connection will be validated through normal API usage.
+                System.out.println("[AdminInitializer] MongoDB not reachable during startup; skipping admin creation");
             }
         };
     }

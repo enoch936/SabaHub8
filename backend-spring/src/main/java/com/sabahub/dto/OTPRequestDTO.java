@@ -12,7 +12,7 @@ public class OTPRequestDTO {
     @Email(message = "Invalid email format")
     private String email;
 
-    @NotBlank(message = "Phone number is required")
+    // Phone number is optional - not all users will provide it
     private String phoneNumber;
 
     private String firstName;

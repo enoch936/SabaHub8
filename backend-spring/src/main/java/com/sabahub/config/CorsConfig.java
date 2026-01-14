@@ -19,12 +19,13 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        // Enable wildcard subdomain match for Codespaces and local dev
-        config.setAllowedOriginPatterns(allowedOrigins);
+        // Allow all origins in development via regex pattern
+        config.setAllowedOriginPatterns(List.of(".*"));  // Match any origin
         config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         // Allow all headers to prevent CORS rejections for non-standard headers
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("*"));
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

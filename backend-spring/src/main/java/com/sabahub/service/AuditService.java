@@ -41,6 +41,10 @@ public class AuditService {
         audit.setMetadata(metadata);
         auditLogRepository.save(audit);
     }
+    
+    public void logAction(String userId, String action, String entityId) {
+        log(action, null, entityId, Map.of("userId", userId));
+    }
 
     private String extractClientIp() {
         String xff = request.getHeader("X-Forwarded-For");

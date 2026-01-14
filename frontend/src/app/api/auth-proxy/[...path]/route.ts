@@ -12,14 +12,16 @@ const API_BASE =
 
 function buildTargetUrl(pathParts?: string[]) {
   const path = Array.isArray(pathParts) ? pathParts.join("/") : "";
-  return `${API_BASE.replace(/\/$/, "")}/auth/${path}`.replace(
-    /([^:]\/)\/+/,
+  return `${API_BASE.replace(/\/$/, "")}/api/auth/${path}`.replace(
+    /([^:]\/)/\/+/,
     "$1",
   );
 }
 
 async function proxy(request: Request, url: string) {
   const headers = new Headers(request.headers);
+  const auth = request.headers.get("authorization");
+  if (auth) headers.set("authorization", auth);
   headers.delete("host");
   headers.delete("origin");
   headers.delete("Origin");
@@ -38,7 +40,19 @@ async function proxy(request: Request, url: string) {
     init.body = await request.text();
   }
 
-  const resp = await fetch(url, init);
+  let resp: Response;
+  try {
+    resp = await fetch(url, init);
+  } catch (error: any) {
+    return Response.json(
+      {
+        error: "BACKEND_UNREACHABLE",
+        message: error?.message || "Failed to reach backend",
+        target: url,
+      },
+      { status: 502 },
+    );
+  }
   const respHeaders = new Headers(resp.headers);
   respHeaders.set("Access-Control-Allow-Origin", "*");
   respHeaders.set("Access-Control-Allow-Headers", "*");

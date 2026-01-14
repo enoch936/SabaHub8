@@ -51,10 +51,10 @@ export default function ChatPage() {
     setActiveId(t.id);
   }
 
-  const filteredThreads = threads.filter((t) =>
+  const filteredThreads = (threads || []).filter((t) =>
     t.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const activeThread = threads.find((t) => t.id === activeId);
+  const activeThread = (threads || []).find((t) => t.id === activeId);
 
   return (
     <main className="flex h-screen bg-slate-50">

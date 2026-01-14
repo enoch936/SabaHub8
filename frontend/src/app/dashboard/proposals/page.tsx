@@ -2,19 +2,38 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { listEmployerJobs, listJobProposals, acceptProposal } from "@/lib/api";
+import Image from "next/image";
+import { Badge, Button } from "@/components/ui";
 
 export default function ProposalsPage() {
   const jobsQuery = useQuery({ queryKey: ["my-jobs"], queryFn: listEmployerJobs });
 
   return (
-    <main className="mx-auto max-w-5xl p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Proposals (Employer)</h1>
-      {jobsQuery.isLoading && <p>Loading...</p>}
+    <main className="relative mx-auto max-w-5xl p-6 pb-12 space-y-6">
+      <div className="absolute inset-0 -z-10 opacity-80" style={{ backgroundImage: "url('/images/backgrounds/geo-light-grid.svg')" }} />
+      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.2),transparent_45%),radial-gradient(circle_at_78%_8%,rgba(167,139,250,0.2),transparent_40%),radial-gradient(circle_at_45%_85%,rgba(16,185,129,0.16),transparent_35%)]" />
+
+      <div className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-sky-500/10 backdrop-blur">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-white/30 bg-white/60 shadow-inner">
+              <Image src="/images/badges/info.png" alt="info badge" fill className="object-contain" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Proposals (Employer)</h1>
+              <p className="text-slate-600">Review incoming bids — sandbox data only.</p>
+            </div>
+          </div>
+          <Badge variant="outline" className="bg-amber-50/80 text-amber-700">Prototype flow</Badge>
+        </div>
+      </div>
+
+      {jobsQuery.isLoading && <p className="text-slate-700">Loading...</p>}
       {jobsQuery.error && <p className="text-rose-600">Failed to load jobs</p>}
       {jobsQuery.data?.map((job) => (
         <JobProposals key={job.id} jobId={job.id} title={job.title} />
       ))}
-      {(!jobsQuery.data || jobsQuery.data.length === 0) && <p className="text-slate-600">No jobs yet.</p>}
+      {(!jobsQuery.data || jobsQuery.data.length === 0) && <p className="text-slate-600">No jobs yet in this beta view.</p>}
     </main>
   );
 }
@@ -28,19 +47,25 @@ function JobProposals({ jobId, title }: { jobId: string; title: string }) {
   }
 
   return (
-    <section className="rounded-xl border p-4">
-      <h2 className="mb-2 text-lg font-semibold">{title}</h2>
-      {isLoading && <p>Loading...</p>}
+    <section className="rounded-2xl border border-white/20 bg-white/85 p-5 shadow-xl shadow-sky-500/10 backdrop-blur">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+          <p className="text-sm text-slate-600">Proposals are mock data until production wiring is enabled.</p>
+        </div>
+        <Badge variant="outline" className="bg-slate-100 text-slate-700">Sandbox</Badge>
+      </div>
+      {isLoading && <p className="text-slate-700">Loading...</p>}
       {error && <p className="text-rose-600">Failed to load proposals</p>}
-      <ul className="space-y-2">
+      <ul className="space-y-3">
         {data?.map((p) => (
-          <li key={p.id} className="rounded border p-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Bid: {p.bidAmount} — {p.timelineDays} days</p>
-                <p className="text-slate-600 text-sm">{p.coverLetter}</p>
+          <li key={p.id} className="rounded-xl border border-white/30 bg-white/75 p-3 shadow-inner">
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-1">
+                <p className="font-medium text-slate-900">Bid {p.bidAmount} — {p.timelineDays} days</p>
+                <p className="text-sm text-slate-600">{p.coverLetter}</p>
               </div>
-              <button onClick={() => accept(p.id)} className="rounded bg-emerald-600 px-3 py-1.5 text-white">Accept</button>
+              <Button onClick={() => accept(p.id)} size="sm" variant="secondary">Accept</Button>
             </div>
           </li>
         ))}

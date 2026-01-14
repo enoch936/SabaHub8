@@ -26,8 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = use(cookies());
-  const themeValue = cookieStore.get('theme')?.value;
-  const themeClass = themeValue === 'dark' ? 'theme-dark' : 'theme-light';
+  const themeClass = 'theme-light';
   
   return (
     <html lang="en" className={themeClass} suppressHydrationWarning>
@@ -40,10 +39,21 @@ export default function RootLayout({
     var t = localStorage.getItem('theme');
     if (t !== 'light' && t !== 'dark') { t = 'light'; }
     var root = document.documentElement;
+    root.classList.remove('theme-light','theme-dark','dark');
     var desired = t === 'dark' ? 'theme-dark' : 'theme-light';
-    if (!root.classList.contains(desired)) {
-      root.classList.remove('theme-light','theme-dark');
-      root.classList.add(desired);
+    root.classList.add(desired);
+    if (t === 'dark') { root.classList.add('dark'); }
+    var href = t === 'dark' ? '/themes/dark.css' : '/themes/light.css';
+    var link = document.getElementById('theme-css');
+    if (link && link.tagName === 'LINK') {
+      if (link.getAttribute('href') !== href) link.setAttribute('href', href);
+    } else {
+      link = document.createElement('link');
+      link.id = 'theme-css';
+      link.rel = 'stylesheet';
+      link.href = href;
+      var head = document.head || document.getElementsByTagName('head')[0];
+      head.insertBefore(link, head.firstChild);
     }
   } catch (e) {}
 })();

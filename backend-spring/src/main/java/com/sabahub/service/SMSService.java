@@ -1,15 +1,16 @@
 package com.sabahub.service;
 
 import com.twilio.Twilio;
-import com.twilio.rest.api.v2010.account.Message;
+import com.twilio.rest.verify.v2.service.Verification;
 import com.twilio.type.PhoneNumber;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * SMS Service using Twilio
- * Enterprise-grade SMS delivery for OTP verification
+ * SMS Service using Twilio Verify API
+ * Enterprise-grade SMS delivery with built-in OTP verification
+ * Better than basic SMS: handles verification logic, rate limiting, security
  */
 @Slf4j
 @Service
@@ -21,10 +22,22 @@ public class SMSService {
     @Value("${twilio.auth-token:}")
     private String twilioAuthToken;
 
+    @Value("${twilio.verify-service-sid:}")
+    private String twilioVerifyServiceSid;
+
     @Value("${twilio.phone-number:+1234567890}")
     private String twilioPhoneNumber;
 
     private boolean isInitialized = false;
+
+    /**
+     * Check if SMS service is properly configured
+     */
+    public boolean isConfigured() {
+        return twilioAccountSid != null && !twilioAccountSid.isEmpty() && 
+               twilioAuthToken != null && !twilioAuthToken.isEmpty() &&
+               twilioVerifyServiceSid != null && !twilioVerifyServiceSid.isEmpty();
+    }
 
     /**
      * Initialize Twilio client (lazy initialization)
@@ -38,70 +51,70 @@ public class SMSService {
     }
 
     /**
-     * Send OTP via SMS
+     * Send OTP via SMS using Twilio Verify API
+     * The Verify API handles verification logic server-side with better security
      */
     public void sendOTPSMS(String phoneNumber, String otpCode) {
-        log.info("Sending OTP SMS to: {}", phoneNumber);
+        log.info("Sending OTP SMS via Verify API to: {}", phoneNumber);
+        
+        if (!isConfigured()) {
+            String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
+            log.warn(errorMsg);
+            throw new RuntimeException(errorMsg);
+        }
         
         if (!isInitialized) {
             initializeTwilio();
         }
 
-        if (twilioAccountSid == null || twilioAccountSid.isEmpty()) {
-            log.warn("Twilio not configured - SMS OTP will not be sent");
-            return;
-        }
-
         try {
-            String messageBody = "Your SabaHub verification code is: " + otpCode + 
-                               "\nThis code expires in 10 minutes.\n" +
-                               "Do not share with anyone.";
-
-            Message message = Message.creator(
-                    new PhoneNumber(phoneNumber),  // To number
-                    new PhoneNumber(twilioPhoneNumber),  // From number
-                    messageBody
+            // Use Verify API to send OTP via SMS
+            // This is better than basic SMS: handles verification, rate limiting, security
+            Verification verification = Verification.creator(
+                    twilioVerifyServiceSid,      // Service SID
+                    phoneNumber,                  // Recipient phone number
+                    "sms"                         // Channel: sms or call
             ).create();
 
-            log.info("SMS sent successfully. SID: {}", message.getSid());
+            log.info("SMS OTP sent successfully via Verify API. Status: {}, Phone: {}", 
+                    verification.getStatus(), phoneNumber);
 
         } catch (Exception e) {
-            log.error("Failed to send SMS to: {} - Error: {}", phoneNumber, e.getMessage(), e);
-            throw new RuntimeException("Failed to send SMS: " + e.getMessage(), e);
+            log.error("Failed to send SMS OTP to: {} - Error: {}", phoneNumber, e.getMessage(), e);
+            throw new RuntimeException("Failed to send SMS OTP: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Send password reset OTP via SMS
+     * Send password reset OTP via SMS using Twilio Verify API
      */
     public void sendPasswordResetSMS(String phoneNumber, String otpCode) {
-        log.info("Sending password reset SMS to: {}", phoneNumber);
+        log.info("Sending password reset SMS via Verify API to: {}", phoneNumber);
+        
+        if (!isConfigured()) {
+            String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
+            log.warn(errorMsg);
+            throw new RuntimeException(errorMsg);
+        }
         
         if (!isInitialized) {
             initializeTwilio();
         }
 
-        if (twilioAccountSid == null || twilioAccountSid.isEmpty()) {
-            log.warn("Twilio not configured - SMS will not be sent");
-            return;
-        }
-
         try {
-            String messageBody = "Your SabaHub password reset code is: " + otpCode + 
-                               "\nThis code expires in 10 minutes.\n" +
-                               "If you didn't request this, ignore this message.";
-
-            Message message = Message.creator(
-                    new PhoneNumber(phoneNumber),
-                    new PhoneNumber(twilioPhoneNumber),
-                    messageBody
+            // Use Verify API to send password reset OTP via SMS
+            Verification verification = Verification.creator(
+                    twilioVerifyServiceSid,      // Service SID
+                    phoneNumber,                  // Recipient phone number
+                    "sms"                         // Channel: sms
             ).create();
 
-            log.info("Password reset SMS sent successfully. SID: {}", message.getSid());
+            log.info("Password reset SMS OTP sent via Verify API. Status: {}, Phone: {}", 
+                    verification.getStatus(), phoneNumber);
 
         } catch (Exception e) {
             log.error("Failed to send password reset SMS to: {} - Error: {}", phoneNumber, e.getMessage(), e);
-            throw new RuntimeException("Failed to send SMS: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to send password reset SMS: " + e.getMessage(), e);
         }
     }
 

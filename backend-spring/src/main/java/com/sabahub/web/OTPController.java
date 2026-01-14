@@ -4,15 +4,18 @@ import com.sabahub.domain.OTP;
 import com.sabahub.dto.OTPRequestDTO;
 import com.sabahub.dto.OTPVerificationDTO;
 import com.sabahub.dto.RegisterWithOTPDTO;
+import com.sabahub.service.AuthService;
 import com.sabahub.service.EmailService;
 import com.sabahub.service.OTPService;
 import com.sabahub.service.SMSService;
+import com.sabahub.web.dto.AuthResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import java.util.Map;
 
 /**
  * REST Controller for OTP verification (Email + SMS)
@@ -27,11 +30,13 @@ public class OTPController {
     private final OTPService otpService;
     private final EmailService emailService;
     private final SMSService smsService;
+    private final AuthService authService;
 
-    public OTPController(OTPService otpService, EmailService emailService, SMSService smsService) {
+    public OTPController(OTPService otpService, EmailService emailService, SMSService smsService, AuthService authService) {
         this.otpService = otpService;
         this.emailService = emailService;
         this.smsService = smsService;
+        this.authService = authService;
     }
 
     /**
@@ -43,48 +48,93 @@ public class OTPController {
         log.info("Requesting registration OTP for email: {}", request.getEmail());
 
         try {
-            // Generate OTP for email
-            OTP emailOTP = otpService.generateOTP(
-                    request.getEmail(),
-                    OTP.OTPType.EMAIL,
-                    OTP.OTPPurpose.REGISTRATION
-            );
-
-            // Send email OTP
-            emailService.sendOTPEmail(
-                    request.getEmail(),
-                    emailOTP.getOtpCode(),
-                    request.getFirstName()
-            );
-
-            // Generate OTP for SMS
-            OTP smsOTP = otpService.generateOTP(
-                    request.getPhoneNumber(),
-                    OTP.OTPType.SMS,
-                    OTP.OTPPurpose.REGISTRATION
-            );
-
-            // Send SMS OTP
-            if (smsService.isValidPhoneNumber(request.getPhoneNumber())) {
-                smsService.sendOTPSMS(request.getPhoneNumber(), smsOTP.getOtpCode());
-            } else {
-                log.warn("Invalid phone number format: {}", request.getPhoneNumber());
-                return ResponseEntity.badRequest().body(
-                        new ApiResponse("Invalid phone number format", false, null)
+            // Check if services are configured
+            boolean emailConfigured = emailService.isConfigured();
+            boolean smsConfigured = smsService.isConfigured();
+            
+            if (!emailConfigured && !smsConfigured) {
+                String errorMsg = "OTP services not configured. Please contact administrator to set up SMTP and Twilio credentials.";
+                log.error(errorMsg);
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+                        new ApiResponse(errorMsg, false, null)
                 );
             }
+            
+            boolean emailSent = false;
+            boolean smsSent = false;
+            StringBuilder responseMsg = new StringBuilder();
+            
+            // Try to send email OTP
+            if (emailConfigured) {
+                try {
+                    OTP emailOTP = otpService.generateOTP(
+                            request.getEmail(),
+                            OTP.OTPType.EMAIL,
+                            OTP.OTPPurpose.REGISTRATION
+                    );
+                    emailService.sendOTPEmail(
+                            request.getEmail(),
+                            emailOTP.getOtpCode(),
+                            request.getFirstName()
+                    );
+                    emailSent = true;
+                    responseMsg.append("OTP sent to email");
+                } catch (Exception e) {
+                    log.error("Failed to send email OTP: {}", e.getMessage());
+                    responseMsg.append("Failed to send email OTP");
+                }
+            } else {
+                log.warn("Email service not configured - skipping email OTP");
+                responseMsg.append("Email service not configured");
+            }
 
-            log.info("Registration OTP sent successfully to email: {} and phone: {}",
-                    request.getEmail(), request.getPhoneNumber());
+            // Try to send SMS OTP (only if phone number provided)
+            if (smsConfigured && request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+                if (smsService.isValidPhoneNumber(request.getPhoneNumber())) {
+                    try {
+                        OTP smsOTP = otpService.generateOTP(
+                                request.getPhoneNumber(),
+                                OTP.OTPType.SMS,
+                                OTP.OTPPurpose.REGISTRATION
+                        );
+                        smsService.sendOTPSMS(request.getPhoneNumber(), smsOTP.getOtpCode());
+                        smsSent = true;
+                        if (emailSent) responseMsg.append(" and ");
+                        responseMsg.append("SMS");
+                    } catch (Exception e) {
+                        log.error("Failed to send SMS OTP: {}", e.getMessage());
+                        if (emailSent) responseMsg.append("; ");
+                        responseMsg.append("Failed to send SMS OTP");
+                    }
+                } else {
+                    log.warn("Invalid phone number format: {}", request.getPhoneNumber());
+                    if (emailSent) responseMsg.append("; ");
+                    responseMsg.append("Invalid phone number format");
+                }
+            } else if (request.getPhoneNumber() == null || request.getPhoneNumber().trim().isEmpty()) {
+                log.info("No phone number provided - skipping SMS OTP");
+            } else {
+                log.warn("SMS service not configured - skipping SMS OTP");
+                if (emailSent) responseMsg.append("; ");
+                responseMsg.append("SMS service not configured");
+            }
 
-            return ResponseEntity.ok(
-                    new ApiResponse("OTP sent to email and SMS successfully", true, null)
-            );
+            // Return appropriate response
+            if (emailSent || smsSent) {
+                log.info("Registration OTP request completed. Email sent: {}, SMS sent: {}", emailSent, smsSent);
+                return ResponseEntity.ok(
+                        new ApiResponse(responseMsg.toString(), true, null)
+                );
+            } else {
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+                        new ApiResponse(responseMsg.toString(), false, null)
+                );
+            }
 
         } catch (Exception e) {
             log.error("Error requesting registration OTP: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    new ApiResponse("Failed to send OTP: " + e.getMessage(), false, null)
+                    new ApiResponse("Failed to process OTP request: " + e.getMessage(), false, null)
             );
         }
     }
@@ -228,6 +278,47 @@ public class OTPController {
             log.error("Error getting OTP status: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new ApiResponse("Failed to get OTP status", false, null)
+            );
+        }
+    }
+
+    /**
+     * Complete registration with verified OTP
+     * Call this after email OTP is verified
+     */
+    @PostMapping("/complete-registration")
+    public ResponseEntity<?> completeRegistration(@Valid @RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String password = request.get("password");
+        String fullName = request.get("fullName");
+        String role = request.get("role"); // Optional: defaults to FREELANCER
+
+        log.info("Completing registration for: {} with role: {}", email, role != null ? role : "FREELANCER");
+
+        try {
+            // Verify that email OTP was verified
+            OTP.OTPStatus emailStatus = otpService.getOTPStatus(email);
+            if (emailStatus != OTP.OTPStatus.VERIFIED) {
+                return ResponseEntity.badRequest().body(
+                        new ApiResponse("Email not verified. Please verify email OTP first.", false, null)
+                );
+            }
+
+            // Create user account with role
+            AuthResponse authResponse = authService.registerWithOTP(email, fullName, password, role);
+
+            log.info("Registration completed successfully for: {} with role: {}", email, role != null ? role : "FREELANCER");
+            return ResponseEntity.ok(authResponse);
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Registration validation error: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse(e.getMessage(), false, null)
+            );
+        } catch (Exception e) {
+            log.error("Error completing registration: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ApiResponse("Failed to complete registration", false, null)
             );
         }
     }

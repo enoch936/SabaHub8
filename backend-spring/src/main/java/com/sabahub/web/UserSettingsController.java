@@ -6,6 +6,7 @@ import com.sabahub.repository.UserRepository;
 import com.sabahub.service.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -29,9 +30,15 @@ public class UserSettingsController {
     @GetMapping
     public ResponseEntity<UserProfile> getSettings() {
         User user = currentUserService.requireUser();
+        System.out.println("=== GET SETTINGS for user: " + user.getEmail() + " ===");
         UserProfile profile = user.getProfile();
         if (profile == null) {
+            System.out.println("Profile is NULL, creating empty profile");
             profile = new UserProfile();
+        } else {
+            System.out.println("Profile found - Bio: " + profile.getBio());
+            System.out.println("Profile found - Location: " + profile.getLocation());
+            System.out.println("Profile found - Skills: " + profile.getSkills());
         }
         return ResponseEntity.ok(profile);
     }
@@ -40,23 +47,43 @@ public class UserSettingsController {
      * PATCH /api/user/settings - Update user settings/profile (partial update)
      */
     @PatchMapping
-    public ResponseEntity<UserProfile> updateSettings(@RequestBody UserProfile profileUpdate) {
+    @Transactional
+    public ResponseEntity<UserProfile> updateSettings(@RequestBody UserProfile profileUpdate,
+                                                       @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        System.out.println("=== PATCH /api/user/settings CALLED ===");
+        System.out.println("Authorization header: " + (authHeader != null ? authHeader.substring(0, Math.min(30, authHeader.length())) + "..." : "NULL"));
+        
         User user = currentUserService.requireUser();
+        System.out.println("=== UPDATE SETTINGS for user: " + user.getEmail() + " ===");
+        System.out.println("Received update - Bio: " + profileUpdate.getBio());
+        System.out.println("Received update - Location: " + profileUpdate.getLocation());
+        System.out.println("Received update - Skills: " + profileUpdate.getSkills());
         
         UserProfile profile = user.getProfile();
         if (profile == null) {
+            System.out.println("Creating NEW profile object");
             profile = new UserProfile();
+            user.setProfile(profile);
         }
 
         // Update only non-null fields
-        if (profileUpdate.getBio() != null) profile.setBio(profileUpdate.getBio());
+        if (profileUpdate.getBio() != null) {
+            System.out.println("Updating Bio: " + profileUpdate.getBio());
+            profile.setBio(profileUpdate.getBio());
+        }
         if (profileUpdate.getProfilePictureUrl() != null) profile.setProfilePictureUrl(profileUpdate.getProfilePictureUrl());
-        if (profileUpdate.getLocation() != null) profile.setLocation(profileUpdate.getLocation());
+        if (profileUpdate.getLocation() != null) {
+            System.out.println("Updating Location: " + profileUpdate.getLocation());
+            profile.setLocation(profileUpdate.getLocation());
+        }
         if (profileUpdate.getTimezone() != null) profile.setTimezone(profileUpdate.getTimezone());
         if (profileUpdate.getPhoneNumber() != null) profile.setPhoneNumber(profileUpdate.getPhoneNumber());
         if (profileUpdate.getLanguage() != null) profile.setLanguage(profileUpdate.getLanguage());
         
-        if (profileUpdate.getSkills() != null) profile.setSkills(profileUpdate.getSkills());
+        if (profileUpdate.getSkills() != null) {
+            System.out.println("Updating Skills: " + profileUpdate.getSkills());
+            profile.setSkills(profileUpdate.getSkills());
+        }
         if (profileUpdate.getCertifications() != null) profile.setCertifications(profileUpdate.getCertifications());
         if (profileUpdate.getExpertise() != null) profile.setExpertise(profileUpdate.getExpertise());
         if (profileUpdate.getYearsOfExperience() != null) profile.setYearsOfExperience(profileUpdate.getYearsOfExperience());
@@ -77,10 +104,13 @@ public class UserSettingsController {
         if (profileUpdate.getShowEarnings() != null) profile.setShowEarnings(profileUpdate.getShowEarnings());
         if (profileUpdate.getPreferredLanguage() != null) profile.setPreferredLanguage(profileUpdate.getPreferredLanguage());
         
+        // Explicitly mark as modified and save
         user.setProfile(profile);
-        userRepository.save(user);
+        System.out.println("Saving user with updated profile...");
+        User savedUser = userRepository.save(user);
+        System.out.println("User saved! Profile after save - Bio: " + savedUser.getProfile().getBio());
         
-        return ResponseEntity.ok(profile);
+        return ResponseEntity.ok(savedUser.getProfile());
     }
 
     /**

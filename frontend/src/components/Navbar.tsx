@@ -19,6 +19,7 @@ import {
 import { useSession } from "@/lib/session";
 import { useNotifications } from "@/lib/notifications";
 import { Badge } from "./ui";
+import { ThemeIconButton } from "./useTheme";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -34,9 +35,18 @@ export default function Navbar() {
   const unread = useNotifications((s) => s.unread);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 10);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll as EventListener);
   }, []);
 
   useEffect(() => {
@@ -132,6 +142,8 @@ export default function Navbar() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-3">
+              {/* Theme Toggle */}
+              <ThemeIconButton />
               {/* Notifications */}
               <div className="relative notifications-menu">
                 <button

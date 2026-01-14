@@ -13,8 +13,8 @@ export default function JobsBrowsePage() {
   const [sortBy, setSortBy] = useState("recent");
 
   const filteredJobs = data?.filter((job: any) => {
-    const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         job.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         job.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === "all" || job.categoryId === categoryFilter;
     return matchesSearch && matchesCategory;
   }) || [];
@@ -27,7 +27,14 @@ export default function JobsBrowsePage() {
   });
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <main className="relative isolate min-h-screen overflow-hidden bg-slate-950 p-6 text-slate-900">
+      <div className="pointer-events-none absolute inset-0 -z-20" aria-hidden>
+        <img src="/images/backgrounds/aurora-blur.svg" alt="Aurora" className="h-full w-full object-cover opacity-75" />
+      </div>
+      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+        <img src="/images/backgrounds/geo-light-grid.svg" alt="Grid" className="h-full w-full object-cover opacity-55" />
+      </div>
+
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <header className="mb-8">
@@ -35,7 +42,7 @@ export default function JobsBrowsePage() {
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Browse Jobs</h1>
               <p className="mt-1 text-slate-600">
-                {filteredJobs.length} {filteredJobs.length === 1 ? "job" : "jobs"} available
+                Find and apply to freelance opportunities
               </p>
             </div>
             <Link href="/dashboard/jobs/new">
@@ -51,7 +58,7 @@ export default function JobsBrowsePage() {
         </header>
 
         {/* Filters */}
-        <Card className="mb-6 p-6">
+        <Card className="mb-6 p-6 border border-white/25 bg-white/85 backdrop-blur">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="md:col-span-1">
               <label className="mb-2 block text-sm font-medium text-slate-700">Search</label>
@@ -87,7 +94,7 @@ export default function JobsBrowsePage() {
         {isLoading && (
           <div className="space-y-4">
             {[1, 2, 3, 4].map((i) => (
-              <Card key={i} className="p-6">
+              <Card key={i} className="p-6 border border-white/25 bg-white/80 backdrop-blur">
                 <Skeleton className="mb-3 h-6 w-2/3" />
                 <Skeleton className="mb-2 h-4 w-full" />
                 <Skeleton className="h-4 w-3/4" />
@@ -101,7 +108,7 @@ export default function JobsBrowsePage() {
         )}
 
         {error && (
-          <Card variant="bordered" className="border-rose-200 bg-rose-50 p-8 text-center">
+          <Card variant="bordered" className="border border-rose-200/70 bg-rose-50/90 p-8 text-center">
             <div className="mb-2 text-4xl">⚠️</div>
             <p className="font-medium text-rose-700">Failed to load jobs</p>
             <p className="text-sm text-rose-600">Please try again later</p>
@@ -109,7 +116,7 @@ export default function JobsBrowsePage() {
         )}
 
         {!isLoading && !error && sortedJobs.length === 0 && (
-          <Card variant="bordered" className="p-12 text-center">
+          <Card variant="bordered" className="p-12 text-center border border-white/25 bg-white/85 backdrop-blur">
             <div className="mb-4 text-6xl">🔍</div>
             <h3 className="mb-2 text-xl font-bold text-slate-900">No jobs found</h3>
             <p className="mb-6 text-slate-600">
@@ -135,7 +142,7 @@ export default function JobsBrowsePage() {
           <div className="grid gap-6">
             {sortedJobs.map((job: any) => (
               <Link key={job.id} href={`/dashboard/jobs/${job.id}`}>
-                <Card hover className="group p-6">
+                <Card hover className="group p-6 border border-white/25 bg-white/85 backdrop-blur">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="mb-3 flex items-start gap-3">

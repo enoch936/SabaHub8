@@ -47,7 +47,7 @@ export function connectWs(): Promise<void> {
   });
 }
 
-export function subscribeThread(threadId: string, onMessage: (body: any) => void): Subscription | null {
+export function subscribeThread(threadId: string, onMessage: (body: Record<string, unknown>) => void): Subscription | null {
   if (!client || !connected) return null;
   const sub = client.subscribe(`/topic/threads/${threadId}/message.new`, (msg: IMessage) => {
     try { onMessage(JSON.parse(msg.body)); } catch {}
@@ -55,7 +55,7 @@ export function subscribeThread(threadId: string, onMessage: (body: any) => void
   return { unsubscribe: () => sub.unsubscribe() };
 }
 
-export function subscribeAnnouncements(onMessage: (body: any) => void): Subscription | null {
+export function subscribeAnnouncements(onMessage: (body: Record<string, unknown>) => void): Subscription | null {
   if (!client || !connected) return null;
   const sub = client.subscribe(`/topic/announcements`, (msg: IMessage) => {
     try { onMessage(JSON.parse(msg.body)); } catch {}
@@ -63,7 +63,7 @@ export function subscribeAnnouncements(onMessage: (body: any) => void): Subscrip
   return { unsubscribe: () => sub.unsubscribe() };
 }
 
-export function sendThreadMessage(threadId: string, payload: any) {
+export function sendThreadMessage(threadId: string, payload: Record<string, unknown>) {
   if (!client || !connected) return;
   client.publish({ destination: `/app/threads/${threadId}/message.send`, body: JSON.stringify(payload) });
 }

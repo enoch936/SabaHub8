@@ -178,11 +178,17 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-white px-4 py-12 text-slate-900">
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-12 text-slate-900">
+      <div className="pointer-events-none absolute inset-0 -z-20" aria-hidden>
+        <img src="/images/backgrounds/aurora-blur.svg" alt="Aurora backdrop" className="h-full w-full object-cover opacity-80" />
+      </div>
+      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+        <img src="/images/backgrounds/geo-light-grid.svg" alt="Grid backdrop" className="h-full w-full object-cover opacity-60" />
+      </div>
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute left-10 top-16 h-48 w-48 rounded-full bg-sky-100 blur-3xl" />
-        <div className="absolute right-10 bottom-16 h-48 w-48 rounded-full bg-indigo-100 blur-3xl" />
-        <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/60 blur-3xl" />
+        <div className="absolute left-10 top-16 h-52 w-52 rounded-full bg-sky-400/20 blur-3xl" />
+        <div className="absolute right-10 bottom-16 h-56 w-56 rounded-full bg-indigo-400/20 blur-3xl" />
+        <div className="absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/10 blur-3xl" />
       </div>
 
       <div className="relative mx-auto flex max-w-6xl flex-col gap-10">
@@ -192,9 +198,10 @@ export default function LoginPage() {
           <p className="mt-3 text-base text-slate-600">Welcome back. Access your workspace securely.</p>
         </header>
 
-        <section className="mx-auto w-full max-w-lg relative overflow-hidden rounded-3xl border border-slate-200 bg-white/90 px-8 py-10 shadow-[0_22px_70px_rgba(15,23,42,0.12)] backdrop-blur-sm">
-          <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-sky-100/60 blur-3xl" aria-hidden />
-          <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-indigo-100/60 blur-3xl" aria-hidden />
+        <section className="relative mx-auto w-full max-w-lg overflow-hidden rounded-3xl border border-white/20 bg-white/80 px-8 py-10 shadow-[0_22px_70px_rgba(8,47,73,0.35)] backdrop-blur">
+          <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-sky-300/30 blur-3xl" aria-hidden />
+          <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-indigo-300/30 blur-3xl" aria-hidden />
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 via-cyan-400 to-indigo-500" aria-hidden />
 
           <div className="relative mb-8 flex items-center gap-4">
             <div className="relative h-14 w-14 rounded-2xl bg-sky-50 p-3 ring-1 ring-sky-100">
@@ -216,6 +223,11 @@ export default function LoginPage() {
               onChange={(value) => handleChange("email", value)}
               error={errors.email}
               autoComplete="email"
+              suffix={(
+                <svg className="h-5 w-5 text-sky-600" aria-hidden>
+                  <use href="/images/icons/ui-icons.svg#icon-mail" />
+                </svg>
+              )}
             />
 
             <Field

@@ -239,3 +239,8 @@ export default function ProtectedLayout({ children }) {
 - 📱 Full responsive design
 - ♿ Accessibility improvements
 - 🎬 Advanced animations and transitions
+Asset types needed now (hero banner, screenshots/placeholders, icons, illustrations, textures, or a short video loop).
+Visual style (minimal/light, bold/colorful, gradients, geometric, or photo-driven).
+Brand colors or reference examples to match.
+Format/size preferences (SVG for icons/illustrations, JPG for photos, MP4/WebM for loops, etc.).
+Source restrictions (use an existing licensed set you have, or is permissive CC0/Apache/MIT acceptable?).

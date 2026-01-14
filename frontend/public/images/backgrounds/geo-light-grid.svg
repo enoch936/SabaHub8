@@ -1,0 +1,28 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0B1224" offset="0%"/>
+      <stop stop-color="#0F172A" offset="100%"/>
+    </linearGradient>
+    <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#22D3EE" stop-opacity="0.55" offset="0%"/>
+      <stop stop-color="#6366F1" stop-opacity="0.45" offset="100%"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <g stroke="url(#stroke)" stroke-opacity="0.18">
+    <path d="M0 120 H1600"/><path d="M0 240 H1600"/><path d="M0 360 H1600"/><path d="M0 480 H1600"/><path d="M0 600 H1600"/><path d="M0 720 H1600"/><path d="M0 840 H1600"/>
+    <path d="M160 0 V900"/><path d="M320 0 V900"/><path d="M480 0 V900"/><path d="M640 0 V900"/><path d="M800 0 V900"/><path d="M960 0 V900"/><path d="M1120 0 V900"/><path d="M1280 0 V900"/><path d="M1440 0 V900"/>
+  </g>
+  <g stroke="#38BDF8" stroke-opacity="0.22">
+    <path d="M-40 200 Q 420 120 820 260 T 1640 240"/>
+    <path d="M-20 520 Q 420 440 820 560 T 1620 560"/>
+  </g>
+  <g fill="#22D3EE" fill-opacity="0.32">
+    <circle cx="320" cy="240" r="6"/>
+    <circle cx="1040" cy="180" r="8"/>
+    <circle cx="1320" cy="520" r="7"/>
+    <circle cx="620" cy="620" r="6"/>
+    <circle cx="1180" cy="760" r="8"/>
+  </g>
+</svg>

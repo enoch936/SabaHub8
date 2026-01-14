@@ -1,6 +1,7 @@
 import axios from "axios";
 
-// Use Next.js API proxy routes for all backend calls
+// Use Next.js API proxy for all environments
+// The proxy is configured in route.ts to forward to backend at localhost:8080
 const API_BASE = "/api";
 
 export const api = axios.create({
@@ -34,6 +35,18 @@ api.interceptors.response.use(
     if (networkUnreachable || (typeof status === "number" && status >= 500)) {
       return Promise.reject(error);
     }
+    
+    // Always reject PATCH/PUT for settings - we need to know if it failed
+    const method = error.config?.method?.toUpperCase();
+    if (method === "PATCH" || method === "PUT") {
+      return Promise.reject(error);
+    }
+    
+    // Reject 403 Forbidden (authorization error)
+    if (status === 403) {
+      return Promise.reject(error);
+    }
+    
     // For other statuses (e.g., 4xx), resolve with empty payload
     const emptyResponse = {
       data: null,
@@ -414,4 +427,40 @@ export async function adminAnalyticsDaily() {
 export async function adminBroadcast(message: string) {
   const { data } = await api.post(`/admin/announcements`, { message });
   return data as { ok: boolean };
+}
+// User Search
+/**
+ * Get user by ID (primary search method)
+ * Every user has a unique MongoDB ID that can be searched
+ */
+export async function getUserById(userId: string) {
+  const { data } = await api.get(`/users/${userId}`);
+  return data as AppUser;
+}
+
+/**
+ * Search user by email
+ * Returns single user if found
+ */
+export async function searchUserByEmail(email: string) {
+  const { data } = await api.get(`/users/search/email`, { params: { email } });
+  return data as AppUser;
+}
+
+/**
+ * Search users by name (partial match)
+ * Returns array of matching users (max 20 results)
+ */
+export async function searchUsersByName(name: string) {
+  const { data } = await api.get(`/users/search/name`, { params: { name } });
+  return data as { query: string; results: AppUser[]; count: number };
+}
+
+/**
+ * List all users (limited to 100 by default)
+ * Useful for admin panels and user discovery
+ */
+export async function listAllUsers(limit = 100) {
+  const { data } = await api.get(`/users/list`, { params: { limit } });
+  return data as { total: number; users: AppUser[] };
 }

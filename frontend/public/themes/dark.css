@@ -1,0 +1,41 @@
+/* Dark theme variables */
+:root {
+  --color-bg: #0b1220; /* deep navy */
+  --color-surface: #0f172a; /* slate-900 */
+  --color-card: #111827; /* gray-900 */
+  --color-border: #1f2937; /* gray-800 */
+  --color-muted: #94a3b8; /* slate-400 */
+
+  --color-primary: #38bdf8; /* sky-400 */
+  --color-primary-600: #0ea5e9; /* sky-500 */
+  --color-primary-700: #0284c7; /* sky-600 */
+  --color-accent: #a78bfa; /* violet-400 */
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+
+  --text-primary: #e5e7eb; /* gray-200 */
+  --text-secondary: #cbd5e1; /* slate-300 */
+  --text-inverse: #0b1220;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.35);
+  --radius-sm: 8px;
+  --radius-md: 16px;
+}
+
+.theme-bg { background: var(--color-bg); color: var(--text-primary); }
+.theme-surface { background: var(--color-surface); }
+.theme-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+.theme-button {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.theme-badge { background: var(--color-accent); color: #0b1220; border-radius: 999px; padding: 2px 8px; }

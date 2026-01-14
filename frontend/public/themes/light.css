@@ -1,0 +1,42 @@
+/* Light theme variables */
+:root {
+  --color-bg: #ffffff;
+  --color-surface: #f8fafc;
+  --color-card: #ffffff;
+  --color-border: #e5e7eb;
+  --color-muted: #64748b;
+
+  --color-primary: #0ea5e9; /* sky-500 */
+  --color-primary-600: #0284c7;
+  --color-primary-700: #0369a1;
+  --color-accent: #8b5cf6; /* violet-500 */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  --text-primary: #0f172a; /* slate-900 */
+  --text-secondary: #334155;
+  --text-inverse: #ffffff;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --radius-sm: 8px;
+  --radius-md: 16px;
+}
+
+/* Helpers for theme demo */
+.theme-bg { background: var(--color-bg); color: var(--text-primary); }
+.theme-surface { background: var(--color-surface); }
+.theme-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+.theme-button {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.theme-badge { background: var(--color-accent); color: #fff; border-radius: 999px; padding: 2px 8px; }

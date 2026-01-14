@@ -26,8 +26,19 @@ public class EmailService {
     @Value("${spring.mail.username:}")
     private String smtpUsername;
 
+    @Value("${spring.mail.password:}")
+    private String smtpPassword;
+
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
+    }
+
+    /**
+     * Check if email service is properly configured
+     */
+    public boolean isConfigured() {
+        return smtpUsername != null && !smtpUsername.isEmpty() && 
+               smtpPassword != null && !smtpPassword.isEmpty();
     }
 
     /**
@@ -35,6 +46,12 @@ public class EmailService {
      */
     public void sendOTPEmail(String toEmail, String otpCode, String userName) {
         log.info("Sending OTP email to: {}", toEmail);
+        
+        if (!isConfigured()) {
+            String errorMsg = "Email service not configured. Please set SMTP_USERNAME and SMTP_PASSWORD environment variables.";
+            log.error(errorMsg);
+            throw new RuntimeException(errorMsg);
+        }
         
         String subject = "Your SabaHub Verification Code";
         String htmlBody = buildOTPEmailHTML(otpCode, userName);
@@ -53,6 +70,12 @@ public class EmailService {
      */
     public void sendPasswordResetEmail(String toEmail, String otpCode, String userName) {
         log.info("Sending password reset email to: {}", toEmail);
+        
+        if (!isConfigured()) {
+            String errorMsg = "Email service not configured. Please set SMTP_USERNAME and SMTP_PASSWORD environment variables.";
+            log.error(errorMsg);
+            throw new RuntimeException(errorMsg);
+        }
         
         String subject = "Password Reset Verification - SabaHub";
         String htmlBody = buildPasswordResetEmailHTML(otpCode, userName);

@@ -20,19 +20,39 @@ import {
   Shield,
   Sparkles,
   LogOut,
+  User,
+  Zap,
+  Award,
+  Search,
+  Send,
+  Clock,
+  CheckCircle,
+  DollarSign,
+  Star,
 } from "lucide-react";
 import { useSession } from "@/lib/session";
 import { useNotifications } from "@/lib/notifications";
 import { Badge } from "./ui";
+import { SegmentedThemeToggle } from "./useTheme";
 
-const navSections = [
+const baseSections = [
   {
     title: "Main",
     items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["ADMIN", "EMPLOYER", "FREELANCER"] },
+      // Dashboard href will be injected based on role in the component
+      { href: "/__DASHBOARD__", label: "Dashboard", icon: LayoutDashboard, roles: ["ADMIN", "EMPLOYER", "FREELANCER"] },
       { href: "/dashboard/jobs", label: "Jobs", icon: Briefcase, roles: ["ADMIN", "EMPLOYER", "FREELANCER"] },
       { href: "/dashboard/contracts", label: "Contracts", icon: FileText, roles: ["ADMIN", "EMPLOYER", "FREELANCER"] },
       { href: "/dashboard/wallet", label: "Wallet", icon: Wallet, roles: ["ADMIN", "EMPLOYER", "FREELANCER"], badge: "new" },
+    ],
+  },
+  {
+    title: "Freelancer",
+    items: [
+      { href: "/freelancer/profile", label: "Profile & Skills", icon: User, roles: ["FREELANCER"] },
+      { href: "/freelancer/projects/search", label: "Search Projects", icon: Search, roles: ["FREELANCER"] },
+      { href: "/freelancer/time-tracker", label: "Time Tracking", icon: Clock, roles: ["FREELANCER"] },
+      { href: "/freelancer/earnings", label: "Earnings", icon: DollarSign, roles: ["FREELANCER"] },
     ],
   },
   {
@@ -66,6 +86,17 @@ export default function Sidebar() {
   const clear = useSession((s) => s.clear);
   const unread = useNotifications((s) => s.unread);
 
+  // Single authoritative dashboard path by role
+  const dashboardHref = role === "ADMIN" ? "/admin" : "/dashboard";
+
+  // Clone and inject resolved dashboard path
+  const navSections = baseSections.map((section) => ({
+    ...section,
+    items: section.items.map((item) =>
+      item.href === "/__DASHBOARD__" ? { ...item, href: dashboardHref } : item
+    ),
+  }));
+
   const handleLogout = () => {
     clear();
     localStorage.removeItem("auth_token");
@@ -74,7 +105,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-40 h-screen transition-all duration-300 ease-in-out ${
+      className={`hidden lg:block fixed left-0 top-0 z-40 h-screen transition-all duration-300 ease-in-out ${
         collapsed ? "w-20" : "w-72"
       } border-r border-slate-200 bg-white shadow-xl`}
     >
@@ -143,7 +174,10 @@ export default function Sidebar() {
                 )}
                 <ul className="space-y-1">
                   {allowed.map((item) => {
-                    const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+                    const isDashboard = item.href === dashboardHref;
+                    const isActive = isDashboard
+                      ? pathname === dashboardHref
+                      : pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href + "/"));
                     const Icon = item.icon;
                     const showNotificationBadge = item.href === "/dashboard/notifications" && unread > 0;
 
@@ -151,10 +185,11 @@ export default function Sidebar() {
                       <li key={item.href}>
                         <Link
                           href={item.href}
+                          aria-current={isActive ? "page" : undefined}
                           className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 ${
                             isActive
-                              ? "bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/50"
-                              : "text-slate-700 hover:bg-slate-100 hover:text-sky-600"
+                              ? "bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/50 dark:from-sky-600 dark:to-blue-700"
+                              : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-sky-600"
                           } ${collapsed ? "justify-center" : ""}`}
                         >
                           <div className="relative">
@@ -205,7 +240,21 @@ export default function Sidebar() {
         </nav>
 
         {/* Footer Actions */}
-        <div className="border-t border-slate-200 p-3 space-y-1">
+        <div className="border-t border-slate-200 p-3 space-y-3">
+          {/* Theme Toggle */}
+          <div className={`${collapsed ? "flex justify-center" : "px-1"}`}>
+            {collapsed ? (
+              <div className="relative group">
+                <SegmentedThemeToggle className="scale-90 origin-left" />
+                <div className="pointer-events-none absolute left-full ml-4 hidden whitespace-nowrap rounded-lg bg-slate-900 px-3 py-2 text-sm text-white opacity-0 shadow-xl transition-opacity group-hover:block group-hover:opacity-100">
+                  Theme
+                  <div className="absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 bg-slate-900" />
+                </div>
+              </div>
+            ) : (
+              <SegmentedThemeToggle />
+            )}
+          </div>
           <Link
             href="/dashboard/settings"
             className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-700 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900 ${

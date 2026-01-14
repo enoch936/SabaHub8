@@ -11,7 +11,7 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     async function run() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080"}/auth/verify-email`, {
+        const res = await fetch(`/api/auth/verify-email`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),

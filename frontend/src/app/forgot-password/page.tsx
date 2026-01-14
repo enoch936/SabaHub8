@@ -18,8 +18,6 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
-
   // Step 1: Request password reset OTP
   async function requestReset(e: FormEvent) {
     e.preventDefault();
@@ -28,7 +26,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/otp/request-registration`, {
+      const res = await fetch(`/api/auth/otp/request-registration`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -56,7 +54,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/otp/verify-email`, {
+      const res = await fetch(`/api/auth/otp/verify-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otpCode: emailOTP }),
@@ -80,7 +78,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/otp/verify-sms`, {
+      const res = await fetch(`/api/auth/otp/verify-sms`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otpCode: smsOTP }),
@@ -116,7 +114,7 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+      const res = await fetch(`/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password: newPassword }),
@@ -139,8 +137,27 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="mx-auto max-w-xl p-6">
-      <h1 className="mb-6 text-3xl font-bold">Reset Password</h1>
+    <main className="relative isolate min-h-screen overflow-hidden bg-slate-950 px-4 py-10 text-slate-900">
+      <div className="pointer-events-none absolute inset-0 -z-20" aria-hidden>
+        <img src="/images/backgrounds/aurora-blur.svg" alt="Aurora" className="h-full w-full object-cover opacity-80" />
+      </div>
+      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+        <img src="/images/backgrounds/geo-light-grid.svg" alt="Grid" className="h-full w-full object-cover opacity-55" />
+      </div>
+
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="mb-8 text-center text-white">
+          <p className="text-xs uppercase tracking-[0.35em] text-cyan-200">Account recovery</p>
+          <h1 className="mt-2 text-3xl font-bold">Reset Password</h1>
+          <p className="mt-2 text-sm text-cyan-100/80">Follow the steps to verify email and SMS before choosing a new password.</p>
+        </div>
+
+        <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-white/85 p-6 shadow-[0_22px_70px_rgba(8,47,73,0.35)] backdrop-blur">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 via-cyan-400 to-indigo-500" aria-hidden />
+          <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-sky-300/30 blur-3xl" aria-hidden />
+          <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-indigo-300/30 blur-3xl" aria-hidden />
+
+          <h2 className="mb-4 text-xl font-semibold text-slate-900">Recovery steps</h2>
 
       {/* Step 1: Email and Phone */}
       {step === "email" && (
@@ -297,11 +314,13 @@ export default function ForgotPasswordPage() {
         </div>
       )}
 
-      {/* Back to Login Link */}
-      <div className="mt-6 text-center">
-        <a href="/login" className="text-blue-600 hover:underline text-sm">
-          Back to Login
-        </a>
+          {/* Back to Login Link */}
+          <div className="mt-6 text-center">
+            <a href="/login" className="text-sky-700 hover:underline text-sm">
+              Back to Login
+            </a>
+          </div>
+        </div>
       </div>
     </main>
   );

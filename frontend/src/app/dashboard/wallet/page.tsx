@@ -65,12 +65,19 @@ export default function WalletPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <main className="relative isolate min-h-screen overflow-hidden bg-slate-950 p-6 text-slate-900">
+      <div className="pointer-events-none absolute inset-0 -z-20" aria-hidden>
+        <img src="/images/backgrounds/aurora-blur.svg" alt="Aurora" className="h-full w-full object-cover opacity-75" />
+      </div>
+      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+        <img src="/images/backgrounds/geo-light-grid.svg" alt="Grid" className="h-full w-full object-cover opacity-55" />
+      </div>
+
       <div className="mx-auto max-w-7xl space-y-8">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Wallet</h1>
-            <p className="text-slate-600">Manage balance, top-ups, and transaction insights.</p>
+            <p className="text-slate-600">Manage your wallet and view transactions.</p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="info">Currency: {currencyLabel}</Badge>
@@ -89,13 +96,13 @@ export default function WalletPage() {
             : topCards.map((card) => (
                 <Card
                   key={card.label}
-                  className="relative overflow-hidden rounded-2xl border-0 p-6 shadow-lg"
+                  className="relative overflow-hidden rounded-2xl border border-white/25 bg-white/85 p-6 shadow-lg backdrop-blur"
                   variant="elevated"
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-90`} />
-                  <div className="relative text-white">
-                    <p className="text-sm opacity-90">{card.label}</p>
-                    <p className="mt-2 text-3xl font-bold">{card.value}</p>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-30`} />
+                  <div className="relative text-slate-900">
+                    <p className="text-sm opacity-80">{card.label}</p>
+                    <p className="mt-2 text-2xl font-semibold">{card.value}</p>
                   </div>
                 </Card>
               ))}
@@ -103,31 +110,30 @@ export default function WalletPage() {
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Balance Card */}
-          <Card className="lg:col-span-2 p-6">
+          <Card className="lg:col-span-2 p-6 border border-white/25 bg-white/85 backdrop-blur">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-slate-500">Available Balance</p>
                 <p className="text-4xl font-bold text-slate-900">
                   {currencyLabel} {balance.toLocaleString()}
                 </p>
-                <p className="text-sm text-emerald-600">+0.8% since last week</p>
+                <p className="text-sm text-slate-500">Pending live data</p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="success">Verified</Badge>
-                <Badge variant="info">Instant payout</Badge>
+                <Badge variant="default">Beta</Badge>
               </div>
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-xl bg-slate-50 p-4">
+              <div className="rounded-xl bg-white/80 p-4 border border-white/30 backdrop-blur">
                 <p className="text-sm text-slate-600">Escrow Held</p>
                 <p className="text-xl font-semibold text-slate-900">{currencyLabel} {(wallet.data?.escrowHeld ?? 0).toLocaleString()}</p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-4">
+              <div className="rounded-xl bg-white/80 p-4 border border-white/30 backdrop-blur">
                 <p className="text-sm text-slate-600">Pending Payouts</p>
                 <p className="text-xl font-semibold text-slate-900">{currencyLabel} {(wallet.data?.pendingPayouts ?? 0).toLocaleString()}</p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-4">
+              <div className="rounded-xl bg-white/80 p-4 border border-white/30 backdrop-blur">
                 <p className="text-sm text-slate-600">Holds</p>
                 <p className="text-xl font-semibold text-slate-900">{currencyLabel} {(wallet.data?.holds ?? 0).toLocaleString()}</p>
               </div>
@@ -135,10 +141,10 @@ export default function WalletPage() {
           </Card>
 
           {/* Top-up Panel */}
-          <Card className="p-6 space-y-4">
+          <Card className="p-6 space-y-4 border border-white/25 bg-white/85 backdrop-blur">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Top-up Wallet</h3>
-              <Badge variant="info">Secure</Badge>
+              <Badge variant="default">Beta</Badge>
             </div>
             <div className="space-y-3">
               <label className="text-sm font-medium text-slate-700">Amount</label>
@@ -184,10 +190,10 @@ export default function WalletPage() {
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Spending Breakdown */}
-          <Card className="p-6 space-y-4">
+          <Card className="p-6 space-y-4 border border-white/25 bg-white/85 backdrop-blur">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Spending Breakdown</h3>
-              <Badge variant="default">Last 30 days</Badge>
+              <Badge variant="default">Beta</Badge>
             </div>
             {spendBreakdown.length === 0 && (
               <p className="text-sm text-slate-500">No spend data yet.</p>
@@ -210,10 +216,10 @@ export default function WalletPage() {
           </Card>
 
           {/* Activity / Net */}
-          <Card className="p-6 space-y-4">
+          <Card className="p-6 space-y-4 border border-white/25 bg-white/85 backdrop-blur">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Activity</h3>
-              <Badge variant="info">Live</Badge>
+              <Badge variant="default">Pending API</Badge>
             </div>
             <div className="space-y-3 text-sm text-slate-700">
               <div className="flex items-center justify-between">
@@ -231,16 +237,16 @@ export default function WalletPage() {
                 </span>
               </div>
             </div>
-            <div className="mt-2 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
-              Track incoming escrow releases, payouts, and fees in real time.
+            <div className="mt-2 rounded-xl bg-white/80 p-4 text-sm text-slate-600 border border-white/30 backdrop-blur">
+              Track incoming escrow releases, payouts, and fees once integrations are live.
             </div>
           </Card>
 
           {/* Recent Transactions */}
-          <Card className="p-6 space-y-4">
+          <Card className="p-6 space-y-4 border border-white/25 bg-white/85 backdrop-blur">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Recent Transactions</h3>
-              <Badge variant="default">Ledger</Badge>
+              <Badge variant="default">Beta</Badge>
             </div>
             <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
               {transactions.length === 0 && (

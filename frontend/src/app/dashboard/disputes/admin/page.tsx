@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminPatchDispute, listDisputes } from "@/lib/api";
 import { bootstrapSession, useSession } from "@/lib/session";
+import Image from "next/image";
+import { Badge, Button, Input, Select, Textarea } from "@/components/ui";
 
 export default function DisputesAdminPage() {
   const router = useRouter();
@@ -37,16 +39,24 @@ export default function DisputesAdminPage() {
   }, [disputes.data, filter]);
 
   return (
-    <main className="mx-auto max-w-5xl p-6 space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Disputes — Admin</h1>
-          <p className="text-slate-600">Moderate and resolve disputes</p>
+    <main className="relative mx-auto max-w-6xl p-6 pb-12 space-y-6">
+      <div className="absolute inset-0 -z-10 opacity-80" style={{ backgroundImage: "url('/images/backgrounds/geo-light-grid.svg')" }} />
+      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_20%_20%,rgba(14,165,233,0.2),transparent_45%),radial-gradient(circle_at_80%_5%,rgba(99,102,241,0.2),transparent_40%),radial-gradient(circle_at_45%_85%,rgba(16,185,129,0.16),transparent_35%)]" />
+
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-sky-500/10 backdrop-blur">
+        <div className="flex items-center gap-3">
+          <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-white/30 bg-white/60 shadow-inner">
+            <Image src="/images/badges/secure.png" alt="secure badge" fill className="object-contain" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Disputes — Admin</h1>
+            <p className="text-slate-600">Moderate and resolve — sandbox data only.</p>
+          </div>
         </div>
-        <input className="w-64 rounded border p-2" placeholder="Filter by status or id" value={filter} onChange={(e) => setFilter(e.target.value)} />
+        <Input className="w-64" placeholder="Filter by status or id" value={filter} onChange={(e) => setFilter(e.target.value)} />
       </header>
 
-      {disputes.isLoading && <p>Loading...</p>}
+      {disputes.isLoading && <p className="text-slate-700">Loading...</p>}
       {disputes.error && <p className="text-rose-600">Failed to load disputes</p>}
 
       <section className="space-y-3">
@@ -64,26 +74,27 @@ function DisputeItem({ d, onPatch, isPending }: { d: any; onPatch: (status?: str
   const [note, setNote] = useState<string>("");
 
   return (
-    <div className="rounded-xl border p-4">
+    <div className="rounded-2xl border border-white/20 bg-white/85 p-5 shadow-xl shadow-sky-500/10 backdrop-blur">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-semibold">{d.id}</p>
+          <p className="font-semibold text-slate-900">{d.id}</p>
           <p className="text-sm text-slate-600">Contract: {d.contractId}</p>
         </div>
-        <span className="rounded bg-slate-100 px-2 py-1 text-sm">{d.status}</span>
+        <Badge variant="outline" className="bg-slate-100 text-slate-700">{d.status}</Badge>
       </div>
       {d.reason && <p className="mt-2 text-sm text-slate-700">{d.reason}</p>}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <select className="rounded border p-2" value={status} onChange={(e) => setStatus(e.target.value)}>
+        <Select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="OPEN">OPEN</option>
           <option value="INVESTIGATING">INVESTIGATING</option>
           <option value="RESOLVED">RESOLVED</option>
           <option value="CLOSED">CLOSED</option>
-        </select>
-        <input className="min-w-64 flex-1 rounded border p-2" placeholder="Admin note" value={note} onChange={(e) => setNote(e.target.value)} />
-        <button disabled={isPending} onClick={() => onPatch(status, note)} className="rounded bg-slate-900 px-3 py-2 text-white disabled:opacity-60">Update</button>
+        </Select>
+        <Textarea className="min-w-64 flex-1" rows={2} placeholder="Admin note" value={note} onChange={(e) => setNote(e.target.value)} />
+        <Button disabled={isPending} onClick={() => onPatch(status, note)} variant="secondary">Update</Button>
       </div>
+      <p className="mt-2 text-xs text-slate-500">All actions are logged in beta; ensure sensitive info is handled off-platform.</p>
     </div>
   );
 }

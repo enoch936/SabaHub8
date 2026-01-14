@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { bootstrapSession, useSession } from "@/lib/session";
 import { api } from "@/lib/api";
-import { Button, Input, Select, Table } from "@/components/ui";
+import { Badge, Button, Input, Select, Table } from "@/components/ui";
+import Image from "next/image";
 
 export default function AuditLogsPage() {
   const router = useRouter();
@@ -50,13 +51,21 @@ export default function AuditLogsPage() {
   ];
 
   return (
-    <main className="mx-auto max-w-6xl p-6 space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Audit Logs</h1>
-          <p className="text-slate-600">Security-sensitive actions trace</p>
+    <main className="relative mx-auto max-w-6xl p-6 pb-12 space-y-6">
+      <div className="absolute inset-0 -z-10 opacity-80" style={{ backgroundImage: "url('/images/backgrounds/geo-light-grid.svg')" }} />
+      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_20%_20%,rgba(14,165,233,0.2),transparent_45%),radial-gradient(circle_at_80%_5%,rgba(99,102,241,0.2),transparent_40%),radial-gradient(circle_at_45%_85%,rgba(16,185,129,0.16),transparent_35%)]" />
+
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-sky-500/10 backdrop-blur">
+        <div className="flex items-center gap-3">
+          <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-white/30 bg-white/60 shadow-inner">
+            <Image src="/images/badges/secure.png" alt="secure badge" fill className="object-contain" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Audit Logs</h1>
+            <p className="text-slate-600">Security-sensitive actions trace — beta data.</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Input placeholder="Actor User ID" value={actorUserId} onChange={(e) => setActorUserId(e.target.value)} />
           <Input placeholder="Action" value={action} onChange={(e) => setAction(e.target.value)} />
           <Input placeholder="Entity Type" value={entityType} onChange={(e) => setEntityType(e.target.value)} />
@@ -70,27 +79,30 @@ export default function AuditLogsPage() {
       </header>
 
       {query.isError && (
-        <div className="rounded border border-rose-200 bg-rose-50 p-3 text-rose-700">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-700">
           Failed to load audit logs. Ensure backend exposes GET /api/admin/audit-logs with params: action, entityType, actorUserId, page, size.
         </div>
       )}
 
-      <section className="space-y-3">
-        <Table columns={columns} rows={query.data?.items ?? []} />
+      <section className="rounded-2xl border border-white/20 bg-white/85 p-4 shadow-xl shadow-sky-500/10 backdrop-blur space-y-3">
         <div className="flex items-center justify-between">
           <div className="text-sm text-slate-600">Total: {query.data?.total ?? 0}</div>
+          <Badge variant="outline" className="bg-amber-50/80 text-amber-700">Prototype view</Badge>
+        </div>
+        <Table columns={columns} rows={query.data?.items ?? []} />
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-slate-600">Page {page + 1}</div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>Prev</Button>
-            <div className="text-sm">Page {page + 1}</div>
             <Button variant="outline" onClick={() => setPage((p) => p + 1)} disabled={(query.data?.items?.length ?? 0) < size}>Next</Button>
           </div>
         </div>
       </section>
 
-      <section className="rounded-xl border p-4">
-        <h2 className="mb-2 font-semibold">Details</h2>
+      <section className="rounded-2xl border border-white/20 bg-white/80 p-4 shadow-xl shadow-sky-500/10 backdrop-blur">
+        <h2 className="mb-2 font-semibold text-slate-900">Details</h2>
         <p className="text-sm text-slate-700">Click a row to inspect metadata in console for now.</p>
-        <p className="text-xs text-slate-500">You can enhance this to open a modal and render JSON pretty-view.</p>
+        <p className="text-xs text-slate-500">Enhance with a modal to render JSON pretty view; keep PII masked in beta.</p>
       </section>
     </main>
   );

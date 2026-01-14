@@ -21,6 +21,7 @@ public class ChatMessage {
     @Indexed
     private String threadId;
 
+    @Indexed
     private String senderId;
 
     private Type type;

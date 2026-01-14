@@ -13,11 +13,15 @@ const API_BASE =
 
 function buildTargetUrl(pathParts?: string[]) {
   const path = Array.isArray(pathParts) ? pathParts.join("/") : "";
-  return `${API_BASE.replace(/\/$/, "")}/${path}`.replace(/([^:]\/)\/+/, "$1");
+  // Always hit the backend under /api to match Spring controllers
+  return `${API_BASE.replace(/\/$/, "")}/api/${path}`.replace(/([^:]\/)\/+/, "$1");
 }
 
 async function proxy(request: Request, url: string) {
   const headers = new Headers(request.headers);
+  // Explicitly forward Authorization if present (Next can strip hop-by-hop headers)
+  const auth = request.headers.get("authorization");
+  if (auth) headers.set("authorization", auth);
 
   // Remove headers that can break proxying in Next.js / Node.
   headers.delete("host");
@@ -28,35 +32,6 @@ async function proxy(request: Request, url: string) {
   if (!headers.has("x-forwarded-host") && request.headers.get("host")) {
     headers.set("x-forwarded-host", request.headers.get("host")!);
   }
-
-  const init: RequestInit = {
-    method: request.method,
-    headers,
-    redirect: "manual",
-    // Forward cookies (if any). This is required when backend uses session cookies.
-    credentials: "include",
-  };
-
-  if (request.method !== "GET" && request.method !== "HEAD" && request.method !== "OPTIONS") {
-    init.body = await request.text();
-  }
-
-  let resp: Response;
-  try {
-    resp = await fetch(url, init);
-  } catch (e: any) {
-    // If backend is down/unreachable, don't crash the route (which becomes a 500 without context).
-    return Response.json(
-      {
-        error: "BACKEND_UNREACHABLE",
-        message: e?.message || "Failed to reach backend",
-        target: url,
-      },
-      { status: 502 }
-    );
-  }
-
-  // Copy response headers and ensure browser can read them.
   const respHeaders = new Headers(resp.headers);
   respHeaders.set("Access-Control-Allow-Origin", "*");
   respHeaders.set("Access-Control-Allow-Headers", "*");

@@ -1,5 +1,9 @@
 package com.sabahub.domain;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -7,12 +11,20 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.List;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Document(collection = "contracts")
 public class Contract {
 
     public enum Status {
+        PENDING,
         ACTIVE,
+        IN_PROGRESS,
         DELIVERED,
         COMPLETED,
         DISPUTED,
@@ -23,6 +35,9 @@ public class Contract {
     private String id;
 
     @Indexed
+    private String projectId;
+
+    @Indexed
     private String jobId;
 
     @Indexed
@@ -31,13 +46,33 @@ public class Contract {
     @Indexed
     private String freelancerId;
 
-    private Status status = Status.ACTIVE;
+    private String title;
+    private String description;
+    private ContractTerms terms;
+
+    private Status status = Status.PENDING;
 
     private Double escrowTotalHeld = 0.0;
-    private String currency = "ETB";
+    private Double totalAmount;
+    private String currency = "USD";
+
+    private List<PaymentMilestone> paymentMilestones;
+
+    private String workType;  // FIXED_PRICE or HOURLY
+    private String contractType;  // ONE_TIME or ONGOING
+
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private LocalDateTime acceptedAt;
+    private LocalDateTime completedAt;
+
+    private List<Deliverable> deliverables;
+    private List<String> attachments;
 
     private String deliveryNote;
     private String deliveryAssetId;
+
+    private ContractSignatures signatures;
 
     @CreatedDate
     private Instant createdAt;
@@ -45,36 +80,65 @@ public class Contract {
     @LastModifiedDate
     private Instant updatedAt;
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    // Inner classes
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ContractTerms {
+        private String scope;
+        private String deliverables;
+        private Integer revisionsAllowed;
+        private String paymentSchedule;
+        private String communicationChannel;
+        private String workingHours;
+        private String confidentiality;
+        private String ipRights;
+        private String terminationClause;
+    }
 
-    public String getJobId() { return jobId; }
-    public void setJobId(String jobId) { this.jobId = jobId; }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class PaymentMilestone {
+        private String id;
+        private String title;
+        private Double amount;
+        private String status;  // PENDING, IN_ESCROW, RELEASED, DISPUTED
+        private LocalDateTime dueDate;
+        private LocalDateTime releaseDate;
+        private String deliverables;
+        private Double percentageComplete;
+        private String feedbackFromEmployer;
+        private Boolean approvedByEmployer;
+        private LocalDateTime approvedAt;
+    }
 
-    public String getEmployerId() { return employerId; }
-    public void setEmployerId(String employerId) { this.employerId = employerId; }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class Deliverable {
+        private String id;
+        private String title;
+        private String description;
+        private String fileUrl;
+        private String status;  // PENDING, SUBMITTED, APPROVED, REVISION_REQUESTED
+        private LocalDateTime submittedAt;
+        private LocalDateTime approvedAt;
+        private String employerFeedback;
+    }
 
-    public String getFreelancerId() { return freelancerId; }
-    public void setFreelancerId(String freelancerId) { this.freelancerId = freelancerId; }
-
-    public Status getStatus() { return status; }
-    public void setStatus(Status status) { this.status = status; }
-
-    public Double getEscrowTotalHeld() { return escrowTotalHeld; }
-    public void setEscrowTotalHeld(Double escrowTotalHeld) { this.escrowTotalHeld = escrowTotalHeld; }
-
-    public String getCurrency() { return currency; }
-    public void setCurrency(String currency) { this.currency = currency; }
-
-    public String getDeliveryNote() { return deliveryNote; }
-    public void setDeliveryNote(String deliveryNote) { this.deliveryNote = deliveryNote; }
-
-    public String getDeliveryAssetId() { return deliveryAssetId; }
-    public void setDeliveryAssetId(String deliveryAssetId) { this.deliveryAssetId = deliveryAssetId; }
-
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
-
-    public Instant getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ContractSignatures {
+        private Boolean employerSigned;
+        private LocalDateTime employerSignedAt;
+        private Boolean freelancerSigned;
+        private LocalDateTime freelancerSignedAt;
+        private String contractHash;
+    }
 }

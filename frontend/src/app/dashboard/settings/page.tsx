@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Mail, Phone, MapPin, Globe, Award, Briefcase, DollarSign, Bell, Lock, Shield, CheckCircle, Loader } from "lucide-react";
 import { bootstrapSession, useSession } from "@/lib/session";
+import { getUserSettings, updateUserSettings } from "@/lib/api";
 
 interface UserProfile {
   bio?: string;
@@ -40,6 +41,18 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState("basic");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [lastSavedTab, setLastSavedTab] = useState<string | null>(null);
+
+  const handleLogout = () => {
+    localStorage.removeItem("auth_token");
+    router.replace("/login");
+  };
+
+  const handleRelogin = () => {
+    localStorage.removeItem("auth_token");
+    setMessage({ type: "error", text: "✗ Please log in again to refresh your session." });
+    setTimeout(() => router.replace("/login"), 1500);
+  };
 
   useEffect(() => {
     bootstrapSession();
@@ -51,14 +64,22 @@ export default function SettingsPage() {
 
     const fetchSettings = async () => {
       try {
-        const response = await fetch("/api/user/settings", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setProfile(data);
+        console.log("=== FETCHING SETTINGS ===");
+        const data = await getUserSettings();
+        console.log("Settings loaded:", JSON.stringify(data, null, 2));
+        setProfile(data);
+      } catch (error: any) {
+        const status = error?.response?.status;
+        if (status === 401 || status === 403) {
+          console.error("Invalid/expired token detected - redirecting to register");
+          localStorage.removeItem("auth_token");
+          setMessage({
+            type: "error",
+            text: "⚠️ Your session token is invalid. Redirecting to registration..."
+          });
+          setTimeout(() => router.replace("/register"), 1500);
+          return;
         }
-      } catch (error) {
         console.error("Failed to fetch settings:", error);
         setMessage({ type: "error", text: "Failed to load settings" });
       } finally {
@@ -71,28 +92,39 @@ export default function SettingsPage() {
 
   const handleSave = async (updates: Partial<UserProfile>) => {
     setSaving(true);
+    console.log("=== SAVING SETTINGS ===");
+    console.log("Updates being sent:", JSON.stringify(updates, null, 2));
     try {
-      const token = localStorage.getItem("auth_token");
-      const response = await fetch("/api/user/settings", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updates),
-      });
-
-      if (response.ok) {
-        const updated = await response.json();
-        setProfile(updated);
-        setMessage({ type: "success", text: "Settings saved successfully!" });
-        setTimeout(() => setMessage(null), 3000);
-      } else {
-        setMessage({ type: "error", text: "Failed to save settings" });
+      const updated = await updateUserSettings(updates);
+      console.log("Response received:", JSON.stringify(updated, null, 2));
+      setProfile(updated);
+      setLastSavedTab(activeTab);
+      setMessage({ type: "success", text: "✓ Settings saved successfully!" });
+      // Keep message visible for longer
+      setTimeout(() => setMessage(null), 5000);
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const errorData = error?.response?.data;
+      const message = error?.message;
+      console.error("=== SAVE FAILED ===");
+      console.error("Status:", status);
+      console.error("Error Message:", message);
+      console.error("Response Data:", errorData);
+      console.error("Full Error:", error);
+      
+      // Check for authentication errors
+      if (status === 401 || status === 403) {
+        console.error("PATCH failed with 401/403 - token is invalid or expired");
+        localStorage.removeItem("auth_token");
+        setMessage({
+          type: "error",
+          text: "⚠️ Your session token is invalid. Please register again to continue."
+        });
+        setTimeout(() => router.replace("/register"), 2000);
+        return;
       }
-    } catch (error) {
-      console.error("Save error:", error);
-      setMessage({ type: "error", text: "Error saving settings" });
+      
+      setMessage({ type: "error", text: `✗ Error saving settings (Status: ${status || "error"}). Please try again.` });
     } finally {
       setSaving(false);
     }
@@ -107,72 +139,75 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Settings & Profile</h1>
-        <p className="text-slate-600 mt-2">Manage your professional profile and preferences</p>
-      </div>
+    <main className="relative mx-auto max-w-6xl p-6 pb-12 space-y-6">
+      <div className="absolute inset-0 -z-10 opacity-80" style={{ backgroundImage: "url('/images/backgrounds/geo-light-grid.svg')" }} />
+      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.18),transparent_45%),radial-gradient(circle_at_78%_8%,rgba(167,139,250,0.2),transparent_40%),radial-gradient(circle_at_45%_85%,rgba(16,185,129,0.16),transparent_35%)]" />
 
-      {message && (
-        <div className={`p-4 rounded-lg ${message.type === "success" ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800"}`}>
-          {message.text}
+      <div className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-sky-500/10 backdrop-blur">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Settings & Profile</h1>
+            <p className="text-slate-600 mt-2">Manage your professional profile and preferences — beta environment.</p>
+          </div>
+          <span className="rounded-full border border-white/30 bg-amber-50/80 px-3 py-1 text-xs font-medium text-amber-700">Prototype data only</span>
         </div>
-      )}
 
-      {/* Tab Navigation */}
-      <div className="border-b border-slate-200">
-        <nav className="flex gap-8 overflow-x-auto">
-          {[
-            { id: "basic", label: "Basic Info", icon: User },
-            { id: "professional", label: "Professional", icon: Briefcase },
-            { id: "payment", label: "Payment & Billing", icon: DollarSign },
-            { id: "verification", label: "Verification", icon: Shield },
-            { id: "notifications", label: "Notifications", icon: Bell },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 pb-4 border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+        {message && (
+          <div className={`mt-4 rounded-xl border p-4 animate-in fade-in ${message.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800 shadow-lg shadow-emerald-100" : "border-rose-200 bg-rose-50 text-rose-800 shadow-lg shadow-rose-100"}`}>
+            <div className="flex items-center gap-3">
+              <span className="text-lg font-bold">{message.type === "success" ? "✓" : "✗"}</span>
+              <span className="font-medium">{message.text}</span>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 border-b border-white/30">
+          <nav className="flex gap-6 overflow-x-auto">
+            {[
+              { id: "basic", label: "Basic Info", icon: User },
+              { id: "professional", label: "Professional", icon: Briefcase },
+              { id: "payment", label: "Payment & Billing", icon: DollarSign },
+              { id: "verification", label: "Verification", icon: Shield },
+              { id: "notifications", label: "Notifications", icon: Bell },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 pb-4 border-b-2 transition-colors relative ${
+                  activeTab === tab.id
+                    ? "border-indigo-500 text-indigo-600"
+                    : "border-transparent text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+                {lastSavedTab === tab.id && (
+                  <CheckCircle className="h-4 w-4 text-emerald-600 ml-1" title="Saved" />
+                )}
+              </button>
+            ))}
+          </nav>
+        </div>
       </div>
 
-      {/* Tab Content */}
       <div className="space-y-6">
-        {/* Basic Info Tab */}
         {activeTab === "basic" && (
           <BasicInfoTab profile={profile} onSave={handleSave} saving={saving} />
         )}
-
-        {/* Professional Tab */}
         {activeTab === "professional" && (
           <ProfessionalTab profile={profile} onSave={handleSave} saving={saving} />
         )}
-
-        {/* Payment & Billing Tab */}
         {activeTab === "payment" && (
           <PaymentTab profile={profile} onSave={handleSave} saving={saving} />
         )}
-
-        {/* Verification Tab */}
         {activeTab === "verification" && (
           <VerificationTab profile={profile} onSave={handleSave} saving={saving} />
         )}
-
-        {/* Notifications Tab */}
         {activeTab === "notifications" && (
           <NotificationsTab profile={profile} onSave={handleSave} saving={saving} />
         )}
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -187,7 +222,7 @@ function BasicInfoTab({ profile, onSave, saving }: { profile: UserProfile | null
 
   return (
     <div className="grid gap-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
+      <div className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-sky-500/10 backdrop-blur">
         <h2 className="mb-6 text-xl font-semibold">Basic Information</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -244,9 +279,16 @@ function BasicInfoTab({ profile, onSave, saving }: { profile: UserProfile | null
         <button
           onClick={() => onSave(data)}
           disabled={saving}
-          className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400"
+          className="mt-6 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium transition-all hover:shadow-lg"
         >
-          {saving ? "Saving..." : "Save Changes"}
+          {saving ? (
+            <span className="flex items-center gap-2">
+              <Loader className="h-4 w-4 animate-spin" />
+              Saving...
+            </span>
+          ) : (
+            "Save Changes"
+          )}
         </button>
       </div>
     </div>
@@ -273,7 +315,7 @@ function ProfessionalTab({ profile, onSave, saving }: { profile: UserProfile | n
 
   return (
     <div className="grid gap-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
+      <div className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-sky-500/10 backdrop-blur">
         <h2 className="mb-6 text-xl font-semibold">Professional Profile</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -370,9 +412,16 @@ function ProfessionalTab({ profile, onSave, saving }: { profile: UserProfile | n
         <button
           onClick={() => onSave(data)}
           disabled={saving}
-          className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400"
+          className="mt-6 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium transition-all hover:shadow-lg"
         >
-          {saving ? "Saving..." : "Save Changes"}
+          {saving ? (
+            <span className="flex items-center gap-2">
+              <Loader className="h-4 w-4 animate-spin" />
+              Saving...
+            </span>
+          ) : (
+            "Save Changes"
+          )}
         </button>
       </div>
     </div>
@@ -388,7 +437,7 @@ function PaymentTab({ profile, onSave, saving }: { profile: UserProfile | null; 
 
   return (
     <div className="grid gap-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
+      <div className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-sky-500/10 backdrop-blur">
         <h2 className="mb-6 text-xl font-semibold">Payment & Billing</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -419,9 +468,16 @@ function PaymentTab({ profile, onSave, saving }: { profile: UserProfile | null; 
         <button
           onClick={() => onSave(data)}
           disabled={saving}
-          className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400"
+          className="mt-6 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium transition-all hover:shadow-lg"
         >
-          {saving ? "Saving..." : "Save Changes"}
+          {saving ? (
+            <span className="flex items-center gap-2">
+              <Loader className="h-4 w-4 animate-spin" />
+              Saving...
+            </span>
+          ) : (
+            "Save Changes"
+          )}
         </button>
       </div>
     </div>
@@ -431,7 +487,7 @@ function PaymentTab({ profile, onSave, saving }: { profile: UserProfile | null; 
 function VerificationTab({ profile, onSave, saving }: { profile: UserProfile | null; onSave: (u: any) => void; saving: boolean }) {
   return (
     <div className="grid gap-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
+      <div className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-sky-500/10 backdrop-blur">
         <h2 className="mb-6 text-xl font-semibold">Verification Status</h2>
         <div className="space-y-4">
           {[
@@ -530,9 +586,16 @@ function NotificationsTab({ profile, onSave, saving }: { profile: UserProfile | 
         <button
           onClick={() => onSave(data)}
           disabled={saving}
-          className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400"
+          className="mt-6 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium transition-all hover:shadow-lg"
         >
-          {saving ? "Saving..." : "Save Changes"}
+          {saving ? (
+            <span className="flex items-center gap-2">
+              <Loader className="h-4 w-4 animate-spin" />
+              Saving...
+            </span>
+          ) : (
+            "Save Changes"
+          )}
         </button>
       </div>
     </div>

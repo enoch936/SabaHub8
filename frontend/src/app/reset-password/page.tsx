@@ -31,8 +31,7 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
-      const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+      const res = await fetch(`/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -48,9 +47,27 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="mx-auto max-w-xl p-6">
-      <h1 className="mb-6 text-3xl font-bold">Reset Password</h1>
-      <form className="space-y-4" onSubmit={onSubmit}>
+    <main className="relative isolate min-h-screen overflow-hidden bg-slate-950 px-4 py-10 text-slate-900">
+      <div className="pointer-events-none absolute inset-0 -z-20" aria-hidden>
+        <img src="/images/backgrounds/aurora-blur.svg" alt="Aurora" className="h-full w-full object-cover opacity-80" />
+      </div>
+      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+        <img src="/images/backgrounds/geo-light-grid.svg" alt="Grid" className="h-full w-full object-cover opacity-55" />
+      </div>
+
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="mb-8 text-center text-white">
+          <p className="text-xs uppercase tracking-[0.35em] text-cyan-200">Account recovery</p>
+          <h1 className="mt-2 text-3xl font-bold">Reset Password</h1>
+          <p className="mt-2 text-sm text-cyan-100/80">Set a strong password after confirming your email.</p>
+        </div>
+
+        <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-white/85 p-6 shadow-[0_22px_70px_rgba(8,47,73,0.35)] backdrop-blur">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 via-cyan-400 to-indigo-500" aria-hidden />
+          <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-sky-300/30 blur-3xl" aria-hidden />
+          <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-indigo-300/30 blur-3xl" aria-hidden />
+
+          <form className="space-y-4" onSubmit={onSubmit}>
         <div>
           <label className="block text-sm font-medium mb-1">Email Address</label>
           <input
@@ -87,13 +104,15 @@ export default function ResetPasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-50"
+          className="w-full rounded bg-sky-600 px-4 py-2 font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60"
         >
           {loading ? "Resetting..." : "Reset Password"}
         </button>
       </form>
-      {status && <p className="mt-4 rounded bg-green-50 p-3 text-green-700 text-sm">{status}</p>}
-      {error && <p className="mt-4 rounded bg-red-50 p-3 text-red-700 text-sm">❌ {error}</p>}
+      {status && <p className="mt-4 rounded bg-emerald-50 p-3 text-emerald-700 text-sm">{status}</p>}
+      {error && <p className="mt-4 rounded bg-rose-50 p-3 text-rose-700 text-sm">❌ {error}</p>}
+        </div>
+      </div>
     </main>
   );
 }
