@@ -1,0 +1,577 @@
+{
+  "info": {
+    "name": "SabaHub - Cloudinary Media Upload API",
+    "description": "Complete collection for testing all Cloudinary media upload endpoints including images, videos, audio, documents, and files",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.token);",
+                  "    console.log('JWT Token saved: ' + jsonData.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@sabahub.local\",\n  \"password\": \"Admin@12345\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Image Uploads",
+      "item": [
+        {
+          "name": "Upload Profile Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select an image file (jpg, jpeg, png, gif, webp, svg, bmp, ico)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/profile-image",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "profile-image"]
+            },
+            "description": "Upload profile picture (max 10MB, 4096x4096px)"
+          }
+        },
+        {
+          "name": "Upload Post Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select an image file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/post-image",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "post-image"]
+            },
+            "description": "Upload image for posts (max 10MB)"
+          }
+        },
+        {
+          "name": "Upload Gallery Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/gallery-image",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "gallery-image"]
+            },
+            "description": "Upload image to gallery (max 10MB)"
+          }
+        },
+        {
+          "name": "Upload Company Logo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/company-logo",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "company-logo"]
+            },
+            "description": "Upload company logo (max 10MB, resized to 500x500px)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Video Uploads",
+      "item": [
+        {
+          "name": "Upload Training Video",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select a video file (mp4, avi, mov, wmv, flv, webm, mkv, m4v)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/training-video",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "training-video"]
+            },
+            "description": "Upload training video (max 100MB, 10 min duration)"
+          }
+        },
+        {
+          "name": "Upload Promotional Video",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/promo-video",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "promo-video"]
+            },
+            "description": "Upload promotional video (max 100MB)"
+          }
+        },
+        {
+          "name": "Upload User Video",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/user-video",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "user-video"]
+            },
+            "description": "Upload user-generated video content (max 100MB)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audio Uploads",
+      "item": [
+        {
+          "name": "Upload Podcast",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select an audio file (mp3, wav, ogg, aac, flac, m4a, wma)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/podcast",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "podcast"]
+            },
+            "description": "Upload podcast episode (max 50MB, 30 min duration)"
+          }
+        },
+        {
+          "name": "Upload Voice Note",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/voice-note",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "voice-note"]
+            },
+            "description": "Upload voice note (max 50MB)"
+          }
+        },
+        {
+          "name": "Upload Audio Content",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/audio-content",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "audio-content"]
+            },
+            "description": "Upload general audio content (max 50MB)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Document Uploads",
+      "item": [
+        {
+          "name": "Upload Resume",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select a document file (pdf, doc, docx, txt, rtf, odt)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/resume",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "resume"]
+            },
+            "description": "Upload resume/CV (max 20MB)"
+          }
+        },
+        {
+          "name": "Upload Contract",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/contract",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "contract"]
+            },
+            "description": "Upload contract document (max 20MB)"
+          }
+        },
+        {
+          "name": "Upload Report",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/report",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "report"]
+            },
+            "description": "Upload business report (max 20MB)"
+          }
+        },
+        {
+          "name": "Upload Certificate",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/certificate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "certificate"]
+            },
+            "description": "Upload certificate (max 20MB)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "File Uploads",
+      "item": [
+        {
+          "name": "Upload Archive",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select an archive file (zip, rar, 7z, tar, gz)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/archive",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "archive"]
+            },
+            "description": "Upload compressed archive (max 50MB)"
+          }
+        },
+        {
+          "name": "Upload Spreadsheet",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select a spreadsheet file (xls, xlsx, csv)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/spreadsheet",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "spreadsheet"]
+            },
+            "description": "Upload spreadsheet (max 50MB)"
+          }
+        },
+        {
+          "name": "Upload Misc File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/upload/misc-file",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "upload", "misc-file"]
+            },
+            "description": "Upload miscellaneous file (max 50MB)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Utility Endpoints",
+      "item": [
+        {
+          "name": "Get Thumbnail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/media/thumbnail/:publicId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "thumbnail", ":publicId"],
+              "variable": [
+                {
+                  "key": "publicId",
+                  "value": "sabahub/images/profiles/sample_image",
+                  "description": "Public ID from Cloudinary"
+                }
+              ]
+            },
+            "description": "Get thumbnail URL for an image (200x200px)"
+          }
+        },
+        {
+          "name": "Get Optimized Image",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/media/optimized/:publicId?width=800&height=800",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "optimized", ":publicId"],
+              "query": [
+                {
+                  "key": "width",
+                  "value": "800",
+                  "description": "Target width"
+                },
+                {
+                  "key": "height",
+                  "value": "800",
+                  "description": "Target height"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "publicId",
+                  "value": "sabahub/images/profiles/sample_image",
+                  "description": "Public ID from Cloudinary"
+                }
+              ]
+            },
+            "description": "Get optimized image URL with custom dimensions"
+          }
+        },
+        {
+          "name": "Delete File",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/media/delete/:resourceType/:publicId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "delete", ":resourceType", ":publicId"],
+              "variable": [
+                {
+                  "key": "resourceType",
+                  "value": "image",
+                  "description": "Resource type: image, video, raw"
+                },
+                {
+                  "key": "publicId",
+                  "value": "sabahub/images/profiles/sample_image",
+                  "description": "Public ID from Cloudinary"
+                }
+              ]
+            },
+            "description": "Delete file from Cloudinary"
+          }
+        }
+      ]
+    }
+  ]
+}
