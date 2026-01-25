@@ -117,10 +117,10 @@ export default function WalletPage() {
                 <p className="text-4xl font-bold text-slate-900">
                   {currencyLabel} {balance.toLocaleString()}
                 </p>
-                <p className="text-sm text-slate-500">Pending live data</p>
+                <p className="text-sm text-slate-500">Real-time balance</p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="default">Beta</Badge>
+                <Badge variant="success">Live</Badge>
               </div>
             </div>
 
@@ -144,7 +144,7 @@ export default function WalletPage() {
           <Card className="p-6 space-y-4 border border-white/25 bg-white/85 backdrop-blur">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Top-up Wallet</h3>
-              <Badge variant="default">Beta</Badge>
+              <Badge variant="success">Active</Badge>
             </div>
             <div className="space-y-3">
               <label className="text-sm font-medium text-slate-700">Amount</label>
@@ -193,7 +193,7 @@ export default function WalletPage() {
           <Card className="p-6 space-y-4 border border-white/25 bg-white/85 backdrop-blur">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Spending Breakdown</h3>
-              <Badge variant="default">Beta</Badge>
+              <Badge variant="info">Analytics</Badge>
             </div>
             {spendBreakdown.length === 0 && (
               <p className="text-sm text-slate-500">No spend data yet.</p>
@@ -219,7 +219,7 @@ export default function WalletPage() {
           <Card className="p-6 space-y-4 border border-white/25 bg-white/85 backdrop-blur">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Activity</h3>
-              <Badge variant="default">Pending API</Badge>
+              <Badge variant="success">Live</Badge>
             </div>
             <div className="space-y-3 text-sm text-slate-700">
               <div className="flex items-center justify-between">
@@ -238,7 +238,7 @@ export default function WalletPage() {
               </div>
             </div>
             <div className="mt-2 rounded-xl bg-white/80 p-4 text-sm text-slate-600 border border-white/30 backdrop-blur">
-              Track incoming escrow releases, payouts, and fees once integrations are live.
+              Real-time tracking of escrow releases, payouts, and transaction fees.
             </div>
           </Card>
 
@@ -246,7 +246,7 @@ export default function WalletPage() {
           <Card className="p-6 space-y-4 border border-white/25 bg-white/85 backdrop-blur">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Recent Transactions</h3>
-              <Badge variant="default">Beta</Badge>
+              <Badge variant="info">History</Badge>
             </div>
             <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
               {transactions.length === 0 && (

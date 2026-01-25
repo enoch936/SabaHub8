@@ -107,11 +107,11 @@ export default function Sidebar() {
     <aside
       className={`hidden lg:block fixed left-0 top-0 z-40 h-screen transition-all duration-300 ease-in-out ${
         collapsed ? "w-20" : "w-72"
-      } border-r border-slate-200 bg-white shadow-xl`}
+      } border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl`}
     >
       <div className="flex h-full flex-col">
         {/* Logo & Toggle */}
-        <div className="flex items-center justify-between border-b border-slate-200 p-4">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 p-4">
           <Link
             href="/dashboard"
             className={`flex items-center gap-3 overflow-hidden transition-all duration-300 ${
@@ -130,7 +130,7 @@ export default function Sidebar() {
           </Link>
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-all duration-200 hover:bg-slate-200 hover:text-slate-900 hover:shadow-md active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 hover:shadow-md active:scale-95"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -138,7 +138,7 @@ export default function Sidebar() {
         </div>
 
         {/* User Profile */}
-        <div className="border-b border-slate-200 p-4">
+        <div className="border-b border-slate-200 dark:border-slate-700 p-4">
           <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
             <div className="relative">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 font-semibold text-white shadow-lg ring-2 ring-emerald-200 ring-offset-2">
@@ -257,7 +257,7 @@ export default function Sidebar() {
           </div>
           <Link
             href="/dashboard/settings"
-            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-700 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900 ${
+            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-300 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 ${
               collapsed ? "justify-center" : ""
             }`}
           >
@@ -272,7 +272,7 @@ export default function Sidebar() {
           </Link>
           <button
             onClick={handleLogout}
-            className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-rose-600 transition-all duration-200 hover:bg-rose-50 hover:text-rose-700 active:scale-95 ${
+            className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-rose-600 dark:text-rose-400 transition-all duration-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-700 dark:hover:text-rose-300 active:scale-95 ${
               collapsed ? "justify-center" : ""
             }`}
           >

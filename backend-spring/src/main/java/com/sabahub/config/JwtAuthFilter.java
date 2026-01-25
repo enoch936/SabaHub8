@@ -54,6 +54,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
         System.out.println("Token extracted: " + token.substring(0, Math.min(20, token.length())) + "...");
         
+        // Development mode: Accept mock tokens
+        if (token.contains("mock-signature-for-development")) {
+            System.out.println("🔧 DEVELOPMENT MODE: Mock token detected, creating dev user");
+            var devUserDetails = org.springframework.security.core.userdetails.User
+                    .withUsername("dev-user@sabahub.com")
+                    .password("")
+                    .authorities("ROLE_USER", "ROLE_FREELANCER", "ROLE_EMPLOYER")
+                    .build();
+            var authToken = new UsernamePasswordAuthenticationToken(
+                    devUserDetails, null, devUserDetails.getAuthorities());
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+            System.out.println("Development authentication set successfully");
+            filterChain.doFilter(request, response);
+            System.out.println("========== JWT FILTER END (dev mode) ==========\n");
+            return;
+        }
+        
         String jti = null;
         try {
             jti = jwtService.extractJti(token);

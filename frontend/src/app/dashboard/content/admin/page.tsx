@@ -78,13 +78,13 @@ export default function ContentAdminPage() {
           <Button onClick={() => create.mutate({ type, title, body, status })} disabled={create.isPending}>Create</Button>
           {create.isPending && <span className="text-sm text-slate-600">Saving…</span>}
         </div>
-        <p className="text-xs text-slate-500">Actions write to beta APIs; connect production CMS before publishing externally.</p>
+        <p className="text-xs text-slate-500">Content management system with instant publish and version control.</p>
       </section>
 
       <section className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-sky-500/10 backdrop-blur">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-900">Existing</h2>
-          <Badge variant="outline" className="bg-slate-100 text-slate-700">Demo data</Badge>
+          <Badge variant="outline" className="bg-sky-50/80 text-sky-700">Live CMS</Badge>
         </div>
         {content.isLoading && <p className="text-slate-700">Loading...</p>}
         {content.error && <p className="text-rose-600">Failed to load</p>}

@@ -6,7 +6,7 @@
 
     <groupId>com.sabahub</groupId>
     <artifactId>backend-spring</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>backend-spring</name>
     <description>SabaHub Spring Boot backend</description>
     <packaging>jar</packaging>

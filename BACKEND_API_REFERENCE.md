@@ -58,6 +58,33 @@ Response:
 }
 ```
 
+### Search & Filter Jobs (Enterprise)
+```
+GET /jobs/search?page=0&size=10&q=video&status=OPEN&deliverableType=VIDEO_PRODUCTION&engagementType=PROJECT_BASED&pricingModel=FIXED_PRICE&industry=saas,finance&skills=aftereffects,premiere&enterpriseOnly=true
+Response:
+{
+  "content": [
+    {
+      "id": "job123",
+      "title": "Enterprise Video Production",
+      "deliverableType": "VIDEO_PRODUCTION",
+      "engagementType": "PROJECT_BASED",
+      "pricingModel": "FIXED_PRICE",
+      "industry": ["saas", "finance"],
+      "skills": ["aftereffects", "premiere"],
+      "isEnterpriseOnly": true,
+      "status": "OPEN"
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 10,
+    "totalElements": 1,
+    "totalPages": 1
+  }
+}
+```
+
 ### Get Single Job
 ```
 GET /jobs/{id}

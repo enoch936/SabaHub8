@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { adminAnalyticsSummary, adminAnalyticsDaily } from "@/lib/api";
+import axios from "axios";
 
 export default function AdminAnalyticsPage() {
   const [data, setData] = useState<{ users: number; jobs: number; revenue: number; disputesOpen: number } | null>(null);
   const [daily, setDaily] = useState<{ dates: string[]; users: number[]; jobs: number[]; revenue: number[] } | null>(null);
+  const [derived, setDerived] = useState<{ totalRevenue30d: number; avgRevenue30d: number; totalJobs30d: number; avgJobs30d: number }>({ totalRevenue30d: 0, avgRevenue30d: 0, totalJobs30d: 0, avgJobs30d: 0 });
+  const [jobStats, setJobStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,9 +16,25 @@ export default function AdminAnalyticsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [sum, day] = await Promise.all([adminAnalyticsSummary(), adminAnalyticsDaily()]);
+      const [sum, day, jobCounts] = await Promise.all([
+        adminAnalyticsSummary(), 
+        adminAnalyticsDaily(),
+        axios.get('/api/v2/jobs/count').then(r => r.data).catch(() => null)
+      ]);
       setData(sum);
       setDaily(day);
+      setJobStats(jobCounts);
+
+      if (day) {
+        const totalRevenue30d = (day.revenue || []).reduce((a, b) => a + b, 0);
+        const totalJobs30d = (day.jobs || []).reduce((a, b) => a + b, 0);
+        setDerived({
+          totalRevenue30d,
+          avgRevenue30d: totalRevenue30d / Math.max((day.revenue || []).length || 1, 1),
+          totalJobs30d,
+          avgJobs30d: totalJobs30d / Math.max((day.jobs || []).length || 1, 1),
+        });
+      }
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || "Failed to load analytics");
     } finally {
@@ -39,6 +58,42 @@ export default function AdminAnalyticsPage() {
         <KpiCard title="Jobs" value={loading ? "…" : data?.jobs ?? 0} />
         <KpiCard title="Revenue" value={loading ? "…" : `${(data?.revenue ?? 0).toFixed(2)} ETB`} />
         <KpiCard title="Open Disputes" value={loading ? "…" : data?.disputesOpen ?? 0} />
+      </div>
+
+      {/* Job Status Breakdown */}
+      {jobStats && (
+        <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <h2 className="text-xl font-semibold text-slate-200 mb-4">Job Status Breakdown</h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-400">{jobStats.total || 0}</div>
+              <div className="text-sm text-slate-400 mt-1">Total Jobs</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-400">{jobStats.open || 0}</div>
+              <div className="text-sm text-slate-400 mt-1">Open</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-yellow-400">{jobStats.in_progress || 0}</div>
+              <div className="text-sm text-slate-400 mt-1">In Progress</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-cyan-400">{jobStats.completed || 0}</div>
+              <div className="text-sm text-slate-400 mt-1">Completed</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-red-400">{jobStats.cancelled || 0}</div>
+              <div className="text-sm text-slate-400 mt-1">Cancelled</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <KpiCard title="Revenue (30d)" value={loading ? "…" : `${derived.totalRevenue30d.toFixed(2)} ETB`} />
+        <KpiCard title="Avg Daily Revenue (30d)" value={loading ? "…" : `${derived.avgRevenue30d.toFixed(2)} ETB`} />
+        <KpiCard title="Jobs Created (30d)" value={loading ? "…" : derived.totalJobs30d} />
+        <KpiCard title="Avg Daily Jobs (30d)" value={loading ? "…" : derived.avgJobs30d.toFixed(1)} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

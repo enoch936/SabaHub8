@@ -39,7 +39,7 @@ export default function NotificationsPage() {
             {n.payload && <pre className="mt-2 overflow-auto rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-xs text-slate-800 shadow-inner">{JSON.stringify(n.payload, null, 2)}</pre>}
           </li>
         ))}
-        {items.length === 0 && <p className="text-slate-600">No notifications in this beta feed.</p>}
+        {items.length === 0 && <p className="text-slate-600">No notifications. You're all caught up!</p>}
       </ul>
     </main>
   );

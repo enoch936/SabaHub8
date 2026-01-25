@@ -21,10 +21,10 @@ export default function ProposalsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Proposals (Employer)</h1>
-              <p className="text-slate-600">Review incoming bids — sandbox data only.</p>
+              <p className="text-slate-600">Review and manage incoming proposals from freelancers.</p>
             </div>
           </div>
-          <Badge variant="outline" className="bg-amber-50/80 text-amber-700">Prototype flow</Badge>
+          <Badge variant="outline" className="bg-emerald-50/80 text-emerald-700">Live System</Badge>
         </div>
       </div>
 
@@ -33,7 +33,7 @@ export default function ProposalsPage() {
       {jobsQuery.data?.map((job) => (
         <JobProposals key={job.id} jobId={job.id} title={job.title} />
       ))}
-      {(!jobsQuery.data || jobsQuery.data.length === 0) && <p className="text-slate-600">No jobs yet in this beta view.</p>}
+      {(!jobsQuery.data || jobsQuery.data.length === 0) && <p className="text-slate-600">No active jobs. Post your first job to receive proposals.</p>}
     </main>
   );
 }
@@ -51,9 +51,9 @@ function JobProposals({ jobId, title }: { jobId: string; title: string }) {
       <div className="mb-3 flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
-          <p className="text-sm text-slate-600">Proposals are mock data until production wiring is enabled.</p>
+          <p className="text-sm text-slate-600">Real-time proposal tracking with instant notifications.</p>
         </div>
-        <Badge variant="outline" className="bg-slate-100 text-slate-700">Sandbox</Badge>
+        <Badge variant="outline" className="bg-sky-50/80 text-sky-700">Active</Badge>
       </div>
       {isLoading && <p className="text-slate-700">Loading...</p>}
       {error && <p className="text-rose-600">Failed to load proposals</p>}

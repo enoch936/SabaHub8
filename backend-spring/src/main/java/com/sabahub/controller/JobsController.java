@@ -7,16 +7,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @RestController
 @RequestMapping("/api/v2/jobs")
@@ -25,6 +32,9 @@ public class JobsController {
 
     @Autowired
     private JobRepository jobRepository;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     /**
      * Get count of jobs by status
@@ -80,6 +90,108 @@ public class JobsController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to fetch jobs: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Advanced search & filtering for enterprise-grade jobs
+     */
+    @GetMapping("/search")
+    public ResponseEntity<?> searchJobs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String deliverableType,
+            @RequestParam(required = false) String engagementType,
+            @RequestParam(required = false) String pricingModel,
+            @RequestParam(required = false) String industry,
+            @RequestParam(required = false) String skills,
+            @RequestParam(required = false) Boolean enterpriseOnly
+    ) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            List<Criteria> criteria = new ArrayList<>();
+
+            if (q != null && !q.isBlank()) {
+                Criteria text = new Criteria().orOperator(
+                        Criteria.where("title").regex(q, "i"),
+                        Criteria.where("description").regex(q, "i"),
+                        Criteria.where("overviewText").regex(q, "i")
+                );
+                criteria.add(text);
+            }
+
+            if (status != null && !status.isBlank()) {
+                try {
+                    Job.Status st = Job.Status.valueOf(status.toUpperCase());
+                    criteria.add(Criteria.where("status").is(st));
+                } catch (IllegalArgumentException ex) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Invalid status: " + status));
+                }
+            }
+
+            if (deliverableType != null && !deliverableType.isBlank()) {
+                try {
+                    Job.DeliverableType dt = Job.DeliverableType.valueOf(deliverableType.toUpperCase());
+                    criteria.add(Criteria.where("deliverableType").is(dt));
+                } catch (IllegalArgumentException ex) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Invalid deliverableType: " + deliverableType));
+                }
+            }
+
+            if (engagementType != null && !engagementType.isBlank()) {
+                try {
+                    Job.EngagementType et = Job.EngagementType.valueOf(engagementType.toUpperCase());
+                    criteria.add(Criteria.where("engagementType").is(et));
+                } catch (IllegalArgumentException ex) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Invalid engagementType: " + engagementType));
+                }
+            }
+
+            if (pricingModel != null && !pricingModel.isBlank()) {
+                try {
+                    Job.PricingModel pm = Job.PricingModel.valueOf(pricingModel.toUpperCase());
+                    criteria.add(Criteria.where("pricingModel").is(pm));
+                } catch (IllegalArgumentException ex) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Invalid pricingModel: " + pricingModel));
+                }
+            }
+
+            if (industry != null && !industry.isBlank()) {
+                List<String> industries = Arrays.stream(industry.split(","))
+                        .map(String::trim).filter(s -> !s.isEmpty()).toList();
+                if (!industries.isEmpty()) {
+                    criteria.add(Criteria.where("industry").in(industries));
+                }
+            }
+
+            if (skills != null && !skills.isBlank()) {
+                List<String> skillList = Arrays.stream(skills.split(","))
+                        .map(String::trim).filter(s -> !s.isEmpty()).toList();
+                if (!skillList.isEmpty()) {
+                    criteria.add(Criteria.where("skills").in(skillList));
+                }
+            }
+
+            if (enterpriseOnly != null) {
+                criteria.add(Criteria.where("isEnterpriseOnly").is(enterpriseOnly));
+            }
+
+            Query query = new Query();
+            if (!criteria.isEmpty()) {
+                query.addCriteria(new Criteria().andOperator(criteria.toArray(new Criteria[0])));
+            }
+
+            long total = mongoTemplate.count(query, Job.class);
+            query.with(pageable);
+            List<Job> items = mongoTemplate.find(query, Job.class);
+
+            Page<Job> result = new PageImpl<>(items, pageable, total);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to search jobs: " + e.getMessage()));
         }
     }
 

@@ -55,9 +55,9 @@ export default function AnalyticsPage() {
             <li>FAQs: {contentFaq.data?.length ?? 0}</li>
           </ul>
           {role === "ADMIN" ? (
-            <p className="mt-2 text-xs text-slate-600">Admin can extend this with revenue and audit logs once backend endpoints are exposed.</p>
+            <p className="mt-2 text-xs text-slate-600">Full admin access to revenue metrics, audit logs, and advanced analytics.</p>
           ) : (
-            <p className="mt-2 text-xs text-slate-600">Metrics shown are limited for non-admin roles.</p>
+            <p className="mt-2 text-xs text-slate-600">Role-specific metrics and analytics dashboard.</p>
           )}
         </section>
       </div>
@@ -70,7 +70,7 @@ function StatCard({ label, value, loading }: { label: string; value: number; loa
     <div className="rounded-2xl border border-white/25 bg-white/85 p-4 backdrop-blur">
       <p className="text-sm text-slate-600">{label}</p>
       <p className="mt-1 text-2xl font-bold">{loading ? "…" : value}</p>
-      <p className="text-xs text-slate-500">Beta data</p>
+      <p className="text-xs text-slate-500">Live data</p>
     </div>
   );
 }

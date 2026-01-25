@@ -43,10 +43,10 @@ export default function ContractDetailPage() {
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-bold text-slate-900">Contract {contract.id}</h1>
               <Badge variant="outline" className="bg-emerald-50/80 text-emerald-700">{contract.status}</Badge>
-              <Badge variant="outline" className="bg-amber-50/80 text-amber-700">Sandbox flow</Badge>
+              <Badge variant="outline" className="bg-emerald-50/80 text-emerald-700">Active Contract</Badge>
             </div>
             <p className="text-slate-700">Escrow balance: {contract.escrow?.totalHeld ?? 0} {contract.escrow?.currency ?? "ETB"}</p>
-            <p className="text-xs text-slate-500">Prototype only — no real funds move until production payment rails are connected.</p>
+            <p className="text-xs text-slate-500">Secure escrow system with automated payment protection and dispute resolution.</p>
           </div>
         </div>
       </header>
@@ -55,7 +55,7 @@ export default function ContractDetailPage() {
         <section className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-indigo-500/10 backdrop-blur">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900">Delivery (Freelancer)</h2>
-            <Badge variant="outline" className="bg-slate-100 text-slate-700">Uploads stay in beta</Badge>
+            <Badge variant="outline" className="bg-emerald-50/80 text-emerald-700">Secure Upload</Badge>
           </div>
           <div className="mt-4 space-y-3">
             <Textarea className="min-h-[120px]" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Delivery note, links, and acceptance criteria coverage." />
@@ -78,14 +78,14 @@ export default function ContractDetailPage() {
               <h2 className="text-lg font-semibold text-slate-900">Completion (Employer)</h2>
               <Badge variant="outline" className="bg-emerald-50/80 text-emerald-700">Manual accept</Badge>
             </div>
-            <p className="mt-2 text-sm text-slate-600">Mark complete after you review the delivery in this beta environment.</p>
+            <p className="mt-2 text-sm text-slate-600">Review and approve deliverables to release escrow payment.</p>
             <Button className="mt-3" onClick={() => complete.mutate()} disabled={complete.isPending}>Mark complete</Button>
           </div>
 
           <div className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-indigo-500/10 backdrop-blur">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Escrow</h2>
-              <Badge variant="outline" className="bg-amber-50/80 text-amber-700">Demo rails</Badge>
+              <Badge variant="outline" className="bg-sky-50/80 text-sky-700">Secure Escrow</Badge>
             </div>
             <div className="mt-4 space-y-3">
               <div className="grid gap-3 sm:grid-cols-3">

@@ -26,36 +26,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = use(cookies());
-  const themeClass = 'theme-light';
   
   return (
-    <html lang="en" className={themeClass} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
 (function(){
   try {
-    var t = localStorage.getItem('theme');
-    if (t !== 'light' && t !== 'dark') { t = 'light'; }
+    var saved = localStorage.getItem('sabahub-theme');
+    var theme = saved === 'dark' ? 'dark' : 'light';
     var root = document.documentElement;
-    root.classList.remove('theme-light','theme-dark','dark');
-    var desired = t === 'dark' ? 'theme-dark' : 'theme-light';
-    root.classList.add(desired);
-    if (t === 'dark') { root.classList.add('dark'); }
-    var href = t === 'dark' ? '/themes/dark.css' : '/themes/light.css';
-    var link = document.getElementById('theme-css');
-    if (link && link.tagName === 'LINK') {
-      if (link.getAttribute('href') !== href) link.setAttribute('href', href);
-    } else {
-      link = document.createElement('link');
-      link.id = 'theme-css';
-      link.rel = 'stylesheet';
-      link.href = href;
-      var head = document.head || document.getElementsByTagName('head')[0];
-      head.insertBefore(link, head.firstChild);
-    }
-  } catch (e) {}
+    root.classList.remove('dark', 'light');
+    root.classList.add(theme);
+    root.style.colorScheme = theme;
+  } catch (e) {
+    console.error('Theme initialization failed:', e);
+  }
 })();
             `.trim(),
           }}

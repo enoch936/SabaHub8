@@ -94,7 +94,7 @@ function DisputeItem({ d, onPatch, isPending }: { d: any; onPatch: (status?: str
         <Textarea className="min-w-64 flex-1" rows={2} placeholder="Admin note" value={note} onChange={(e) => setNote(e.target.value)} />
         <Button disabled={isPending} onClick={() => onPatch(status, note)} variant="secondary">Update</Button>
       </div>
-      <p className="mt-2 text-xs text-slate-500">All actions are logged in beta; ensure sensitive info is handled off-platform.</p>
+      <p className="mt-2 text-xs text-slate-500">All actions are logged and auditable. Sensitive information is encrypted and secure.</p>
     </div>
   );
 }

@@ -147,7 +147,7 @@ export default function SettingsPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Settings & Profile</h1>
-            <p className="text-slate-600 mt-2">Manage your professional profile and preferences — beta environment.</p>
+            <p className="text-slate-600 mt-2">Manage your professional profile, preferences, and account security.</p>
           </div>
           <span className="rounded-full border border-white/30 bg-amber-50/80 px-3 py-1 text-xs font-medium text-amber-700">Prototype data only</span>
         </div>

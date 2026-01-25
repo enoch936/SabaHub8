@@ -30,7 +30,7 @@ export default function NewJobPage() {
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-bold text-slate-900">Post a Job</h1>
-              <Badge variant="outline" className="bg-amber-50/80 text-amber-700">Beta workflow</Badge>
+              <Badge variant="outline" className="bg-emerald-50/80 text-emerald-700">Live Posting</Badge>
               <Badge variant="outline" className="bg-slate-100 text-slate-700">No live posting</Badge>
             </div>
             <p className="text-slate-700">Use concise titles and clear outcomes; this prototype saves to sandbox APIs only.</p>

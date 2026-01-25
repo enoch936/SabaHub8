@@ -32,15 +32,43 @@ async function proxy(request: Request, url: string) {
   if (!headers.has("x-forwarded-host") && request.headers.get("host")) {
     headers.set("x-forwarded-host", request.headers.get("host")!);
   }
-  const respHeaders = new Headers(resp.headers);
-  respHeaders.set("Access-Control-Allow-Origin", "*");
-  respHeaders.set("Access-Control-Allow-Headers", "*");
-  respHeaders.set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
 
-  return new Response(resp.body, {
-    status: resp.status,
-    headers: respHeaders,
-  });
+  try {
+    // Clone the request to read body if needed
+    let body: BodyInit | null = null;
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      try {
+        body = await request.text();
+      } catch (e) {
+        console.error("Error reading request body:", e);
+      }
+    }
+
+    const resp = await fetch(url, {
+      method: request.method,
+      headers,
+      body: body || undefined,
+    });
+
+    const respHeaders = new Headers(resp.headers);
+    respHeaders.set("Access-Control-Allow-Origin", "*");
+    respHeaders.set("Access-Control-Allow-Headers", "*");
+    respHeaders.set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+
+    return new Response(resp.body, {
+      status: resp.status,
+      headers: respHeaders,
+    });
+  } catch (error) {
+    console.error(`Proxy error for ${url}:`, error);
+    return new Response(JSON.stringify({ error: "Backend unavailable", details: String(error) }), {
+      status: 502,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }
 }
 
 export async function OPTIONS(request: Request, ctx: { params: Promise<{ path?: string[] }> }) {

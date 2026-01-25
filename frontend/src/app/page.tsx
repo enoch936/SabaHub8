@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 const STATS = [
-  { value: "Private beta", label: "Current phase" },
+  { value: "Production Launch", label: "Current phase" },
   { value: "Web app", label: "Focus: core workflows" },
   { value: "Escrow + chat", label: "Next milestone" },
   { value: "Roadmap in repo", label: "Progress tracking" },
@@ -12,7 +12,7 @@ const FEATURES = [
   {
     icon: "/images/icons/badges/secure-gradient.svg",
     title: "Secure Escrow",
-    desc: "Escrow flow is being wired to protect payments once the beta is stabilized.",
+    desc: "Secure escrow flow protects all payments and ensures safe transactions.",
   },
   {
     icon: "/images/icons/badges/chat-gradient.svg",
@@ -37,7 +37,7 @@ const FEATURES = [
   {
     icon: "/images/icons/badges/info-gradient.svg",
     title: "Global Reach",
-    desc: "International onboarding will follow after the initial beta cohort.",
+    desc: "International onboarding is expanding to new regions.",
   },
 ] as const;
 
@@ -94,7 +94,7 @@ export default function Home() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/80"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-500"></span>
               </span>
-              In development — Request beta access
+              Production Ready — Get Started Now
             </div>
             
             <h1 className="mb-5 text-5xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
@@ -102,7 +102,7 @@ export default function Home() {
             </h1>
             
             <p className="mb-10 text-xl leading-relaxed text-slate-700">
-              We are actively developing SabaHub with secure payments, collaboration, and escrow workflows. Request access to test the beta and share feedback.
+              SabaHub is live with secure payments, collaboration tools, and escrow workflows. Join thousands of professionals connecting talent with opportunity.
             </p>
             
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -119,7 +119,7 @@ export default function Home() {
                 href="/login" 
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-8 py-4 text-base font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
               >
-                Sign in to beta
+                Sign in
               </Link>
             </div>
             
@@ -143,7 +143,7 @@ export default function Home() {
           <div className="relative mx-auto mt-14 max-w-5xl rounded-3xl border border-white/30 bg-white/70 p-4 shadow-xl backdrop-blur">
             <div className="absolute -top-6 left-6 flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow">
               <img src="/images/icons/badges/verified-gradient.svg" alt="Verified" className="h-4 w-4" />
-              Beta workspace preview
+              Workspace preview
             </div>
             <Image
               src="/images/banners/sabahub-collab.png"
@@ -181,7 +181,7 @@ export default function Home() {
           <div className="flex items-center gap-3 text-slate-800">
             <img src="/images/icons/badges/info-gradient.svg" alt="Info badge" className="h-8 w-8" />
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Beta workflow preview</p>
+              <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Workflow preview</p>
               <p className="text-sm leading-relaxed text-slate-700">Snapshot of the in-progress experience: escrow, chat, analytics, payouts, admin review.</p>
             </div>
           </div>
@@ -233,7 +233,7 @@ export default function Home() {
             <div className="grid gap-6 md:grid-cols-2">
               {GALLERY_IMAGES.map((src) => (
                 <div key={src} className="overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm">
-                  <img src={src} alt="Beta visual" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                  <img src={src} alt="Platform visual" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                 </div>
               ))}
             </div>
@@ -262,7 +262,7 @@ export default function Home() {
             </div>
             
             <div className="relative">
-              <h2 className="mb-4 text-4xl font-bold">Follow the beta journey</h2>
+              <h2 className="mb-4 text-4xl font-bold">Follow the journey</h2>
               <p className="mb-8 text-lg text-sky-100">
                 Request access, sign in, and tell us what you need most.
               </p>

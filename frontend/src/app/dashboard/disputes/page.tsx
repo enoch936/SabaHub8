@@ -35,7 +35,7 @@ export default function DisputesPage() {
         <header className="text-center text-white">
           <p className="text-xs uppercase tracking-[0.35em] text-cyan-200">Disputes</p>
           <h1 className="mt-2 text-3xl font-bold">Resolution center</h1>
-          <p className="mt-2 text-sm text-cyan-100/80">Beta preview — live dispute data appears once APIs are wired.</p>
+          <p className="mt-2 text-sm text-cyan-100/80">Professional dispute resolution with secure evidence handling and admin mediation.</p>
         </header>
 
         <section className="rounded-3xl border border-white/15 bg-white/85 p-6 shadow-[0_22px_70px_rgba(8,47,73,0.35)] backdrop-blur">

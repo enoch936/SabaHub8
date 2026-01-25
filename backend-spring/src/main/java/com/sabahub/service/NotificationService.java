@@ -17,6 +17,11 @@ public class NotificationService {
         sendNotification(employerId, message, "EMPLOYER");
     }
     
+    public void notifyEmployer(String employerId, String subject, String message) {
+        log.info("Notification to employer {}: {} - {}", employerId, subject, message);
+        sendNotification(employerId, subject + ": " + message, "EMPLOYER");
+    }
+    
     public void notifyFreelancer(String freelancerId, String message) {
         sendNotification(freelancerId, message, "FREELANCER");
     }
@@ -51,5 +56,13 @@ public class NotificationService {
     
     public void sendRatingNotificationToFreelancer(String freelancerId, Double rating, String feedback) {
         log.info("Sending rating notification to freelancer {}: {} stars", freelancerId, rating);
+    }
+    
+    public void notifyVendor(String vendorId, String message, String type) {
+        sendNotification(vendorId, message, type);
+    }
+    
+    public void notifyJobPublished(String employerId, String jobId) {
+        log.info("Notifying employer {} that job {} was published", employerId, jobId);
     }
 }

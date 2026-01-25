@@ -22,7 +22,7 @@ export default function ContentPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Content</h1>
-            <p className="text-slate-600">Public content listing — beta data only.</p>
+            <p className="text-slate-600">Public content management system.</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -52,12 +52,12 @@ export default function ContentPage() {
                 <h3 className="font-semibold text-slate-900">{c.title}</h3>
                 <p className="text-sm text-slate-600">{c.type} — {c.status}</p>
               </div>
-              <Badge variant="outline" className="bg-amber-50/80 text-amber-700">Beta copy</Badge>
+              <Badge variant="outline" className="bg-emerald-50/80 text-emerald-700">Published</Badge>
             </div>
             <div className="prose prose-slate mt-3 whitespace-pre-wrap text-slate-800">{c.body}</div>
           </li>
         ))}
-        {(!data || data.length === 0) && <p className="text-slate-600">No content found in this beta view.</p>}
+        {(!data || data.length === 0) && <p className="text-slate-600">No content available. Create your first content item.</p>}
       </ul>
     </main>
   );

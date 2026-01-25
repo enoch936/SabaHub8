@@ -55,6 +55,44 @@ export const useSession = create<SessionState>((set) => ({
 
 export function bootstrapSession() {
   if (typeof window === "undefined") return;
-  const token = localStorage.getItem("auth_token");
-  if (token) useSession.getState().setToken(token);
+  let token = localStorage.getItem("auth_token");
+  
+  // Development mode: create mock token if none exists
+  // Check for development environment (localhost or explicitly set)
+  const isDev = process.env.NODE_ENV === "development" || 
+                window.location.hostname === "localhost" ||
+                window.location.hostname.includes("github.dev");
+  
+  if (!token && isDev) {
+    token = createDevelopmentToken();
+    localStorage.setItem("auth_token", token);
+    console.log("🔧 Development mode: Created mock authentication token");
+    console.log("Token preview:", token.substring(0, 50) + "...");
+  }
+  
+  if (token) {
+    useSession.getState().setToken(token);
+    console.log("✅ Session initialized with token");
+  } else {
+    console.warn("⚠️ No authentication token available");
+  }
+}
+
+/**
+ * Creates a mock JWT token for development/testing
+ * This allows testing protected endpoints without a real auth flow
+ */
+function createDevelopmentToken(): string {
+  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const payload = btoa(JSON.stringify({
+    sub: "dev-user@sabahub.com",
+    email: "dev-user@sabahub.com",
+    name: "Development User",
+    roles: ["FREELANCER", "EMPLOYER"],
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60), // 1 year
+  }));
+  // Important: This signature must contain the magic string that backend recognizes
+  const signature = "mock-signature-for-development";
+  return `${header}.${payload}.${signature}`;
 }

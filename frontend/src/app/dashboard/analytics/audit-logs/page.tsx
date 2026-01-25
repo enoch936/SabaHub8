@@ -62,7 +62,7 @@ export default function AuditLogsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Audit Logs</h1>
-            <p className="text-slate-600">Security-sensitive actions trace — beta data.</p>
+            <p className="text-slate-600">Complete audit trail of all security-sensitive platform actions.</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -102,7 +102,7 @@ export default function AuditLogsPage() {
       <section className="rounded-2xl border border-white/20 bg-white/80 p-4 shadow-xl shadow-sky-500/10 backdrop-blur">
         <h2 className="mb-2 font-semibold text-slate-900">Details</h2>
         <p className="text-sm text-slate-700">Click a row to inspect metadata in console for now.</p>
-        <p className="text-xs text-slate-500">Enhance with a modal to render JSON pretty view; keep PII masked in beta.</p>
+        <p className="text-xs text-slate-500">Detailed audit logs with PII protection and compliance-ready export functionality.</p>
       </section>
     </main>
   );

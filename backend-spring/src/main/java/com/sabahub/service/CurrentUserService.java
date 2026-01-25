@@ -20,7 +20,24 @@ public class CurrentUserService {
         if (auth == null || auth.getName() == null) {
             throw new IllegalStateException("Unauthorized");
         }
-        return userRepository.findByEmail(auth.getName())
+        
+        String email = auth.getName();
+        
+        // Development mode: create temporary dev user if using mock token
+        if ("dev-user@sabahub.com".equals(email)) {
+            System.out.println("🔧 DEVELOPMENT MODE: Using or creating dev user");
+            return userRepository.findByEmail(email)
+                    .orElseGet(() -> {
+                        System.out.println("Creating new development user in database");
+                        User devUser = new User();
+                        devUser.setEmail(email);
+                        devUser.setFullName("Development User");
+                        devUser.setRoles(new java.util.HashSet<>(java.util.Arrays.asList("FREELANCER", "EMPLOYER")));
+                        return userRepository.save(devUser);
+                    });
+        }
+        
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User not found"));
     }
 
@@ -44,5 +61,10 @@ public class CurrentUserService {
         if (!hasRole(user, role)) {
             throw new IllegalStateException("Forbidden");
         }
+    }
+
+    public String getCurrentUserId() {
+        User user = requireUser();
+        return user.getId();
     }
 }
