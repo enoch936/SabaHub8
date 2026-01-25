@@ -863,6 +863,8 @@ git status                   # Check status
 git add .                    # Stage all changes
 git commit -m "message"      # Commit changes
 git push origin main         # Push to remote
+git log --oneline -5         # View last 5 commits
+git diff main origin/main    # See differences from remote
 ```
 
 ### Docker Commands
@@ -872,6 +874,66 @@ docker logs <container>      # View container logs
 docker stop <container>      # Stop container
 docker rm <container>        # Remove container
 docker exec -it <container> bash  # Access container shell
+```
+
+### Git Issues & Resolution
+
+#### Issue: "Divergent branches" when pulling
+```bash
+# Configure git to use merge strategy (recommended for this project)
+git config pull.rebase false
+
+# Then pull normally
+git pull origin main
+
+# If merge conflicts occur, resolve them:
+git status  # See conflicted files
+git checkout --ours <file>  # Keep local version
+# OR
+git checkout --theirs <file>  # Keep remote version
+git add <file>
+git commit -m "Resolve merge conflicts"
+```
+
+#### Issue: "Need to reconcile divergent branches"
+```bash
+# This means local and remote have different commit histories
+# Solution: Configure merge strategy
+git config --global pull.rebase false
+
+# View differences before merging
+git diff main origin/main
+
+# Then pull with merge
+git pull --no-rebase origin main
+```
+
+#### Issue: Accidental commits to main branch
+```bash
+# Undo last commit (keep changes)
+git reset --soft HEAD~1
+
+# Or undo and discard changes
+git reset --hard HEAD~1
+```
+
+#### Issue: Need to sync with remote (discard local changes)
+```bash
+# WARNING: This will delete your local commits!
+git fetch origin
+git reset --hard origin/main
+```
+
+#### View Git Configuration
+```bash
+# See all local git settings
+git config --local -l
+
+# Set merge strategy locally
+git config pull.rebase false
+
+# Set globally for all repositories
+git config --global pull.rebase false
 ```
 
 ---
