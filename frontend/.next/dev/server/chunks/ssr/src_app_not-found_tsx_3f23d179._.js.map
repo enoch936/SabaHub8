@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///workspaces/SabaHub8/frontend/src/app/not-found.tsx"],"sourcesContent":["export default function NotFound() {\n  return (\n    <main className=\"mx-auto max-w-xl p-6 text-center\">\n      <h1 className=\"mb-2 text-2xl font-bold\">404 — Page not found</h1>\n      <p className=\"text-slate-700\">The page you are looking for doesn’t exist or has been moved.</p>\n      <a href=\"/\" className=\"mt-4 inline-block rounded border border-slate-300 px-4 py-2\">Go home</a>\n    </main>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,qBACE,mcAAC;QAAK,WAAU;;0BACd,mcAAC;gBAAG,WAAU;0BAA0B;;;;;;0BACxC,mcAAC;gBAAE,WAAU;0BAAiB;;;;;;0BAC9B,mcAAC;gBAAE,MAAK;gBAAI,WAAU;0BAA8D;;;;;;;;;;;;AAG1F"}}]
+}

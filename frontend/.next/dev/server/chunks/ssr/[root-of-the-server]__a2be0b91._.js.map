@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 10, "column": 0}, "map": {"version":3,"sources":["file:///workspaces/SabaHub8/frontend/src/app/providers.tsx"],"sourcesContent":["\"use client\";\n\nimport { QueryClient, QueryClientProvider } from \"@tanstack/react-query\";\nimport { ReactNode, useState } from \"react\";\nimport { Toaster } from \"sonner\";\n\nexport default function Providers({ children }: { children: ReactNode }) {\n  const [client] = useState(() => new QueryClient());\n  return (\n    <QueryClientProvider client={client}>\n      {children}\n      <Toaster position=\"top-right\" richColors />\n    </QueryClientProvider>\n  );\n}\n"],"names":[],"mappings":";;;;;AAEA;AAAA;AACA;AACA;AAJA;;;;;AAMe,SAAS,UAAU,EAAE,QAAQ,EAA2B;IACrE,MAAM,CAAC,OAAO,GAAG,IAAA,saAAQ,EAAC,IAAM,IAAI,sQAAW;IAC/C,qBACE,mcAAC,8SAAmB;QAAC,QAAQ;;YAC1B;0BACD,mcAAC,mRAAO;gBAAC,UAAS;gBAAY,UAAU;;;;;;;;;;;;AAG9C"}}]
+}
