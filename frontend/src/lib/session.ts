@@ -9,9 +9,13 @@ type SessionState = {
   token?: string | null;
   email?: string;
   fullName?: string;
+  profilePictureUrl?: string;
+  emailVerified?: boolean;
   roles?: string[];
   role?: Role;
   setToken: (token: string | null) => void;
+  setProfilePictureUrl: (url: string | null) => void;
+  setEmailVerified: (verified: boolean | null) => void;
   clear: () => void;
 };
 
@@ -19,6 +23,10 @@ export const useSession = create<SessionState>((set) => ({
   token: undefined,
   email: undefined,
   fullName: undefined,
+  profilePictureUrl: typeof window !== "undefined" ? localStorage.getItem("profile_picture_url") ?? undefined : undefined,
+  emailVerified: typeof window !== "undefined"
+    ? localStorage.getItem("email_verified") === "true"
+    : undefined,
   roles: undefined,
   role: undefined,
   setToken: (token) => {
@@ -50,7 +58,30 @@ export const useSession = create<SessionState>((set) => ({
     } catch {}
     set({ token, email, roles, role });
   },
-  clear: () => set({ token: null, email: undefined, roles: undefined, role: undefined }),
+  setProfilePictureUrl: (url) => {
+    if (typeof window !== "undefined") {
+      if (url) localStorage.setItem("profile_picture_url", url);
+      else localStorage.removeItem("profile_picture_url");
+    }
+    set({ profilePictureUrl: url ?? undefined });
+  },
+  setEmailVerified: (verified) => {
+    if (typeof window !== "undefined") {
+      if (verified === null || verified === undefined) {
+        localStorage.removeItem("email_verified");
+      } else {
+        localStorage.setItem("email_verified", String(verified));
+      }
+    }
+    set({ emailVerified: verified ?? undefined });
+  },
+  clear: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("profile_picture_url");
+      localStorage.removeItem("email_verified");
+    }
+    set({ token: null, email: undefined, roles: undefined, role: undefined, profilePictureUrl: undefined, emailVerified: undefined });
+  },
 }));
 
 export function bootstrapSession() {

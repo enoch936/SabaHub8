@@ -18,6 +18,8 @@ public class WalletLedgerEntry {
     public enum Reason {
         CHAPA_TOPUP,
         LOCAL_TOPUP,
+        INTERNAL_TRANSFER_IN,
+        INTERNAL_TRANSFER_OUT,
         ESCROW_FUND,
         ESCROW_RELEASE,
         REFUND,

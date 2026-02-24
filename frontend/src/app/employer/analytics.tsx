@@ -75,7 +75,16 @@ const AnalyticsDashboard = () => {
 
   const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#0ea5e9', '#8b5cf6', '#f43f5e'];
 
-  const StatCard = ({ title, value, icon, subtitle, trend, color }) => (
+  type StatCardProps = {
+    title: string;
+    value: React.ReactNode;
+    icon: React.ReactNode;
+    subtitle?: string;
+    trend?: number;
+    color: string;
+  };
+
+  const StatCard = ({ title, value, icon, subtitle, trend, color }: StatCardProps) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}

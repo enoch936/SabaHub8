@@ -60,10 +60,10 @@ public class JobsController {
      */
     @GetMapping
     public ResponseEntity<?> getAllJobs(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String categoryId) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "categoryId", required = false) String categoryId) {
         try {
             Pageable pageable = PageRequest.of(page, size);
             Page<Job> jobs;
@@ -98,16 +98,16 @@ public class JobsController {
      */
     @GetMapping("/search")
     public ResponseEntity<?> searchJobs(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String deliverableType,
-            @RequestParam(required = false) String engagementType,
-            @RequestParam(required = false) String pricingModel,
-            @RequestParam(required = false) String industry,
-            @RequestParam(required = false) String skills,
-            @RequestParam(required = false) Boolean enterpriseOnly
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "q", required = false) String q,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "deliverableType", required = false) String deliverableType,
+            @RequestParam(name = "engagementType", required = false) String engagementType,
+            @RequestParam(name = "pricingModel", required = false) String pricingModel,
+            @RequestParam(name = "industry", required = false) String industry,
+            @RequestParam(name = "skills", required = false) String skills,
+            @RequestParam(name = "enterpriseOnly", required = false) Boolean enterpriseOnly
     ) {
         try {
             Pageable pageable = PageRequest.of(page, size);
@@ -199,7 +199,7 @@ public class JobsController {
      * Get a single job by ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> getJobById(@PathVariable String id) {
+    public ResponseEntity<?> getJobById(@PathVariable("id") String id) {
         try {
             Optional<Job> job = jobRepository.findById(id);
             if (job.isPresent()) {
@@ -277,7 +277,7 @@ public class JobsController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<?> updateJob(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             @RequestBody JobDTO jobDTO,
             Authentication authentication) {
         try {
@@ -315,7 +315,7 @@ public class JobsController {
     @PutMapping("/{id}/close")
     @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<?> closeJob(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             Authentication authentication) {
         try {
             Optional<Job> existingJob = jobRepository.findById(id);
@@ -345,7 +345,7 @@ public class JobsController {
     @PutMapping("/{id}/cancel")
     @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<?> cancelJob(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             Authentication authentication) {
         try {
             Optional<Job> existingJob = jobRepository.findById(id);
@@ -375,7 +375,7 @@ public class JobsController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<?> deleteJob(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             Authentication authentication) {
         try {
             Optional<Job> existingJob = jobRepository.findById(id);

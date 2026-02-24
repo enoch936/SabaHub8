@@ -29,6 +29,9 @@ public class EmailService {
     @Value("${spring.mail.password:}")
     private String smtpPassword;
 
+    @Value("${OTP_FAKE:false}")
+    private boolean otpFake;
+
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
@@ -37,8 +40,10 @@ public class EmailService {
      * Check if email service is properly configured
      */
     public boolean isConfigured() {
-        return smtpUsername != null && !smtpUsername.isEmpty() && 
-               smtpPassword != null && !smtpPassword.isEmpty();
+         // If OTP_FAKE is enabled, treat email service as "configured" for dev/testing
+         if (otpFake) return true;
+         return smtpUsername != null && !smtpUsername.isEmpty() && 
+             smtpPassword != null && !smtpPassword.isEmpty();
     }
 
     /**
@@ -46,11 +51,10 @@ public class EmailService {
      */
     public void sendOTPEmail(String toEmail, String otpCode, String userName) {
         log.info("Sending OTP email to: {}", toEmail);
-        
-        if (!isConfigured()) {
-            String errorMsg = "Email service not configured. Please set SMTP_USERNAME and SMTP_PASSWORD environment variables.";
-            log.error(errorMsg);
-            throw new RuntimeException(errorMsg);
+        // Dev fallback: if OTP_FAKE is enabled, log and skip actual SMTP send
+        if (otpFake) {
+            log.warn("OTP_FAKE enabled - logging OTP instead of sending via SMTP. Recipient: {} OTP: {}", toEmail, otpCode);
+            return;
         }
         
         String subject = "Your SabaHub Verification Code";
@@ -70,11 +74,10 @@ public class EmailService {
      */
     public void sendPasswordResetEmail(String toEmail, String otpCode, String userName) {
         log.info("Sending password reset email to: {}", toEmail);
-        
-        if (!isConfigured()) {
-            String errorMsg = "Email service not configured. Please set SMTP_USERNAME and SMTP_PASSWORD environment variables.";
-            log.error(errorMsg);
-            throw new RuntimeException(errorMsg);
+        // Dev fallback: if OTP_FAKE is enabled, log and skip actual SMTP send
+        if (otpFake) {
+            log.warn("OTP_FAKE enabled - logging password reset OTP instead of sending via SMTP. Recipient: {} OTP: {}", toEmail, otpCode);
+            return;
         }
         
         String subject = "Password Reset Verification - SabaHub";

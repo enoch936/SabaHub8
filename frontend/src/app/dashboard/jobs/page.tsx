@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { listJobs } from "@/lib/api";
 import { Card, Badge, Button, Input, Select, Skeleton } from "@/components/ui";
 import { useState } from "react";
+import JobCategoryPicker from "@/components/JobCategoryPicker";
+import { getJobCategoryDisplay, jobCategoryMatches } from "@/lib/jobTaxonomy";
 
 export default function JobsBrowsePage() {
   const { data, isLoading, error } = useQuery({ queryKey: ["jobs"], queryFn: listJobs });
@@ -15,7 +17,7 @@ export default function JobsBrowsePage() {
   const filteredJobs = data?.filter((job: any) => {
     const matchesSearch = job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          job.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || job.categoryId === categoryFilter;
+    const matchesCategory = jobCategoryMatches(job.categoryId, categoryFilter);
     return matchesSearch && matchesCategory;
   }) || [];
 
@@ -71,13 +73,15 @@ export default function JobsBrowsePage() {
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">Category</label>
-              <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                <option value="all">All Categories</option>
-                <option value="design">Design</option>
-                <option value="development">Development</option>
-                <option value="marketing">Marketing</option>
-                <option value="writing">Writing</option>
-              </Select>
+              <JobCategoryPicker
+                value={categoryFilter}
+                onChange={setCategoryFilter}
+                allowAllOption
+                allowNonLeaf
+                allValue="all"
+                allLabel="All categories"
+                placeholder="Filter by category"
+              />
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">Sort By</label>
@@ -153,6 +157,14 @@ export default function JobsBrowsePage() {
                           <h3 className="mb-1 text-xl font-bold text-slate-900 group-hover:text-sky-600 transition truncate">
                             {job.title}
                           </h3>
+                          {job.categoryId ? (
+                            <p
+                              className="mb-1 text-xs font-semibold text-slate-500 truncate"
+                              title={getJobCategoryDisplay(job.categoryId, { unknownFallback: job.categoryId })}
+                            >
+                              {getJobCategoryDisplay(job.categoryId, { unknownFallback: job.categoryId })}
+                            </p>
+                          ) : null}
                           <p className="text-sm text-slate-600 line-clamp-2">{job.description}</p>
                         </div>
                       </div>

@@ -1,0 +1,35 @@
+@startuml
+skinparam linetype ortho
+skinparam activity {
+  BackgroundColor #F2F2F2
+  BorderColor #2B2B2B
+  BackgroundColor<<failure>> #FFEEEE
+}
+
+title Security Monitoring & Incident Response (Parallel Remediation)
+
+|Security Operations|
+start
+:Monitor security events;
+if (Threat detected?) then (yes)
+  :Create incident;
+  :Trigger alerting;
+  fork
+    |Security Operations|
+    :Start containment actions;
+  fork again
+    |DevOps|
+    if (Requires rollback?) then (yes)
+      :Execute rollback;
+    endif
+  end fork
+  |Security Operations|
+  :Perform remediation;
+  :Close incident;
+  |Audit|
+  :Record audit event;
+else (no)
+  :Continue monitoring;
+endif
+stop
+@enduml

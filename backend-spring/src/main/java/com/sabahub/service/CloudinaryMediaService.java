@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.*;
 
@@ -97,7 +99,7 @@ public class CloudinaryMediaService {
     private long maxFileSize;
 
     // ========== Allowed Formats ==========
-    @Value("${cloudinary.allowed.image-formats:jpg,jpeg,png,gif,webp,svg,bmp,ico}")
+    @Value("${cloudinary.allowed.image-formats:jpg,jpeg,png,gif,webp,svg,bmp,ico,avif,heic,heif}")
     private String allowedImageFormats;
 
     @Value("${cloudinary.allowed.video-formats:mp4,avi,mov,wmv,flv,webm,mkv,m4v}")
@@ -458,6 +460,37 @@ public class CloudinaryMediaService {
             throw new IllegalArgumentException(
                     String.format("File size exceeds maximum limit of %d bytes", maxSize));
         }
+
+        if (isImageUpload(allowedFormats)) {
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new IllegalArgumentException("File must be an image");
+            }
+
+            if (shouldDecodeImage(extension)) {
+                try {
+                    BufferedImage image = ImageIO.read(file.getInputStream());
+                    if (image == null) {
+                        log.warn("ImageIO could not decode image. filename={}, contentType={}, size={}, extension={}",
+                                originalFilename, contentType, file.getSize(), extension);
+                    }
+                } catch (IOException e) {
+                    log.warn("ImageIO failed to decode image. filename={}, contentType={}, size={}, extension={}",
+                            originalFilename, contentType, file.getSize(), extension, e);
+                }
+            }
+        }
+    }
+
+    private boolean isImageUpload(String allowedFormats) {
+        return allowedFormats != null && allowedFormats.equalsIgnoreCase(allowedImageFormats);
+    }
+
+    private boolean shouldDecodeImage(String extension) {
+        if (extension == null) {
+            return false;
+        }
+        return Set.of("jpg", "jpeg", "png", "gif", "bmp").contains(extension.toLowerCase());
     }
 
     /**

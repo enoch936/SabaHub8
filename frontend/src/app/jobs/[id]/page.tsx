@@ -45,20 +45,37 @@ interface Job {
 export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const routeJobId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchJob();
-  }, [params.id]);
+    if (!routeJobId) {
+      setError('Invalid job ID');
+      setLoading(false);
+      return;
+    }
 
-  const fetchJob = async () => {
+    fetchJob(routeJobId);
+  }, [routeJobId]);
+
+  const fetchJob = async (jobId: string) => {
     try {
-      const response = await axios.get(`/api/jobs/${params.id}`);
+      const response = await axios.get(`/api/jobs/${encodeURIComponent(jobId)}`);
       setJob(response.data);
-    } catch (error) {
-      console.error('Error fetching job:', error);
+    } catch (requestError) {
+      if (axios.isAxiosError(requestError)) {
+        const status = requestError.response?.status;
+        if (status === 404) {
+          setError('Job not found');
+          return;
+        }
+        if (status === 400) {
+          setError('Invalid job ID');
+          return;
+        }
+      }
       setError('Failed to load job details');
     } finally {
       setLoading(false);

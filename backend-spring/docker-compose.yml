@@ -10,21 +10,13 @@ services:
     volumes:
       - redis_data:/data
 
-  mongo:
-    image: mongo:7
-    container_name: sabahub-mongo
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-
   app:
     build: .
     container_name: sabahub-backend-spring
     environment:
       - SERVER_PORT=8080
-      - MONGODB_URI=mongodb://mongo:27017/sabahub
+      - SPRING_DATA_MONGODB_URI=${SPRING_DATA_MONGODB_URI:?Set SPRING_DATA_MONGODB_URI (MongoDB Atlas SRV URI) in backend-spring/.env}
+      - MONGODB_URI=${SPRING_DATA_MONGODB_URI}
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
@@ -35,11 +27,22 @@ services:
       - APP_CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
       - SPRING_REDIS_HOST=redis
       - SPRING_REDIS_PORT=6379
+      - OTP_FAKE=${OTP_FAKE}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
+      - SMTP_AUTH=${SMTP_AUTH}
+      - SMTP_TLS_ENABLED=${SMTP_TLS_ENABLED}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_VERIFY_SERVICE_SID=${TWILIO_VERIFY_SERVICE_SID}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
     ports:
       - "8080:8080"
     depends_on:
-      - mongo
       - redis
 volumes:
-  mongo_data:
   redis_data:

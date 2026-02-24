@@ -2,12 +2,21 @@ package com.sabahub.web;
 
 import com.sabahub.domain.User;
 import com.sabahub.domain.UserProfile;
+import com.sabahub.domain.OTP;
 import com.sabahub.repository.UserRepository;
+import com.sabahub.service.CloudinaryMediaService;
 import com.sabahub.service.CurrentUserService;
+import com.sabahub.service.EmailService;
+import com.sabahub.service.OTPService;
+import com.sabahub.service.SMSService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * User Settings & Profile Management API
@@ -23,6 +32,18 @@ public class UserSettingsController {
 
     @Autowired
     private CurrentUserService currentUserService;
+
+    @Autowired
+    private CloudinaryMediaService mediaService;
+
+    @Autowired
+    private OTPService otpService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private SMSService smsService;
 
     /**
      * GET /api/user/settings - Get current user's settings/profile
@@ -135,6 +156,151 @@ public class UserSettingsController {
         userRepository.save(user);
         
         return ResponseEntity.ok("Verification code sent to phone");
+    }
+
+    /**
+     * POST /api/user/settings/verify-phone/request - Send SMS code for phone verification
+     */
+    @PostMapping("/verify-phone/request")
+    public ResponseEntity<?> requestPhoneVerification() {
+        User user = currentUserService.requireUser();
+        UserProfile profile = user.getProfile();
+        if (profile == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Profile not found", "success", false));
+        }
+        if (profile.getPhoneNumber() == null || profile.getPhoneNumber().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Phone number not set", "success", false));
+        }
+        if (!smsService.isConfigured()) {
+            return ResponseEntity.status(503).body(Map.of(
+                    "message", "SMS service not configured. Please contact administrator.",
+                    "success", false
+            ));
+        }
+        if (!smsService.isValidPhoneNumber(profile.getPhoneNumber())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid phone number format", "success", false));
+        }
+
+        smsService.sendVerificationCode(profile.getPhoneNumber());
+        return ResponseEntity.ok(Map.of("message", "Verification code sent to phone", "success", true));
+    }
+
+    /**
+     * POST /api/user/settings/verify-phone/confirm - Confirm SMS code and mark verified
+     */
+    @PostMapping("/verify-phone/confirm")
+    @Transactional
+    public ResponseEntity<?> confirmPhoneVerification(@RequestBody Map<String, String> payload) {
+        User user = currentUserService.requireUser();
+        UserProfile profile = user.getProfile();
+        if (profile == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Profile not found", "success", false));
+        }
+        String phoneNumber = profile.getPhoneNumber();
+        String otpCode = payload.get("otpCode");
+
+        if (phoneNumber == null || phoneNumber.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Phone number not set", "success", false));
+        }
+        if (otpCode == null || otpCode.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "OTP code is required", "success", false));
+        }
+
+        boolean approved = smsService.verifyCode(phoneNumber, otpCode);
+        if (!approved) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired OTP", "success", false));
+        }
+
+        profile.setPhoneVerified(true);
+        user.setProfile(profile);
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(savedUser.getProfile());
+    }
+
+    /**
+     * POST /api/user/settings/verify-email/request - Send email OTP for verification
+     */
+    @PostMapping("/verify-email/request")
+    public ResponseEntity<?> requestEmailVerification() {
+        User user = currentUserService.requireUser();
+        String email = user.getEmail();
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email not set", "success", false));
+        }
+
+        if (!emailService.isConfigured()) {
+            return ResponseEntity.status(503).body(Map.of(
+                    "message", "Email service not configured. Please contact administrator.",
+                    "success", false
+            ));
+        }
+
+        OTP otp = otpService.generateOTP(email, OTP.OTPType.EMAIL, OTP.OTPPurpose.EMAIL_VERIFICATION);
+        emailService.sendOTPEmail(email, otp.getOtpCode(), user.getFullName());
+        return ResponseEntity.ok(Map.of("message", "Verification code sent to your email", "success", true));
+    }
+
+    /**
+     * POST /api/user/settings/verify-email/confirm - Confirm email OTP and mark verified
+     */
+    @PostMapping("/verify-email/confirm")
+    @Transactional
+    public ResponseEntity<?> confirmEmailVerification(@RequestBody Map<String, String> payload) {
+        User user = currentUserService.requireUser();
+        String email = user.getEmail();
+        String otpCode = payload.get("otpCode");
+
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email not set", "success", false));
+        }
+        if (otpCode == null || otpCode.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "OTP code is required", "success", false));
+        }
+
+        boolean isValid = otpService.verifyOTPWithAttempts(email, otpCode);
+        if (!isValid) {
+            otpService.recordFailedAttempt(email, otpCode);
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired OTP", "success", false));
+        }
+
+        UserProfile profile = user.getProfile();
+        if (profile == null) {
+            profile = new UserProfile();
+        }
+        profile.setEmailVerified(true);
+        user.setProfile(profile);
+        User savedUser = userRepository.save(user);
+
+        return ResponseEntity.ok(savedUser.getProfile());
+    }
+
+    /**
+     * POST /api/user/settings/avatar - Upload profile image and persist profilePictureUrl
+     */
+    @PostMapping("/avatar")
+    @Transactional
+    public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        try {
+            User user = currentUserService.requireUser();
+            UserProfile profile = user.getProfile();
+            if (profile == null) {
+                profile = new UserProfile();
+            }
+
+            Map<String, String> result = mediaService.uploadProfileImage(file);
+            String url = result.get("url");
+            profile.setProfilePictureUrl(url);
+            user.setProfile(profile);
+            User savedUser = userRepository.save(user);
+
+            return ResponseEntity.ok(savedUser.getProfile());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body("Failed to upload avatar");
+        }
     }
 
     /**

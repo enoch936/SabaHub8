@@ -63,7 +63,7 @@ function Field({
     <label className="block space-y-2 text-sm font-medium text-slate-800">
       <span>{label}</span>
       <div
-        className={`flex items-center gap-3 rounded-xl border bg-white px-4 py-3 transition focus-within:ring-2 focus-within:ring-sky-200 ${
+        className={`flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white/90 px-4 py-3 backdrop-blur transition focus-within:ring-2 focus-within:ring-sky-200/70 ${
           error ? "border-rose-400" : "border-slate-200"
         }`}
       >
@@ -94,7 +94,7 @@ function SocialButton({ label }: { label: string }) {
   return (
     <button
       type="button"
-      className="flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-sky-200 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
+      className="flex items-center justify-center gap-3 rounded-xl border border-slate-200/80 bg-white/90 px-4 py-2.5 text-sm font-semibold text-slate-800 backdrop-blur transition hover:border-sky-200 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
     >
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700">
         {iconLetter}
@@ -178,7 +178,7 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-12 text-slate-900">
+    <div className="relative min-h-screen overflow-hidden bg-transparent px-4 py-12 text-slate-900">
       <div className="pointer-events-none absolute inset-0 -z-20" aria-hidden>
         <img src="/images/backgrounds/aurora-blur.svg" alt="Aurora backdrop" className="h-full w-full object-cover opacity-80" />
       </div>
@@ -198,13 +198,13 @@ export default function LoginPage() {
           <p className="mt-3 text-base text-slate-600">Welcome back. Access your workspace securely.</p>
         </header>
 
-        <section className="relative mx-auto w-full max-w-lg overflow-hidden rounded-3xl border border-white/20 bg-white/80 px-8 py-10 shadow-[0_22px_70px_rgba(8,47,73,0.35)] backdrop-blur">
+        <section className="relative mx-auto w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200/70 bg-white/85 px-8 py-10 shadow-[var(--shadow-soft-lg)] backdrop-blur">
           <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-sky-300/30 blur-3xl" aria-hidden />
           <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-indigo-300/30 blur-3xl" aria-hidden />
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 via-cyan-400 to-indigo-500" aria-hidden />
 
           <div className="relative mb-8 flex items-center gap-4">
-            <div className="relative h-14 w-14 rounded-2xl bg-sky-50 p-3 ring-1 ring-sky-100">
+            <div className="relative h-14 w-14 rounded-2xl bg-sky-50/80 p-3 ring-1 ring-sky-100/70">
               <Image src="/auth-illustration.svg" alt="WorkHub" fill sizes="56px" className="object-contain" />
             </div>
             <div>
@@ -256,7 +256,7 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={form.remember}
                   onChange={(event) => handleChange("remember", event.target.checked)}
-                  className="h-4 w-4 cursor-pointer rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-200"
+                  className="h-4 w-4 cursor-pointer rounded border-slate-300/80 text-sky-600 focus:ring-2 focus:ring-sky-200/70"
                 />
                 <span>Remember me</span>
               </label>

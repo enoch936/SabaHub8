@@ -1,0 +1,22 @@
+@startuml
+skinparam linetype ortho
+actor "Job Seeker" as JS
+participant "Privacy & Consent" as CONSENT
+participant "Security & Compliance" as COMP
+database "Auth DB" as AUTHDB
+database "Application DB" as APPDB
+database "Object Storage" as BLOB
+database "Analytics Warehouse" as DWH
+
+JS -> CONSENT : Submit consent
+CONSENT -> COMP : Record consent
+
+JS -> CONSENT : RTBF request
+CONSENT -> COMP : Validate request
+COMP -> AUTHDB : Delete identity data
+COMP -> APPDB : Delete application data
+COMP -> BLOB : Delete documents
+COMP -> DWH : Purge analytics
+COMP --> JS : Confirmation
+@enduml
+

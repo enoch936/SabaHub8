@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SabaHub",
-  description: "Freelance platform",
+  title: "SabaHub | Professional Freelance Marketplace",
+  description: "Live job marketplace with professional role details, trusted workflows, and enterprise-ready delivery tooling.",
 };
 
 export default function RootLayout({

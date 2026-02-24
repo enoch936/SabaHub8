@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getWallet, initChapa, localTopupRequest } from "@/lib/api";
+import { getWallet, initChapa, internalWalletTransfer, localTopupRequest, type WalletTransaction } from "@/lib/api";
 import { Card, Badge, Button, Input, Select, Progress, Skeleton } from "@/components/ui";
 
 export default function WalletPage() {
@@ -13,6 +13,10 @@ export default function WalletPage() {
   const [currency, setCurrency] = useState<string>("ETB");
   const [referenceId, setReferenceId] = useState<string>("");
   const [method, setMethod] = useState<"chapa" | "local">("chapa");
+  const [recipient, setRecipient] = useState<string>("");
+  const [transferAmount, setTransferAmount] = useState<number>(100);
+  const [transferNote, setTransferNote] = useState<string>("");
+  const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">("idle");
 
   const chapa = useMutation({
     mutationFn: () => initChapa({ amount, currency }, crypto.randomUUID()),
@@ -24,10 +28,26 @@ export default function WalletPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["wallet"] }),
   });
 
-  const balance = wallet.data?.balance ?? 0;
-  const currencyLabel = wallet.data?.currency ?? currency;
+  const transfer = useMutation({
+    mutationFn: () =>
+      internalWalletTransfer(
+        { recipient, amount: transferAmount, currency, note: transferNote },
+        crypto.randomUUID()
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+      setRecipient("");
+      setTransferNote("");
+      setTransferAmount(100);
+    },
+  });
 
-  const transactions = (wallet.data?.transactions as Array<any>) || [];
+  const balance = wallet.data?.balance ?? 0;
+  const availableBalance = wallet.data?.availableBalance ?? balance;
+  const currencyLabel = wallet.data?.currency ?? currency;
+  const userId = wallet.data?.userId?.trim() ?? "";
+
+  const transactions: WalletTransaction[] = wallet.data?.transactions ?? [];
   const activity = useMemo(() => {
     const income = transactions
       .filter((t) => t.direction === "IN")
@@ -48,7 +68,11 @@ export default function WalletPage() {
   const spendBreakdown = useMemo(() => {
     const buckets: Record<string, number> = {};
     transactions.forEach((t) => {
-      const cat = t.category || t.reason || "Other";
+      const categoryFromMetadata =
+        t.metadata && typeof t.metadata === "object" && "category" in t.metadata
+          ? String((t.metadata as Record<string, unknown>).category ?? "")
+          : "";
+      const cat = categoryFromMetadata || t.reason || "Other";
       buckets[cat] = (buckets[cat] || 0) + (t.amount || 0);
     });
     return Object.entries(buckets)
@@ -62,6 +86,35 @@ export default function WalletPage() {
   const handleTopup = () => {
     if (method === "chapa") return chapa.mutate();
     return localReq.mutate();
+  };
+
+  const copyUserId = async () => {
+    if (!userId) {
+      setCopyStatus("error");
+      return;
+    }
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(userId);
+      } else if (typeof document !== "undefined") {
+        const el = document.createElement("textarea");
+        el.value = userId;
+        el.style.position = "fixed";
+        el.style.opacity = "0";
+        document.body.appendChild(el);
+        el.focus();
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+      } else {
+        throw new Error("Clipboard not available");
+      }
+      setCopyStatus("success");
+      window.setTimeout(() => setCopyStatus("idle"), 2000);
+    } catch {
+      setCopyStatus("error");
+    }
   };
 
   return (
@@ -115,9 +168,9 @@ export default function WalletPage() {
               <div>
                 <p className="text-sm text-slate-500">Available Balance</p>
                 <p className="text-4xl font-bold text-slate-900">
-                  {currencyLabel} {balance.toLocaleString()}
+                  {currencyLabel} {availableBalance.toLocaleString()}
                 </p>
-                <p className="text-sm text-slate-500">Real-time balance</p>
+                <p className="text-sm text-slate-500">Available for transfer and spending</p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="success">Live</Badge>
@@ -125,6 +178,29 @@ export default function WalletPage() {
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div className="sm:col-span-3 rounded-xl bg-slate-50/90 p-4 border border-slate-200/80">
+                <p className="text-sm font-medium text-slate-700">Your User ID</p>
+                <p className="text-xs text-slate-500">Use this for SabaHub internal transfers.</p>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    readOnly
+                    value={userId || "User ID unavailable"}
+                    onFocus={(e) => e.currentTarget.select()}
+                    className="font-mono text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={copyUserId}
+                    disabled={!userId}
+                    className="sm:w-auto"
+                  >
+                    Copy ID
+                  </Button>
+                </div>
+                {copyStatus === "success" && <p className="mt-1 text-xs text-emerald-600">User ID copied.</p>}
+                {copyStatus === "error" && <p className="mt-1 text-xs text-rose-600">Unable to copy User ID.</p>}
+              </div>
               <div className="rounded-xl bg-white/80 p-4 border border-white/30 backdrop-blur">
                 <p className="text-sm text-slate-600">Escrow Held</p>
                 <p className="text-xl font-semibold text-slate-900">{currencyLabel} {(wallet.data?.escrowHeld ?? 0).toLocaleString()}</p>
@@ -185,6 +261,42 @@ export default function WalletPage() {
             {(chapa.isSuccess || localReq.isSuccess) && (
               <p className="text-sm text-emerald-600">Request submitted. Balance will refresh automatically.</p>
             )}
+
+            <div className="border-t border-slate-200/80 pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-slate-900">SabaHub to SabaHub Transfer</h4>
+                <Badge variant="info">Internal</Badge>
+              </div>
+              <Input
+                placeholder="Recipient email or user ID"
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+              />
+              <Input
+                type="number"
+                value={transferAmount}
+                onChange={(e) => setTransferAmount(Number(e.target.value))}
+              />
+              <Input
+                placeholder="Transfer note (optional)"
+                value={transferNote}
+                onChange={(e) => setTransferNote(e.target.value)}
+              />
+              <Button
+                onClick={() => transfer.mutate()}
+                isLoading={transfer.isPending}
+                disabled={!recipient || transferAmount <= 0 || transferAmount > availableBalance}
+                className="w-full"
+              >
+                Send to SabaHub Wallet
+              </Button>
+              {transfer.error && (
+                <p className="text-sm text-rose-600">{(transfer.error as any)?.response?.data?.error || (transfer.error as any)?.message || "Transfer failed"}</p>
+              )}
+              {transfer.isSuccess && (
+                <p className="text-sm text-emerald-600">Transfer completed successfully.</p>
+              )}
+            </div>
           </Card>
         </div>
 
@@ -255,7 +367,7 @@ export default function WalletPage() {
               {transactions.slice(0, 8).map((t) => (
                 <div key={t.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
                   <div>
-                    <p className="font-semibold text-slate-900">{t.reason || t.type || "Transaction"}</p>
+                    <p className="font-semibold text-slate-900">{t.reason || "Transaction"}</p>
                     <p className="text-xs text-slate-500">{t.createdAt ? new Date(t.createdAt).toLocaleString() : ""}</p>
                   </div>
                   <div className="text-right">

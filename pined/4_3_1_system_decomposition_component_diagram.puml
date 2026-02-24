@@ -1,0 +1,56 @@
+@startuml
+left to right direction
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Inter"
+skinparam defaultFontSize 10
+
+actor "Freelancer" as Freelancer
+actor "Employer" as Employer
+actor "Admin" as Admin
+
+component "Next.js UI" as UI
+component "Next.js API Proxy" as Proxy
+component "Spring Boot API" as API
+
+package "Core Services" {
+  component "Auth/OTP Service" as Auth
+  component "Profile Service" as Profile
+  component "Job Service" as Job
+  component "Application Service" as App
+  component "Media/Asset Service" as Media
+  component "Admin Service" as AdminSvc
+}
+
+component "MongoDB Atlas" as Mongo <<database>>
+component "Cloudinary" as Cloud <<external>>
+component "SMTP Provider" as Smtp <<external>>
+component "Twilio Verify" as Twilio <<external>>
+component "Redis (optional)" as Redis <<external>>
+
+Freelancer --> UI
+Employer --> UI
+Admin --> UI
+
+UI --> Proxy
+Proxy --> API
+
+API --> Auth
+API --> Profile
+API --> Job
+API --> App
+API --> Media
+API --> AdminSvc
+
+Auth --> Mongo
+Auth --> Redis
+Auth --> Smtp
+Auth --> Twilio
+
+Profile --> Mongo
+Job --> Mongo
+App --> Mongo
+Media --> Mongo
+Media --> Cloud
+AdminSvc --> Mongo
+@enduml

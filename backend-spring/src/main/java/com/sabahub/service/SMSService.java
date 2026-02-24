@@ -2,6 +2,7 @@ package com.sabahub.service;
 
 import com.twilio.Twilio;
 import com.twilio.rest.verify.v2.service.Verification;
+import com.twilio.rest.verify.v2.service.VerificationCheck;
 import com.twilio.type.PhoneNumber;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,13 +31,18 @@ public class SMSService {
 
     private boolean isInitialized = false;
 
+    @Value("${OTP_FAKE:false}")
+    private boolean otpFake;
+
     /**
      * Check if SMS service is properly configured
      */
     public boolean isConfigured() {
-        return twilioAccountSid != null && !twilioAccountSid.isEmpty() && 
-               twilioAuthToken != null && !twilioAuthToken.isEmpty() &&
-               twilioVerifyServiceSid != null && !twilioVerifyServiceSid.isEmpty();
+         // If OTP_FAKE is enabled, treat SMS service as configured for dev/testing
+         if (otpFake) return true;
+         return twilioAccountSid != null && !twilioAccountSid.isEmpty() && 
+             twilioAuthToken != null && !twilioAuthToken.isEmpty() &&
+             twilioVerifyServiceSid != null && !twilioVerifyServiceSid.isEmpty();
     }
 
     /**
@@ -56,13 +62,18 @@ public class SMSService {
      */
     public void sendOTPSMS(String phoneNumber, String otpCode) {
         log.info("Sending OTP SMS via Verify API to: {}", phoneNumber);
-        
+        // Dev fallback: if OTP_FAKE is enabled, log and skip Twilio call
+        if (otpFake) {
+            log.warn("OTP_FAKE enabled - logging OTP SMS instead of sending via Twilio Verify. Recipient: {} OTP: {}", phoneNumber, otpCode);
+            return;
+        }
+
         if (!isConfigured()) {
             String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
             log.warn(errorMsg);
             throw new RuntimeException(errorMsg);
         }
-        
+
         if (!isInitialized) {
             initializeTwilio();
         }
@@ -86,17 +97,91 @@ public class SMSService {
     }
 
     /**
-     * Send password reset OTP via SMS using Twilio Verify API
+     * Send a verification code via Twilio Verify (preferred for phone verification)
      */
-    public void sendPasswordResetSMS(String phoneNumber, String otpCode) {
-        log.info("Sending password reset SMS via Verify API to: {}", phoneNumber);
-        
+    public void sendVerificationCode(String phoneNumber) {
+        log.info("Sending verification code via Verify API to: {}", phoneNumber);
+        if (otpFake) {
+            log.warn("OTP_FAKE enabled - skipping Twilio Verify send. Recipient: {}", phoneNumber);
+            return;
+        }
+
         if (!isConfigured()) {
             String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
             log.warn(errorMsg);
             throw new RuntimeException(errorMsg);
         }
-        
+
+        if (!isInitialized) {
+            initializeTwilio();
+        }
+
+        try {
+            Verification verification = Verification.creator(
+                    twilioVerifyServiceSid,
+                    phoneNumber,
+                    "sms"
+            ).create();
+
+            log.info("Verification SMS sent via Verify API. Status: {}, Phone: {}", verification.getStatus(), phoneNumber);
+        } catch (Exception e) {
+            log.error("Failed to send verification SMS to: {} - Error: {}", phoneNumber, e.getMessage(), e);
+            throw new RuntimeException("Failed to send verification SMS: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Verify a code using Twilio Verify API
+     */
+    public boolean verifyCode(String phoneNumber, String code) {
+        log.info("Verifying SMS code via Verify API for: {}", phoneNumber);
+        if (otpFake) {
+            log.warn("OTP_FAKE enabled - accepting verification code for: {}", phoneNumber);
+            return true;
+        }
+
+        if (!isConfigured()) {
+            String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
+            log.warn(errorMsg);
+            throw new RuntimeException(errorMsg);
+        }
+
+        if (!isInitialized) {
+            initializeTwilio();
+        }
+
+        try {
+            VerificationCheck verificationCheck = VerificationCheck.creator(twilioVerifyServiceSid)
+                    .setCode(code)
+                    .setTo(phoneNumber)
+                    .create();
+
+            String status = verificationCheck.getStatus();
+            log.info("Verification check status: {} for {}", status, phoneNumber);
+            return "approved".equalsIgnoreCase(status);
+        } catch (Exception e) {
+            log.error("Failed to verify SMS code for: {} - Error: {}", phoneNumber, e.getMessage(), e);
+            throw new RuntimeException("Failed to verify SMS code: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Send password reset OTP via SMS using Twilio Verify API
+     */
+    public void sendPasswordResetSMS(String phoneNumber, String otpCode) {
+        log.info("Sending password reset SMS via Verify API to: {}", phoneNumber);
+        // Dev fallback: if OTP_FAKE is enabled, log and skip Twilio call
+        if (otpFake) {
+            log.warn("OTP_FAKE enabled - logging password reset SMS OTP instead of sending via Twilio Verify. Recipient: {} OTP: {}", phoneNumber, otpCode);
+            return;
+        }
+
+        if (!isConfigured()) {
+            String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
+            log.warn(errorMsg);
+            throw new RuntimeException(errorMsg);
+        }
+
         if (!isInitialized) {
             initializeTwilio();
         }

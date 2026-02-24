@@ -13,7 +13,7 @@ const API_BASE =
 function buildTargetUrl(pathParts?: string[]) {
   const path = Array.isArray(pathParts) ? pathParts.join("/") : "";
   return `${API_BASE.replace(/\/$/, "")}/api/auth/${path}`.replace(
-    /([^:]\/)/\/+/,
+    /([^:]\/)\/+/g,
     "$1",
   );
 }

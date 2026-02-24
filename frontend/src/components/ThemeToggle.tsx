@@ -1,6 +1,7 @@
 "use client";
 
 import { useTheme } from "./useTheme";
+import { motion } from "framer-motion";
 
 // Inline icons
 function SunIcon({ className = "h-5 w-5" }: { className?: string }) {
@@ -82,7 +83,7 @@ export function ThemeIconButton({ className = "" }: { className?: string }) {
   const isDark = theme === "dark";
 
   return (
-    <button
+    <motion.button
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       type="button"
@@ -92,6 +93,8 @@ export function ThemeIconButton({ className = "" }: { className?: string }) {
         backgroundColor: isDark ? "#1e293b" : "#f8fafc",
         color: isDark ? "#cbd5e1" : "#475569",
       }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.96 }}
     >
       <div className="relative h-5 w-5">
         <div
@@ -109,6 +112,6 @@ export function ThemeIconButton({ className = "" }: { className?: string }) {
           <MoonIcon className="h-5 w-5" />
         </div>
       </div>
-    </button>
+    </motion.button>
   );
 }

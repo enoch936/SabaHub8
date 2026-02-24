@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, type HTMLMotionProps } from "framer-motion";
 import clsx from "clsx";
 import { createPortal } from "react-dom";
 import { useSession } from "@/lib/session";
@@ -22,17 +23,17 @@ export function Card({
   hover?: boolean;
 }) {
   const variants = {
-    default: "bg-white border border-slate-200",
-    bordered: "bg-white border-2 border-slate-200",
-    elevated: "bg-white shadow-lg border border-slate-100",
+    default: "bg-white/90 backdrop-blur border border-slate-200/80 shadow-[var(--shadow-soft)]",
+    bordered: "bg-white/90 backdrop-blur border-2 border-slate-200/80",
+    elevated: "bg-white/95 backdrop-blur shadow-[var(--shadow-soft-lg)] border border-slate-100",
   };
   
   return (
     <div
       className={cn(
-        "rounded-xl transition-all duration-200",
+        "rounded-2xl transition-all duration-300",
         variants[variant],
-        hover && "hover:shadow-xl hover:-translate-y-0.5 cursor-pointer",
+        hover && "hover:shadow-2xl hover:-translate-y-1 hover:border-slate-300/80 cursor-pointer",
         className
       )}
       {...props}
@@ -50,16 +51,17 @@ export function Badge({
   className,
   ...props 
 }: React.HTMLAttributes<HTMLSpanElement> & {
-  variant?: "default" | "success" | "warning" | "danger" | "info" | "purple";
+  variant?: "default" | "outline" | "success" | "warning" | "danger" | "info" | "purple";
   size?: "sm" | "md" | "lg";
 }) {
   const variants = {
-    default: "bg-slate-100 text-slate-700 border border-slate-200",
-    success: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-    warning: "bg-amber-50 text-amber-700 border border-amber-200",
-    danger: "bg-rose-50 text-rose-700 border border-rose-200",
-    info: "bg-sky-50 text-sky-700 border border-sky-200",
-    purple: "bg-purple-50 text-purple-700 border border-purple-200",
+    default: "bg-slate-100/80 text-slate-700 border border-slate-200/70",
+    outline: "bg-transparent text-slate-700 border border-slate-200/80",
+    success: "bg-emerald-50/80 text-emerald-700 border border-emerald-200/70",
+    warning: "bg-amber-50/80 text-amber-700 border border-amber-200/70",
+    danger: "bg-rose-50/80 text-rose-700 border border-rose-200/70",
+    info: "bg-sky-50/80 text-sky-700 border border-sky-200/70",
+    purple: "bg-purple-50/80 text-purple-700 border border-purple-200/70",
   };
   
   const sizes = {
@@ -71,7 +73,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full font-medium",
+        "inline-flex items-center gap-1 rounded-full font-medium backdrop-blur",
         variants[variant],
         sizes[size],
         className
@@ -106,7 +108,11 @@ export function Avatar({
   };
   
   if (!src || error) {
-    const initials = fallback || alt.charAt(0).toUpperCase();
+    const fallbackText = fallback?.trim();
+    const display =
+      fallbackText && fallbackText.length > 0
+        ? fallbackText.split(" ")[0]
+        : alt.charAt(0).toUpperCase();
     return (
       <div
         className={cn(
@@ -115,7 +121,7 @@ export function Avatar({
           className
         )}
       >
-        {initials}
+        {display}
       </div>
     );
   }
@@ -235,7 +241,7 @@ export function Dropdown({
       {open && (
         <div
           className={cn(
-            "absolute z-50 mt-2 min-w-[200px] rounded-lg border border-slate-200 bg-white py-1 shadow-xl",
+            "absolute z-50 mt-2 min-w-[200px] rounded-xl border border-slate-200/80 bg-white/95 backdrop-blur py-1 shadow-2xl",
             align === "right" ? "right-0" : "left-0"
           )}
         >
@@ -247,7 +253,7 @@ export function Dropdown({
                 setOpen(false);
               }}
               className={cn(
-                "flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition hover:bg-slate-50",
+                "flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition hover:bg-slate-50/80",
                 item.danger ? "text-rose-600" : "text-slate-700"
               )}
             >
@@ -271,7 +277,7 @@ export function Button({
     leftIcon,
     rightIcon,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+}: Omit<HTMLMotionProps<"button">, "ref"> & {
   variant?: "primary" | "secondary" | "outline" | "danger";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
@@ -279,26 +285,30 @@ export function Button({
   rightIcon?: ReactNode;
 }) {
   const variants: Record<string, string> = {
-    primary: "bg-sky-600 text-white hover:bg-sky-700 shadow-sm hover:shadow-md",
-    secondary: "bg-slate-900 text-white hover:bg-black shadow-sm hover:shadow-md",
-    outline: "border-2 border-slate-300 hover:bg-slate-50 hover:border-slate-400",
-    danger: "bg-rose-600 text-white hover:bg-rose-700 shadow-sm hover:shadow-md",
+    primary: "bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-[0_10px_30px_rgba(14,165,233,0.35)] hover:from-sky-500 hover:to-blue-600",
+    secondary: "bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.3)] hover:bg-slate-950",
+    outline: "border-2 border-slate-300/80 bg-white/80 backdrop-blur hover:bg-slate-50/80 hover:border-slate-400/80",
+    danger: "bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-[0_10px_30px_rgba(244,63,94,0.3)] hover:from-rose-500 hover:to-pink-600",
   };
   const sizes: Record<string, string> = {
     sm: "px-3 py-2 text-sm",
     md: "px-5 py-2.5 text-sm font-medium",
     lg: "px-6 py-3 text-base font-medium",
   };
+
+  const { disabled, ...rest } = props;
   return (
-    <button
+    <motion.button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center gap-2 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-sky-400/60 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
         variants[variant],
         sizes[size],
         className
       )}
-        disabled={isLoading || props.disabled}
-      {...props}
+      whileHover={isLoading || disabled ? undefined : { y: -1 }}
+      whileTap={isLoading || disabled ? undefined : { scale: 0.98 }}
+      {...rest}
+      disabled={isLoading || disabled}
     >
             {isLoading ? (
               <>
@@ -315,8 +325,7 @@ export function Button({
                 {rightIcon}
               </>
             )}
-      {children}
-    </button>
+    </motion.button>
   );
 }
 
@@ -326,7 +335,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={cn(
-        "w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-2.5 text-sm transition placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 disabled:bg-slate-50 disabled:cursor-not-allowed",
+        "w-full rounded-xl border border-slate-200/80 bg-white/90 backdrop-blur px-4 py-2.5 text-sm transition placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100/70 disabled:bg-slate-50 disabled:cursor-not-allowed",
         props.className
       )}
     />
@@ -339,7 +348,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
     <textarea
       {...props}
       className={cn(
-        "w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-2.5 text-sm transition placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 disabled:bg-slate-50 disabled:cursor-not-allowed",
+        "w-full rounded-xl border border-slate-200/80 bg-white/90 backdrop-blur px-4 py-2.5 text-sm transition placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100/70 disabled:bg-slate-50 disabled:cursor-not-allowed",
         props.className
       )}
     />
@@ -352,7 +361,7 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
     <select
       {...props}
       className={cn(
-        "rounded-lg border-2 border-slate-200 bg-white px-4 py-2.5 text-sm transition focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 disabled:bg-slate-50 disabled:cursor-not-allowed",
+        "rounded-xl border border-slate-200/80 bg-white/90 backdrop-blur px-4 py-2.5 text-sm transition focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100/70 disabled:bg-slate-50 disabled:cursor-not-allowed",
         props.className
       )}
     />
@@ -367,57 +376,61 @@ export function Modal({ open, onClose, title, children, actions }: {
   children: ReactNode;
   actions?: ReactNode;
 }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  
-    useEffect(() => {
-      if (open) {
-        document.body.style.overflow = 'hidden';
-      } else {
-        document.body.style.overflow = 'unset';
-      }
-      return () => {
-        document.body.style.overflow = 'unset';
-      };
-    }, [open]);
-  
-  if (!mounted) return null;
+  const isBrowser = typeof document !== "undefined";
+
+  useEffect(() => {
+    if (!isBrowser) return;
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [open, isBrowser]);
+
+  if (!isBrowser) return null;
   return createPortal(
-    <div
-      aria-hidden={!open}
-      className={cn(
-        "fixed inset-0 z-50 grid place-items-center transition-opacity duration-300",
-        open ? "visible opacity-100" : "invisible opacity-0 pointer-events-none"
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-50 grid place-items-center">
+          <motion.div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          />
+
+          <motion.div
+            className="relative z-10 w-full max-w-lg rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-2xl backdrop-blur"
+            initial={{ opacity: 0, y: 12, scale: 0.995 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.995 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {title && (
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-slate-900">{title}</h3>
+                <button
+                  onClick={onClose}
+                  className="rounded-lg p-1 transition hover:bg-slate-100"
+                  aria-label="Close"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+            <div className="text-slate-700">{children}</div>
+            {actions && <div className="mt-6 flex justify-end gap-3">{actions}</div>}
+          </motion.div>
+        </div>
       )}
-    >
-      <div 
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300" 
-        onClick={onClose} 
-      />
-      <div 
-        className={cn(
-          "relative z-10 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl transition-all duration-300",
-          open ? "scale-100 translate-y-0" : "scale-95 -translate-y-4"
-        )}
-      >
-        {title && (
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-bold text-slate-900">{title}</h3>
-            <button
-              onClick={onClose}
-              className="rounded-lg p-1 transition hover:bg-slate-100"
-              aria-label="Close"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
-        <div className="text-slate-700">{children}</div>
-        {actions && <div className="mt-6 flex justify-end gap-3">{actions}</div>}
-      </div>
-    </div>,
+    </AnimatePresence>,
     document.body
   );
 }

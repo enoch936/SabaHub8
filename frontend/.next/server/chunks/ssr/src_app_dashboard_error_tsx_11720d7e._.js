@@ -1,0 +1,3 @@
+module.exports=[2042,a=>{"use strict";var b=a.i(3502),c=a.i(7040);function d({error:a,reset:d}){return(0,c.useEffect)(()=>{console.error("Dashboard error:",a)},[a]),(0,b.jsxs)("div",{className:"mx-auto max-w-xl p-6",children:[(0,b.jsx)("h1",{className:"mb-2 text-2xl font-bold",children:"Something went wrong"}),(0,b.jsx)("p",{className:"text-slate-700",children:"An unexpected error occurred while rendering this page."}),(0,b.jsx)("div",{className:"mt-4",children:(0,b.jsx)("button",{onClick:()=>d(),className:"rounded bg-slate-900 px-4 py-2 text-white",children:"Try again"})}),!1]})}a.s(["default",()=>d])}];
+
+//# sourceMappingURL=src_app_dashboard_error_tsx_11720d7e._.js.map

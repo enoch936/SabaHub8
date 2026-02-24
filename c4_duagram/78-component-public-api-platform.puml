@@ -1,0 +1,22 @@
+@startuml
+!include <C4/C4_Component>
+
+Container(apiPlatform, "Public API Platform", "REST/Webhooks", "Partner integrations") {
+  Component(apiCredentials, "Obtain API Credentials", "Key issuance")
+  Component(apiKeyMgmt, "Manage API Keys", "Key rotation")
+  Component(apiVersioning, "API Versioning", "Versioned endpoints")
+  Component(usagePolicies, "Usage Policies", "Quota and usage rules")
+  Component(jobCatalog, "Access Job Catalog", "Job endpoints")
+  Component(submitApplications, "Submit Applications", "Application endpoints")
+  Component(webhooks, "Webhook Subscription", "Event delivery")
+  Component(rateLimits, "Rate Limit Management", "Abuse protection")
+  Component(apiAudit, "Audit API Usage", "Usage logging")
+}
+
+Rel(jobCatalog, rateLimits, "Includes")
+Rel(submitApplications, rateLimits, "Includes")
+Rel(apiVersioning, jobCatalog, "Applies")
+Rel(apiVersioning, submitApplications, "Applies")
+Rel(usagePolicies, rateLimits, "Governs")
+Rel(webhooks, apiAudit, "Includes")
+@enduml

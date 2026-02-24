@@ -1,0 +1,82 @@
+CHAPTER FOUR 4: SYSTEM DESIGN
+
+4.1 Introduction
+The System Design phase translates the requirements from Chapter 2 into a concrete technical blueprint for SabaHub. The project targets an enterprise-grade freelance marketplace, so the design emphasizes security, scalability, and low latency while preserving developer agility.
+
+SabaHub is implemented as a 3-tier layered architecture:
+- Presentation Layer: Next.js 16 (React 19) frontend for fast, SEO-friendly UI.
+- Application Layer: Spring Boot 3.3 REST API for business logic and orchestration.
+- Data Layer: MongoDB Atlas for structured metadata and Cloudinary for media assets.
+
+Architectural Foundations
+The design is guided by four pillars:
+1) Subsystem decomposition: break the platform into cohesive services (Auth/OTP, Profiles, Jobs, Applications, Media/Assets, Admin).
+2) Hardware/software mapping: place the Spring Boot API in containerized compute, and offload media delivery to Cloudinary edge nodes.
+3) Persistent data management: store structured, evolving data in MongoDB, and store large binaries in Cloudinary with metadata and signed URLs saved in MongoDB.
+4) Access control and security: enforce JWT-based stateless auth with RBAC (Admin, Employer, Freelancer) and OTP-based identity verification.
+
+Traceability and Alignment
+Design choices map directly to the requirements:
+- Identity and OTP flows map to the authentication and verification requirements.
+- Media upload and storage architecture maps to portfolio and asset requirements.
+- Role-based permissions map to governance and admin requirements.
+- Scalability and responsiveness map to performance and availability requirements.
+Constraints that influence architecture include the need for Cloudinary integration, MongoDB Atlas usage, and a stateless JWT authentication model for horizontal scaling.
+
+4.2 Current Software Architecture (System Being Replaced)
+The current environment is fragmented and informal. Existing local job boards are monolithic, and most hiring activity occurs in decentralized channels (Telegram, WhatsApp, Facebook Groups).
+
+I. Fragmented Monolithic Architecture
+- Tightly coupled UI, business logic, and data access in a single app.
+- SQL tables struggle to store evolving profile schemas and large media assets.
+- Legacy server-side rendering yields slow and inconsistent UX.
+
+II. Informal Decentralized Network
+- Portfolio files are shared in chats with no persistence or searchability.
+- No identity layer or document verification; trust is anecdotal.
+- Manual coordination across multiple apps increases cognitive load.
+
+III. Comparative Technical Gaps
+Feature | Current System (Legacy/Informal) | SabaHub (Modern)
+Architecture | Monolithic or disconnected apps | API-first, decoupled Next.js + Spring Boot
+Data Flow | Synchronous and local | Asynchronous, cloud-native with Cloudinary
+Identity | Self-reported, no verification | OTP + JWT with role-based controls
+Scalability | Vertical, expensive | Horizontal, elastic containers
+
+4.3 Proposed Software Architecture
+SabaHub adopts a cloud-native, decoupled architecture with strict separation of concerns between UI, API, and storage. The design uses REST interfaces and stateless JWT tokens to enable horizontal scaling.
+
+4.3.1 System Decomposition
+See the UML component diagram: 4_3_1_system_decomposition_component_diagram.puml
+Subsystems and responsibilities:
+- Auth/OTP: registration, login, OTP verification, token issuance.
+- Profiles: user details, skills, portfolio metadata.
+- Jobs: job post creation and management.
+- Applications: application lifecycle and status tracking.
+- Media/Assets: upload and metadata management (Cloudinary + MongoDB).
+- Admin/Governance: role management and audit controls.
+
+4.3.2 Hardware/Software Mapping
+See the UML deployment diagram: 4_3_2_hardware_software_mapping_deployment_diagram.puml
+Mapping summary:
+- Client tier: browsers render Next.js bundles.
+- Application tier: Next.js server and Spring Boot API in containers.
+- Data tier: MongoDB Atlas for metadata, Cloudinary for binaries, optional Redis for caching.
+
+4.3.3 Persistent Data Modeling
+See the UML object diagram: 4_3_3_persistent_data_modeling_object_diagram.puml
+Persistent data is stored in MongoDB as documents. Media files are stored in Cloudinary; MongoDB stores metadata and signed URLs. Data access is encapsulated in Spring Data repositories and service-layer DAOs to prevent direct client-side access.
+
+4.3.4 Access Control and Security
+See 4_3_4_access_control_and_security.txt for the RBAC table and security details.
+
+4.3.5 Detailed Class Diagram
+See the UML class diagram: 4_3_5_detailed_class_diagram.puml
+The diagram specifies attributes, operations, visibility, and operation contracts for key domain entities and services.
+
+4.3.6 Package Diagram
+See the UML package diagram: 4_3_6_package_diagram.puml
+The package structure reflects clean layering and code separation across controllers, services, repositories, security, and integrations.
+
+4.3.7 Deployment
+See 4_3_7_deployment.txt for deployment stages and production rollout details.

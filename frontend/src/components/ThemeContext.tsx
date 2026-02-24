@@ -17,19 +17,6 @@ export function ThemeContextProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
-  // Initialize theme on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("sabahub-theme");
-      const initialTheme = (saved === "dark" ? "dark" : "light") as Theme;
-      setThemeState(initialTheme);
-      applyTheme(initialTheme);
-    } catch {
-      applyTheme("light");
-    }
-    setMounted(true);
-  }, []);
-
   const applyTheme = useCallback((nextTheme: Theme) => {
     if (typeof document === "undefined") return;
 
@@ -59,6 +46,19 @@ export function ThemeContextProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("sabahub-theme", nextTheme);
     } catch {}
   }, []);
+
+  // Initialize theme on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sabahub-theme");
+      const initialTheme = (saved === "dark" ? "dark" : "light") as Theme;
+      setThemeState(initialTheme);
+      applyTheme(initialTheme);
+    } catch {
+      applyTheme("light");
+    }
+    setMounted(true);
+  }, [applyTheme]);
 
   const setTheme = useCallback(
     (nextTheme: Theme) => {
@@ -92,7 +92,7 @@ export function useTheme() {
   useEffect(() => {
     if (!context) return;
 
-    const handleThemeChange = (event: any) => {
+    const handleThemeChange = () => {
       // Force re-render to pick up the new theme from context
       setUpdate((prev) => prev + 1);
     };

@@ -1,0 +1,46 @@
+@startuml
+left to right direction
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+}
+
+title Notifications — ER Diagram
+
+entity "User" as User {
+  *id : UUID
+  --
+  email : String
+}
+
+entity "Template" as Template {
+  *id : UUID
+  --
+  name : String <<unique>>
+  content : Text
+}
+
+entity "Notification" as Notification {
+  *id : UUID
+  --
+  userId : UUID <<FK>>
+  channel : ChannelType
+  status : NotificationStatus
+  templateId : UUID <<FK>>
+}
+
+entity "NotificationPreference" as NotificationPreference {
+  *userId : UUID <<PK/FK>>
+  *channel : ChannelType <<PK>>
+  --
+  enabled : Boolean
+}
+
+User ||--o{ Notification : userId
+Template ||--o{ Notification : templateId
+User ||--o{ NotificationPreference : userId
+@enduml
+

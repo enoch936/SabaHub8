@@ -1,0 +1,19 @@
+@startuml
+!include <C4/C4_Component>
+
+Container(complianceService, "Security & Compliance Service", "Java/Spring", "Audit, privacy, reporting") {
+  Component(securityPolicies, "Configure Security Policies", "Policy management")
+  Component(monitorSecurity, "Monitor Security Events", "Event monitoring")
+  Component(reviewAuditLogs, "Review Audit Logs", "Audit review")
+  Component(auditAlerting, "Audit Alerting", "Policy violation alerts")
+  Component(dataRetention, "Data Retention & Purge", "Retention controls")
+  Component(consentMgmt, "Consent & Privacy Management", "Consent handling")
+  Component(regulatoryReporting, "Regulatory Reporting", "Compliance reports")
+  Component(incidentResponse, "Incident Response", "Incident handling")
+}
+
+Rel(monitorSecurity, reviewAuditLogs, "Includes")
+Rel(incidentResponse, reviewAuditLogs, "Includes")
+Rel(auditAlerting, incidentResponse, "Escalates to")
+Rel(consentMgmt, regulatoryReporting, "Includes")
+@enduml

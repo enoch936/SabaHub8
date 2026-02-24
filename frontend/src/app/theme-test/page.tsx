@@ -6,7 +6,7 @@ import { SegmentedThemeToggle, useTheme } from "@/components/useTheme";
 export default function ThemeTestPage() {
   const { theme, mounted } = useTheme();
   const [htmlClasses, setHtmlClasses] = useState<string>("");
-  const [localStorage, setLocalStorage] = useState<string>("");
+  const [storedTheme, setStoredTheme] = useState<string>("");
 
   useEffect(() => {
     if (!mounted) return;
@@ -14,10 +14,10 @@ export default function ThemeTestPage() {
     const checkState = () => {
       const html = document.documentElement;
       const classes = html.className;
-      const stored = localStorage.getItem("sabahub-theme") || "not set";
+      const stored = window.localStorage.getItem("sabahub-theme") || "not set";
 
       setHtmlClasses(classes);
-      setLocalStorage(stored);
+      setStoredTheme(stored);
     };
 
     checkState();
@@ -41,7 +41,7 @@ export default function ThemeTestPage() {
             <strong>HTML Classes:</strong> <code className="bg-white dark:bg-slate-700 px-2 py-1 rounded">{htmlClasses || "none"}</code>
           </div>
           <div>
-            <strong>LocalStorage sabahub-theme:</strong> <code className="bg-white dark:bg-slate-700 px-2 py-1 rounded">{localStorage}</code>
+            <strong>LocalStorage sabahub-theme:</strong> <code className="bg-white dark:bg-slate-700 px-2 py-1 rounded">{storedTheme}</code>
           </div>
           <div>
             <strong>color-scheme:</strong> <code className="bg-white dark:bg-slate-700 px-2 py-1 rounded">{document.documentElement.style.colorScheme}</code>

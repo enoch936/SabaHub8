@@ -1,0 +1,49 @@
+@startuml
+!include <C4/C4_Context>
+
+LAYOUT_LEFT_RIGHT
+
+Person(jobSeeker, "Job Seeker", "Searches and applies for jobs")
+Person(employer, "Employer", "Posts jobs, manages hiring")
+Person(recruiter, "Recruiter", "Supports talent acquisition")
+Person(admin, "Administrator", "Manages platform, users, and compliance")
+Person(support, "Support Agent", "Provides customer support")
+Person(financeAdmin, "Finance Admin", "Manages billing & tax")
+Person(government, "Government/Compliance", "Regulates and audits platform")
+Person(tenantAdmin, "Tenant Admin", "Manages tenant-level configuration")
+Person(tenantUser, "Tenant User", "End-user within tenant organization")
+Person(partnerAPI, "Partner API Client", "Integrates via public API")
+
+System_Ext(idp, "Identity Provider", "Authentication & SSO")
+System_Ext(pay, "Payment Gateway", "Payments and billing")
+System_Ext(msg, "Notification Provider", "Email/SMS/Push delivery")
+System_Ext(bi, "Analytics/BI", "Reporting and analytics")
+System_Ext(ats, "ATS/HRIS", "Recruiting systems")
+System_Ext(bgCheck, "Background Check Provider", "Candidate verification")
+System_Ext(calendar, "Calendar Provider", "Interview scheduling")
+System_Ext(esign, "E-Signature Service", "Offer signing")
+System_Ext(crmErp, "CRM/ERP", "Billing & revenue sync")
+
+System(system, "SabaHub Enterprise Platform", "Multi-tenant talent acquisition and hiring platform")
+
+Rel(jobSeeker, system, "Searches and applies")
+Rel(employer, system, "Manages jobs and hiring")
+Rel(recruiter, system, "Manages candidates")
+Rel(admin, system, "Governance and compliance")
+Rel(support, system, "Support operations")
+Rel(financeAdmin, system, "Billing and tax")
+Rel(government, system, "Regulatory oversight")
+Rel(tenantAdmin, system, "Tenant configuration")
+Rel(tenantUser, system, "Tenant usage")
+Rel(partnerAPI, system, "Public API integration")
+
+Rel(system, idp, "SSO/MFA")
+Rel(system, pay, "Payments")
+Rel(system, msg, "Notifications")
+Rel(system, bi, "Analytics")
+Rel(system, ats, "Job/candidate sync")
+Rel(system, bgCheck, "Background checks")
+Rel(system, calendar, "Interview scheduling")
+Rel(system, esign, "Offer signatures")
+Rel(system, crmErp, "Revenue sync")
+@enduml

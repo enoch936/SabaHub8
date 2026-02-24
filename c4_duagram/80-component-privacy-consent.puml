@@ -1,0 +1,13 @@
+@startuml
+!include <C4/C4_Component>
+
+Container(complianceService, "Security & Compliance Service", "Java/Spring", "Privacy and consent") {
+  Component(captureConsent, "Capture Consent", "Consent capture")
+  Component(dataAccess, "Manage Data Access Requests", "DSAR workflows")
+  Component(rtbf, "Right to be Forgotten", "Data erasure")
+  Component(dataExport, "Data Export", "User export")
+  Component(pia, "Privacy Impact Assessment", "Risk assessment")
+}
+
+Rel(dataAccess, dataExport, "Includes")
+@enduml

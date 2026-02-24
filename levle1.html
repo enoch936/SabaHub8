@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SabaHub Official Gantt (E.C)</title>
+
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.css">
+
+<script src="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.min.js"></script>
+
+<style>
+body{
+    margin:0;
+    background:#0b1220;
+    font-family:Segoe UI;
+    color:white;
+}
+
+.header{
+    padding:20px;
+    background:#111827;
+    text-align:center;
+    font-size:22px;
+    font-weight:600;
+}
+
+#gantt{
+    margin:40px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+SabaHub Enterprise Platform  
+18/04/2018 EC → 06/06/2018 EC  
+(Week Ends Every Friday)
+</div>
+
+<div id="gantt"></div>
+
+<script>
+
+const tasks = [
+
+{
+    id: '1',
+    name: 'Chapter 1 - Introduction',
+    start: '2025-12-26',
+    end: '2026-01-02',
+    progress: 100
+},
+
+{
+    id: '2',
+    name: 'Chapter 2 - Literature Review',
+    start: '2026-01-02',
+    end: '2026-01-12',
+    progress: 100
+},
+
+{
+    id: '3',
+    name: 'Chapter 3 - System Analysis',
+    start: '2026-01-12',
+    end: '2026-01-24',
+    progress: 100
+},
+
+{
+    id: '4',
+    name: 'Chapter 4 - System Design',
+    start: '2026-01-24',
+    end: '2026-02-14',
+    progress: 85
+}
+
+];
+
+const gantt = new Gantt("#gantt", tasks, {
+
+view_mode: 'Week',
+
+date_format: 'YYYY-MM-DD',
+
+custom_popup_html: function(task) {
+    return `
+        <div style="padding:10px;">
+            <b>${task.name}</b><br>
+            Start: ${task.start}<br>
+            End: ${task.end}
+        </div>
+    `;
+}
+
+});
+
+</script>
+
+</body>
+</html>

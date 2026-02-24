@@ -1,0 +1,24 @@
+@startuml
+skinparam linetype ortho
+actor "Employer" as EMP
+participant "Billing Service" as BILL
+participant "Payment Gateway" as PAY
+participant "Event Bus" as BUS
+participant "Notification Service" as NOTIF
+participant "Audit Log" as AUDIT
+
+EMP -> BILL : Pay invoice
+BILL -> PAY : Create charge
+alt Payment success
+  PAY --> BILL : Payment succeeded
+  BILL -> BUS : Publish PaymentSucceeded
+  BUS -> NOTIF : Send receipt
+  BILL -> AUDIT : Record success
+else Payment failed
+  PAY --> BILL : Payment failed
+  BILL -> BUS : Publish PaymentFailed
+  BUS -> NOTIF : Notify failure
+  BILL -> AUDIT : Record failure
+end
+@enduml
+

@@ -41,6 +41,7 @@ interface Job {
 export default function AdvancedJobSearch() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   // State
   const [filters, setFilters] = useState<SearchFilter>({
@@ -60,6 +61,7 @@ export default function AdvancedJobSearch() {
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSaveSearch, setShowSaveSearch] = useState(false);
   const [searchName, setSearchName] = useState('');
   const [page, setPage] = useState(0);
@@ -68,25 +70,44 @@ export default function AdvancedJobSearch() {
   // Fetch jobs
   const fetchJobs = async (pageNum: number = 0) => {
     setLoading(true);
+    setErrorMessage(null);
+    const params: Record<string, any> = { page: pageNum, size: 12 };
+    if (filters.deliverableType) params.deliverableType = filters.deliverableType;
+    if (filters.engagementType) params.engagementType = filters.engagementType;
+    if (filters.pricingModel) params.pricingModel = filters.pricingModel;
+    if (filters.requiredSkills && filters.requiredSkills.length) params.skills = filters.requiredSkills.join(',');
+    if (filters.industry && filters.industry.length) params.industry = filters.industry.join(',');
+    if (filters.teamSize && filters.teamSize.length) params.teamSize = filters.teamSize.join(',');
+    if (filters.budgetMin) params.budgetMin = filters.budgetMin;
+    if (filters.budgetMax) params.budgetMax = filters.budgetMax;
+    if (filters.minYearsExperience) params.minYearsExperience = filters.minYearsExperience;
+    if (filters.sortBy) params.sort = filters.sortBy;
     try {
-      const params: Record<string, any> = { page: pageNum, size: 12 };
-      if (filters.deliverableType) params.deliverableType = filters.deliverableType;
-      if (filters.engagementType) params.engagementType = filters.engagementType;
-      if (filters.pricingModel) params.pricingModel = filters.pricingModel;
-      if (filters.requiredSkills && filters.requiredSkills.length) params.skills = filters.requiredSkills.join(',');
-      if (filters.industry && filters.industry.length) params.industry = filters.industry.join(',');
-      if (filters.teamSize && filters.teamSize.length) params.teamSize = filters.teamSize.join(',');
-      if (filters.budgetMin) params.budgetMin = filters.budgetMin;
-      if (filters.budgetMax) params.budgetMax = filters.budgetMax;
-      if (filters.minYearsExperience) params.minYearsExperience = filters.minYearsExperience;
-      if (filters.sortBy) params.sort = filters.sortBy;
 
       const response = await axios.get('/api/v2/jobs/search', { params });
       setJobs(response.data.content || response.data);
       setTotalResults(response.data.totalElements || (response.data.content ? response.data.content.length : 0));
       setPage(pageNum);
     } catch (error) {
+      if (backendBase) {
+        try {
+          const directResponse = await axios.get(`${backendBase.replace(/\/$/, '')}/api/v2/jobs/search`, { params });
+          setJobs(directResponse.data.content || directResponse.data);
+          setTotalResults(
+            directResponse.data.totalElements || (directResponse.data.content ? directResponse.data.content.length : 0)
+          );
+          setPage(pageNum);
+          return;
+        } catch (directError) {
+          console.error('Direct backend fetch failed:', directError);
+        }
+      }
       console.error('Failed to fetch jobs:', error);
+      setErrorMessage(
+        backendBase
+          ? 'Jobs service is unavailable right now. Check backend connectivity or API gateway.'
+          : 'Jobs service is unavailable. Set NEXT_PUBLIC_BACKEND_URL to a reachable backend host.'
+      );
     } finally {
       setLoading(false);
     }
@@ -116,10 +137,10 @@ export default function AdvancedJobSearch() {
     if (filters.budgetMin) params.set('budgetMin', filters.budgetMin.toString());
     if (filters.budgetMax) params.set('budgetMax', filters.budgetMax.toString());
     if (filters.minYearsExperience) params.set('experience', filters.minYearsExperience.toString());
-    if (filters.requiredSkills.length) params.set('skills', filters.requiredSkills.join(','));
-    if (filters.industry.length) params.set('industry', filters.industry.join(','));
+    if (filters.requiredSkills?.length) params.set('skills', filters.requiredSkills.join(','));
+    if (filters.industry?.length) params.set('industry', filters.industry.join(','));
     if (filters.pricingModel) params.set('pricing', filters.pricingModel);
-    if (filters.teamSize.length) params.set('teamSize', filters.teamSize.join(','));
+    if (filters.teamSize?.length) params.set('teamSize', filters.teamSize.join(','));
     if (filters.sortBy) params.set('sort', filters.sortBy);
 
     router.push(`?${params.toString()}`, { scroll: false });
@@ -369,6 +390,27 @@ export default function AdvancedJobSearch() {
 
           {/* Main Content - Results */}
           <div className="lg:col-span-3">
+            {errorMessage && (
+              <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-200/70 bg-gradient-to-r from-emerald-50 via-teal-50 to-white px-5 py-4 text-sm text-emerald-900 shadow-[0_12px_30px_rgba(16,185,129,0.12)]">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Connectivity</p>
+                    <p className="mt-1 text-sm text-emerald-900">{errorMessage}</p>
+                    {!backendBase && (
+                      <p className="mt-2 text-xs font-semibold text-emerald-800">
+                        Add `NEXT_PUBLIC_BACKEND_URL=http://localhost:8080` in `frontend/.env.local` and restart the dev server.
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => fetchJobs(page)}
+                    className="mt-3 inline-flex items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 sm:mt-0"
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
+            )}
             {/* Results Header */}
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
@@ -384,6 +426,17 @@ export default function AdvancedJobSearch() {
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="bg-white rounded-lg shadow animate-pulse p-4 h-96" />
                 ))}
+              </div>
+            ) : errorMessage ? (
+              <div className="bg-white rounded-lg shadow-md p-12 text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to load jobs</h3>
+                <p className="text-gray-600">{errorMessage}</p>
+                <button
+                  onClick={() => fetchJobs(page)}
+                  className="mt-4 inline-flex items-center justify-center rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Retry
+                </button>
               </div>
             ) : jobs.length > 0 ? (
               <>

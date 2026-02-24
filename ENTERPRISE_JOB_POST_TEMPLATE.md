@@ -24,6 +24,14 @@ This is not a marketplace-based engagement. Selected partners will operate under
 
 ---
 
+SCENARIO
+
+A global enterprise client launches a multi-country workforce transformation program through the platform and requires a coordinated release of media and documentation within a fixed eight-week window. The engagement includes: (1) product and lifestyle imagery for localized landing pages, (2) a series of explainer and training videos with subtitles in multiple languages, (3) professional voice-over and audio mastering to regional loudness standards, and (4) executive-ready documentation and slide decks for internal leadership and external partners.
+
+The vendor will receive a structured brief, brand system, and weekly release calendar. Work will be delivered in sprint-based batches with staged reviews (creative, compliance, and executive approval). All assets must meet strict file-format requirements, metadata labeling standards, and version-control documentation. The partnership is expected to scale across multiple regions and product lines with consistent quality, traceable revisions, and measurable SLA performance.
+
+---
+
 SCOPE OF WORK
 
 Image Production & Design
@@ -91,190 +99,9 @@ Deliverable Formats:
 - Google Workspace native formats (Docs, Sheets, Slides) with sharing and collaboration protocols
 - PDF (final, locked format with embedded fonts and metadata)
 
----
+SCENARIO
 
-DELIVERABLES & QUALITY STANDARDS
+A global enterprise client launches a multi-country workforce transformation program through the platform and requires a coordinated release of media and documentation within a fixed eight-week window. The engagement includes: (1) product and lifestyle imagery for localized landing pages, (2) a series of explainer and training videos with subtitles in multiple languages, (3) professional voice-over and audio mastering aligned to regional loudness standards, and (4) executive-ready documentation and slide decks for internal leadership and external partners.
 
-Service Level Agreements (SLAs)
+The vendor receives a structured brief, brand system, and weekly release calendar. Work is delivered in sprint-based batches with staged reviews (creative, compliance, and executive approval). All assets must meet strict file-format requirements, metadata labeling standards, and version-control documentation. The partnership is expected to scale across multiple regions and product lines with consistent quality, traceable revisions, and measurable SLA performance.
 
-• Defined turnaround times per project type, ranging from 48 hours (minor revisions) to 15 business days (complex productions)
-• Guaranteed availability for project scope confirmation and clarification meetings
-• Documented escalation procedures for scope adjustments or timeline modifications
-• Response time standards: Email responses within 4 business hours; creative direction clarification within 24 hours
-
-Quality Assurance & Compliance
-
-• All deliverables subject to quality review against predefined acceptance criteria
-• Compliance with technical specifications including file format requirements, resolution standards, and metadata requirements
-• Brand consistency verification against established guidelines and previous deliverables
-• Verification of all external assets (music, stock photography, fonts) for proper licensing and rights clearance
-
-File Organization & Version Control
-
-• Deliverables organized in structured folder hierarchies with clear naming conventions
-• Version numbering system with change documentation (e.g., V1.0, V1.1_Revision, Final)
-• Backup copies maintained for 90 days post-project completion
-• Comprehensive handoff documentation including asset inventories and technical specifications
-
-Revision Cycles
-
-• Included: Up to two rounds of revisions per project within defined scope
-• Out-of-scope revisions (major conceptual changes, significant re-work) invoiced separately at agreed rates
-• Change request process: Written submission via project management system with scope and timeline impact assessment
-• Final deliverables locked upon approval; future modifications treated as new projects
-
-Confidentiality & Data Security
-
-• Execution of standard Non-Disclosure Agreement (NDA) prior to project commencement
-• Secure handling of proprietary, confidential, or sensitive client materials
-• No reproduction, distribution, or portfolio use of client work without explicit written authorization
-• Compliance with GDPR, CCPA, and applicable data protection regulations
-• Secure file transfer protocols; no use of unsecured public file-sharing services
-
----
-
-REQUIRED QUALIFICATIONS
-
-Professional Experience
-
-• Minimum five years of professional media production, design, or content development experience
-• Demonstrated portfolio of work for enterprise or large-scale clients (not limited to marketplace platforms)
-• Verifiable client references from corporate, institutional, or agency backgrounds
-• Proficiency in managing multiple concurrent projects with documented timelines and deliverables
-
-Technical Competency
-
-• Advanced proficiency with industry-standard production tools:
-  - Image Production: Adobe Creative Suite (Photoshop, Illustrator), or equivalent (Affinity, Figma)
-  - Video Production: Adobe Premiere Pro, Final Cut Pro, DaVinci Resolve, or equivalent
-  - Audio Production: Adobe Audition, Pro Tools, Logic Pro, or equivalent
-  - Document Development: Microsoft Office Suite, Google Workspace, Adobe InDesign, or equivalent
-• Understanding of file formats, color spaces, and technical specifications for web and print delivery
-• Experience with project management systems and asset management platforms
-
-Process Discipline
-
-• Demonstrated ability to work within structured workflows and documented processes
-• Strong communication skills with regular status updates, clear documentation, and proactive escalation protocols
-• Ability to interpret creative direction and technical specifications with minimal ambiguity
-• Experience managing revisions and incorporating feedback systematically
-
----
-
-PREFERRED ENTERPRISE EXPERIENCE
-
-Structured Approval Workflows
-
-• Experience with multi-level review and approval processes (creative, legal, compliance)
-• Proficiency with stakeholder communication in hierarchical organizational structures
-• Familiarity with formal change management and scope negotiation
-
-Brand Governance & Compliance
-
-• Experience maintaining strict brand consistency across large asset libraries
-• Understanding of regulatory compliance requirements (accessibility, data protection, industry-specific standards)
-• Ability to work within defined style guides, templates, and compliance frameworks
-
-Scalable Production Capacity
-
-• Established team or studio infrastructure capable of scaling production volume
-• Experience with batch processing and efficiency workflows for high-volume delivery
-• Track record of maintaining quality standards under increased workload
-• Documented processes for quality control and consistency across multiple team members
-
----
-
-COMMERCIAL TERMS
-
-Pricing Models
-
-Vendors may propose pricing structures aligned with engagement volume and capacity:
-
-• Per-Project Pricing: Fixed rates for defined deliverables with detailed scope documentation
-• Retainer-Based: Monthly or quarterly retainer with allocation of hours/projects, with overage rates for excess work
-• Volume-Based: Tiered pricing structure with cost reductions at defined project volume thresholds
-• Hybrid: Combination of base retainer plus per-project rates for specialized or high-complexity work
-
-Vendor Proposal Requirements
-
-Pricing submission must include:
-
-• Detailed rate card specifying costs by deliverable type (video, design, audio, documents)
-• Available production capacity (number of concurrent projects, typical turnaround)
-• Team composition and expertise breakdown
-• Revision policies and out-of-scope rate structure
-• Payment terms requested (NET 15, NET 30, etc.)
-• Any minimum engagement commitments or volume requirements
-
----
-
-EVALUATION & ONBOARDING PROCESS
-
-Vendor Verification
-
-• Company or individual registration verification and business documentation review
-• Verification of business licensing, insurance, and legal compliance status
-• Background check or creditworthiness assessment as appropriate
-• Confirmation of availability and capacity for project commencement
-
-Portfolio & Case Study Review
-
-• Comprehensive portfolio review demonstrating relevant enterprise work
-• Minimum three case studies provided with scope, deliverables, and results documentation
-• Client references (minimum two) available for direct contact and verification
-• Demonstration of quality standards, technical execution, and process discipline
-
-Pilot Project or Sample Assignment
-
-• Optional sample assignment to assess creative direction interpretation, technical execution, and communication
-• Typical scope: Single deliverable or limited project (estimated 20-40 hours)
-• Compensation provided for pilot work at agreed rates
-• Results evaluated against quality standards and timeline adherence
-
-Compliance & Onboarding
-
-• Execution of Master Service Agreement (MSA) or Standard Service Terms
-• Completion of compliance training (data protection, confidentiality, brand guidelines)
-• Establishment of project management and communication protocols
-• Access provisioning to project management systems, asset repositories, and communication channels
-• Formal onboarding meeting to confirm workflow, escalation procedures, and primary contacts
-
----
-
-LONG-TERM OPPORTUNITY
-
-Preferred Enterprise Partnership
-
-Selected vendors demonstrating consistent quality, reliability, and process discipline will be considered for:
-
-• Preferred vendor designation with priority project allocation
-• Guaranteed minimum monthly project volume or retainer commitment
-• Rate stability guarantees for 12-month partnership period
-• Dedicated account management and priority support
-• First consideration for specialized or high-value projects
-
-Ongoing Engagement Model
-
-• Continuous project flow with predictable work allocation
-• Performance-based incentives for quality, on-time delivery, and process compliance
-• Quarterly business reviews to assess performance and discuss capacity expansion
-• Collaborative planning for seasonal demand fluctuations or high-volume periods
-• Opportunity for expanded scope across additional service lines or specializations
-
----
-
-APPLICATION & CONTACT
-
-Interested vendors should submit the following materials:
-
-1. Professional company or individual profile with service offering summary
-2. Portfolio or work samples (provide links or attachments)
-3. Detailed pricing proposal per Commercial Terms section
-4. Minimum two professional references with contact information
-5. Confirmation of availability and capacity for project commencement
-
-Submissions will be evaluated based on portfolio quality, technical expertise, pricing competitiveness, and organizational capacity. Selected finalists will be contacted for detailed discussion of engagement terms and pilot project opportunities.
-
----
-
-This is an exclusive engagement for verified enterprise vendors. Marketplace-based or casual freelance proposals will not be considered. All selected partners will operate under formal service agreements with documented terms, quality standards, and performance expectations.

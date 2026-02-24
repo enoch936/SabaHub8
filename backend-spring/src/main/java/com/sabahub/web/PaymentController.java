@@ -7,10 +7,14 @@ import com.sabahub.service.PaymentService;
 import com.sabahub.service.WalletService;
 import com.sabahub.service.RateLimiter;
 import com.sabahub.config.RateLimitProperties;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -56,7 +60,7 @@ public class PaymentController {
         String currency = (String) body.getOrDefault("currency", "ETB");
 
         if (idemKey != null && !idemKey.isBlank()) {
-            var existing = transactionRepository.findByIdempotencyKey(idemKey);
+            var existing = transactionRepository.findByUserIdAndIdempotencyKey(me.getId(), idemKey);
             if (existing.isPresent()) {
                 var tx0 = existing.get();
                 return ResponseEntity.ok(Map.of("transactionId", tx0.getId(), "idempotent", true));
@@ -139,11 +143,22 @@ public class PaymentController {
         if (!rateLimiter.allow("local:request:" + me.getId(), limit, windowSeconds)) {
             return ResponseEntity.status(429).body(Map.of("error", "rate_limited"));
         }
-        double amount = ((Number) body.getOrDefault("amount", 0)).doubleValue();
-        String currency = (String) body.getOrDefault("currency", "ETB");
-        String referenceId = (String) body.getOrDefault("referenceId", "");
+        Object amountValue = body.getOrDefault("amount", 0);
+        double amount = amountValue instanceof Number ? ((Number) amountValue).doubleValue() : 0.0;
+        if (amount <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "amount_must_be_greater_than_zero"));
+        }
+
+        Object currencyRaw = body.getOrDefault("currency", "ETB");
+        String currency = currencyRaw == null ? "ETB" : currencyRaw.toString().trim().toUpperCase();
+        Object referenceRaw = body.getOrDefault("referenceId", "");
+        String referenceId = referenceRaw == null ? "" : referenceRaw.toString().trim();
+        if (referenceId.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "reference_id_required"));
+        }
+
         if (idemKey != null && !idemKey.isBlank()) {
-            var existing = transactionRepository.findByIdempotencyKey(idemKey);
+            var existing = transactionRepository.findByUserIdAndIdempotencyKey(me.getId(), idemKey);
             if (existing.isPresent()) {
                 var tx0 = existing.get();
                 return ResponseEntity.ok(Map.of("transactionId", tx0.getId(), "idempotent", true));
@@ -161,7 +176,68 @@ public class PaymentController {
         tx.setMetadata(body);
         tx.setIdempotencyKey(idemKey);
         transactionRepository.save(tx);
-        return ResponseEntity.ok(Map.of("transactionId", tx.getId()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                "transactionId", tx.getId(),
+                "status", tx.getStatus().name(),
+                "message", "Local payment submitted. Funds will be available after admin approval."
+        ));
+    }
+
+    /**
+     * Transfer settled wallet funds from one SabaHub account to another.
+     */
+    @PostMapping("/payments/internal/transfer")
+    public ResponseEntity<Map<String, Object>> transferInternal(
+            @RequestHeader(name = "Idempotency-Key", required = false) String idemKey,
+            @RequestBody Map<String, Object> body) {
+        var me = currentUserService.requireUser();
+        int limit = rateLimitProperties.getLocalRequestPerMinute();
+        int windowSeconds = rateLimitProperties.getWindowSeconds();
+        if (!rateLimiter.allow("wallet:transfer:" + me.getId(), limit, windowSeconds)) {
+            return ResponseEntity.status(429).body(Map.of("error", "rate_limited"));
+        }
+
+        Object recipientRaw = body.containsKey("recipient")
+                ? body.get("recipient")
+                : body.containsKey("recipientEmail")
+                ? body.get("recipientEmail")
+                : body.getOrDefault("recipientUserId", "");
+        String recipient = recipientRaw == null ? "" : recipientRaw.toString().trim();
+
+        Object transferCurrencyRaw = body.getOrDefault("currency", "ETB");
+        String currency = transferCurrencyRaw == null ? "ETB" : transferCurrencyRaw.toString().trim().toUpperCase();
+        Object noteRaw = body.getOrDefault("note", "");
+        String note = noteRaw == null ? "" : noteRaw.toString().trim();
+        Object amountValue = body.getOrDefault("amount", 0);
+        double amount = amountValue instanceof Number ? ((Number) amountValue).doubleValue() : 0.0;
+
+        try {
+            Map<String, Object> result = walletService.transferToUser(recipient, amount, currency, note, idemKey);
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * List pending local/manual top-up requests for admin review.
+     */
+    @GetMapping("/admin/payments/local/pending")
+    public ResponseEntity<?> listPendingLocalTopups(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
+        var admin = currentUserService.requireUser();
+        currentUserService.requireRole(admin, "ADMIN");
+
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1));
+        var pending = transactionRepository.findByProviderAndStatusOrderByCreatedAtDesc(
+                Transaction.Provider.LOCAL,
+                Transaction.Status.PENDING,
+                pageable
+        );
+        return ResponseEntity.ok(pending);
     }
 
     /**
@@ -180,20 +256,44 @@ public class PaymentController {
         }
 
         String transactionId = (String) body.get("transactionId");
+        boolean approved = body.get("approved") == null || Boolean.TRUE.equals(body.get("approved"));
+        String adminNote = body.get("note") instanceof String ? ((String) body.get("note")).trim() : "";
+
         Transaction tx = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
 
-        if (tx.getStatus() != Transaction.Status.PENDING || tx.getProvider() != Transaction.Provider.LOCAL) {
+        if (tx.getProvider() != Transaction.Provider.LOCAL) {
             throw new IllegalStateException("Invalid transaction state");
         }
+        if (tx.getStatus() == Transaction.Status.SUCCESS) {
+            return ResponseEntity.ok(Map.of("ok", true, "idempotent", true, "status", tx.getStatus().name()));
+        }
+        if (tx.getStatus() != Transaction.Status.PENDING) {
+            throw new IllegalStateException("Transaction already reviewed");
+        }
 
-        tx.setStatus(Transaction.Status.SUCCESS);
+        tx.setStatus(approved ? Transaction.Status.SUCCESS : Transaction.Status.FAILED);
+
+        Map<String, Object> metadata = tx.getMetadata() == null ? new HashMap<>() : new HashMap<>(tx.getMetadata());
+        metadata.put("reviewedByAdminId", admin.getId());
+        metadata.put("reviewApproved", approved);
+        if (!adminNote.isBlank()) {
+            metadata.put("reviewNote", adminNote);
+        }
+        tx.setMetadata(metadata);
         if (idemKey != null && !idemKey.isBlank()) {
             tx.setIdempotencyKey(idemKey);
         }
         transactionRepository.save(tx);
 
-        walletService.creditTopUpLocal(tx.getUserId(), tx.getAmount(), tx.getCurrency(), tx.getProviderRef(), admin.getId());
-        return ResponseEntity.ok(Map.of("ok", true));
+        if (approved) {
+            walletService.creditTopUpLocal(tx.getUserId(), tx.getAmount(), tx.getCurrency(), tx.getProviderRef(), admin.getId());
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "ok", true,
+                "status", tx.getStatus().name(),
+                "walletCredited", approved
+        ));
     }
 }

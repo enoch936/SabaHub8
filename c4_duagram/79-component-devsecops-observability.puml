@@ -1,0 +1,20 @@
+@startuml
+!include <C4/C4_Component>
+
+Container(observability, "DevSecOps & Observability", "Platform", "CI/CD, monitoring, logging") {
+  Component(ciCd, "CI/CD Pipeline", "Build and deploy")
+  Component(iac, "Infrastructure as Code", "Provisioning")
+  Component(secretsMgmt, "Secrets Management", "Credential vault")
+  Component(vulnScan, "Vulnerability Scanning", "Security scans")
+  Component(perfMonitoring, "Performance Monitoring", "APM/metrics")
+  Component(logAggregation, "Log Aggregation", "Centralized logs")
+  Component(alerting, "Alerting & Incident Mgmt", "Alerts and response")
+  Component(releaseGov, "Release Governance", "Approvals and policy")
+  Component(autoRollback, "Automated Rollback", "Rollback on failed scans")
+}
+
+Rel(vulnScan, releaseGov, "Includes")
+Rel(alerting, releaseGov, "Includes")
+Rel(vulnScan, autoRollback, "Triggers on failure")
+Rel(autoRollback, ciCd, "Executes rollback")
+@enduml

@@ -1,0 +1,15 @@
+@startuml
+!include <C4/C4_Component>
+
+Container(analyticsService, "Analytics & Insights Service", "Python/ETL", "Dashboards, KPIs, exports") {
+  Component(viewDashboard, "View Dashboard", "KPIs and metrics")
+  Component(generateReports, "Generate Reports", "Report engine")
+  Component(exportData, "Export Data", "BI exports")
+  Component(predictiveInsights, "Predictive Insights", "ML insights")
+  Component(dataQualityMonitor, "Data Quality Monitor", "Validation")
+  Component(configureKPIs, "Configure KPIs", "KPI setup")
+}
+
+Rel(generateReports, exportData, "Includes")
+Rel(predictiveInsights, viewDashboard, "Extends")
+@enduml

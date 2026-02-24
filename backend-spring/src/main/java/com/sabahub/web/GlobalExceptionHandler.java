@@ -1,11 +1,13 @@
 package com.sabahub.web;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.security.core.AuthenticationException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,11 +36,44 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuth(AuthenticationException ex) {
+        if (hasCause(ex, DataAccessException.class)) {
+            Map<String, Object> body = new HashMap<>();
+            body.put("error", "ServiceUnavailable");
+            body.put("message", "Database unavailable. Check MongoDB connection settings.");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
+        }
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "Unauthorized");
+        body.put("message", "Invalid email or password");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleDataAccess(DataAccessException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "ServiceUnavailable");
+        body.put("message", "Database unavailable. Check MongoDB connection settings.");
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
         Map<String, Object> body = new HashMap<>();
         body.put("error", "ServerError");
         body.put("message", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
+
+    private static boolean hasCause(Throwable ex, Class<? extends Throwable> causeType) {
+        Throwable cur = ex;
+        while (cur != null) {
+            if (causeType.isInstance(cur)) {
+                return true;
+            }
+            cur = cur.getCause();
+        }
+        return false;
     }
 }

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Phone, MapPin, Globe, Award, Briefcase, DollarSign, Bell, Lock, Shield, CheckCircle, Loader } from "lucide-react";
+import { User, Mail, Phone, MapPin, Globe, Award, Briefcase, DollarSign, Bell, Lock, Shield, CheckCircle, Loader, Upload } from "lucide-react";
 import { bootstrapSession, useSession } from "@/lib/session";
-import { getUserSettings, updateUserSettings } from "@/lib/api";
+import { getUserSettings, updateUserSettings, uploadProfileImage, requestEmailVerification, confirmEmailVerification, requestPhoneVerification, confirmPhoneVerification } from "@/lib/api";
+import { Avatar } from "@/components/ui";
 
 interface UserProfile {
   bio?: string;
@@ -130,6 +131,14 @@ export default function SettingsPage() {
     }
   };
 
+  const handleProfileUpdate = (updated: UserProfile, messageText?: string, messageType: "success" | "error" = "success") => {
+    setProfile(updated);
+    if (messageText) {
+      setMessage({ type: messageType, text: messageText });
+      setTimeout(() => setMessage(null), 5000);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -182,7 +191,9 @@ export default function SettingsPage() {
                 <tab.icon className="h-4 w-4" />
                 {tab.label}
                 {lastSavedTab === tab.id && (
-                  <CheckCircle className="h-4 w-4 text-emerald-600 ml-1" title="Saved" />
+                  <span className="ml-1" title="Saved" aria-label="Saved">
+                    <CheckCircle className="h-4 w-4 text-emerald-600" />
+                  </span>
                 )}
               </button>
             ))}
@@ -201,7 +212,7 @@ export default function SettingsPage() {
           <PaymentTab profile={profile} onSave={handleSave} saving={saving} />
         )}
         {activeTab === "verification" && (
-          <VerificationTab profile={profile} onSave={handleSave} saving={saving} />
+          <VerificationTab profile={profile} onProfileUpdate={handleProfileUpdate} />
         )}
         {activeTab === "notifications" && (
           <NotificationsTab profile={profile} onSave={handleSave} saving={saving} />
@@ -215,16 +226,111 @@ export default function SettingsPage() {
 
 function BasicInfoTab({ profile, onSave, saving }: { profile: UserProfile | null; onSave: (u: any) => void; saving: boolean }) {
   const [data, setData] = useState(profile || {});
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const setProfilePictureUrl = useSession((s) => s.setProfilePictureUrl);
+  const setEmailVerified = useSession((s) => s.setEmailVerified);
+  const fullName = useSession((s) => s.fullName);
 
   useEffect(() => {
     setData(profile || {});
+    if (profile?.profilePictureUrl) {
+      setProfilePictureUrl(profile.profilePictureUrl);
+    }
+    if (profile?.emailVerified !== undefined && profile?.emailVerified !== null) {
+      setEmailVerified(Boolean(profile.emailVerified));
+    }
   }, [profile]);
+
+  const convertToJpeg = async (file: File) => {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("Unable to process image.");
+    }
+    ctx.drawImage(bitmap, 0, 0);
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92)
+    );
+    if (!blob) {
+      throw new Error("Unable to convert image.");
+    }
+    return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    setAvatarUploading(true);
+    setAvatarError(null);
+    const allowedTypes = ["image/png", "image/jpeg", "image/webp", "image/avif", "image/heic", "image/heif"];
+    if (!allowedTypes.includes(file.type)) {
+      setAvatarError("Unsupported image type. Use PNG, JPG, WEBP, AVIF, or HEIC.");
+      setAvatarUploading(false);
+      return;
+    }
+    let uploadFile = file;
+    try {
+      uploadFile = await convertToJpeg(file);
+    } catch (error) {
+      setAvatarError("Unable to process this image. Please export it as JPG or PNG.");
+      setAvatarUploading(false);
+      return;
+    }
+    if (uploadFile.size > 10 * 1024 * 1024) {
+      setAvatarError("Image too large. Max size is 10MB.");
+      setAvatarUploading(false);
+      return;
+    }
+    try {
+      const url = await uploadProfileImage(uploadFile);
+      if (!url) {
+        throw new Error("Upload failed");
+      }
+      setData({ ...data, profilePictureUrl: url });
+      setProfilePictureUrl(url);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to upload avatar.";
+      setAvatarError(message);
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   return (
     <div className="grid gap-6">
       <div className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-sky-500/10 backdrop-blur">
         <h2 className="mb-6 text-xl font-semibold">Basic Information</h2>
         <div className="grid gap-4 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Profile photo</label>
+            <div className="flex flex-wrap items-center gap-4">
+              <Avatar src={data.profilePictureUrl} fallback={fullName || "User"} size="lg" />
+              <div className="space-y-2">
+                <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50">
+                  <Upload className="h-4 w-4 text-slate-500" />
+                  <span>Upload photo</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/avif,image/heic,image/heif"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        void handleAvatarUpload(file);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+                {avatarUploading && <p className="text-xs text-slate-500">Uploading avatar…</p>}
+                {avatarError && <p className="text-xs text-rose-600">{avatarError}</p>}
+                {!avatarUploading && !avatarError && (
+                  <p className="text-xs text-slate-500">PNG, JPG, or WEBP up to 10MB.</p>
+                )}
+              </div>
+            </div>
+          </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Bio</label>
             <textarea
@@ -484,34 +590,223 @@ function PaymentTab({ profile, onSave, saving }: { profile: UserProfile | null; 
   );
 }
 
-function VerificationTab({ profile, onSave, saving }: { profile: UserProfile | null; onSave: (u: any) => void; saving: boolean }) {
+function VerificationTab({
+  profile,
+  onProfileUpdate,
+}: {
+  profile: UserProfile | null;
+  onProfileUpdate: (profile: UserProfile, messageText?: string, messageType?: "success" | "error") => void;
+}) {
+  const [emailOtp, setEmailOtp] = useState("");
+  const [emailStatus, setEmailStatus] = useState<{ type: "idle" | "sent" | "error" | "success"; text?: string }>({ type: "idle" });
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailVerifying, setEmailVerifying] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [phoneStatus, setPhoneStatus] = useState<{ type: "idle" | "sent" | "error" | "success"; text?: string }>({ type: "idle" });
+  const [phoneSending, setPhoneSending] = useState(false);
+  const [phoneVerifying, setPhoneVerifying] = useState(false);
+  const setEmailVerified = useSession((s) => s.setEmailVerified);
+
+  useEffect(() => {
+    if (profile?.emailVerified) {
+      setEmailStatus({ type: "success", text: "Email verified" });
+    }
+  }, [profile?.emailVerified]);
+
+  const handleRequestEmailCode = async () => {
+    setEmailSending(true);
+    setEmailStatus({ type: "idle" });
+    try {
+      const response = await requestEmailVerification();
+      setEmailStatus({ type: "sent", text: response?.message || "Verification code sent." });
+    } catch (error: any) {
+      const message = error?.response?.data?.message || "Failed to send verification code.";
+      setEmailStatus({ type: "error", text: message });
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
+  const handleConfirmEmailCode = async () => {
+    if (!emailOtp.trim()) {
+      setEmailStatus({ type: "error", text: "Enter the verification code from your email." });
+      return;
+    }
+    setEmailVerifying(true);
+    try {
+      const updated = await confirmEmailVerification(emailOtp.trim());
+      setEmailVerified(true);
+      onProfileUpdate(updated, "✓ Email verified successfully!", "success");
+      setEmailStatus({ type: "success", text: "Email verified" });
+    } catch (error: any) {
+      const message = error?.response?.data?.message || "Invalid or expired code.";
+      setEmailStatus({ type: "error", text: message });
+    } finally {
+      setEmailVerifying(false);
+    }
+  };
+
+  const handleVerifyPhone = async () => {
+    setPhoneSending(true);
+    setPhoneStatus({ type: "idle" });
+    try {
+      const response = await requestPhoneVerification();
+      setPhoneStatus({ type: "sent", text: response?.message || "Verification code sent." });
+    } catch (error: any) {
+      const message = error?.response?.data?.message || "Failed to send verification code.";
+      setPhoneStatus({ type: "error", text: message });
+    } finally {
+      setPhoneSending(false);
+    }
+  };
+
+  const handleConfirmPhoneCode = async () => {
+    if (!phoneOtp.trim()) {
+      setPhoneStatus({ type: "error", text: "Enter the verification code sent to your phone." });
+      return;
+    }
+    setPhoneVerifying(true);
+    try {
+      const updated = await confirmPhoneVerification(phoneOtp.trim());
+      onProfileUpdate(updated, "✓ Phone verified successfully!", "success");
+      setPhoneStatus({ type: "success", text: "Phone verified" });
+    } catch (error: any) {
+      const message = error?.response?.data?.message || "Invalid or expired code.";
+      setPhoneStatus({ type: "error", text: message });
+    } finally {
+      setPhoneVerifying(false);
+    }
+  };
+
   return (
     <div className="grid gap-6">
       <div className="rounded-2xl border border-white/20 bg-white/85 p-6 shadow-xl shadow-sky-500/10 backdrop-blur">
         <h2 className="mb-6 text-xl font-semibold">Verification Status</h2>
-        <div className="space-y-4">
-          {[
-            { label: "Email Verified", verified: profile?.emailVerified, icon: Mail },
-            { label: "Phone Verified", verified: profile?.phoneVerified, icon: Phone },
-            { label: "Identity Verified", verified: profile?.identityVerified, icon: Shield },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+        <div className="space-y-5">
+          <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <item.icon className="h-5 w-5 text-slate-600" />
+                <Mail className="h-5 w-5 text-slate-600" />
                 <div>
-                  <p className="font-medium text-slate-900">{item.label}</p>
-                  <p className="text-sm text-slate-600">{item.verified ? "Verified" : "Not verified"}</p>
+                  <p className="font-medium text-slate-900">Email Verification</p>
+                  <p className="text-sm text-slate-600">
+                    {profile?.emailVerified ? "Verified" : "Verify your email to unlock enterprise access."}
+                  </p>
                 </div>
               </div>
-              {item.verified ? (
-                <CheckCircle className="h-5 w-5 text-emerald-600" />
+              {profile?.emailVerified ? (
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <CheckCircle className="h-4 w-4" /> Verified
+                </span>
               ) : (
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
-                  Verify
+                <button
+                  onClick={handleRequestEmailCode}
+                  disabled={emailSending}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm disabled:bg-slate-400"
+                >
+                  {emailSending ? "Sending..." : "Send Code"}
                 </button>
               )}
             </div>
-          ))}
+            {!profile?.emailVerified && (
+              <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
+                <input
+                  value={emailOtp}
+                  onChange={(e) => setEmailOtp(e.target.value)}
+                  placeholder="Enter 6-digit code"
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                />
+                <button
+                  onClick={handleConfirmEmailCode}
+                  disabled={emailVerifying}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm disabled:bg-slate-400"
+                >
+                  {emailVerifying ? "Verifying..." : "Verify Email"}
+                </button>
+              </div>
+            )}
+            {emailStatus.type !== "idle" && (
+              <p
+                className={`mt-3 text-sm ${
+                  emailStatus.type === "error" ? "text-rose-600" : "text-emerald-600"
+                }`}
+              >
+                {emailStatus.text}
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Phone className="h-5 w-5 text-slate-600" />
+                <div>
+                  <p className="font-medium text-slate-900">Phone Verification</p>
+                  <p className="text-sm text-slate-600">{profile?.phoneVerified ? "Verified" : "Confirm your phone number for SMS alerts."}</p>
+                </div>
+              </div>
+              {profile?.phoneVerified ? (
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <CheckCircle className="h-4 w-4" /> Verified
+                </span>
+              ) : (
+                <button
+                  onClick={handleVerifyPhone}
+                  disabled={phoneSending}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm disabled:bg-slate-400"
+                >
+                  {phoneSending ? "Sending..." : "Send Code"}
+                </button>
+              )}
+            </div>
+            {!profile?.phoneVerified && (
+              <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
+                <input
+                  value={phoneOtp}
+                  onChange={(e) => setPhoneOtp(e.target.value)}
+                  placeholder="Enter SMS code"
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                />
+                <button
+                  onClick={handleConfirmPhoneCode}
+                  disabled={phoneVerifying}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm disabled:bg-slate-400"
+                >
+                  {phoneVerifying ? "Verifying..." : "Verify Phone"}
+                </button>
+              </div>
+            )}
+            {phoneStatus.type !== "idle" && (
+              <p
+                className={`mt-3 text-sm ${
+                  phoneStatus.type === "error" ? "text-rose-600" : "text-emerald-600"
+                }`}
+              >
+                {phoneStatus.text}
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Shield className="h-5 w-5 text-slate-600" />
+                <div>
+                  <p className="font-medium text-slate-900">Identity Verification</p>
+                  <p className="text-sm text-slate-600">{profile?.identityVerified ? "Verified" : "Complete identity checks for high-trust contracts."}</p>
+                </div>
+              </div>
+              {profile?.identityVerified ? (
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <CheckCircle className="h-4 w-4" /> Verified
+                </span>
+              ) : (
+                <button className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg text-sm" disabled>
+                  Coming Soon
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

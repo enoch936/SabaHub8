@@ -1,0 +1,53 @@
+@startuml
+skinparam linetype ortho
+skinparam activity {
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+  BackgroundColor<<failure>> #FFEEEE
+}
+
+title Employer Job Posting Lifecycle (Parallel Promotions & Notifications)
+
+|Employer|
+start
+:Create job draft;
+|Job Service|
+:Validate job fields;
+if (Compliance required?) then (yes)
+  |Compliance|
+  :Submit for compliance review;
+  if (Approved?) then (yes)
+    |Job Service|
+    :Proceed;
+  else (no)
+    |Employer|
+    :Return to draft <<failure>>;
+    stop
+  endif
+endif
+|Job Service|
+:Publish job;
+:Index in search;
+fork
+  |Billing|
+  if (Promoted?) then (yes)
+    :Charge promotion;
+    :Boost visibility;
+  endif
+fork again
+  |Notification Service|
+  :Resolve template;
+  :Check user preferences;
+  if (Allowed channel?) then (yes)
+    :Send message;
+    if (Delivery failed?) then (yes)
+      :Fallback channel <<failure>>;
+      :Retry delivery <<failure>>;
+    endif
+  else (no)
+    :Skip delivery <<failure>>;
+  endif
+  :Log delivery status;
+end fork
+stop
+@enduml

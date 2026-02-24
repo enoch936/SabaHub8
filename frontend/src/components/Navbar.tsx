@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Search,
   Bell,
@@ -15,10 +16,13 @@ import {
   DollarSign,
   MessageSquare,
   ChevronDown,
+  Banknote,
+  ShieldCheck,
+  Building2,
 } from "lucide-react";
 import { useSession } from "@/lib/session";
 import { useNotifications } from "@/lib/notifications";
-import { Badge } from "./ui";
+import { Avatar, Badge } from "./ui";
 import { ThemeIconButton } from "./useTheme";
 
 export default function Navbar() {
@@ -27,12 +31,27 @@ export default function Navbar() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
   const role = useSession((s) => s.role);
   const fullName = useSession((s) => s.fullName);
   const email = useSession((s) => s.email);
+  const profilePictureUrl = useSession((s) => s.profilePictureUrl);
+  const emailVerified = useSession((s) => s.emailVerified);
   const clear = useSession((s) => s.clear);
   const unread = useNotifications((s) => s.unread);
+
+  type QuickAction = {
+    label: string;
+    icon: any;
+    href: string;
+    color: string;
+    badge?: string | number;
+  };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let ticking = false;
@@ -69,10 +88,11 @@ export default function Navbar() {
     window.location.href = "/login";
   };
 
-  const quickActions = [
+  const quickActions: QuickAction[] = [
     { label: "Post Job", icon: Sparkles, href: "/dashboard/jobs/new", color: "text-sky-600" },
-    { label: "Messages", icon: MessageSquare, href: "/chat", color: "text-emerald-600", badge: "3" },
-    { label: "Earnings", icon: DollarSign, href: "/dashboard/wallet", color: "text-amber-600" },
+    { label: "Vendor Hub", icon: Building2, href: "/dashboard/vendor-hub", color: "text-cyan-600" },
+    { label: "Spend Control", icon: Banknote, href: "/dashboard/spend", color: "text-emerald-600" },
+    { label: "Risk Center", icon: ShieldCheck, href: "/dashboard/risk", color: "text-rose-600" },
     { label: "Analytics", icon: TrendingUp, href: "/dashboard/analytics", color: "text-purple-600" },
   ];
 
@@ -164,44 +184,52 @@ export default function Navbar() {
                     </>
                   )}
                 </button>
-                {notificationsOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-top-2 duration-200">
-                    <div className="border-b border-slate-200 p-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-slate-900">Notifications</h3>
-                        <Badge variant="danger" className="text-xs">
-                          {unread} new
-                        </Badge>
+                <AnimatePresence>
+                  {notificationsOpen && (
+                    <motion.div
+                      className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-slate-200 bg-white shadow-2xl"
+                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <div className="border-b border-slate-200 p-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-slate-900">Notifications</h3>
+                          <Badge variant="danger" className="text-xs">
+                            {unread} new
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {dummyNotifications.map((notif) => (
-                        <div
-                          key={notif.id}
-                          className={`border-b border-slate-100 p-4 transition-colors hover:bg-slate-50 ${
-                            notif.unread ? "bg-sky-50/50" : ""
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            {notif.unread && <div className="mt-2 h-2 w-2 rounded-full bg-sky-600" />}
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-slate-900">{notif.title}</p>
-                              <p className="text-xs text-slate-500">{notif.time}</p>
+                      <div className="max-h-96 overflow-y-auto">
+                        {dummyNotifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            className={`border-b border-slate-100 p-4 transition-colors hover:bg-slate-50 ${
+                              notif.unread ? "bg-sky-50/50" : ""
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              {notif.unread && <div className="mt-2 h-2 w-2 rounded-full bg-sky-600" />}
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-slate-900">{notif.title}</p>
+                                <p className="text-xs text-slate-500">{notif.time}</p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="border-t border-slate-200 p-3">
-                      <Link
-                        href="/dashboard/notifications"
-                        className="flex items-center justify-center rounded-lg py-2 text-sm font-medium text-sky-600 transition-colors hover:bg-sky-50"
-                      >
-                        View all notifications
-                      </Link>
-                    </div>
-                  </div>
-                )}
+                        ))}
+                      </div>
+                      <div className="border-t border-slate-200 p-3">
+                        <Link
+                          href="/dashboard/notifications"
+                          className="flex items-center justify-center rounded-lg py-2 text-sm font-medium text-sky-600 transition-colors hover:bg-sky-50"
+                        >
+                          View all notifications
+                        </Link>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* User Menu */}
@@ -215,9 +243,12 @@ export default function Navbar() {
                   className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 transition-all hover:border-sky-500 hover:shadow-md active:scale-95"
                 >
                   <div className="relative">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-blue-600 font-semibold text-white shadow-lg">
-                      {fullName?.charAt(0)?.toUpperCase() || "U"}
-                    </div>
+                    <Avatar
+                      src={mounted ? profilePictureUrl : undefined}
+                      fallback={fullName || "User"}
+                      size="sm"
+                      className="shadow-lg"
+                    />
                     <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
                   </div>
                   <span className="hidden sm:block text-sm font-medium text-slate-900">{fullName || "User"}</span>
@@ -225,61 +256,75 @@ export default function Navbar() {
                     className={`h-4 w-4 text-slate-500 transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
                   />
                 </button>
-                {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-top-2 duration-200">
-                    <div className="border-b border-slate-200 p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-blue-600 font-bold text-white shadow-lg">
-                          {fullName?.charAt(0)?.toUpperCase() || "U"}
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div
+                      className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-slate-200 bg-white shadow-2xl"
+                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <div className="border-b border-slate-200 p-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar
+                            src={mounted ? profilePictureUrl : undefined}
+                            fallback={fullName || "User"}
+                            size="lg"
+                            className="shadow-lg"
+                          />
+                          <div className="flex-1 overflow-hidden">
+                            <p className="truncate font-semibold text-slate-900">{fullName || "User"}</p>
+                            <p className="truncate text-sm text-slate-500">{email || "user@example.com"}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 overflow-hidden">
-                          <p className="truncate font-semibold text-slate-900">{fullName || "User"}</p>
-                          <p className="truncate text-sm text-slate-500">{email || "user@example.com"}</p>
+                        <div className="mt-3 flex items-center gap-2">
+                          <Badge
+                            variant={role === "ADMIN" ? "danger" : role === "EMPLOYER" ? "warning" : "info"}
+                            className="text-xs"
+                          >
+                            {role || "USER"}
+                          </Badge>
+                          <Badge variant={emailVerified ? "success" : "warning"} className="text-xs">
+                            {emailVerified ? "Email Verified" : "Email Unverified"}
+                          </Badge>
                         </div>
                       </div>
-                      <div className="mt-3">
-                        <Badge
-                          variant={role === "ADMIN" ? "danger" : role === "EMPLOYER" ? "warning" : "info"}
-                          className="text-xs"
+                      <div className="p-2">
+                        <Link
+                          href="/dashboard"
+                          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-700 transition-colors hover:bg-slate-100"
                         >
-                          {role || "USER"}
-                        </Badge>
+                          <User className="h-4 w-4" />
+                          <span>My Profile</span>
+                        </Link>
+                        <Link
+                          href="/dashboard/wallet"
+                          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-700 transition-colors hover:bg-slate-100"
+                        >
+                          <DollarSign className="h-4 w-4" />
+                          <span>Wallet</span>
+                        </Link>
+                        <Link
+                          href="/dashboard/settings"
+                          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-700 transition-colors hover:bg-slate-100"
+                        >
+                          <Settings className="h-4 w-4" />
+                          <span>Settings</span>
+                        </Link>
                       </div>
-                    </div>
-                    <div className="p-2">
-                      <Link
-                        href="/dashboard"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-700 transition-colors hover:bg-slate-100"
-                      >
-                        <User className="h-4 w-4" />
-                        <span>My Profile</span>
-                      </Link>
-                      <Link
-                        href="/dashboard/wallet"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-700 transition-colors hover:bg-slate-100"
-                      >
-                        <DollarSign className="h-4 w-4" />
-                        <span>Wallet</span>
-                      </Link>
-                      <Link
-                        href="/dashboard/settings"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-700 transition-colors hover:bg-slate-100"
-                      >
-                        <Settings className="h-4 w-4" />
-                        <span>Settings</span>
-                      </Link>
-                    </div>
-                    <div className="border-t border-slate-200 p-2">
-                      <button
-                        onClick={handleLogout}
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-rose-600 transition-colors hover:bg-rose-50 active:scale-95"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span>Logout</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                      <div className="border-t border-slate-200 p-2">
+                        <button
+                          onClick={handleLogout}
+                          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-rose-600 transition-colors hover:bg-rose-50 active:scale-95"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          <span>Logout</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
@@ -287,45 +332,60 @@ export default function Navbar() {
       </nav>
 
       {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-2xl animate-in slide-in-from-left duration-300">
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-900">Menu</h2>
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <motion.div
+              className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+              onClick={() => setMobileMenuOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            />
+            <motion.div
+              className="absolute left-0 top-0 h-full w-72 bg-white shadow-2xl"
+              initial={{ x: -24, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -24, opacity: 0 }}
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-slate-900">Menu</h2>
+                  <button
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {quickActions.map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <Link
+                        key={action.href}
+                        href={action.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-700 transition-colors hover:bg-slate-100"
+                      >
+                        <Icon className={`h-5 w-5 ${action.color}`} />
+                        <span className="font-medium">{action.label}</span>
+                        {action.badge && (
+                          <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white">
+                            {action.badge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="space-y-2">
-                {quickActions.map((action) => {
-                  const Icon = action.icon;
-                  return (
-                    <Link
-                      key={action.href}
-                      href={action.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-700 transition-colors hover:bg-slate-100"
-                    >
-                      <Icon className={`h-5 w-5 ${action.color}`} />
-                      <span className="font-medium">{action.label}</span>
-                      {action.badge && (
-                        <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white">
-                          {action.badge}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </>
   );
 }

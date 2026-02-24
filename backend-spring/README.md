@@ -17,11 +17,11 @@ Features
 Requirements
 - Java 17+
 - Maven 3.9+
-- MongoDB (local or cloud) accessible via MONGODB_URI
+- MongoDB Atlas (cloud) accessible via SPRING_DATA_MONGODB_URI (or MONGODB_URI)
 - Cloudinary account and API credentials
 
 Configuration (env vars)
-- MONGODB_URI=mongodb://localhost:27017/sabahub
+- SPRING_DATA_MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/<db>?retryWrites=true&w=majority
 - CLOUDINARY_CLOUD_NAME=your_cloud
 - CLOUDINARY_API_KEY=your_key
 - CLOUDINARY_API_SECRET=your_secret

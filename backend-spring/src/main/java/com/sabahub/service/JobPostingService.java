@@ -123,6 +123,32 @@ public class JobPostingService {
         if (jobUpdate.getPricingModel() != null) job.setPricingModel(jobUpdate.getPricingModel());
         if (jobUpdate.getSlaDeliveryDays() != null) job.setSlaDeliveryDays(jobUpdate.getSlaDeliveryDays());
         if (jobUpdate.getRequiredSkills() != null) job.setRequiredSkills(jobUpdate.getRequiredSkills());
+        if (jobUpdate.getRequiredTools() != null) job.setRequiredTools(jobUpdate.getRequiredTools());
+        if (jobUpdate.getRequiredQualifications() != null) job.setRequiredQualifications(jobUpdate.getRequiredQualifications());
+        if (jobUpdate.getPreferredExperience() != null) job.setPreferredExperience(jobUpdate.getPreferredExperience());
+        if (jobUpdate.getRequiresPortfolio() != null) job.setRequiresPortfolio(jobUpdate.getRequiresPortfolio());
+        if (jobUpdate.getRequiresReferences() != null) job.setRequiresReferences(jobUpdate.getRequiresReferences());
+        if (jobUpdate.getMinReferenceCount() != null) job.setMinReferenceCount(jobUpdate.getMinReferenceCount());
+        if (jobUpdate.getRequiresNDA() != null) job.setRequiresNDA(jobUpdate.getRequiresNDA());
+        if (jobUpdate.getRequiresBGCheck() != null) job.setRequiresBGCheck(jobUpdate.getRequiresBGCheck());
+        if (jobUpdate.getRequiresInsurance() != null) job.setRequiresInsurance(jobUpdate.getRequiresInsurance());
+        if (jobUpdate.getComplianceRequirements() != null) job.setComplianceRequirements(jobUpdate.getComplianceRequirements());
+        if (jobUpdate.getDataClassifications() != null) job.setDataClassifications(jobUpdate.getDataClassifications());
+        if (jobUpdate.getPilotProjectRequired() != null) job.setPilotProjectRequired(jobUpdate.getPilotProjectRequired());
+        if (jobUpdate.getPilotProjectScope() != null) job.setPilotProjectScope(jobUpdate.getPilotProjectScope());
+        if (jobUpdate.getPilotEstimatedHours() != null) job.setPilotEstimatedHours(jobUpdate.getPilotEstimatedHours());
+        if (jobUpdate.getPreferredVendorOpportunity() != null) job.setPreferredVendorOpportunity(jobUpdate.getPreferredVendorOpportunity());
+        if (jobUpdate.getMinimumMonthlyCommitment() != null) job.setMinimumMonthlyCommitment(jobUpdate.getMinimumMonthlyCommitment());
+        if (jobUpdate.getContractTermMonths() != null) job.setContractTermMonths(jobUpdate.getContractTermMonths());
+        if (jobUpdate.getRateStabilityGuarantee() != null) job.setRateStabilityGuarantee(jobUpdate.getRateStabilityGuarantee());
+        if (jobUpdate.getQualityStandards() != null) job.setQualityStandards(jobUpdate.getQualityStandards());
+        if (jobUpdate.getRequiredFormats() != null) job.setRequiredFormats(jobUpdate.getRequiredFormats());
+        if (jobUpdate.getEvaluationProcess() != null) job.setEvaluationProcess(jobUpdate.getEvaluationProcess());
+        if (jobUpdate.getApplicationGuidelineUrls() != null) job.setApplicationGuidelineUrls(jobUpdate.getApplicationGuidelineUrls());
+        if (jobUpdate.getSampleDocumentUrls() != null) job.setSampleDocumentUrls(jobUpdate.getSampleDocumentUrls());
+        if (jobUpdate.getSampleImageUrls() != null) job.setSampleImageUrls(jobUpdate.getSampleImageUrls());
+        if (jobUpdate.getSampleVideoUrls() != null) job.setSampleVideoUrls(jobUpdate.getSampleVideoUrls());
+        if (jobUpdate.getSampleAudioUrls() != null) job.setSampleAudioUrls(jobUpdate.getSampleAudioUrls());
         if (jobUpdate.getClosingDate() != null) job.setClosingDate(jobUpdate.getClosingDate());
 
         job.setUpdatedAt(Instant.now());
@@ -177,8 +203,11 @@ public class JobPostingService {
      */
     public Page<Job> getOpenJobsByCategory(String categoryId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        if (categoryId == null || categoryId.isBlank()) {
+            return jobRepository.findByStatusAndIsEnterpriseOnly(Job.Status.OPEN, false, pageable);
+        }
         return jobRepository.findByCategoryIdAndStatusAndIsEnterpriseOnly(
-                categoryId, Job.Status.OPEN, true, pageable);
+                categoryId, Job.Status.OPEN, false, pageable);
     }
 
     /**
@@ -187,7 +216,7 @@ public class JobPostingService {
     public Page<Job> getJobsByEngagementType(Job.EngagementType engagementType, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return jobRepository.findByEngagementTypeAndStatusAndIsEnterpriseOnly(
-                engagementType, Job.Status.OPEN, true, pageable);
+                engagementType, Job.Status.OPEN, false, pageable);
     }
 
     /**
@@ -196,7 +225,7 @@ public class JobPostingService {
     public Page<Job> getJobsByDeliverableType(Job.DeliverableType deliverableType, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return jobRepository.findByDeliverableTypeAndStatusAndIsEnterpriseOnly(
-                deliverableType, Job.Status.OPEN, true, pageable);
+                deliverableType, Job.Status.OPEN, false, pageable);
     }
 
     /**
@@ -223,7 +252,7 @@ public class JobPostingService {
         
         List<Job> results = jobRepository.findAll().stream()
                 .filter(job -> job.getStatus() == Job.Status.OPEN)
-                .filter(job -> Boolean.TRUE.equals(job.getIsEnterpriseOnly()))
+            .filter(job -> Boolean.FALSE.equals(job.getIsEnterpriseOnly()))
                 .filter(job -> filterByCriteria(job, criteria))
                 .collect(Collectors.toList());
 

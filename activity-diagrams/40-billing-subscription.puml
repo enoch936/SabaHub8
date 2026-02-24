@@ -1,0 +1,41 @@
+@startuml
+skinparam linetype ortho
+skinparam activity {
+  BackgroundColor #F6F8FA
+  BorderColor #2B2B2B
+  BackgroundColor<<failure>> #FFEEEE
+}
+
+title Billing & Subscription (with Exception Handling)
+
+|Employer|
+start
+:Employer selects plan;
+|Billing Service|
+:Create subscription;
+:Generate invoice;
+:Process payment;
+if (Payment success?) then (yes)
+  :Activate subscription;
+  :Update billing history;
+else (no)
+  :Record payment failure <<failure>>;
+  |Notification Service|
+  :Notify employer;
+  :Resolve template;
+  :Check user preferences;
+  if (Allowed channel?) then (yes)
+    :Send message;
+    if (Delivery failed?) then (yes)
+      :Fallback channel <<failure>>;
+      :Retry delivery <<failure>>;
+    endif
+  else (no)
+    :Skip delivery <<failure>>;
+  endif
+  :Log delivery status;
+  |Audit|
+  :Record audit event;
+endif
+stop
+@enduml

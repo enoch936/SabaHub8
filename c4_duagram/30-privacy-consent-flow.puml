@@ -1,0 +1,24 @@
+@startuml
+actor "Job Seeker" as JS
+participant "Privacy & Consent Module" as CONSENT
+participant "Security & Compliance Service" as COMP
+database "Auth DB" as AUTHDB
+database "Application DB" as APPDB
+database "Object Storage" as BLOB
+database "Analytics Warehouse" as DWH
+participant "Analytics Service" as ANALYTICS
+participant "Notification Service" as NOTIF
+
+JS -> CONSENT : Capture consent
+CONSENT -> COMP : Store consent policy
+COMP -> ANALYTICS : Allow analytics processing
+COMP -> NOTIF : Allow notifications
+
+JS -> CONSENT : Right-to-be-Forgotten request
+CONSENT -> COMP : Validate request
+COMP -> AUTHDB : Delete identity data
+COMP -> APPDB : Delete application data
+COMP -> BLOB : Delete resumes/docs
+COMP -> DWH : Purge analytics records
+COMP -> ANALYTICS : Confirm purge
+@enduml

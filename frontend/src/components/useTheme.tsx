@@ -10,6 +10,38 @@ export function useTheme() {
   const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
+  const applyThemeToDOM = useCallback((nextTheme: Theme) => {
+    if (typeof document === "undefined") return;
+    
+    const html = document.documentElement;
+    const isDark = nextTheme === "dark";
+    
+    // Set class for Tailwind dark: variants
+    if (isDark) {
+      html.classList.add("dark");
+      html.classList.remove("light");
+    } else {
+      html.classList.add("light");
+      html.classList.remove("dark");
+    }
+    
+    // Set data attribute for direct CSS selectors
+    html.setAttribute("data-theme", nextTheme);
+    
+    // Set color-scheme for native elements
+    html.style.colorScheme = nextTheme;
+    
+    // Apply inline styles for critical elements
+    const root = document.documentElement;
+    root.style.setProperty("--background", nextTheme === "dark" ? "#0a0a0a" : "#ffffff");
+    root.style.setProperty("--foreground", nextTheme === "dark" ? "#ededed" : "#171717");
+    
+    // Save to localStorage
+    try {
+      localStorage.setItem("sabahub-theme", nextTheme);
+    } catch {}
+  }, []);
+
   // Initialize on mount and listen for changes
   useEffect(() => {
     const initializeTheme = () => {
@@ -54,39 +86,7 @@ export function useTheme() {
       observer.disconnect();
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, []);
-
-  const applyThemeToDOM = useCallback((nextTheme: Theme) => {
-    if (typeof document === "undefined") return;
-    
-    const html = document.documentElement;
-    const isDark = nextTheme === "dark";
-    
-    // Set class for Tailwind dark: variants
-    if (isDark) {
-      html.classList.add("dark");
-      html.classList.remove("light");
-    } else {
-      html.classList.add("light");
-      html.classList.remove("dark");
-    }
-    
-    // Set data attribute for direct CSS selectors
-    html.setAttribute("data-theme", nextTheme);
-    
-    // Set color-scheme for native elements
-    html.style.colorScheme = nextTheme;
-    
-    // Apply inline styles for critical elements
-    const root = document.documentElement;
-    root.style.setProperty("--background", nextTheme === "dark" ? "#0a0a0a" : "#ffffff");
-    root.style.setProperty("--foreground", nextTheme === "dark" ? "#ededed" : "#171717");
-    
-    // Save to localStorage
-    try {
-      localStorage.setItem("sabahub-theme", nextTheme);
-    } catch {}
-  }, []);
+  }, [applyThemeToDOM]);
 
   const setTheme = useCallback(
     (next: Theme) => {

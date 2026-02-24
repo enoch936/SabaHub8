@@ -59,7 +59,7 @@ public class MediaUploadController {
     }
 
     @PostMapping("/upload/gallery-image")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'EMPLOYER')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<?> uploadGalleryImage(@RequestParam("file") MultipartFile file) {
         try {
             Map<String, String> result = mediaService.uploadGalleryImage(file);
@@ -106,7 +106,7 @@ public class MediaUploadController {
     }
 
     @PostMapping("/upload/promo-video")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYER')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<?> uploadPromoVideo(@RequestParam("file") MultipartFile file) {
         try {
             Map<String, String> result = mediaService.uploadPromoVideo(file);
@@ -168,7 +168,7 @@ public class MediaUploadController {
     }
 
     @PostMapping("/upload/audio-content")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'EMPLOYER')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<?> uploadAudioContent(@RequestParam("file") MultipartFile file) {
         try {
             Map<String, String> result = mediaService.uploadAudioContent(file);
@@ -215,7 +215,7 @@ public class MediaUploadController {
     }
 
     @PostMapping("/upload/report")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYER')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<?> uploadReport(@RequestParam("file") MultipartFile file) {
         try {
             Map<String, String> result = mediaService.uploadReport(file);

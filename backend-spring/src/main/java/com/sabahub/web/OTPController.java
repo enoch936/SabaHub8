@@ -179,20 +179,20 @@ public class OTPController {
      * Step 3: Verify SMS OTP
      */
     @PostMapping("/verify-sms")
-    public ResponseEntity<?> verifySMSOTP(@Valid @RequestBody OTPVerificationDTO request) {
-        log.info("Verifying SMS OTP for: {}", request.getEmail());
+    public ResponseEntity<?> verifySMSOTP(@Valid @RequestBody com.sabahub.dto.OTPVerificationPhoneDTO request) {
+        log.info("Verifying SMS OTP for phone: {}", request.getPhoneNumber());
 
         try {
-            boolean isValid = otpService.verifyOTPWithAttempts(request.getEmail(), request.getOtpCode());
+            boolean isValid = otpService.verifyOTPWithAttempts(request.getPhoneNumber(), request.getOtpCode());
 
             if (isValid) {
-                log.info("SMS OTP verified successfully for: {}", request.getEmail());
+                log.info("SMS OTP verified successfully for: {}", request.getPhoneNumber());
                 return ResponseEntity.ok(
                         new ApiResponse("SMS verified successfully", true, null)
                 );
             } else {
-                otpService.recordFailedAttempt(request.getEmail(), request.getOtpCode());
-                log.warn("Invalid SMS OTP for: {}", request.getEmail());
+                otpService.recordFailedAttempt(request.getPhoneNumber(), request.getOtpCode());
+                log.warn("Invalid SMS OTP for: {}", request.getPhoneNumber());
                 return ResponseEntity.badRequest().body(
                         new ApiResponse("Invalid or expired OTP", false, null)
                 );

@@ -1,0 +1,28 @@
+@startuml
+skinparam linetype ortho
+actor "Partner API Client" as PARTNER
+participant "API Gateway" as API
+participant "API Platform" as APIP
+participant "API Versioning" as VER
+participant "Usage Policy" as POLICY
+participant "Rate Limiter" as RATE
+participant "API Audit" as AUDIT
+
+PARTNER -> API : GET /v2/jobs
+API -> APIP : Route request
+APIP -> VER : Validate version
+APIP -> POLICY : Check quota
+APIP -> RATE : Enforce limits
+alt Allowed
+  RATE --> APIP : Allow
+  APIP -> AUDIT : Log usage
+  APIP --> API : Response
+  API --> PARTNER : 200 OK
+else Blocked
+  RATE --> APIP : Deny
+  APIP -> AUDIT : Log denial
+  APIP --> API : 429/403
+  API --> PARTNER : 429/403
+end
+@enduml
+

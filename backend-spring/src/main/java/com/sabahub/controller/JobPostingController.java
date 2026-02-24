@@ -1,9 +1,11 @@
 package com.sabahub.controller;
 
 import com.sabahub.domain.Job;
+import com.sabahub.repository.JobRepository;
 import com.sabahub.service.JobPostingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Enterprise Job Posting Controller
@@ -27,6 +30,9 @@ public class JobPostingController {
 
     @Autowired
     private JobPostingService jobPostingService;
+
+    @Autowired
+    private JobRepository jobRepository;
 
     // ========== Job Creation & Management ==========
 
@@ -67,11 +73,62 @@ public class JobPostingController {
     }
 
     /**
+     * POST /api/jobs/seed
+     * Bulk create open marketplace jobs (development utility)
+     */
+    @PostMapping("/seed")
+    public ResponseEntity<?> seedJobs(@RequestBody List<Job> jobs,
+                                      @RequestParam(name = "clear", defaultValue = "false") boolean clear) {
+        try {
+            if (jobs == null || jobs.isEmpty()) {
+                return ResponseEntity.badRequest().body(createErrorResponse("Job list is required"));
+            }
+
+            if (clear) {
+                jobRepository.deleteAll();
+            }
+
+            jobs.forEach(job -> {
+                if (job.getStatus() == null) {
+                    job.setStatus(Job.Status.OPEN);
+                }
+                if (job.getIsEnterpriseOnly() == null) {
+                    job.setIsEnterpriseOnly(false);
+                }
+                if (job.getEmployerId() == null || job.getEmployerId().isBlank()) {
+                    job.setEmployerId("seed-employer");
+                }
+                if (job.getCreatedAt() == null) {
+                    job.setCreatedAt(java.time.Instant.now());
+                }
+                if (job.getTitle() == null || job.getTitle().isBlank()) {
+                    throw new IllegalArgumentException("Job title is required");
+                }
+                if (job.getDescription() == null || job.getDescription().isBlank()) {
+                    throw new IllegalArgumentException("Job description is required");
+                }
+                if (job.getEngagementType() == null || job.getDeliverableType() == null) {
+                    throw new IllegalArgumentException("Engagement type and deliverable type are required");
+                }
+            });
+
+            List<Job> created = jobRepository.saveAll(jobs.stream().filter(Objects::nonNull).toList());
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error seeding jobs", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Failed to seed jobs: " + e.getMessage()));
+        }
+    }
+
+    /**
      * GET /api/jobs/{id}
      * Get job details by ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> getJob(@PathVariable String id) {
+    public ResponseEntity<?> getJob(@PathVariable("id") String id) {
         try {
             Job job = jobPostingService.getJobById(id);
             return ResponseEntity.ok(job);
@@ -88,7 +145,7 @@ public class JobPostingController {
      */
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('EMPLOYER')")
-    public ResponseEntity<?> updateJob(@PathVariable String id, @RequestBody Job jobUpdate) {
+    public ResponseEntity<?> updateJob(@PathVariable("id") String id, @RequestBody Job jobUpdate) {
         try {
             log.info("Updating job: {}", id);
             Job updated = jobPostingService.updateJob(id, jobUpdate);
@@ -111,7 +168,7 @@ public class JobPostingController {
      */
     @PostMapping("/{id}/publish")
     @PreAuthorize("hasRole('EMPLOYER')")
-    public ResponseEntity<?> publishJob(@PathVariable String id) {
+    public ResponseEntity<?> publishJob(@PathVariable("id") String id) {
         try {
             log.info("Publishing job: {}", id);
             Job published = jobPostingService.publishJob(id);
@@ -132,8 +189,8 @@ public class JobPostingController {
      */
     @PostMapping("/{id}/close")
     @PreAuthorize("hasRole('EMPLOYER')")
-    public ResponseEntity<?> closeJob(@PathVariable String id, 
-                                      @RequestParam(required = false) String reason) {
+    public ResponseEntity<?> closeJob(@PathVariable("id") String id,
+                                      @RequestParam(name = "reason", required = false) String reason) {
         try {
             log.info("Closing job: {}", id);
             Job closed = jobPostingService.closeJob(id, reason);
@@ -156,11 +213,15 @@ public class JobPostingController {
      */
     @GetMapping("/browse/open")
     public ResponseEntity<?> getOpenJobs(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         try {
             Page<Job> jobs = jobPostingService.getOpenJobsByCategory(null, page, size);
             return ResponseEntity.ok(jobs);
+        } catch (DataAccessException e) {
+            log.error("Database unavailable while fetching open jobs", e);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(createErrorResponse("Database unavailable"));
         } catch (Exception e) {
             log.error("Error fetching open jobs", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -174,9 +235,9 @@ public class JobPostingController {
      */
     @GetMapping("/browse/by-type")
     public ResponseEntity<?> getJobsByEngagementType(
-            @RequestParam Job.EngagementType engagementType,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "engagementType") Job.EngagementType engagementType,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         try {
             Page<Job> jobs = jobPostingService.getJobsByEngagementType(engagementType, page, size);
             return ResponseEntity.ok(jobs);
@@ -193,9 +254,9 @@ public class JobPostingController {
      */
     @GetMapping("/browse/by-deliverable")
     public ResponseEntity<?> getJobsByDeliverableType(
-            @RequestParam Job.DeliverableType deliverableType,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "deliverableType") Job.DeliverableType deliverableType,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         try {
             Page<Job> jobs = jobPostingService.getJobsByDeliverableType(deliverableType, page, size);
             return ResponseEntity.ok(jobs);
@@ -212,7 +273,7 @@ public class JobPostingController {
      */
     @GetMapping("/trending")
     public ResponseEntity<?> getTrendingJobs(
-            @RequestParam(defaultValue = "10") int limit) {
+            @RequestParam(name = "limit", defaultValue = "10") int limit) {
         try {
             List<Job> trendingJobs = jobPostingService.getTrendingJobs(limit);
             return ResponseEntity.ok(trendingJobs);
@@ -232,8 +293,8 @@ public class JobPostingController {
     @PostMapping("/search")
     public ResponseEntity<?> searchJobs(
             @RequestBody JobSearchRequest searchRequest,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         try {
             log.info("Executing job search with filters");
             
@@ -266,7 +327,7 @@ public class JobPostingController {
     @GetMapping("/employer/my-jobs")
     @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<?> getMyJobs(
-            @RequestParam(required = false) Integer limit) {
+            @RequestParam(name = "limit", required = false) Integer limit) {
         try {
             List<Job> jobs = jobPostingService.getEmployerJobs(limit);
             return ResponseEntity.ok(jobs);

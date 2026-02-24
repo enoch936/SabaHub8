@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Component>
+
+Container(notificationService, "Messaging & Notification Service", "Node.js", "Email/SMS/Push/In-app") {
+  Component(emailSender, "Send Email", "Email delivery")
+  Component(smsSender, "Send SMS", "SMS delivery")
+  Component(pushSender, "Send Push Notification", "Push delivery")
+  Component(inAppMsg, "In-App Messaging", "In-app messages")
+  Component(notificationPrefs, "Notification Preferences", "User preferences")
+  Component(templateMgmt, "Template Management", "Templates")
+  Component(fallbackHandler, "Fallback Notification", "Retries/fallback")
+}
+
+Rel(templateMgmt, emailSender, "Includes")
+Rel(templateMgmt, smsSender, "Includes")
+Rel(templateMgmt, pushSender, "Includes")
+Rel(inAppMsg, notificationPrefs, "Extends")
+Rel(fallbackHandler, emailSender, "Retries")
+Rel(fallbackHandler, smsSender, "Retries")
+Rel(fallbackHandler, pushSender, "Retries")
+@enduml

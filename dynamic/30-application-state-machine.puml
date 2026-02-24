@@ -1,0 +1,20 @@
+@startuml
+skinparam linetype ortho
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+}
+
+[*] --> Draft
+Draft --> Submitted : submit
+Submitted --> UnderReview : review
+UnderReview --> Shortlisted : shortlist
+UnderReview --> Rejected : reject
+Shortlisted --> InterviewScheduled : scheduleInterview
+InterviewScheduled --> Offered : sendOffer
+Offered --> Hired : acceptOffer
+Offered --> Rejected : declineOffer
+Hired --> [*]
+Rejected --> [*]
+@enduml
+

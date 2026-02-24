@@ -1,0 +1,20 @@
+@startuml
+!include <C4/C4_Component>
+
+Container(authService, "Identity & Access Service", "Java/Spring", "SSO, MFA, sessions, roles") {
+  Component(signUp, "Sign Up", "Registration")
+  Component(signIn, "Sign In", "Authentication")
+  Component(mfa, "MFA Orchestrator", "Second-factor enforcement")
+  Component(passwordReset, "Password Reset", "Credential recovery")
+  Component(sessionMgmt, "Session Management", "Token/session lifecycle")
+  Component(roleMgmt, "Role & Permission Management", "RBAC/ABAC")
+  Component(ssoIntegration, "SSO Integration", "SAML/OIDC adapters")
+  Component(loginAudit, "Audit Login Events", "Security audit trail")
+}
+
+Rel(signIn, mfa, "Extends")
+Rel(signIn, sessionMgmt, "Includes")
+Rel(signIn, loginAudit, "Includes")
+Rel(ssoIntegration, signIn, "Includes")
+Rel(signIn, passwordReset, "Includes")
+@enduml

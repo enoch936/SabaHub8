@@ -34,11 +34,11 @@ async function proxy(request: Request, url: string) {
   }
 
   try {
-    // Clone the request to read body if needed
     let body: BodyInit | null = null;
     if (request.method !== "GET" && request.method !== "HEAD") {
       try {
-        body = await request.text();
+        const buffer = await request.arrayBuffer();
+        body = buffer.byteLength ? buffer : null;
       } catch (e) {
         console.error("Error reading request body:", e);
       }
@@ -47,7 +47,7 @@ async function proxy(request: Request, url: string) {
     const resp = await fetch(url, {
       method: request.method,
       headers,
-      body: body || undefined,
+      body: body ?? undefined,
     });
 
     const respHeaders = new Headers(resp.headers);

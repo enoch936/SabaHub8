@@ -1,0 +1,134 @@
+@startuml
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Inter"
+skinparam defaultFontSize 10
+
+package "com.sabahub.controller" as controller {
+	package "auth" as controller_auth
+	package "profile" as controller_profile
+	package "job" as controller_job
+	package "application" as controller_app
+	package "asset" as controller_asset
+	package "admin" as controller_admin
+	package "health" as controller_health
+}
+
+package "com.sabahub.service" as service {
+	package "auth" as service_auth
+	package "otp" as service_otp
+	package "profile" as service_profile
+	package "job" as service_job
+	package "application" as service_app
+	package "asset" as service_asset
+	package "admin" as service_admin
+	package "audit" as service_audit
+}
+
+package "com.sabahub.repository" as repository {
+	package "mongo" as repo_mongo
+	package "cache" as repo_cache
+}
+
+package "com.sabahub.domain" as domain {
+	package "user" as domain_user
+	package "profile" as domain_profile
+	package "job" as domain_job
+	package "application" as domain_app
+	package "asset" as domain_asset
+	package "audit" as domain_audit
+	package "common" as domain_common
+}
+
+package "com.sabahub.security" as security {
+	package "jwt" as security_jwt
+	package "rbac" as security_rbac
+	package "filters" as security_filters
+}
+
+package "com.sabahub.integration" as integration {
+	package "cloudinary" as integ_cloudinary
+	package "smtp" as integ_smtp
+	package "twilio" as integ_twilio
+	package "payments" as integ_payments
+}
+
+package "com.sabahub.config" as config {
+	package "web" as config_web
+	package "security" as config_security
+	package "storage" as config_storage
+	package "documentation" as config_docs
+}
+
+package "com.sabahub.dto" as dto {
+	package "request" as dto_request
+	package "response" as dto_response
+}
+
+package "com.sabahub.mapper" as mapper
+package "com.sabahub.exception" as exception
+package "com.sabahub.validation" as validation
+package "com.sabahub.util" as util
+
+controller_auth --> service_auth
+controller_profile --> service_profile
+controller_job --> service_job
+controller_app --> service_app
+controller_asset --> service_asset
+controller_admin --> service_admin
+controller_health --> service_audit
+
+service_auth --> service_otp
+service_auth --> security_jwt
+service_auth --> security_rbac
+service_auth --> repo_mongo
+service_auth --> repo_cache
+
+service_profile --> repo_mongo
+service_profile --> domain_profile
+service_profile --> domain_user
+
+service_job --> repo_mongo
+service_job --> domain_job
+service_job --> service_audit
+
+service_app --> repo_mongo
+service_app --> domain_app
+service_app --> service_audit
+
+service_asset --> repo_mongo
+service_asset --> domain_asset
+service_asset --> integ_cloudinary
+
+service_admin --> repo_mongo
+service_admin --> domain_user
+service_admin --> domain_audit
+service_admin --> service_audit
+
+service_audit --> repo_mongo
+service_audit --> domain_audit
+
+controller --> dto
+controller --> validation
+dto --> mapper
+mapper --> domain
+service --> domain
+service --> exception
+
+security_filters --> security_jwt
+security_rbac --> domain_user
+
+repo_mongo --> domain
+repo_cache --> domain
+
+integ_smtp --> service_otp
+integ_twilio --> service_otp
+
+config_web --> controller
+config_security --> security
+config_storage --> integ_cloudinary
+config_docs --> controller
+
+validation --> dto
+exception --> util
+@enduml

@@ -87,7 +87,7 @@ export default function AuditLogsPage() {
       <section className="rounded-2xl border border-white/20 bg-white/85 p-4 shadow-xl shadow-sky-500/10 backdrop-blur space-y-3">
         <div className="flex items-center justify-between">
           <div className="text-sm text-slate-600">Total: {query.data?.total ?? 0}</div>
-          <Badge variant="outline" className="bg-amber-50/80 text-amber-700">Prototype view</Badge>
+          <Badge variant="warning">Prototype view</Badge>
         </div>
         <Table columns={columns} rows={query.data?.items ?? []} />
         <div className="flex items-center justify-between">

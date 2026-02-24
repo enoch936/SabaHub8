@@ -1,0 +1,90 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Inter"
+skinparam defaultFontSize 10
+
+class User {
+  -id: String
+  -email: String
+  -role: Role
+  -status: UserStatus
+  +getId(): String
+  +getRole(): Role
+}
+
+class Profile {
+  -userId: String
+  -displayName: String
+  -skills: List<String>
+  +updateProfile(displayName: String, skills: List<String>): void
+}
+
+class JobPost {
+  -id: String
+  -ownerId: String
+  -title: String
+  -status: JobStatus
+  +publish(): void
+  +close(): void
+}
+
+class Application {
+  -id: String
+  -jobId: String
+  -applicantId: String
+  -status: ApplicationStatus
+  +submit(): void
+  +withdraw(): void
+}
+
+class Asset {
+  -id: String
+  -ownerId: String
+  -publicId: String
+  -url: String
+  -contentType: String
+  +assignToProfile(profileId: String): void
+}
+
+class OtpSession {
+  -id: String
+  -channel: OtpChannel
+  -target: String
+  -expiresAt: Instant
+  +isExpired(now: Instant): boolean
+}
+
+class AuthService {
+  +requestOtp(channel: OtpChannel, target: String): void
+  +verifyOtp(sessionId: String, code: String): boolean
+  +issueJwt(userId: String): String
+}
+
+class AssetService {
+  +uploadAsset(file: File, ownerId: String): Asset
+  +deleteAsset(assetId: String): void
+}
+
+class JwtService {
+  +sign(userId: String, role: Role): String
+  +verify(token: String): boolean
+}
+
+User "1" -- "1" Profile
+User "1" -- "0..*" Asset
+JobPost "1" -- "0..*" Application
+
+AuthService ..> OtpSession
+AuthService ..> JwtService
+AssetService ..> Asset
+
+note right of AuthService
+Pre: target is valid and OTP rate limit not exceeded.
+Post: OTP session created and delivered (email/SMS).
+end note
+
+note right of Application
+Pre: status == DRAFT before submit().
+Post: status == SUBMITTED and audit event created.
+end note
+@enduml

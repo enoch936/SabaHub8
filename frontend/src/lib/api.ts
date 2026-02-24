@@ -49,7 +49,7 @@ api.interceptors.response.use(
     
     // For other statuses (e.g., 4xx), resolve with empty payload
     const emptyResponse = {
-      data: null,
+      data: error?.response?.data ?? null,
       status: typeof status === "number" ? status : 0,
       statusText: error?.response?.statusText ?? "EMPTY",
       headers: error?.response?.headers ?? {},
@@ -144,6 +144,26 @@ export async function verifyPhone() {
   return data;
 }
 
+export async function requestPhoneVerification() {
+  const { data } = await api.post("/user/settings/verify-phone/request");
+  return data as { message?: string; success?: boolean };
+}
+
+export async function confirmPhoneVerification(otpCode: string) {
+  const { data } = await api.post("/user/settings/verify-phone/confirm", { otpCode });
+  return data as UserProfile;
+}
+
+export async function requestEmailVerification() {
+  const { data } = await api.post("/user/settings/verify-email/request");
+  return data as { message?: string; success?: boolean };
+}
+
+export async function confirmEmailVerification(otpCode: string) {
+  const { data } = await api.post("/user/settings/verify-email/confirm", { otpCode });
+  return data as UserProfile;
+}
+
 export async function verifyIdentity(method: string) {
   const { data } = await api.post("/user/settings/verify-identity", {}, { params: { method } });
   return data;
@@ -164,14 +184,156 @@ export type Job = {
   id: string;
   title: string;
   description: string;
+  overviewText?: string;
+  employerId?: string;
   budget?: { min?: number; max?: number; currency?: string };
+  budgetMin?: number;
+  budgetMax?: number;
+  currency?: string;
   status?: string;
   createdAt?: string;
+  updatedAt?: string;
+  engagementType?: string;
+  deliverableType?: string;
+  deliverableScopes?: string[];
+  workLocation?: string;
+  pricingModel?: string;
+  rateBreakdown?: Record<string, number>;
+  slaDeliveryDays?: number;
+  maxConcurrentProjects?: number;
+  includedRevisionRounds?: number;
+  qualityStandards?: string[];
+  requiredFormats?: string[];
+  minYearsExperience?: number;
+  requiredSkills?: string[];
+  requiredTools?: string[];
+  requiredQualifications?: string[];
+  preferredExperience?: string[];
+  requiresPortfolio?: boolean;
+  requiresReferences?: boolean;
+  minReferenceCount?: number;
+  requiresNDA?: boolean;
+  requiresBGCheck?: boolean;
+  requiresInsurance?: boolean;
+  complianceRequirements?: string[];
+  dataClassifications?: string[];
+  pilotProjectRequired?: boolean;
+  pilotProjectScope?: string;
+  pilotEstimatedHours?: number;
+  preferredVendorOpportunity?: boolean;
+  minimumMonthlyCommitment?: number;
+  contractTermMonths?: number;
+  rateStabilityGuarantee?: boolean;
+  categoryId?: string;
+  skills?: string[];
+  industry?: string[];
+  teamSize?: string[];
+  companyName?: string;
+  closingDate?: string;
+  evaluationProcess?: string;
+  applicationGuidelineUrls?: string[];
+  sampleDocumentUrls?: string[];
+  sampleImageUrls?: string[];
+  sampleVideoUrls?: string[];
+  sampleAudioUrls?: string[];
+  isEnterpriseOnly?: boolean;
 };
 
+export type PaginatedResult<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+};
+
+type RawPagePayload<T> = {
+  content?: T[];
+  items?: T[];
+  totalElements?: number;
+  total?: number;
+  number?: number;
+  page?: number;
+  size?: number;
+  totalPages?: number;
+  first?: boolean;
+  last?: boolean;
+  pageable?: {
+    pageNumber?: number;
+    pageSize?: number;
+  };
+};
+
+function toFiniteNumber(value: unknown, fallback: number) {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizePage<T>(
+  payload: RawPagePayload<T> | T[] | null | undefined,
+  fallbackPage: number,
+  fallbackSize: number
+): PaginatedResult<T> {
+  const page = Math.max(0, fallbackPage);
+  const size = Math.max(1, fallbackSize);
+
+  if (Array.isArray(payload)) {
+    const total = payload.length;
+    const totalPages = total > 0 ? Math.ceil(total / size) : 0;
+    return {
+      items: payload,
+      total,
+      page,
+      size,
+      totalPages,
+      hasPrevious: page > 0,
+      hasNext: page + 1 < totalPages,
+    };
+  }
+
+  const raw = (payload && typeof payload === "object" ? payload : {}) as RawPagePayload<T>;
+  const items = Array.isArray(raw.content) ? raw.content : Array.isArray(raw.items) ? raw.items : [];
+
+  const resolvedSize = Math.max(
+    1,
+    toFiniteNumber(raw.size, toFiniteNumber(raw.pageable?.pageSize, size))
+  );
+  const resolvedPage = Math.max(
+    0,
+    toFiniteNumber(raw.number, toFiniteNumber(raw.page, toFiniteNumber(raw.pageable?.pageNumber, page)))
+  );
+  const total = Math.max(0, toFiniteNumber(raw.totalElements, toFiniteNumber(raw.total, items.length)));
+  const totalPages = Math.max(0, toFiniteNumber(raw.totalPages, total > 0 ? Math.ceil(total / resolvedSize) : 0));
+
+  const hasPrevious = typeof raw.first === "boolean" ? !raw.first : resolvedPage > 0;
+  const hasNext = typeof raw.last === "boolean" ? !raw.last : resolvedPage + 1 < totalPages;
+
+  return {
+    items,
+    total,
+    page: resolvedPage,
+    size: resolvedSize,
+    totalPages,
+    hasPrevious,
+    hasNext,
+  };
+}
+
+export async function listOpenJobsPage(options?: { page?: number; size?: number }) {
+  const page = Math.max(0, options?.page ?? 0);
+  const size = Math.max(1, options?.size ?? 20);
+
+  const { data } = await api.get("/jobs/browse/open", {
+    params: { page, size },
+  });
+
+  return normalizePage<Job>(data as RawPagePayload<Job> | Job[] | null | undefined, page, size);
+}
+
 export async function listJobs() {
-  const { data } = await api.get("/jobs");
-  return data as Job[];
+  const response = await listOpenJobsPage({ page: 0, size: 20 });
+  return response.items;
 }
 
 export async function getJob(id: string) {
@@ -180,13 +342,89 @@ export async function getJob(id: string) {
 }
 
 export async function createJob(job: Partial<Job>) {
-  const { data } = await api.post("/employer/jobs", job);
+  const { data } = await api.post("/jobs", job);
   return data as Job;
+}
+
+async function uploadMediaFile(endpoint: string, file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post(endpoint, formData);
+  return data?.url as string | undefined;
+}
+
+async function uploadMediaFiles(endpoint: string, files: File[]) {
+  if (!files.length) return [] as string[];
+  const uploads = await Promise.all(files.map((file) => uploadMediaFile(endpoint, file)));
+  return uploads.filter((url): url is string => Boolean(url));
+}
+
+export async function uploadJobSampleDocuments(files: File[]) {
+  return uploadMediaFiles("/media/upload/report", files);
+}
+
+export async function uploadJobSampleImages(files: File[]) {
+  return uploadMediaFiles("/media/upload/gallery-image", files);
+}
+
+export async function uploadJobSampleVideos(files: File[]) {
+  return uploadMediaFiles("/media/upload/promo-video", files);
+}
+
+export async function uploadJobSampleAudio(files: File[]) {
+  return uploadMediaFiles("/media/upload/audio-content", files);
+}
+
+export async function uploadProfileImage(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post("/user/settings/avatar", formData);
+  if (response.status >= 400) {
+    const message =
+      typeof response.data === "string"
+        ? response.data
+        : response.data?.message || "Failed to upload avatar.";
+    throw new Error(message);
+  }
+  const { data } = response;
+  return (data?.profilePictureUrl as string | undefined) ?? (data?.url as string | undefined);
 }
 
 export async function listEmployerJobs() {
   const { data } = await api.get("/employer/jobs");
   return data as Job[];
+}
+
+export type FeaturedFreelancerReview = {
+  id: string;
+  quote: string;
+  name: string;
+  role: string;
+  rating: number;
+  reviewCount: number;
+  avatarUrl?: string | null;
+};
+
+export async function listFeaturedFreelancerReviews(limit = 3) {
+  try {
+    const { data } = await api.get("/freelancer/featured-reviews", { params: { limit } });
+    if (!Array.isArray(data)) return [] as FeaturedFreelancerReview[];
+
+    return data
+      .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
+      .map((item) => ({
+        id: typeof item.id === "string" ? item.id : "",
+        quote: typeof item.quote === "string" ? item.quote : "",
+        name: typeof item.name === "string" ? item.name : "Verified Freelancer",
+        role: typeof item.role === "string" ? item.role : "Freelancer",
+        rating: typeof item.rating === "number" ? item.rating : 0,
+        reviewCount: typeof item.reviewCount === "number" ? item.reviewCount : 0,
+        avatarUrl: typeof item.avatarUrl === "string" ? item.avatarUrl : undefined,
+      }))
+      .filter((item) => Boolean(item.id));
+  } catch {
+    return [] as FeaturedFreelancerReview[];
+  }
 }
 
 // Proposals
@@ -246,9 +484,36 @@ export async function completeContract(id: string) {
 }
 
 // Wallet / Payments
+export type WalletTransaction = {
+  id: string;
+  provider?: string | null;
+  direction?: "IN" | "OUT" | null;
+  status?: string | null;
+  reason?: string | null;
+  amount?: number | null;
+  currency?: string | null;
+  referenceId?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+export type WalletSnapshot = {
+  userId?: string | null;
+  balance: number;
+  availableBalance?: number;
+  currency: string;
+  escrowHeld?: number;
+  pendingPayouts?: number;
+  holds?: number;
+  pendingLocalTopups?: number;
+  entries?: Record<string, unknown>[];
+  transactions?: WalletTransaction[];
+};
+
 export async function getWallet() {
   const { data } = await api.get(`/wallet`);
-  return data as { balance: number; currency: string } & Record<string, any>;
+  return data as WalletSnapshot;
 }
 
 export async function initChapa(input: { amount: number; currency?: string }, idempotencyKey?: string) {
@@ -258,12 +523,64 @@ export async function initChapa(input: { amount: number; currency?: string }, id
 
 export async function localTopupRequest(input: { amount: number; currency?: string; referenceId?: string }, idempotencyKey?: string) {
   const { data } = await api.post(`/payments/local/request`, input, { headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined });
-  return data as { transactionId: string };
+  return data as { transactionId: string; status?: string; message?: string };
+}
+
+export async function internalWalletTransfer(
+  input: { recipient: string; amount: number; currency?: string; note?: string },
+  idempotencyKey?: string
+) {
+  const { data } = await api.post(`/payments/internal/transfer`, input, {
+    headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined,
+  });
+  return data as {
+    ok: boolean;
+    transferReference: string;
+    transactionId: string;
+    amount: number;
+    currency: string;
+    senderBalanceAfter: number;
+    recipient: { id: string; email: string; fullName?: string };
+    idempotent?: boolean;
+  };
+}
+
+export type PendingLocalTopup = {
+  id: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  providerRef?: string;
+  status: string;
+  createdAt?: string;
+  metadata?: Record<string, unknown>;
+};
+
+export async function listPendingLocalTopups(options?: { page?: number; size?: number }) {
+  const { data } = await api.get(`/admin/payments/local/pending`, {
+    params: { page: options?.page ?? 0, size: options?.size ?? 20 },
+  });
+  return data as {
+    content: PendingLocalTopup[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+  };
+}
+
+export async function adminReviewLocal(
+  input: { transactionId: string; approved?: boolean; note?: string },
+  idempotencyKey?: string
+) {
+  const { data } = await api.post(`/admin/payments/local/verify`, input, {
+    headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined,
+  });
+  return data as { ok: boolean; status?: string; walletCredited?: boolean; idempotent?: boolean };
 }
 
 export async function adminVerifyLocal(input: { transactionId: string }, idempotencyKey?: string) {
-  const { data } = await api.post(`/admin/payments/local/verify`, input, { headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined });
-  return data as { ok: boolean };
+  return adminReviewLocal({ transactionId: input.transactionId, approved: true }, idempotencyKey);
 }
 
 // Escrow

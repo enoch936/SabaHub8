@@ -1,0 +1,64 @@
+# Root .gitignore for SabaHub monorepo
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Next.js
+/.next/
+/.turbo/
+/.vercel/
+next-env.d.ts
+
+# pnpm
+node_modules/
+pnpm-lock.yaml
+
+# Build outputs
+/target/
+dist/
+build/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# IDEs and editors
+.idea/
+*.iml
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# Misc generated files
+*.class
+*.jar
+*.war
+
+# Project-specific generated/rendered diagrams and artifacts
+**/rendered/
+**/*.png
+**/*.svg
+**/*.preproc
+
+# Claude agent artifacts
+.claude/
+
+# Ignore lockfiles if you prefer a package manager lock to be present, keep tracked if wanted
+# (pnpm lock is present in repo; remove the next line if you want to keep it tracked)
+# pnpm-lock.yaml

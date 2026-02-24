@@ -1,0 +1,26 @@
+4.3.7 Deployment
+
+Deployment Strategy
+SabaHub is containerized to ensure consistent environments across development, staging, and production.
+
+Stages
+1) Build images
+- Next.js app image (frontend)
+- Spring Boot API image (backend)
+
+2) Orchestration
+- Deploy images using Docker Compose for dev or Kubernetes/Docker Swarm for production.
+
+3) Data services
+- MongoDB Atlas as managed database.
+- Optional Redis for caching/OTP throttling.
+- Cloudinary for media storage and delivery.
+
+4) Security and observability
+- HTTPS via managed TLS (or Lets Encrypt).
+- Health checks for /health and /actuator/health.
+- Centralized logging and metrics as needed.
+
+Runtime Ports (default)
+- Frontend: 3000
+- Backend: 8080

@@ -9,8 +9,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 const EmployerDashboard = () => {
-  const [analytics, setAnalytics] = useState(null);
-  const [projects, setProjects] = useState([]);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [projects, setProjects] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +51,15 @@ const EmployerDashboard = () => {
 
   const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#0ea5e9'];
 
-  const StatCard = ({ icon, title, value, color, trend }) => (
+  type StatCardProps = {
+    icon: React.ReactNode;
+    title: string;
+    value: React.ReactNode;
+    color: string;
+    trend?: number;
+  };
+
+  const StatCard = ({ icon, title, value, color, trend }: StatCardProps) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -203,7 +211,7 @@ const EmployerDashboard = () => {
               Skills Breakdown
             </h3>
             <div className="space-y-3">
-              {analytics?.topSkillsRequested?.slice(0, 5).map((skill, idx) => (
+              {(analytics?.topSkillsRequested ?? []).slice(0, 5).map((skill: string, idx: number) => (
                 <div key={idx} className="flex items-center justify-between">
                   <span className="text-gray-700 dark:text-gray-300">{skill}</span>
                   <div className="w-20 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -226,7 +234,7 @@ const EmployerDashboard = () => {
           animate={{ opacity: 1 }}
           className="space-y-4"
         >
-          {projects.map((project, idx) => (
+          {projects.map((project: any, idx: number) => (
             <ProjectCard key={project.id} project={project} index={idx} />
           ))}
         </motion.div>
@@ -265,7 +273,18 @@ const EmployerDashboard = () => {
   );
 };
 
-const ProjectCard = ({ project, index }) => (
+type EmployerProject = {
+  id: string;
+  title: string;
+  description?: string;
+  status?: string;
+  budget?: number;
+  [key: string]: any;
+};
+
+type ProjectCardProps = { project: EmployerProject; index: number };
+
+const ProjectCard = ({ project, index }: ProjectCardProps) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}

@@ -138,6 +138,10 @@ public class Job {
     private Instant closingDate;
     private String evaluationProcess; // Description of evaluation
     private List<String> applicationGuidelineUrls;
+    private List<String> sampleDocumentUrls;
+    private List<String> sampleImageUrls;
+    private List<String> sampleVideoUrls;
+    private List<String> sampleAudioUrls;
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -291,4 +295,16 @@ public class Job {
 
     public List<String> getApplicationGuidelineUrls() { return applicationGuidelineUrls; }
     public void setApplicationGuidelineUrls(List<String> applicationGuidelineUrls) { this.applicationGuidelineUrls = applicationGuidelineUrls; }
+
+    public List<String> getSampleDocumentUrls() { return sampleDocumentUrls; }
+    public void setSampleDocumentUrls(List<String> sampleDocumentUrls) { this.sampleDocumentUrls = sampleDocumentUrls; }
+
+    public List<String> getSampleImageUrls() { return sampleImageUrls; }
+    public void setSampleImageUrls(List<String> sampleImageUrls) { this.sampleImageUrls = sampleImageUrls; }
+
+    public List<String> getSampleVideoUrls() { return sampleVideoUrls; }
+    public void setSampleVideoUrls(List<String> sampleVideoUrls) { this.sampleVideoUrls = sampleVideoUrls; }
+
+    public List<String> getSampleAudioUrls() { return sampleAudioUrls; }
+    public void setSampleAudioUrls(List<String> sampleAudioUrls) { this.sampleAudioUrls = sampleAudioUrls; }
 }

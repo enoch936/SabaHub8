@@ -31,6 +31,19 @@ public class DotenvConfig implements ApplicationContextInitializer<ConfigurableA
                 dotenvProperties.put(entry.getKey(), entry.getValue());
             });
 
+            // Normalize MongoDB URI env var names (support both legacy and Spring-standard keys)
+            String springMongoUri = toTrimmedString(dotenvProperties.get("SPRING_DATA_MONGODB_URI"));
+            String legacyMongoUri = toTrimmedString(dotenvProperties.get("MONGODB_URI"));
+            if (isBlank(springMongoUri) && !isBlank(legacyMongoUri)) {
+                dotenvProperties.put("SPRING_DATA_MONGODB_URI", legacyMongoUri);
+                log.info("ℹ️ Mapped MONGODB_URI -> SPRING_DATA_MONGODB_URI");
+            } else if (isBlank(legacyMongoUri) && !isBlank(springMongoUri)) {
+                dotenvProperties.put("MONGODB_URI", springMongoUri);
+                log.info("ℹ️ Mapped SPRING_DATA_MONGODB_URI -> MONGODB_URI");
+            } else if (!isBlank(springMongoUri) && !isBlank(legacyMongoUri) && !springMongoUri.equals(legacyMongoUri)) {
+                log.warn("⚠️ Both SPRING_DATA_MONGODB_URI and MONGODB_URI are set and differ. SPRING_DATA_MONGODB_URI will be used.");
+            }
+
             // Add to Spring environment with high priority
             ConfigurableEnvironment environment = applicationContext.getEnvironment();
             environment.getPropertySources().addFirst(
@@ -50,5 +63,17 @@ public class DotenvConfig implements ApplicationContextInitializer<ConfigurableA
         } catch (Exception e) {
             log.warn("⚠️ Failed to load .env file: {}. Using system environment variables.", e.getMessage());
         }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private static String toTrimmedString(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String str = String.valueOf(value);
+        return str.trim().isEmpty() ? null : str.trim();
     }
 }

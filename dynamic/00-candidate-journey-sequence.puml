@@ -1,0 +1,36 @@
+@startuml
+skinparam linetype ortho
+skinparam sequence {
+  LifeLineBorderColor #2B2B2B
+  LifeLineBackgroundColor #F6F8FA
+  ParticipantBorderColor #2B2B2B
+}
+
+actor "Job Seeker" as JS
+participant "Web/Mobile UI" as UI
+participant "API Gateway" as API
+participant "Applications & Hiring Service" as APP
+participant "Background Check Provider" as BGC
+participant "Calendar Provider" as CAL
+participant "E-Signature Service" as ESIGN
+participant "Event Bus" as BUS
+participant "Notification Service" as NOTIF
+participant "Analytics Service" as ANALYTICS
+
+JS -> UI : Submit application
+UI -> API : POST /applications
+API -> APP : Create application
+APP -> BUS : Publish ApplicationSubmitted
+BUS -> NOTIF : Notify candidate
+BUS -> ANALYTICS : Track funnel event
+APP -> BGC : Request background check
+BGC --> APP : Check result
+APP -> CAL : Schedule interview
+CAL --> APP : Interview confirmed
+APP -> ESIGN : Send offer for signature
+ESIGN --> APP : Offer signed
+APP -> BUS : Publish OfferAccepted
+BUS -> NOTIF : Notify employer/candidate
+BUS -> ANALYTICS : Update hiring metrics
+@enduml
+

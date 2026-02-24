@@ -21,7 +21,10 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
-      <div className="lg:ml-72">
+      <div
+        className="transition-[margin] duration-300 ease-out"
+        style={{ marginLeft: "var(--sidebar-width, 288px)" }}
+      >
         <Navbar />
         <main className="pt-16">{children}</main>
       </div>

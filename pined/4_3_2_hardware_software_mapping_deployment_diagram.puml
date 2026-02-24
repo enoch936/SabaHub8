@@ -1,0 +1,34 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Inter"
+skinparam defaultFontSize 10
+
+node "Client Device" as Client {
+  artifact "Browser" as Browser
+}
+
+node "Frontend Tier" as FE {
+  artifact "Next.js Server" as NextServer
+}
+
+node "Application Tier" as BE {
+  artifact "Spring Boot API" as SpringApi
+}
+
+node "Data Tier" as Data {
+  database "MongoDB Atlas" as Mongo
+}
+
+cloud "Cloudinary" as Cloudinary
+cloud "SMTP Provider" as Smtp
+cloud "Twilio Verify" as Twilio
+node "Redis (optional)" as Redis
+
+Browser --> NextServer
+NextServer --> SpringApi
+SpringApi --> Mongo
+SpringApi --> Cloudinary
+SpringApi --> Smtp
+SpringApi --> Twilio
+SpringApi --> Redis
+@enduml

@@ -1,0 +1,28 @@
+@startuml
+!include <C4/C4_Container>
+
+LAYOUT_LEFT_RIGHT
+
+System_Boundary(sabaHub, "SabaHub Platform") {
+  Container(apiGateway, "API Gateway", "Edge/API", "Auth, routing, rate limits")
+  Container(authService, "Identity & Access Service", "Java/Spring", "SSO, MFA, sessions, roles")
+  Container(jobService, "Job Posting Service", "Java/Spring", "Job lifecycle management")
+  Container(appService, "Applications & Hiring Service", "Java/Spring", "Applications, interviews, offers")
+  Container(billingService, "Billing & Subscription Service", "Java/Spring", "Plans, payments, invoices")
+  Container(notificationService, "Messaging & Notification Service", "Node.js", "Email/SMS/Push/In-app")
+  Container(analyticsService, "Analytics & Insights Service", "Python/ETL", "Dashboards, KPIs, exports")
+  Container(complianceService, "Security & Compliance Service", "Java/Spring", "Audit, privacy, reporting")
+  Container(adminOpsService, "Admin & Operations Service", "Java/Spring", "Tenants, support, config")
+  Container(observability, "DevSecOps & Observability", "Platform", "Logs, metrics, traces")
+}
+
+Rel(apiGateway, observability, "Logs/Metrics/Traces")
+Rel(authService, observability, "Logs/Metrics/Traces")
+Rel(jobService, observability, "Logs/Metrics/Traces")
+Rel(appService, observability, "Logs/Metrics/Traces")
+Rel(billingService, observability, "Logs/Metrics/Traces")
+Rel(notificationService, observability, "Logs/Metrics/Traces")
+Rel(analyticsService, observability, "Logs/Metrics/Traces")
+Rel(complianceService, observability, "Audit Events/Alerts")
+Rel(adminOpsService, observability, "Logs/Metrics/Traces")
+@enduml

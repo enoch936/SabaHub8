@@ -96,7 +96,7 @@ export default function ContractDetailPage() {
               <div className="grid gap-3 sm:grid-cols-3">
                 <Input type="number" value={fee} onChange={(e) => setFee(Number(e.target.value))} placeholder="Platform fee" />
                 <Button onClick={() => release.mutate()} disabled={release.isPending}>Release</Button>
-                <Button variant="destructive" onClick={() => refund.mutate()} disabled={refund.isPending}>Refund</Button>
+                <Button variant="danger" onClick={() => refund.mutate()} disabled={refund.isPending}>Refund</Button>
               </div>
               <p className="text-xs text-slate-500">These controls hit sandbox endpoints; connect live payment provider to move funds.</p>
             </div>

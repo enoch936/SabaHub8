@@ -1,0 +1,27 @@
+@startuml
+left to right direction
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam entity {
+  BackgroundColor #F6F8FA
+  BorderColor #2B2B2B
+}
+
+title Data Governance & Classification — ER Diagram
+
+entity "DataClassification" as DataClassification {
+  *code : String
+  --
+  description : String
+}
+
+entity "DataRetentionPolicy" as DataRetentionPolicy {
+  *id : UUID
+  --
+  entityName : String
+  retentionDays : Integer
+  legalBasis : String
+}
+@enduml
+

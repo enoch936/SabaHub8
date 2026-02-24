@@ -246,4 +246,19 @@ public class FreelancerController {
         FreelancerAnalytics analytics = freelancerService.getAnalytics(freelancer.getId());
         return ResponseEntity.ok(analytics);
     }
+
+    @GetMapping("/featured-reviews")
+    public ResponseEntity<List<FreelancerService.FeaturedFreelancerReview>> getFeaturedReviews(
+            @RequestParam(name = "limit", defaultValue = "3") int limit) {
+        List<FreelancerService.FeaturedFreelancerReview> reviews = freelancerService.getFeaturedReviews(limit);
+        return ResponseEntity.ok(reviews);
+    }
+
+    @PostMapping("/seed/featured-reviews")
+    public ResponseEntity<FreelancerService.ReviewSeedResult> seedFeaturedReviews(
+            @RequestParam(name = "count", defaultValue = "6") int count,
+            @RequestParam(name = "clear", defaultValue = "false") boolean clear) {
+        FreelancerService.ReviewSeedResult result = freelancerService.seedFeaturedReviewFreelancers(count, clear);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
 }

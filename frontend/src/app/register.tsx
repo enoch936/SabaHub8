@@ -123,7 +123,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="relative isolate min-h-[calc(100dvh-80px)] overflow-hidden bg-slate-950 px-6 py-10 text-slate-900">
+    <main className="relative isolate min-h-[calc(100dvh-80px)] overflow-hidden bg-transparent px-6 py-10 text-slate-900">
       <div className="pointer-events-none absolute inset-0 -z-20" aria-hidden>
         <img src="/images/backgrounds/aurora-blur.svg" alt="Aurora" className="h-full w-full object-cover opacity-70" />
       </div>
@@ -132,7 +132,7 @@ export default function RegisterPage() {
       </div>
 
       <div className="relative mx-auto flex max-w-5xl items-center justify-center">
-        <div className="w-full overflow-hidden rounded-3xl border border-white/20 bg-white/85 shadow-[0_22px_70px_rgba(8,47,73,0.28)] backdrop-blur">
+        <div className="w-full overflow-hidden rounded-3xl border border-slate-200/70 bg-white/85 shadow-[var(--shadow-soft-lg)] backdrop-blur">
           <div className="grid grid-cols-1 md:grid-cols-2">
             <div className="relative hidden min-h-[580px] md:block">
               <img src="/images/banners/sabahub-collab-2.png" alt="Register" className="absolute inset-0 h-full w-full object-cover" />
@@ -154,7 +154,7 @@ export default function RegisterPage() {
               <form className={`space-y-4 ${shake ? "animate-shake" : ""}`} onSubmit={requestOTP}>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <input
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100 transition focus:border-sky-400 focus:ring"
+                    className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100/70 transition focus:border-sky-400 focus:ring"
                     placeholder="First name"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
@@ -162,14 +162,14 @@ export default function RegisterPage() {
                     aria-label="First name"
                   />
                   <input
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100 transition focus:border-sky-400 focus:ring"
+                    className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100/70 transition focus:border-sky-400 focus:ring"
                     placeholder="Middle name (optional)"
                     value={middleName}
                     onChange={(e) => setMiddleName(e.target.value)}
                     aria-label="Middle name"
                   />
                   <input
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100 transition focus:border-sky-400 focus:ring"
+                    className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100/70 transition focus:border-sky-400 focus:ring"
                     placeholder="Last name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
@@ -179,7 +179,7 @@ export default function RegisterPage() {
                 </div>
 
                 <input
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100 transition focus:border-sky-400 focus:ring"
+                  className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100/70 transition focus:border-sky-400 focus:ring"
                   type="email"
                   placeholder="Email address"
                   value={email}
@@ -189,7 +189,7 @@ export default function RegisterPage() {
                 />
 
                 <input
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100 transition focus:border-sky-400 focus:ring"
+                  className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100/70 transition focus:border-sky-400 focus:ring"
                   placeholder="Phone number (optional)"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
@@ -199,7 +199,7 @@ export default function RegisterPage() {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <input
                     type="password"
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100 transition focus:border-sky-400 focus:ring"
+                    className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100/70 transition focus:border-sky-400 focus:ring"
                     placeholder="Password (min 8 characters)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -209,7 +209,7 @@ export default function RegisterPage() {
                   />
                   <input
                     type="password"
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100 transition focus:border-sky-400 focus:ring"
+                    className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none ring-sky-100/70 transition focus:border-sky-400 focus:ring"
                     placeholder="Confirm password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -222,7 +222,7 @@ export default function RegisterPage() {
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-slate-800">I am a:</label>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg border p-3 transition ${role === "FREELANCER" ? "border-sky-500 bg-sky-50" : "border-slate-300 hover:border-slate-400"}`}>
+                    <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border p-3 transition ${role === "FREELANCER" ? "border-sky-400 bg-sky-50/80" : "border-slate-200/80 hover:border-slate-300"}`}>
                       <div className="flex items-center gap-2">
                         <input
                           type="radio"
@@ -236,7 +236,7 @@ export default function RegisterPage() {
                       </div>
                       <span className="text-xs text-gray-500">Sell services</span>
                     </label>
-                    <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg border p-3 transition ${role === "EMPLOYER" ? "border-sky-500 bg-sky-50" : "border-slate-300 hover:border-slate-400"}`}>
+                    <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border p-3 transition ${role === "EMPLOYER" ? "border-sky-400 bg-sky-50/80" : "border-slate-200/80 hover:border-slate-300"}`}>
                       <div className="flex items-center gap-2">
                         <input
                           type="radio"
@@ -254,7 +254,7 @@ export default function RegisterPage() {
                 </div>
 
                 <button
-                  className="w-full rounded-lg bg-sky-600 px-4 py-2 font-semibold text-white shadow-sm transition hover:bg-sky-700 hover:shadow-md disabled:opacity-50"
+                  className="w-full rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 px-4 py-2 font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.3)] transition hover:shadow-[0_16px_36px_rgba(37,99,235,0.35)] disabled:opacity-50"
                   disabled={loading}
                 >
                   {loading ? "Sending code..." : "Continue"}

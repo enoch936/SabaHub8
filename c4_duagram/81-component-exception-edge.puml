@@ -1,0 +1,16 @@
+@startuml
+!include <C4/C4_Component>
+
+Container(notificationService, "Messaging & Notification Service", "Node.js", "Fallback and resilience") {
+  Component(paymentFailure, "Payment Failure Handling", "Billing retry/compensation")
+  Component(otpFailure, "Invalid/Expired OTP", "OTP validation errors")
+  Component(duplicatePrevention, "Duplicate Application Prevention", "Idempotency")
+  Component(rateLimit, "Rate Limit & Abuse Prevention", "Throttling")
+  Component(fallbackNotify, "Fallback Notification", "Channel fallback")
+}
+
+Rel(paymentFailure, fallbackNotify, "Includes")
+Rel(otpFailure, fallbackNotify, "Includes")
+Rel(duplicatePrevention, fallbackNotify, "Includes")
+Rel(rateLimit, fallbackNotify, "Includes")
+@enduml

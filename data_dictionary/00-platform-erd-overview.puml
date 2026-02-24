@@ -1,0 +1,138 @@
+@startuml
+left to right direction
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam entity {
+  BackgroundColor #F6F8FA
+  BorderColor #2B2B2B
+}
+
+title SabaHub — Platform ER Overview (Cross-Domain)
+
+package "Tenant & Identity" {
+  entity "Tenant" as Tenant {
+    *id : UUID
+    --
+    name : String <<unique>>
+    status : TenantStatus
+  }
+
+  entity "User" as User {
+    *id : UUID
+    --
+    email : String <<unique>>
+    tenantId : UUID <<FK>>
+    status : UserStatus
+  }
+}
+
+package "Job & Hiring" {
+  entity "Company" as Company {
+    *id : UUID
+    --
+    tenantId : UUID <<FK>>
+    name : String
+  }
+
+  entity "JobPost" as JobPost {
+    *id : UUID
+    --
+    companyId : UUID <<FK>>
+    title : String
+    status : JobStatus
+  }
+
+  entity "Application" as Application {
+    *id : UUID
+    --
+    jobPostId : UUID <<FK>>
+    candidateId : UUID <<FK>>
+    status : ApplicationStatus
+  }
+}
+
+package "Billing" {
+  entity "Subscription" as Subscription {
+    *id : UUID
+    --
+    companyId : UUID <<FK>>
+    status : SubscriptionStatus
+  }
+
+  entity "Invoice" as Invoice {
+    *id : UUID
+    --
+    subscriptionId : UUID <<FK>>
+    total : Money
+    status : InvoiceStatus
+  }
+
+  entity "Payment" as Payment {
+    *id : UUID
+    --
+    invoiceId : UUID <<FK>>
+    status : PaymentStatus
+  }
+}
+
+package "Notifications" {
+  entity "Template" as Template {
+    *id : UUID
+    --
+    name : String <<unique>>
+  }
+
+  entity "Notification" as Notification {
+    *id : UUID
+    --
+    userId : UUID <<FK>>
+    templateId : UUID <<FK>>
+    channel : ChannelType
+    status : NotificationStatus
+  }
+}
+
+package "Analytics & Compliance" {
+  entity "AuditEvent" as AuditEvent {
+    *id : UUID
+    --
+    userId : UUID <<FK>>
+    eventType : String
+  }
+}
+
+package "Public API" {
+  entity "ApiClient" as ApiClient {
+    *id : UUID
+    --
+    name : String
+    status : ClientStatus
+  }
+
+  entity "ApiKey" as ApiKey {
+    *id : UUID
+    --
+    apiClientId : UUID <<FK>>
+    status : ApiKeyStatus
+  }
+}
+
+Tenant ||--o{ User : tenantId
+Tenant ||--o{ Company : tenantId
+Company ||--o{ JobPost : companyId
+JobPost ||--o{ Application : jobPostId
+User ||--o{ Application : candidateId
+
+Company ||--o{ Subscription : companyId
+Subscription ||--o{ Invoice : subscriptionId
+Invoice ||--o{ Payment : invoiceId
+
+User ||--o{ Notification : userId
+Template ||--o{ Notification : templateId
+
+User ||--o{ AuditEvent : userId
+
+ApiClient ||--o{ ApiKey : apiClientId
+@enduml
+

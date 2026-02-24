@@ -1,0 +1,38 @@
+@startuml
+left to right direction
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam entity {
+  BackgroundColor #F6F8FA
+  BorderColor #2B2B2B
+}
+
+title Analytics & Compliance — ER Diagram
+
+entity "User" as User {
+  *id : UUID
+  --
+  email : String
+}
+
+entity "AuditEvent" as AuditEvent {
+  *id : UUID
+  --
+  userId : UUID <<FK>>
+  eventType : String
+  createdAt : DateTime
+}
+
+entity "Consent" as Consent {
+  *id : UUID
+  --
+  userId : UUID <<FK>>
+  type : ConsentType
+  grantedAt : DateTime
+}
+
+User ||--o{ AuditEvent : userId
+User ||--o{ Consent : userId
+@enduml
+

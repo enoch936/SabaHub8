@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SabaHub Enterprise Platform — Context Use Case Diagram</title>
+</head>
+<body>
+
+<svg width="1400" height="820" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- TITLE -->
+  <text x="420" y="30" font-size="18" font-weight="bold">
+    SabaHub Enterprise Platform — Context Use Case Diagram
+  </text>
+
+  <!-- SYSTEM BOUNDARY -->
+  <rect x="420" y="70" width="560" height="680"
+        fill="none" stroke="black" stroke-width="1.5"/>
+  <text x="560" y="60" font-size="14">SabaHub Enterprise Platform</text>
+
+  <!-- LEFT ACTORS -->
+  <text x="120" y="160">Job Seeker</text>
+  <text x="120" y="240">Employer</text>
+  <text x="120" y="320">Recruiter</text>
+  <text x="120" y="400">Support Agent</text>
+
+  <!-- RIGHT ACTORS -->
+  <text x="1180" y="200">Administrator</text>
+  <text x="1180" y="280">Identity Provider</text>
+  <text x="1180" y="360">Payment Gateway</text>
+  <text x="1180" y="440">Notification Service</text>
+  <text x="1180" y="520">Analytics / BI</text>
+  <text x="1180" y="600">Government / Compliance</text>
+
+  <!-- USE CASES -->
+  <ellipse cx="700" cy="160" rx="180" ry="26"
+           fill="none" stroke="black"/>
+  <text x="610" y="165">Search &amp; Discover Jobs</text>
+
+  <ellipse cx="700" cy="220" rx="180" ry="26"
+           fill="none" stroke="black"/>
+  <text x="635" y="225">Apply for Jobs</text>
+
+  <ellipse cx="700" cy="280" rx="200" ry="26"
+           fill="none" stroke="black"/>
+  <text x="600" y="285">Manage Company &amp; Job Listings</text>
+
+  <ellipse cx="700" cy="340" rx="210" ry="26"
+           fill="none" stroke="black"/>
+  <text x="580" y="345">Manage User Access &amp; Identity</text>
+
+  <ellipse cx="700" cy="400" rx="200" ry="26"
+           fill="none" stroke="black"/>
+  <text x="605" y="405">Manage Payments &amp; Billing</text>
+
+  <ellipse cx="700" cy="460" rx="220" ry="26"
+           fill="none" stroke="black"/>
+  <text x="560" y="465">Notifications &amp; Messaging</text>
+
+  <ellipse cx="700" cy="520" rx="220" ry="26"
+           fill="none" stroke="black"/>
+  <text x="560" y="525">Analytics &amp; Reporting</text>
+
+  <ellipse cx="700" cy="580" rx="230" ry="26"
+           fill="none" stroke="black"/>
+  <text x="540" y="585">Compliance &amp; Auditing</text>
+
+  <ellipse cx="700" cy="640" rx="210" ry="26"
+           fill="none" stroke="black"/>
+  <text x="585" y="645">Customer Support</text>
+
+  <!-- ASSOCIATIONS — LEFT (PURE 180°) -->
+  <line x1="260" y1="160" x2="520" y2="160" stroke="black"/>
+  <line x1="260" y1="160" x2="520" y2="220" stroke="black"/>
+
+  <line x1="260" y1="240" x2="500" y2="280" stroke="black"/>
+  <line x1="260" y1="320" x2="500" y2="280" stroke="black"/>
+
+  <line x1="260" y1="400" x2="490" y2="640" stroke="black"/>
+
+  <!-- ASSOCIATIONS — RIGHT (PURE 180°) -->
+  <line x1="900" y1="340" x2="1140" y2="200" stroke="black"/>
+  <line x1="900" y1="340" x2="1140" y2="280" stroke="black"/>
+
+  <line x1="900" y1="400" x2="1140" y2="360" stroke="black"/>
+  <line x1="900" y1="460" x2="1140" y2="440" stroke="black"/>
+  <line x1="900" y1="520" x2="1140" y2="520" stroke="black"/>
+  <line x1="900" y1="580" x2="1140" y2="600" stroke="black"/>
+
+</svg>
+
+</body>
+</html>

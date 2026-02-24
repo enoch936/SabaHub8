@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -52,7 +53,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        System.out.println("Token extracted: " + token.substring(0, Math.min(20, token.length())) + "...");
+        System.out.println("Token extracted (len=" + token.length() + ")");
         
         // Development mode: Accept mock tokens
         if (token.contains("mock-signature-for-development")) {
@@ -95,20 +96,36 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
 
-        String email = jwtService.extractSubject(token);
+        String email;
+        try {
+            email = jwtService.extractSubject(token);
+        } catch (Exception e) {
+            System.out.println("Failed to extract subject from token: " + e.getMessage());
+            filterChain.doFilter(request, response);
+            System.out.println("========== JWT FILTER END (invalid token) ==========\n");
+            return;
+        }
         System.out.println("Extracted email: " + email);
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            var userDetails = userDetailsService.loadUserByUsername(email);
-            if (jwtService.isTokenValid(token, userDetails.getUsername())) {
-                System.out.println("Token valid! Setting authentication for user: " + email);
-                var authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-                System.out.println("Authentication set successfully");
-            } else {
-                System.out.println("Token INVALID for user: " + email);
+            try {
+                var userDetails = userDetailsService.loadUserByUsername(email);
+                if (jwtService.isTokenValid(token, userDetails.getUsername())) {
+                    System.out.println("Token valid! Setting authentication for user: " + email);
+                    var authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    System.out.println("Authentication set successfully");
+                } else {
+                    System.out.println("Token INVALID for user: " + email);
+                }
+            } catch (DataAccessException e) {
+                // Database unavailable: don't 500 public endpoints; proceed as anonymous.
+                System.err.println("User lookup failed (db unavailable). Continuing unauthenticated: " + e.getMessage());
+            } catch (Exception e) {
+                // Any auth lookup failure should not crash the request pipeline.
+                System.err.println("User lookup failed. Continuing unauthenticated: " + e.getMessage());
             }
         } else {
             System.out.println("Email: " + email + ", Current auth: " + SecurityContextHolder.getContext().getAuthentication());

@@ -41,7 +41,6 @@ export default function AdminUsersPage() {
       return;
     }
     loadUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
 
   async function loadUsers() {

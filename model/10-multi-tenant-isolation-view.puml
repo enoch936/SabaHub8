@@ -1,0 +1,35 @@
+@startuml
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+  ArrowColor #333333
+}
+
+class Tenant {
+  +id: UUID
+  +name: String
+  +status: TenantStatus
+}
+
+class TenantPartition {
+  +partitionKey: String
+  +isolationMode: IsolationMode
+}
+
+class TenantConfig {
+  +featureFlags: Map
+  +dataResidency: String
+}
+
+class TenantUser {
+  +userId: UUID
+  +role: String
+}
+
+Tenant "1" -- "1" TenantPartition
+Tenant "1" -- "1" TenantConfig
+Tenant "1" -- "*" TenantUser
+@enduml
+
