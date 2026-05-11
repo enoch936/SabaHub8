@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function () {
+    sagecell.makeSagecell({inputLocation:'div.evaluated',autoeval:true,
+                           template:sagecell.templates.minimal,
+                           evalButtonText:'run'}); });
+    </script>
+  </head>
+  <style>
+  pre {padding-left:3px; border:2px double slategray;}
+  h3 {color:#aa33ff; text-shadow:4px 4px 4px #aaa;}
+  .sagecell_output {width:99%; border:2px double slategray; padding-right:1px;}
+  body {margin:5px 5px 5px 15px;}
+  </style>  
+  <body>
+    <h3>$$\mathbb{ External \; JSON }$$</h3>
+<pre><code>
+import pandas,numpy; g=Graphics() 
+filepath='https://data.cityofnewyork.us/resource/'
+sd=pandas.read_json(filepath+'cuae-wd7h.json')
+for i in range(sd.shape[0]):
+    coord=numpy.array(sd['the_geom'][i][u'coordinates'])
+    c1=colormaps.jet(8*i)[:3]; c2=['black','gray']
+    mean=numpy.mean([numpy.mean(coord[j][0],axis=0) 
+                     for j in range(coord.shape[0])],axis=0)
+    g+=sum([polygon2d(coord[j][0],rgbcolor=c1,alpha=.75) 
+            for j in range(coord.shape[0])])
+    p=points((-73.95,40.7),size=0,rgbcolor=c1,
+             legend_label='D '+str(i+1),legend_color=c1)
+    p.set_legend_options(bbox_to_anchor=(1.25,1.05))
+    g+=p+text(str(i+1),mean,color=c2[i%2],
+              fontsize=10,fontweight='bold') 
+g.show(title='NYC School Districts',
+       figsize=(7,8),gridlines=True)
+
+</code></pre><br/> 
+<div id='cell004' class='evaluated'><script type='text/x-sage'>
+import pandas,numpy; g=Graphics() 
+filepath='https://data.cityofnewyork.us/resource/'
+sd=pandas.read_json(filepath+'cuae-wd7h.json')
+for i in range(sd.shape[0]):
+    coord=numpy.array(sd['the_geom'][i][u'coordinates'])
+    c1=colormaps.jet(8*i)[:3]; c2=['black','gray']
+    mean=numpy.mean([numpy.mean(coord[j][0],axis=0) 
+                     for j in range(coord.shape[0])],axis=0)
+    g+=sum([polygon2d(coord[j][0],rgbcolor=c1,alpha=.75) 
+            for j in range(coord.shape[0])])
+    p=points((-73.95,40.7),size=0,rgbcolor=c1,
+             legend_label='D '+str(i+1),legend_color=c1)
+    p.set_legend_options(bbox_to_anchor=(1.25,1.05))
+    g+=p+text(str(i+1),mean,color=c2[i%2],
+              fontsize=10,fontweight='bold') 
+g.show(title='NYC School Districts',
+       figsize=(7,8),gridlines=True)
+</script></div><br/>
+  </body>
+</html>

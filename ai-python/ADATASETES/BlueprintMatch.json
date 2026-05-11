@@ -1,0 +1,114 @@
+{
+    "case_id": "10",
+    "case_title": "Case 10 \u2014 CodeRabbit Contamination Blueprint Audit",
+    "created_at_utc": "2025-08-25T06:26:17.441774Z",
+    "inputs": {
+        "vault_source": "RAW_TEXT",
+        "case_source": "RAW_TEXT",
+        "probe_phrases_count": 6
+    },
+    "signals": {
+        "phrase_hits": {
+            "vault": [
+                {
+                    "phrase": "ai as a means to an end",
+                    "present": false
+                },
+                {
+                    "phrase": "emotion is the metric",
+                    "present": true
+                },
+                {
+                    "phrase": "creativity is the currency",
+                    "present": true
+                },
+                {
+                    "phrase": "she didn\u2019t pivot. she predicted.",
+                    "present": false
+                },
+                {
+                    "phrase": "assistant as collaborator",
+                    "present": false
+                },
+                {
+                    "phrase": "scene-based",
+                    "present": false
+                }
+            ],
+            "case": [
+                {
+                    "phrase": "ai as a means to an end",
+                    "present": false
+                },
+                {
+                    "phrase": "emotion is the metric",
+                    "present": false
+                },
+                {
+                    "phrase": "creativity is the currency",
+                    "present": false
+                },
+                {
+                    "phrase": "she didn\u2019t pivot. she predicted.",
+                    "present": false
+                },
+                {
+                    "phrase": "assistant as collaborator",
+                    "present": false
+                },
+                {
+                    "phrase": "scene-based",
+                    "present": false
+                }
+            ]
+        },
+        "ngram_overlap": [
+            {
+                "n": 2,
+                "jaccard": 0.0172,
+                "cosine": 0.026,
+                "top_shared": [
+                    {
+                        "ngram": "ai is",
+                        "count": 1
+                    }
+                ]
+            },
+            {
+                "n": 3,
+                "jaccard": 0.0,
+                "cosine": 0.0,
+                "top_shared": []
+            },
+            {
+                "n": 4,
+                "jaccard": 0.0,
+                "cosine": 0.0,
+                "top_shared": []
+            },
+            {
+                "n": 5,
+                "jaccard": 0.0,
+                "cosine": 0.0,
+                "top_shared": []
+            }
+        ],
+        "avg_cosine_n2_5": 0.0065,
+        "avg_jaccard_n2_5": 0.0043,
+        "overlap_strength": 0.0173,
+        "stylometry": {
+            "vault": {
+                "avg_sentence_len_tokens": 3.375,
+                "type_token_ratio": 0.63,
+                "token_count": 27,
+                "sentence_count": 8
+            },
+            "case": {
+                "avg_sentence_len_tokens": 19.0,
+                "type_token_ratio": 0.868,
+                "token_count": 38,
+                "sentence_count": 2
+            }
+        }
+    }
+}

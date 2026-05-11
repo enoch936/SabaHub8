@@ -126,6 +126,23 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
 
+        <!-- Web Push (VAPID) -->
+        <dependency>
+            <groupId>nl.martijndwars</groupId>
+            <artifactId>web-push</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.78.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+
         <!-- Dotenv for loading .env files -->
         <dependency>
             <groupId>io.github.cdimascio</groupId>
@@ -174,11 +191,10 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <!-- Use explicit release to ensure consistent cross-JDK compilation -->
                     <release>${java.version}</release>
+                    <fork>true</fork>
                     <parameters>true</parameters>
-                    <!-- Ensure annotation processors (Lombok) are available during compile -->
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>

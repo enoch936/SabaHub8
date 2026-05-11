@@ -1,0 +1,69 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function () {
+    sagecell.makeSagecell({inputLocation:'div.interactive',
+                           template:sagecell.templates.minimal,
+                           evalButtonText:'run'}); });
+    </script>
+  </head>
+  <style>
+  h3 {color:#aa33ff; text-shadow:4px 4px 4px slategray;}
+  pre {width:99%; padding-left:3px; border:2px double slategray; } 
+  .sagecell_output {width:99%; border:2px double slategray; padding-right:1px;}
+  .sagecell_interactControlLabel:hover {padding-left:3px; color:#aa33ff; font-size:120%;}
+  .sagecell_interactOutput {padding-left:3px;}
+  body {margin:5px 5px 5px 15px;}
+  </style>  
+  <body>
+    <h3>$$\mathbb{ Set \; Operations }$$</h3>
+<pre><code>
+@interact
+def _(A='a,3,2,c,1,ф,⎈,D',
+      B='ф,7,a,⎈,2,1,B,θ',
+      C='8,N,a,θ,4,P,⎈,r'):
+    S=[sorted(list(el.split(','))) 
+       for el in [A,B,C]]     
+    st='&#60;style&#62;h4 {color:#ff3636; font-size:20px}'+\
+       'h5 {color:#3636ff; font-size:20px}&#60;/style&#62;'     
+    s1='&#60;h5&#62;$A \\cap B = %s$&#60;/h5&#62;'
+    s2='&#60;h5&#62;$A \\cap C = %s$&#60;/h5&#62;'
+    s3='&#60;h5&#62;$B \\cap C = %s$&#60;/h5&#62;'
+    s4='&#60;h4&#62;$A \\cap B \\cap C = %s$&#60;/h5&#62;'
+    AB=list(set(S[0])&set(S[1]))
+    AC=list(set(S[0])&set(S[2]))
+    BC=list(set(S[1])&set(S[2])) 
+    ABC=list(set(AB)&set(S[2]))
+    pretty_print(html(st+s1%('{'+','.join(AB)+'}')))
+    pretty_print(html(st+s2%('{'+','.join(AC)+'}')))
+    pretty_print(html(st+s3%('{'+','.join(BC)+'}')))
+    pretty_print(html(st+s4%('{'+','.join(ABC)+'}')))
+
+</code></pre><br/> 
+<div id='cell006' class='interactive'><script type='text/x-sage'>
+@interact
+def _(A='a,3,2,c,1,ф,⎈,D',
+      B='ф,7,a,⎈,2,1,B,θ',
+      C='8,N,a,θ,4,P,⎈,r'):
+    S=[sorted(list(el.split(','))) 
+       for el in [A,B,C]]
+    st='<style>h4 {color:#ff3636; font-size:20px}'+\
+       'h5 {color:#3636ff; font-size:20px}</style>'
+    s1='<h5>$A \\cap B = %s$</h5>'
+    s2='<h5>$A \\cap C = %s$</h5>'
+    s3='<h5>$B \\cap C = %s$</h5>'
+    s4='<h4>$A \\cap B \\cap C = %s$</h4>'
+    AB=list(set(S[0])&set(S[1]))
+    AC=list(set(S[0])&set(S[2]))
+    BC=list(set(S[1])&set(S[2])) 
+    ABC=list(set(AB)&set(S[2]))
+    pretty_print(html(st+s1%('{'+','.join(AB)+'}')))
+    pretty_print(html(st+s2%('{'+','.join(AC)+'}')))
+    pretty_print(html(st+s3%('{'+','.join(BC)+'}')))
+    pretty_print(html(st+s4%('{'+','.join(ABC)+'}')))
+</script></div><br/>
+  </body>
+</html>

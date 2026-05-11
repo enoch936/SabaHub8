@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width,initial-scale=1.0'>
+    <script src='https://cdn.jsdelivr.net/npm/danfojs@0.1.1/dist/index.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest'></script>
+</head>
+<body>
+<h1>TF Tensor =>>> Danfo DataFrames</h1>
+<p>Table Examples</p>
+<div id='div016_1'></div>
+<p>Chart Examples</p>
+<div id='div016_2'></div>
+    <script>
+var tf_tensor=tf.tensor(
+    [[12,35,56],[5,17,44],[19,32,63],[9,27,54],
+     [16,26,43],[8,22,64],[15,44,71],[11,31,45]]);
+var dfd_series=new dfd.DataFrame(
+    tf_tensor,{columns:['x','y','z']});
+dfd_series.plot('div016_1').table();
+dfd_series.plot('div016_2').violin();
+    </script>
+</body>
+</html>

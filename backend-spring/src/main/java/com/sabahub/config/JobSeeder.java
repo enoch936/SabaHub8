@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
@@ -138,7 +139,7 @@ public class JobSeeder {
                 mixedCampaign.setCompanyName("Brightlane");
                 mixedCampaign.setCreatedAt(now.minusSeconds(18000));
 
-                jobRepository.saveAll(List.of(
+                List<Job> seedJobs = new ArrayList<>(List.of(
                         brandMotion,
                         uiSystem,
                         docAutomation,
@@ -146,6 +147,7 @@ public class JobSeeder {
                         videoSeries,
                         mixedCampaign
                 ));
+                jobRepository.saveAll(seedJobs);
             } catch (Exception e) {
                 // Mongo is not reachable during startup; skip seeding so the app can still start.
             }

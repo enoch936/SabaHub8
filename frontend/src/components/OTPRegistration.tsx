@@ -1,417 +1,250 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  Grid,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 
-/**
- * OTP Registration Component
- * Enterprise-level registration with email and SMS OTP verification
- */
+type Step = "registration" | "otp-verification";
+
 export default function OTPRegistration() {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState<'registration' | 'otp-verification'>('registration');
-  
-  // Step 1: Registration Data
+  const [currentStep, setCurrentStep] = useState<Step>("registration");
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phoneNumber: '',
-    password: '',
-    confirmPassword: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
+    password: "",
+    confirmPassword: "",
   });
-
-  // Step 2: OTP Verification
-  const [otpData, setOtpData] = useState({
-    emailOTP: '',
-    smsOTP: '',
-  });
-
+  const [otpData, setOtpData] = useState({ emailOTP: "", smsOTP: "" });
   const [loading, setLoading] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Handle registration form input
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle OTP input
   const handleOTPChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    // Only allow digits, max 6
-    if (/^\d{0,6}$/.test(value)) {
-      setOtpData(prev => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    if (/^\d{0,6}$/.test(value)) setOtpData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Step 1: Request OTP
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    setMessage(null);
     try {
-      // Validation
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.phoneNumber) {
-        toast.error('Please fill all fields');
+        setMessage({ type: "error", text: "Please fill all fields." });
         setLoading(false);
         return;
       }
-
       if (formData.password !== formData.confirmPassword) {
-        toast.error('Passwords do not match');
+        setMessage({ type: "error", text: "Passwords do not match." });
         setLoading(false);
         return;
       }
-
       if (formData.password.length < 8) {
-        toast.error('Password must be at least 8 characters');
+        setMessage({ type: "error", text: "Password must be at least 8 characters." });
         setLoading(false);
         return;
       }
 
-      // Request OTP from backend
-      const response = await fetch('/api/auth/otp/request-registration', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          email: formData.email,
-          phoneNumber: formData.phoneNumber,
-        }),
+      const response = await fetch("/api/auth/otp/request-registration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName: formData.firstName, email: formData.email, phoneNumber: formData.phoneNumber }),
       });
-
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('OTP sent to your email and phone');
-        setOtpSent(true);
-        setCurrentStep('otp-verification');
+        setMessage({ type: "success", text: "OTP sent to your email and phone." });
+        setCurrentStep("otp-verification");
       } else {
-        toast.error(data.message || 'Failed to send OTP');
+        setMessage({ type: "error", text: data.message || "Failed to send OTP." });
       }
-    } catch (error) {
-      console.error('Error requesting OTP:', error);
-      toast.error('An error occurred. Please try again.');
+    } catch {
+      setMessage({ type: "error", text: "An error occurred. Please try again." });
     } finally {
       setLoading(false);
     }
   };
 
-  // Step 2: Verify Email OTP
   const handleVerifyEmailOTP = async () => {
-    setLoading(true);
-
-    try {
-      if (!otpData.emailOTP) {
-        toast.error('Please enter email OTP');
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch('/api/auth/otp/verify-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          otpCode: otpData.emailOTP,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success('Email verified successfully!');
-        return true;
-      } else {
-        toast.error(data.message || 'Invalid email OTP');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error verifying email OTP:', error);
-      toast.error('An error occurred during email verification');
+    if (!otpData.emailOTP) {
+      setMessage({ type: "error", text: "Please enter email OTP." });
       return false;
-    } finally {
-      setLoading(false);
     }
+    const response = await fetch("/api/auth/otp/verify-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: formData.email, otpCode: otpData.emailOTP }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setMessage({ type: "error", text: data.message || "Invalid email OTP." });
+      return false;
+    }
+    return true;
   };
 
-  // Step 3: Verify SMS OTP
   const handleVerifySMSOTP = async () => {
-    setLoading(true);
-
-    try {
-      if (!otpData.smsOTP) {
-        toast.error('Please enter SMS OTP');
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch('/api/auth/otp/verify-sms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          otpCode: otpData.smsOTP,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success('Phone verified successfully!');
-        return true;
-      } else {
-        toast.error(data.message || 'Invalid SMS OTP');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error verifying SMS OTP:', error);
-      toast.error('An error occurred during SMS verification');
+    if (!otpData.smsOTP) {
+      setMessage({ type: "error", text: "Please enter SMS OTP." });
       return false;
-    } finally {
-      setLoading(false);
     }
+    const response = await fetch("/api/auth/otp/verify-sms", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: formData.email, otpCode: otpData.smsOTP }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setMessage({ type: "error", text: data.message || "Invalid SMS OTP." });
+      return false;
+    }
+    return true;
   };
 
-  // Complete registration
   const handleCompleteRegistration = async () => {
     setLoading(true);
-
+    setMessage(null);
     try {
-      // Verify both OTPs first
       const emailVerified = await handleVerifyEmailOTP();
       if (!emailVerified) {
         setLoading(false);
         return;
       }
-
       const smsVerified = await handleVerifySMSOTP();
       if (!smsVerified) {
         setLoading(false);
         return;
       }
 
-      // Complete registration
-      const response = await fetch('/api/auth/register-with-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          emailOTP: otpData.emailOTP,
-          smsOTP: otpData.smsOTP,
-        }),
+      const response = await fetch("/api/auth/register-with-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, emailOTP: otpData.emailOTP, smsOTP: otpData.smsOTP }),
       });
-
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Registration successful! Logging you in...');
-        // Redirect to dashboard or login
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
+        setMessage({ type: "success", text: "Registration successful. Redirecting to login..." });
+        setTimeout(() => router.push("/login"), 1200);
       } else {
-        toast.error(data.message || 'Registration failed');
+        setMessage({ type: "error", text: data.message || "Registration failed." });
       }
-    } catch (error) {
-      console.error('Error completing registration:', error);
-      toast.error('An error occurred during registration');
+    } catch {
+      setMessage({ type: "error", text: "An error occurred during registration." });
     } finally {
       setLoading(false);
     }
   };
 
-  // Resend OTP
   const handleResendOTP = async () => {
     setLoading(true);
-
+    setMessage(null);
     try {
-      const response = await fetch('/api/auth/otp/resend', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          email: formData.email,
-          phoneNumber: formData.phoneNumber,
-        }),
+      const response = await fetch("/api/auth/otp/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName: formData.firstName, email: formData.email, phoneNumber: formData.phoneNumber }),
       });
-
       const data = await response.json();
-
-      if (response.ok) {
-        toast.success('OTP resent successfully');
-      } else {
-        toast.error(data.message || 'Failed to resend OTP');
-      }
-    } catch (error) {
-      console.error('Error resending OTP:', error);
-      toast.error('An error occurred');
+      if (response.ok) setMessage({ type: "success", text: "OTP resent successfully." });
+      else setMessage({ type: "error", text: data.message || "Failed to resend OTP." });
+    } catch {
+      setMessage({ type: "error", text: "An error occurred." });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">SabaHub</h1>
-          <p className="text-gray-600 mt-2">Secure Registration</p>
-        </div>
+    <Box sx={{ minHeight: "100vh", py: 8, background: "linear-gradient(145deg, #eff6ff 0%, #e0e7ff 100%)" }}>
+      <Container maxWidth="sm">
+        <Card>
+          <CardContent>
+            <Stack spacing={2}>
+              <Box textAlign="center">
+                <Typography variant="h4" fontWeight={800}>SabaHub</Typography>
+                <Typography variant="body2" color="text.secondary">Secure Registration</Typography>
+              </Box>
 
-        {currentStep === 'registration' ? (
-          // Step 1: Registration Form
-          <form onSubmit={handleRequestOTP} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                name="firstName"
-                placeholder="First Name"
-                value={formData.firstName}
-                onChange={handleFormChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              />
-              <input
-                type="text"
-                name="lastName"
-                placeholder="Last Name"
-                value={formData.lastName}
-                onChange={handleFormChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              />
-            </div>
+              {message ? <Alert severity={message.type}>{message.text}</Alert> : null}
 
-            <input
-              type="email"
-              name="email"
-              placeholder="Email Address"
-              value={formData.email}
-              onChange={handleFormChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-            />
+              {currentStep === "registration" ? (
+                <Stack component="form" onSubmit={handleRequestOTP} spacing={1.5}>
+                  <Grid container spacing={1.25}>
+                    <Grid size={{ xs: 12, sm: 6 }}><TextField name="firstName" label="First Name" value={formData.firstName} onChange={handleFormChange} required fullWidth /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}><TextField name="lastName" label="Last Name" value={formData.lastName} onChange={handleFormChange} required fullWidth /></Grid>
+                  </Grid>
+                  <TextField name="email" type="email" label="Email Address" value={formData.email} onChange={handleFormChange} required fullWidth />
+                  <TextField name="phoneNumber" label="Phone Number" value={formData.phoneNumber} onChange={handleFormChange} required fullWidth />
+                  <TextField name="password" type="password" label="Password" value={formData.password} onChange={handleFormChange} required fullWidth />
+                  <TextField name="confirmPassword" type="password" label="Confirm Password" value={formData.confirmPassword} onChange={handleFormChange} required fullWidth />
+                  <Button type="submit" variant="contained" disabled={loading}>{loading ? "Sending OTP..." : "Continue & Send OTP"}</Button>
+                </Stack>
+              ) : (
+                <Stack spacing={1.5}>
+                  <TextField
+                    name="emailOTP"
+                    label="Email OTP"
+                    value={otpData.emailOTP}
+                    onChange={handleOTPChange}
+                    inputProps={{ maxLength: 6, inputMode: "numeric" }}
+                    fullWidth
+                  />
+                  <TextField
+                    name="smsOTP"
+                    label="SMS OTP"
+                    value={otpData.smsOTP}
+                    onChange={handleOTPChange}
+                    inputProps={{ maxLength: 6, inputMode: "numeric" }}
+                    fullWidth
+                  />
+                  <Button
+                    variant="contained"
+                    color="success"
+                    disabled={loading || otpData.emailOTP.length !== 6 || otpData.smsOTP.length !== 6}
+                    onClick={handleCompleteRegistration}
+                  >
+                    {loading ? "Verifying..." : "Complete Registration"}
+                  </Button>
+                  <Button variant="text" onClick={handleResendOTP} disabled={loading}>Resend OTP</Button>
+                  <Button
+                    variant="text"
+                    color="inherit"
+                    onClick={() => {
+                      setCurrentStep("registration");
+                      setOtpData({ emailOTP: "", smsOTP: "" });
+                    }}
+                  >
+                    Back to Registration
+                  </Button>
+                </Stack>
+              )}
 
-            <input
-              type="tel"
-              name="phoneNumber"
-              placeholder="Phone Number (+1234567890)"
-              value={formData.phoneNumber}
-              onChange={handleFormChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-            />
-
-            <input
-              type="password"
-              name="password"
-              placeholder="Password (min 8 characters)"
-              value={formData.password}
-              onChange={handleFormChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-            />
-
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              value={formData.confirmPassword}
-              onChange={handleFormChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Sending OTP...' : 'Continue & Send OTP'}
-            </button>
-          </form>
-        ) : (
-          // Step 2: OTP Verification
-          <div className="space-y-6">
-            <div>
-              <p className="text-gray-700 font-semibold mb-4">
-                ✉️ Email OTP (Check your email)
-              </p>
-              <input
-                type="text"
-                name="emailOTP"
-                placeholder="Enter 6-digit code"
-                value={otpData.emailOTP}
-                onChange={handleOTPChange}
-                maxLength={6}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-center text-2xl tracking-widest focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <p className="text-gray-700 font-semibold mb-4">
-                📱 SMS OTP (Check your phone)
-              </p>
-              <input
-                type="text"
-                name="smsOTP"
-                placeholder="Enter 6-digit code"
-                value={otpData.smsOTP}
-                onChange={handleOTPChange}
-                maxLength={6}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-center text-2xl tracking-widest focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <button
-              onClick={handleCompleteRegistration}
-              disabled={loading || otpData.emailOTP.length !== 6 || otpData.smsOTP.length !== 6}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Verifying...' : 'Complete Registration'}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleResendOTP}
-              disabled={loading}
-              className="w-full text-blue-600 hover:text-blue-700 font-semibold py-2"
-            >
-              Resend OTP
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setCurrentStep('registration');
-                setOtpData({ emailOTP: '', smsOTP: '' });
-              }}
-              className="w-full text-gray-600 hover:text-gray-700 font-semibold py-2"
-            >
-              ← Back to Registration
-            </button>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="text-center mt-8 text-sm text-gray-600">
-          <p>Already have an account?{' '}
-            <a href="/login" className="text-blue-600 hover:underline font-semibold">
-              Login here
-            </a>
-          </p>
-        </div>
-      </div>
-    </div>
+              <Typography variant="body2" color="text.secondary" textAlign="center">
+                Already have an account? <a href="/login">Login here</a>
+              </Typography>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Container>
+    </Box>
   );
 }

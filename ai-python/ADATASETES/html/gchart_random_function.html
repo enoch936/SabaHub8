@@ -1,0 +1,34 @@
+<script src='https://www.gstatic.com/charts/loader.js'></script>
+<style>
+  .centered {position:fixed; top:50%; left:50%; 
+             transform:translate(-50%,-50%);}
+</style>
+<div id='div009' class='centered'></div>
+<script>
+google.charts.load('current',{'packages':['corechart']}); 
+google.charts.setOnLoadCallback(drawChart);
+function randi(xmin,xmax){
+    return Math.floor(Math.random()*(xmax-xmin+1))+xmin;};
+function randcol(k){
+    var r=randi(10*k,255),g=randi(10*k,255),b=randi(10*k,255);
+    return '#'+r.toString(16)+g.toString(16)+b.toString(16);};
+function drawChart(){
+  var a=randi(7,15),c=randi(10,24),d=.01,n=638;
+  var xy=Array(2*n).fill(1).map((k,t)=>
+      [(2*Math.floor(t/n)+k)*(Math.cos(d*t)+
+       Math.cos(a*d*t)/2+Math.sin((a+c)*d*t)/3),
+       k*(Math.sin(d*t)+Math.sin(a*d*t)/2+
+       Math.cos((a+c)*d*t)/3),
+       (k+2)*(Math.sin(d*t)+Math.sin(a*d*t)/2+
+       Math.cos((a+c)*d*t)/3)]);
+  for (var i=1; i<n-1; i++){xy[n-1+i][1]=NaN; xy[i+1][2]=NaN;}; 
+  xy.unshift(['x','k=1','k=3']); 
+  var data=google.visualization.arrayToDataTable(xy); 
+  var options={title:'Random Parameters of Functions => a,c = '+[a,c],
+               curveType:'function',legend:{position:'bottom'},
+               colors:[randcol(a-6),randcol(c-9)],
+               width:500,height:500};
+  var doc=document.getElementById('div009');
+  var chart=new google.visualization.LineChart(doc); 
+  chart.draw(data,options);};
+  </script>

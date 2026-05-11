@@ -1,0 +1,53 @@
+{
+    "type": "object",
+    "required": [
+        "case_id",
+        "case_title",
+        "vault_reference",
+        "vault_protocol",
+        "status",
+        "time_stamped_origin",
+        "subject",
+        "parallels",
+        "evidence_mapping"
+    ],
+    "properties": {
+        "case_id": {
+            "type": "string",
+            "const": "10"
+        },
+        "case_title": {
+            "type": "string"
+        },
+        "vault_reference": {
+            "type": "string"
+        },
+        "vault_protocol": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string"
+        },
+        "time_stamped_origin": {
+            "type": "string"
+        },
+        "subject": {
+            "type": "string"
+        },
+        "parallels": {
+            "type": "array",
+            "items": {
+                "type": "object"
+            }
+        },
+        "evidence_mapping": {
+            "type": "array",
+            "items": {
+                "type": "object"
+            }
+        },
+        "created_at_utc": {
+            "type": "string"
+        }
+    }
+}

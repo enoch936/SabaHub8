@@ -129,9 +129,37 @@ export function getJobCategoryDisplay(categoryId?: string, options?: { separator
   return labels.join(options?.separator ?? " \u203A ");
 }
 
+function normalizePathLabel(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function findJobCategoryIdByDisplay(display?: string) {
+  if (!display) return null;
+  const labels = display
+    .split(">")
+    .map((label) => label.trim())
+    .filter(Boolean);
+  return findJobCategoryIdByLabels(labels);
+}
+
+export function findJobCategoryIdByLabels(labels?: string[] | null) {
+  if (!labels || labels.length === 0) return null;
+  const normalizedLabels = labels.map(normalizePathLabel);
+
+  for (const node of JOB_TAXONOMY.leaves) {
+    const pathLabels = getJobCategoryPathLabels(node.id);
+    if (!pathLabels || pathLabels.length !== normalizedLabels.length) continue;
+    const normalizedPath = pathLabels.map(normalizePathLabel);
+    if (normalizedPath.every((label, index) => label === normalizedLabels[index])) {
+      return node.id;
+    }
+  }
+
+  return null;
+}
+
 export function jobCategoryMatches(jobCategoryId: string | undefined, filterCategoryId: string) {
   if (!filterCategoryId || filterCategoryId === "all") return true;
   if (!jobCategoryId) return false;
   return jobCategoryId === filterCategoryId || jobCategoryId.startsWith(`${filterCategoryId}.`);
 }
-

@@ -1,0 +1,39 @@
+{
+    "type": "object",
+    "required": [
+        "case_id",
+        "case_title",
+        "vault_reference",
+        "protocol",
+        "status",
+        "confirmation_line",
+        "attribution",
+        "sealed_utc"
+    ],
+    "properties": {
+        "case_id": {
+            "type": "string"
+        },
+        "case_title": {
+            "type": "string"
+        },
+        "vault_reference": {
+            "type": "string"
+        },
+        "protocol": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string"
+        },
+        "confirmation_line": {
+            "type": "string"
+        },
+        "attribution": {
+            "type": "string"
+        },
+        "sealed_utc": {
+            "type": "string"
+        }
+    }
+}

@@ -2,11 +2,14 @@ package com.sabahub.web;
 
 import com.sabahub.domain.User;
 import com.sabahub.repository.UserRepository;
+import com.sabahub.service.ChatPresenceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 /**
  * User Search Controller
@@ -19,9 +22,11 @@ import java.util.Map;
 public class UserSearchController {
 
     private final UserRepository userRepository;
+    private final ChatPresenceService chatPresenceService;
 
-    public UserSearchController(UserRepository userRepository) {
+    public UserSearchController(UserRepository userRepository, ChatPresenceService chatPresenceService) {
         this.userRepository = userRepository;
+        this.chatPresenceService = chatPresenceService;
     }
 
     /**
@@ -46,7 +51,21 @@ public class UserSearchController {
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Email parameter required"));
         }
-        return userRepository.findByEmail(email)
+        return userRepository.findByEmailIgnoreCase(email.trim())
+                .map(user -> ResponseEntity.ok(buildUserResponse(user)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Search user by exact username
+     * GET /api/users/search/username?username=john_doe
+     */
+    @GetMapping("/search/username")
+    public ResponseEntity<?> searchByUsername(@RequestParam(name = "username") String username) {
+        if (username == null || username.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Username parameter required"));
+        }
+        return userRepository.findByUsernameIgnoreCase(username.trim())
                 .map(user -> ResponseEntity.ok(buildUserResponse(user)))
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -61,8 +80,9 @@ public class UserSearchController {
         if (name == null || name.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Name parameter required"));
         }
+        String normalizedQuery = normalizeSearchQuery(name);
         List<User> results = userRepository.findAll().stream()
-                .filter(u -> u.getFullName() != null && u.getFullName().toLowerCase().contains(name.toLowerCase()))
+                .filter(user -> matchesUserSearch(user, normalizedQuery))
                 .limit(20)
                 .toList();
         return ResponseEntity.ok(Map.of(
@@ -92,14 +112,32 @@ public class UserSearchController {
      * Build a safe user response object (excludes password hash)
      */
     private Map<String, Object> buildUserResponse(User user) {
-        return Map.of(
-                "id", user.getId(),
-                "email", user.getEmail(),
-                "fullName", user.getFullName(),
-                "roles", user.getRoles() != null ? user.getRoles() : List.of(),
-                "suspended", user.isSuspended(),
-                "documentsVerified", user.isDocumentsVerified(),
-                "createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : null
-        );
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("id", user.getId());
+        response.put("email", user.getEmail());
+        response.put("username", user.getUsername());
+        response.put("fullName", user.getFullName());
+        response.put("roles", user.getRoles() != null ? user.getRoles() : List.of());
+        response.put("suspended", user.isSuspended());
+        response.put("documentsVerified", user.isDocumentsVerified());
+        response.put("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
+        response.put("lastSeenAt", user.getLastSeenAt() != null ? user.getLastSeenAt().toString() : null);
+        response.put("online", chatPresenceService.isOnline(user.getId()));
+        return response;
+    }
+
+    private boolean matchesUserSearch(User user, String normalizedQuery) {
+        return containsIgnoreCase(user.getId(), normalizedQuery)
+                || containsIgnoreCase(user.getFullName(), normalizedQuery)
+                || containsIgnoreCase(user.getUsername(), normalizedQuery)
+                || containsIgnoreCase(user.getEmail(), normalizedQuery);
+    }
+
+    private boolean containsIgnoreCase(String candidate, String normalizedQuery) {
+        return candidate != null && candidate.toLowerCase(Locale.ROOT).contains(normalizedQuery);
+    }
+
+    private String normalizeSearchQuery(String value) {
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
     }
 }

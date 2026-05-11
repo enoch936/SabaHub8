@@ -1,0 +1,108 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function () {
+    sagecell.makeSagecell({inputLocation:'div.linked',template:sagecell.templates.minimal,
+                           linked:true,evalButtonText:'run linked cells'}); });
+    </script>
+  </head>
+  <style>
+  h2 {color:#aa33ff; text-shadow:4px 4px 4px #aaa;}
+  h3 {color:slategray; text-shadow:4px 4px 4px #aaa;}
+  pre {padding-left:3px; border:2px double slategray;}
+  .sagecell_output {width:99%; border:2px double slategray; padding-right:1px;}
+  body {margin:5px 5px 5px 15px;}
+  </style>  
+  <body>
+    <h2>$\mathbb{Sklearn \; Clusters}$</h2>
+    <h3>$\mathbb{Code \; Modules \; and \; Data}$</h3>
+<pre><code>
+import sklearn.datasets as sds
+import sklearn.cluster as scl
+import pylab as pl
+from IPython.core.magic import register_line_magic
+N=1000; n_clusters=7
+X,y=sds.make_blobs(n_samples=N,n_features=2, 
+                   centers=n_clusters,
+                   cluster_std=.7, 
+                   shuffle=True,random_state=0)
+pl.figure(figsize=(4,4))
+pl.scatter(X[:,0],X[:,1],
+           c='white',marker='v',
+           edgecolor='#aa33ff',s=10)
+pl.grid(); pl.title('Artificial Data'); pl.show()
+    
+</code></pre><br/> 
+<div id='cell007' class='linked'><script type='text/x-sage'>
+import sklearn.datasets as sds
+import sklearn.cluster as scl
+import pylab as pl
+from IPython.core.magic import register_line_magic
+N=1000; n_clusters=7
+X,y=sds.make_blobs(n_samples=N,n_features=2, 
+                   centers=n_clusters,
+                   cluster_std=.7, 
+                   shuffle=True,random_state=0)
+pl.figure(figsize=(4,4))
+pl.scatter(X[:,0],X[:,1],
+           c='white',marker='v',
+           edgecolor='#aa33ff',s=10)
+pl.grid(); pl.title('Artificial Data'); pl.show()
+</script></div><br/>
+    <h3>$\mathbb{Clustering}$</h3>
+<pre><code>
+km,y_km=[],[]
+@register_line_magic
+def kmeans_clusters(c):
+    n_clusters=int(c)
+    global km,y_km
+    km=scl.KMeans(n_clusters=n_clusters,
+                  init='k-means++',n_init=10,
+                  max_iter=500,tol=1e-04,
+                  random_state=0)
+    y_km=km.fit_predict(X)
+%kmeans_clusters 7
+pl.figure(figsize=(4,4))
+for i in range(n_clusters):
+    color=pl.cm.hsv(float(i)/n_clusters)
+    pl.scatter(X[y_km==i,0],X[y_km==i,1],
+               s=15,color=color,marker='v',
+               edgecolor='#aa33ff',
+               label='cluster %d'%i)
+pl.scatter(km.cluster_centers_[:,0],
+           km.cluster_centers_[:,1],
+           s=100, marker='*',c='black',
+           edgecolor='#aa33ff',label='centroids')
+pl.legend(scatterpoints=1); pl.show()
+    
+</code></pre><br/> 
+<div id='cell008' class='linked'><script type='text/x-sage'>
+km,y_km=[],[]
+@register_line_magic
+def kmeans_clusters(c):
+    n_clusters=int(c)
+    global km,y_km
+    km=scl.KMeans(n_clusters=n_clusters,
+                  init='k-means++',n_init=10,
+                  max_iter=500,tol=1e-04,
+                  random_state=0)
+    y_km=km.fit_predict(X)
+%kmeans_clusters 7
+pl.figure(figsize=(4,4))
+for i in range(n_clusters):
+    color=pl.cm.hsv(float(i)/n_clusters)
+    pl.scatter(X[y_km==i,0],X[y_km==i,1],
+               s=15,color=color,marker='v',
+               edgecolor='#aa33ff',
+               label='cluster %d'%i)
+pl.scatter(km.cluster_centers_[:,0],
+           km.cluster_centers_[:,1],
+           s=100, marker='*',c='black',
+           edgecolor='#aa33ff',label='centroids')
+pl.legend(scatterpoints=1); pl.show()
+</script></div><br/>
+  </body>
+</html>

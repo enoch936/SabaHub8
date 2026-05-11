@@ -22,10 +22,16 @@ public interface JobRepository extends MongoRepository<Job, String> {
     Page<Job> findByStatusAndIsEnterpriseOnly(Job.Status status, Boolean isEnterpriseOnly, Pageable pageable);
 
     // Deliverable type queries
+    Page<Job> findByDeliverableTypeAndStatus(
+            Job.DeliverableType deliverableType, Job.Status status, Pageable pageable);
+
     Page<Job> findByDeliverableTypeAndStatusAndIsEnterpriseOnly(
             Job.DeliverableType deliverableType, Job.Status status, Boolean isEnterpriseOnly, Pageable pageable);
 
     // Engagement type queries
+    Page<Job> findByEngagementTypeAndStatus(
+            Job.EngagementType engagementType, Job.Status status, Pageable pageable);
+
     Page<Job> findByEngagementTypeAndStatusAndIsEnterpriseOnly(
             Job.EngagementType engagementType, Job.Status status, Boolean isEnterpriseOnly, Pageable pageable);
 
@@ -42,4 +48,3 @@ public interface JobRepository extends MongoRepository<Job, String> {
     long countByStatus(Job.Status status);
     long countByEmployerId(String employerId);
 }
-

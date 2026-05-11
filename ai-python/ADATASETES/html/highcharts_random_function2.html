@@ -1,0 +1,34 @@
+<script src='https://code.highcharts.com/highcharts.js'></script>
+<style>
+  .centered {position:fixed; top:50%; left:50%; 
+             transform:translate(-50%,-50%);}
+</style>
+<h3>The Twice-colored Effect</h3>
+<div id='div008' class='centered' style='height:550px; width:500px;'></div>
+<script>
+function randi(min,max){
+    return Math.floor(Math.random()*(max-min+1))+min;};
+function fx(a,b,c,t,u){
+    return Math.sin(u*t/6)+a*Math.sin(b*u*t)*Math.cos(u*t)-
+           c*Math.sin(16*b*u*t)};
+function fy(a,b,c,t,u){
+    return Math.cos(u*t/6)+a*Math.sin(b*u*t)*Math.sin(u*t)-
+           c*Math.cos(16*b*u*t)};
+function ar(k,a,b,c,u,m){
+    return Array(b*m).fill(k).map((k,t)=>
+           [(1+u*k)*fx(a,b,c,t,u),(1+u*k)*fy(a,b,c,t,u)]);};
+function col(i){
+    var r=randi(i,255),g=randi(i,255),b=randi(i,255);
+    return 'rgb('+r+','+g+','+b+')';}; 
+var series=[]; var u=.01,m=1280; 
+var a=.5+Math.random(),c=.001*randi(1,99),b=randi(3,12);
+for (var i=1; i<3; i++){
+    series.push({name:i,color:col(i),
+                 lineWidth:.6/i,data:ar(i,a,b,c,u,m)})};
+Highcharts.chart('div008',{
+    chart:{type:'line',backgroundColor:'ghostwhite'},
+    xAxis:{title:{text:'x'}},yAxis:{title:{text:'y'}},
+    title:{text:'Random Parameters: a,b,c = '+[a,b,c]},
+    credits:{enabled:false},legend:{enabled:false},
+    series:series});
+</script>

@@ -59,6 +59,21 @@ Thumbs.db
 # Claude agent artifacts
 .claude/
 
+# GitHub, AI and Build artifacts
+.github/
+.imports/
+.kiro/
+.pnpm-store/
+.run/
+.qodo/
+.sixth/
+
+# Enterprise documentation
+enterprise-documentation/
+
+# Documentation files
+*.md
+
 # Ignore lockfiles if you prefer a package manager lock to be present, keep tracked if wanted
 # (pnpm lock is present in repo; remove the next line if you want to keep it tracked)
 # pnpm-lock.yaml

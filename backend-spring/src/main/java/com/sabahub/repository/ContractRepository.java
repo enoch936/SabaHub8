@@ -107,4 +107,14 @@ public interface ContractRepository extends MongoRepository<Contract, String> {
      * Find contract by job ID (for ProposalService)
      */
     Optional<Contract> findByJobId(String jobId);
+
+    /**
+     * Find all contracts linked to a job.
+     */
+    List<Contract> findAllByJobId(String jobId);
+
+    /**
+     * Find contract for a specific hired freelancer on a job.
+     */
+    Optional<Contract> findByJobIdAndFreelancerId(String jobId, String freelancerId);
 }

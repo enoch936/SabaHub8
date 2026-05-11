@@ -15,9 +15,11 @@ import java.util.Map;
 public class Transaction {
 
     public enum Provider {
+        STRIPE,
         CHAPA,
         LOCAL,
-        INTERNAL
+        INTERNAL,
+        WITHDRAWAL
     }
 
     public enum Direction {

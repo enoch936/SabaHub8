@@ -25,7 +25,20 @@ Configuration (env vars)
 - CLOUDINARY_CLOUD_NAME=your_cloud
 - CLOUDINARY_API_KEY=your_key
 - CLOUDINARY_API_SECRET=your_secret
-- APP_CORS_ALLOWED_ORIGINS (optional): comma-separated list, defaults to http://localhost:3000,http://localhost:5173
+- CHAPA_SECRET_KEY=your_chapa_secret_key
+- CHAPA_WEBHOOK_SECRET=your_chapa_webhook_secret
+- CHAPA_BASE_URL=https://api.chapa.co/v1
+- CHAPA_CALLBACK_URL=http://localhost:8080/api/payments/chapa/webhook
+- CHAPA_RETURN_URL=http://localhost:3000/dashboard/wallet
+- APP_CORS_ALLOWED_ORIGINS (optional): comma-separated list, defaults to http://localhost:3000
+
+Chapa webhook notes
+- `CHAPA_WEBHOOK_SECRET` must come from your Chapa dashboard webhook settings.
+- `CHAPA_CALLBACK_URL` must be publicly reachable by Chapa; localhost only works for local simulations.
+
+.env support
+- The backend auto-loads values from backend-spring/.env at startup.
+- Start from backend-spring/.env.example and set your real keys.
 
 Run
 - mvn spring-boot:run

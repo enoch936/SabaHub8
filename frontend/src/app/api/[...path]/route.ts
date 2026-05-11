@@ -6,18 +6,19 @@
 export const dynamic = "force-dynamic";
 
 // Backend base URL. Can be overridden via NEXT_PUBLIC_BACKEND_URL or BACKEND_URL.
-const API_BASE =
-  process.env.BACKEND_URL ||
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  "http://localhost:8080";
+const CONFIGURED_API_BASE = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "";
+const API_BASE_CANDIDATES = CONFIGURED_API_BASE
+  ? [CONFIGURED_API_BASE]
+  : ["http://127.0.0.1:8080", "http://localhost:8080"];
 
-function buildTargetUrl(pathParts?: string[]) {
+function buildTargetUrl(apiBase: string, pathParts?: string[], search = "") {
   const path = Array.isArray(pathParts) ? pathParts.join("/") : "";
   // Always hit the backend under /api to match Spring controllers
-  return `${API_BASE.replace(/\/$/, "")}/api/${path}`.replace(/([^:]\/)\/+/, "$1");
+  const base = `${apiBase.replace(/\/$/, "")}/api/${path}`.replace(/([^:]\/)\/+/, "$1");
+  return `${base}${search}`;
 }
 
-async function proxy(request: Request, url: string) {
+async function proxy(request: Request, urls: string[]) {
   const headers = new Headers(request.headers);
   // Explicitly forward Authorization if present (Next can strip hop-by-hop headers)
   const auth = request.headers.get("authorization");
@@ -33,42 +34,47 @@ async function proxy(request: Request, url: string) {
     headers.set("x-forwarded-host", request.headers.get("host")!);
   }
 
-  try {
-    let body: BodyInit | null = null;
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      try {
-        const buffer = await request.arrayBuffer();
-        body = buffer.byteLength ? buffer : null;
-      } catch (e) {
-        console.error("Error reading request body:", e);
-      }
+  let body: BodyInit | null = null;
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    try {
+      const buffer = await request.arrayBuffer();
+      body = buffer.byteLength ? buffer : null;
+    } catch (e) {
+      console.error("Error reading request body:", e);
     }
-
-    const resp = await fetch(url, {
-      method: request.method,
-      headers,
-      body: body ?? undefined,
-    });
-
-    const respHeaders = new Headers(resp.headers);
-    respHeaders.set("Access-Control-Allow-Origin", "*");
-    respHeaders.set("Access-Control-Allow-Headers", "*");
-    respHeaders.set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-
-    return new Response(resp.body, {
-      status: resp.status,
-      headers: respHeaders,
-    });
-  } catch (error) {
-    console.error(`Proxy error for ${url}:`, error);
-    return new Response(JSON.stringify({ error: "Backend unavailable", details: String(error) }), {
-      status: 502,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
   }
+
+  let lastError: unknown = null;
+  for (const url of urls) {
+    try {
+      const resp = await fetch(url, {
+        method: request.method,
+        headers,
+        body: body ?? undefined,
+      });
+
+      const respHeaders = new Headers(resp.headers);
+      respHeaders.set("Access-Control-Allow-Origin", "*");
+      respHeaders.set("Access-Control-Allow-Headers", "*");
+      respHeaders.set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+
+      return new Response(resp.body, {
+        status: resp.status,
+        headers: respHeaders,
+      });
+    } catch (error) {
+      lastError = error;
+      console.error(`Proxy error for ${url}:`, error);
+    }
+  }
+
+  return new Response(JSON.stringify({ error: "Backend unavailable", details: String(lastError) }), {
+    status: 502,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
 }
 
 export async function OPTIONS(request: Request, ctx: { params: Promise<{ path?: string[] }> }) {
@@ -84,30 +90,31 @@ export async function OPTIONS(request: Request, ctx: { params: Promise<{ path?: 
 
 export async function GET(request: Request, ctx: { params: Promise<{ path?: string[] }> }) {
   const { path } = await ctx.params;
-  const url = buildTargetUrl(path);
-  return proxy(request, url);
+  const search = new URL(request.url).search;
+  const urls = API_BASE_CANDIDATES.map((base) => buildTargetUrl(base, path, search));
+  return proxy(request, urls);
 }
 
 export async function POST(request: Request, ctx: { params: Promise<{ path?: string[] }> }) {
   const { path } = await ctx.params;
-  const url = buildTargetUrl(path);
-  return proxy(request, url);
+  const urls = API_BASE_CANDIDATES.map((base) => buildTargetUrl(base, path));
+  return proxy(request, urls);
 }
 
 export async function PUT(request: Request, ctx: { params: Promise<{ path?: string[] }> }) {
   const { path } = await ctx.params;
-  const url = buildTargetUrl(path);
-  return proxy(request, url);
+  const urls = API_BASE_CANDIDATES.map((base) => buildTargetUrl(base, path));
+  return proxy(request, urls);
 }
 
 export async function PATCH(request: Request, ctx: { params: Promise<{ path?: string[] }> }) {
   const { path } = await ctx.params;
-  const url = buildTargetUrl(path);
-  return proxy(request, url);
+  const urls = API_BASE_CANDIDATES.map((base) => buildTargetUrl(base, path));
+  return proxy(request, urls);
 }
 
 export async function DELETE(request: Request, ctx: { params: Promise<{ path?: string[] }> }) {
   const { path } = await ctx.params;
-  const url = buildTargetUrl(path);
-  return proxy(request, url);
+  const urls = API_BASE_CANDIDATES.map((base) => buildTargetUrl(base, path));
+  return proxy(request, urls);
 }

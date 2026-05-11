@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function(){ 
+      sagecell.makeSagecell({inputLocation:'#cell016',evalButtonText:'run',
+                             template:sagecell.templates.minimal}); 
+      sagecell.makeSagecell({inputLocation:'#cell017',evalButtonText:'run'}); });
+    </script>
+  </head>
+  <style>
+  pre {padding-left:2px; border:2px double slategray; 
+       font-size:120%; text-shadow:2px 2px 2px #aaa} 
+  .sagecell_output {border-color:slategray; padding-right:2px;}
+  .sagecell .CodeMirror-scroll {min-height:2em; max-height:6em;
+                                border-color:slategray; 
+                                font-size:120%; 
+                                text-shadow:2px 2px 2px #aaa}
+  </style>  
+  <body>   
+$\large{\mathbb{Code \; Input}}$
+<p>An Example of Uneditable Interactive Code</p>
+<pre><code>
+print('These code lines are not editable.\n'+\
+      'But you can run them and see the result.')
+
+</code></pre><br/>     
+<div id='cell016'><script type='text/x-sage'>
+print('These code lines are not editable.\n'+\
+      'But you can run them and see the result.')
+</script></div>
+<p>An Example of Editable Interactive Code</p>
+<div id='cell017'><script type='text/x-sage'>
+print('These code lines are editable.\n'+\
+      'You can change them right here and run.')
+</script></div>
+  </body>
+</html>

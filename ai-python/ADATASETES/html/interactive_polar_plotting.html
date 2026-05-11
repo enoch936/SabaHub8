@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function(){ 
+      sagecell.makeSagecell({
+        inputLocation:'#cell009',template:sagecell.templates.minimal,
+        evalButtonText:'run'}); });
+    </script>
+  </head>
+  <style>
+  h3 {color:#aa33ff; text-shadow:4px 4px 4px slategray;}
+  pre {width:99%; padding-left:3px; border:2px double slategray; } 
+  .sagecell_output {width:99%; border:2px double slategray; padding-right:1px;}
+  .sagecell_interactControlLabel:hover {padding-left:3px; color:#aa33ff; font-size:120%;}
+  .sagecell_interactOutput {padding-left:3px;}
+  </style> 
+  <body>   
+<h3>$$\large{\mathbb{Interactive \; Polar \; Plotting}}$$</h3>
+<p>Click the $\large{\mathbb{run}}$ button to display an example.</p>
+<pre><code>
+ c=list(colors.keys()); f(x,t)=sin(5*x)^2+0.02*t 
+ @interact
+ def _(number=[20,28,..,len(c)]):
+     p=sum([polar_plot(f(x,i),(x,0,2*pi),plot_points=30,
+                       thickness=1,color=c[i-1]) 
+            for i in [1..number]])
+     p.show(figsize=(5,5),gridlines=True)
+
+</code></pre><br/>     
+<div id='cell009'><script type='text/x-sage'>
+c=list(colors.keys())
+f(x,t)=sin(5*x)^2+0.02*t
+@interact
+def _(number=[20,28,..,len(c)]):
+    p=sum([polar_plot(f(x,i),(x,0,2*pi),plot_points=30,
+                      thickness=1,color=c[i-1]) 
+           for i in [1..number]])
+    p.show(figsize=(5,5),gridlines=True)
+</script></div>
+  </body>
+</html>

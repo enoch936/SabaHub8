@@ -1,0 +1,66 @@
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function(){ 
+      sagecell.makeSagecell({
+        inputLocation:'#cell001',template:sagecell.templates.minimal,
+        evalButtonText:'run'}); });
+    </script>
+  </head>
+  <style>
+  h3 {color:#aa33ff; text-shadow:3px 3px 3px slategray;}
+  pre {width:99%; padding-left:3px; border:2px double slategray; } 
+  .sagecell_output {width:99%; border:2px double slategray; padding-right:1px;}
+  .sagecell_interactControlLabel:hover {padding-left:3px; color:#aa33ff; font-size:120%;}
+  .sagecell_interactOutput {padding-left:3px;}
+  </style>  
+  <body>   
+<h3>$$\large{\mathbb{Interactive \; 3D \; Plotting}}$$</h3>
+<p>Click the $\large{\mathbb{run}}$ button to display an example.</p>
+<pre style='border:1px double #aaa;'><code>
+@interact
+def _(gnum=[3,..,6],lnum=[2,..,5]):
+    LG=Graphics(); g=graphs.CubeGraph(gnum)
+    vg=g.get_pos(); eg=g.edges() 
+    nv=len(vg); ne=len(eg); k=randint(10,50)/100
+    x0=mean([list(vg.values())[i][0] for i in range(nv)])
+    y0=mean([list(vg.values())[i][1] for i in range(nv)])
+    coord=[[list(vg[eg[i][0]]),list(vg[eg[i][1]])] 
+           for i in range(ne)]
+    lg=[[[x-x0,y-y0] for [x,y] in coord[i]] 
+        for i in range(ne)]
+    zlg=[[[(1+k*j)*x,j,(1+k*j)*y] 
+          for [x,y] in lg[i]] 
+         for j in range(lnum) for i in range(ne)]
+    for i in range(lnum*ne): 
+        LG+=line3d(zlg[i],
+                   color=(floor(i/ne)/(lnum-1),
+                          random(),random()))
+    LG.show(frame=False,aspect_ratio=1)
+    
+</code></pre><br/>     
+<div id='cell001'><script type='text/x-sage'>
+@interact
+def _(gnum=[3,..,6],lnum=[2,..,5]):
+    LG=Graphics(); g=graphs.CubeGraph(gnum)
+    vg=g.get_pos(); eg=g.edges() 
+    nv=len(vg); ne=len(eg); k=randint(10,50)/100
+    x0=mean([list(vg.values())[i][0] for i in range(nv)])
+    y0=mean([list(vg.values())[i][1] for i in range(nv)])
+    coord=[[list(vg[eg[i][0]]),list(vg[eg[i][1]])] 
+           for i in range(ne)]
+    lg=[[[x-x0,y-y0] for [x,y] in coord[i]] 
+        for i in range(ne)]
+    zlg=[[[(1+k*j)*x,j,(1+k*j)*y] 
+          for [x,y] in lg[i]] 
+         for j in range(lnum) for i in range(ne)]
+    for i in range(lnum*ne): 
+        LG+=line3d(zlg[i],
+                   color=(floor(i/ne)/(lnum-1),
+                          random(),random()))
+    LG.show(frame=False,aspect_ratio=1)
+</script></div>
+  </body>
+</html>

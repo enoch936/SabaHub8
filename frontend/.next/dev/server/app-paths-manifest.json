@@ -1,5 +1,9 @@
 {
   "/api/[...path]/route": "app/api/[...path]/route.js",
-  "/jobs/page": "app/jobs/page.js",
-  "/page": "app/page.js"
+  "/login/page": "app/login/page.js",
+  "/login/password/page": "app/login/password/page.js",
+  "/admin/(operations)/users/page": "app/admin/(operations)/users/page.js",
+  "/admin/(operations)/financial-operations/page": "app/admin/(operations)/financial-operations/page.js",
+  "/admin/(operations)/proposals/page": "app/admin/(operations)/proposals/page.js",
+  "/admin/(executive)/security-governance/page": "app/admin/(executive)/security-governance/page.js"
 }

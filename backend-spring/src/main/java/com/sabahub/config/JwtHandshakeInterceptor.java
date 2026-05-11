@@ -3,6 +3,8 @@ package com.sabahub.config;
 import com.sabahub.service.AppUserDetailsService;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
@@ -22,8 +24,8 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     }
 
     @Override
-    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
-                                   WebSocketHandler wsHandler, Map<String, Object> attributes) {
+    public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response,
+                                   @NonNull WebSocketHandler wsHandler, @NonNull Map<String, Object> attributes) {
         List<String> authHeaders = request.getHeaders().get("Authorization");
         if (authHeaders == null || authHeaders.isEmpty()) {
             return true; // allow connect; message send will fail if unauthenticated
@@ -46,8 +48,8 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     }
 
     @Override
-    public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
-                               WebSocketHandler wsHandler, Exception exception) {
+    public void afterHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response,
+                               @NonNull WebSocketHandler wsHandler, @Nullable Exception exception) {
         // no-op
     }
 }

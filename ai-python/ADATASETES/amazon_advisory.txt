@@ -1,0 +1,23 @@
+Example Advisory:
+CVE-2025-4318 - Input validation issue in AWS Amplify Studio UI component properties
+Publication Date: 2025/05/05 11:00 AM PDT
+
+Description
+
+The AWS Amplify Studio amplify-codegen-ui is an AWS package that generates front-end code from UI Builder entities (components, forms, views, and themes), primarily used in Amplify Studio for component previews and in AWS Command Line Interface (AWS CLI) for generating component files in customers' local applications
+
+We identified CVE-2025-4318, an input validation issue in Amplify Studio UI component properties. When importing a component schema using the create-component command, Amplify Studio will import and generate the component on the users' behalf. The expression-binding function does not validate the component schema properties before converting them to expressions. As a result, an authenticated user who can create or modify components could run arbitrary JavaScript code during the component rendering and build process.
+
+We released a fix in 2.20.3 and recommend users upgrade to address this issue. Additionally, ensure any forked or derivative code is patched to incorporate the new fixes.
+
+Affected version: <=2.20.2
+
+Resolution:
+
+The patches are included in Amplify Studio aws-amplify/amplify-codegen-ui version 2.20.3. We recommend upgrading to the latest version and ensuring any forked or derivative code is patched to incorporate the new fixes.
+
+References:
+
+GHSA-hf3j-86p7-mfw8
+CVE-2025-4318
+Please email aws-security@amazon.com with any security questions or concerns.

@@ -1,0 +1,71 @@
+<html>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width'>
+  <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'>
+  </script>
+  <script>$(function () {
+    sagecell.makeSagecell({inputLocation:'div.evaluated',autoeval:true,
+                           template:sagecell.templates.minimal,
+                           evalButtonText:'run'}); });
+  </script>
+</head>
+<style>
+  pre {padding-left:3px; border:2px double slategray;}
+  h3 {color:#aa33ff; text-shadow:3px 3px 3px slategray;}
+  .sagecell .CodeMirror-scroll {min-height:3em; max-height:60em;}
+  body {margin:5px 5px 5px 15px;}
+</style>
+<body>
+  <h3>$$\mathbb{ R \; Packages \; in \; Python \; Cells }$$</h3>
+<pre><code>
+import warnings; warnings.filterwarnings('ignore')
+from IPython import display
+import rpy2.robjects as ro
+from rpy2.robjects.packages import importr
+grdevices=importr('grDevices')
+grdevices.svg(file='Rplots.svg',
+              width=int(5),height=int(3),
+              onefile=True,family='times',
+              bg='white',pointsize=int(10))
+ro.r('library(MASS); library(nnet); '+\
+     'data(Boston); n<-dim(Boston)[1]')
+ro.r('model<-nnet(as.matrix(Boston[1:430,-14]),'+\
+     'as.matrix(Boston[1:430,14]),'+\
+     'size=52,trace=F,maxit=10^7,linout=T,decay=.1^5); '+\
+     'predictions<-predict(model,'+\
+     'as.matrix(Boston[431:n,-14]),type="raw")')
+ro.r('plot(as.matrix(Boston[431:n,14]),'+\
+     'cex=.7,col=rgb(0,1,0),type="o",'+\
+     'xlab="",ylab="",yaxt="n"); par(new=T); '+\
+     'plot(predictions,col=rgb(0,0,1),type="o",'+\
+     'cex=.9,ylab="Targets & Predictions"); grid();') 
+grdevices.dev_off()
+
+</code></pre><br/>
+<div id='cell014' class='evaluated'><script type='text/x-sage'>
+import warnings; warnings.filterwarnings('ignore')
+from IPython import display
+import rpy2.robjects as ro
+from rpy2.robjects.packages import importr
+grdevices=importr('grDevices')
+grdevices.svg(file='Rplots.svg',
+              width=int(5),height=int(3),
+              onefile=True,family='times',
+              bg='white',pointsize=int(10))
+ro.r('library(MASS); library(nnet); '+\
+     'data(Boston); n<-dim(Boston)[1]')
+ro.r('model<-nnet(as.matrix(Boston[1:430,-14]),'+\
+     'as.matrix(Boston[1:430,14]),'+\
+     'size=52,trace=F,maxit=10^7,linout=T,decay=.1^5); '+\
+     'predictions<-predict(model,'+\
+     'as.matrix(Boston[431:n,-14]),type="raw")')
+ro.r('plot(as.matrix(Boston[431:n,14]),'+\
+     'cex=.7,col=rgb(0,1,0),type="o",'+\
+     'xlab="",ylab="",yaxt="n"); par(new=T); '+\
+     'plot(predictions,col=rgb(0,0,1),type="o",'+\
+     'cex=.9,ylab="Targets & Predictions"); grid();') 
+grdevices.dev_off()
+</script></div><br/>
+</body>
+</html>

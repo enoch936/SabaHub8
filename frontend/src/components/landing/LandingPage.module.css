@@ -1,0 +1,373 @@
+.page {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.page::before {
+  content: none;
+}
+
+.navShell {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1280px, calc(100% - 1.5rem));
+  z-index: 50;
+}
+
+.glassPanel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.softPanel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.shapeOne,
+.shapeTwo {
+  display: none;
+}
+
+.shapeOne {
+  top: 5rem;
+  right: -10rem;
+  width: min(54vw, 48rem);
+  height: 26rem;
+  opacity: 0.16;
+}
+
+.shapeTwo {
+  bottom: 8rem;
+  left: -9rem;
+  width: min(50vw, 42rem);
+  height: 22rem;
+  opacity: 0.1;
+  transform: rotate(180deg);
+}
+
+.orbPurple,
+.orbBlue {
+  display: none;
+}
+
+.orbPurple {
+  top: 12rem;
+  left: -6rem;
+  width: 24rem;
+  height: 24rem;
+  background: linear-gradient(135deg, rgba(226, 232, 240, 0.7), rgba(248, 250, 252, 0.2));
+  animation: drift 12s ease-in-out infinite;
+}
+
+.orbBlue {
+  right: -6rem;
+  bottom: 22rem;
+  width: 26rem;
+  height: 26rem;
+  background: linear-gradient(135deg, rgba(226, 232, 240, 0.7), rgba(248, 250, 252, 0.2));
+  animation: drift 14s ease-in-out infinite reverse;
+}
+
+.brandIcon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 1rem;
+  background: #111827;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+}
+
+.brandDot {
+  position: absolute;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
+}
+
+.brandDotLarge {
+  width: 0.72rem;
+  height: 0.72rem;
+  top: 0.72rem;
+  left: 0.72rem;
+}
+
+.brandDotRight {
+  width: 0.72rem;
+  height: 0.72rem;
+  top: 0.72rem;
+  right: 0.72rem;
+}
+
+.brandDotLowerLeft {
+  width: 0.46rem;
+  height: 0.46rem;
+  bottom: 0.62rem;
+  left: 0.82rem;
+}
+
+.brandDotLowerRight {
+  width: 0.46rem;
+  height: 0.46rem;
+  bottom: 0.62rem;
+  right: 0.82rem;
+}
+
+.brandText {
+  color: var(--foreground);
+}
+
+.displayHeading {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  padding: 0.95rem 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+  border: 1px solid transparent;
+}
+
+.actionButton:hover {
+  transform: translateY(-2px);
+}
+
+.primaryButton {
+  color: var(--background);
+  background: var(--accent-strong);
+  box-shadow: var(--shadow-soft-lg);
+}
+
+.secondaryButton {
+  color: var(--foreground);
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.whiteButton {
+  color: var(--foreground);
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+.darkGhostButton {
+  color: var(--foreground);
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.heroMedia {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft-lg);
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.04), rgba(15, 23, 42, 0.02));
+  pointer-events: none;
+}
+
+.floatingCard {
+  position: absolute;
+  left: -1.5rem;
+  bottom: -1.5rem;
+  max-width: 17rem;
+  border-radius: 1.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.featureCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 220ms ease,
+    background-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-0.35rem);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-soft-lg);
+}
+
+.featureGlow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  filter: blur(40px);
+  transition: opacity 220ms ease;
+}
+
+.featureCard:hover .featureGlow {
+  opacity: 0.08;
+}
+
+.darkSection {
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--foreground);
+}
+
+.darkSection::before,
+.darkSection::after {
+  content: none;
+}
+
+.ctaShell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft-lg);
+}
+
+.ctaShell::before,
+.ctaShell::after {
+  content: none;
+}
+
+.footerShell {
+  border-top: 1px solid var(--border);
+  background: var(--background);
+}
+
+.socialPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--foreground-muted);
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.socialPill:hover {
+  transform: translateY(-2px);
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+:global(html.dark) .page :global(.text-slate-950),
+:global(html.dark) .page :global(.text-slate-900),
+:global(html.dark) .page :global(.text-slate-800) {
+  color: var(--foreground);
+}
+
+:global(html.dark) .page :global(.text-slate-700),
+:global(html.dark) .page :global(.text-slate-600),
+:global(html.dark) .page :global(.text-slate-500) {
+  color: var(--foreground-muted);
+}
+
+:global(html.dark) .page :global(.bg-white) {
+  background-color: var(--surface);
+}
+
+:global(html.dark) .page :global(.bg-slate-50),
+:global(html.dark) .page :global(.bg-slate-100) {
+  background-color: var(--surface-muted);
+}
+
+:global(html.dark) .page :global(.border-slate-200),
+:global(html.dark) .page :global(.border-slate-300) {
+  border-color: var(--border);
+}
+
+:global(html.dark) .page :global(.hover\:bg-slate-50:hover) {
+  background-color: var(--accent);
+}
+
+:global(html.dark) .page :global(.hover\:text-slate-950:hover) {
+  color: var(--foreground);
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(1.4rem, -1rem, 0) scale(1.08);
+  }
+}
+
+@media (max-width: 1024px) {
+  .floatingCard {
+    left: 1rem;
+    bottom: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .navShell {
+    top: 0.75rem;
+    width: calc(100% - 1rem);
+  }
+
+  .shapeOne {
+    display: none;
+  }
+
+  .shapeTwo {
+    display: none;
+  }
+
+  .orbPurple,
+  .orbBlue {
+    display: none;
+  }
+
+  .floatingCard {
+    position: static;
+    max-width: none;
+    margin-top: 1rem;
+  }
+
+  .ctaShell {
+    border-radius: 2rem;
+  }
+}

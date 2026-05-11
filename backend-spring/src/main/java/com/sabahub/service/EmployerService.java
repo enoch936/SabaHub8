@@ -324,6 +324,12 @@ public class EmployerService {
                 .endDate(dto.getEndDate())
                 .totalAmount(dto.getTotalAmount())
                 .currency(project.getBudget().getCurrency())
+                .paymentModel("MILESTONE")
+                .escrowProtectionLevel("FULL")
+                .disputeWindowDays(7)
+                .autoReleaseDays(5)
+                .requiresEscrow(Boolean.TRUE)
+                .adminReviewRequired(Boolean.TRUE)
                 .terms(Contract.ContractTerms.builder()
                         .scope(project.getDescription())
                         .deliverables(project.getDescription())
@@ -363,8 +369,7 @@ public class EmployerService {
         List<Contract.PaymentMilestone> milestones = new ArrayList<>();
 
         if ("FIXED_PRICE".equals(project.getProjectType().getType()) && project.getMilestones() != null) {
-            // Use predefined milestones
-            int index = 1;
+                        // Use predefined milestones
             for (Project.Milestone m : project.getMilestones()) {
                 milestones.add(Contract.PaymentMilestone.builder()
                         .id(UUID.randomUUID().toString())
@@ -376,7 +381,6 @@ public class EmployerService {
                         .percentageComplete(0.0)
                         .approvedByEmployer(false)
                         .build());
-                index++;
             }
         } else {
             // Create single milestone for hourly or lump sum
@@ -522,13 +526,13 @@ public class EmployerService {
     private Map<String, Double> calculateSpendByCategory(List<Contract> contracts) {
         return contracts.stream()
                 .collect(Collectors.groupingBy(
-                        c -> "General",  // TODO: get actual category from project
+                                                c -> "General",  // Category fallback until contract-project category mapping is available.
                         Collectors.summingDouble(Contract::getTotalAmount)
                 ));
     }
 
     private List<com.sabahub.web.dto.EmployerDTOs.ActivityDataPointDTO> generateActivityTimeline(List<Contract> contracts) {
-        // TODO: Implement timeline generation
+                // Timeline data is currently unavailable in this service; return an empty series.
         return new ArrayList<>();
     }
 

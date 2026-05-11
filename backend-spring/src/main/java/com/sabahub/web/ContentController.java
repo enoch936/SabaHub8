@@ -22,6 +22,13 @@ public class ContentController {
         return ResponseEntity.ok(contentService.listPublic(type));
     }
 
+    @GetMapping("/admin/content")
+    public ResponseEntity<List<ContentItem>> adminList(
+            @RequestParam(name = "type", required = false) String type,
+            @RequestParam(name = "status", required = false) String status) {
+        return ResponseEntity.ok(contentService.adminList(type, status));
+    }
+
     @PostMapping("/admin/content")
     public ResponseEntity<ContentItem> adminCreate(@RequestBody ContentItem item) {
         return ResponseEntity.ok(contentService.adminCreate(item));

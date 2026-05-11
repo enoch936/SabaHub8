@@ -24,13 +24,12 @@ public class AdminProposalController {
 
     @GetMapping
     public ResponseEntity<List<Proposal>> list(@RequestParam(name = "status", required = false) String status) {
-        var me = currentUserService.requireUser();
-        currentUserService.requireRole(me, "ADMIN");
+        requireProposalAdmin();
         List<Proposal> all = proposalRepository.findAll();
         if (status == null || status.isBlank()) return ResponseEntity.ok(all);
         Proposal.Status st;
         try {
-            st = Proposal.Status.valueOf(status);
+            st = Proposal.Status.valueOf(status.trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }
@@ -40,18 +39,26 @@ public class AdminProposalController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<Proposal> patch(@PathVariable String id, @RequestBody Map<String, Object> body) {
-        var me = currentUserService.requireUser();
-        currentUserService.requireRole(me, "ADMIN");
+        requireProposalAdmin();
         var proposal = proposalRepository.findById(id).orElseThrow();
         Object statusObj = body.get("status");
         if (statusObj instanceof String s) {
             try {
-                proposal.setStatus(Proposal.Status.valueOf(s));
+                proposal.setStatus(Proposal.Status.valueOf(s.trim().toUpperCase()));
             } catch (IllegalArgumentException ex) {
                 return ResponseEntity.badRequest().build();
             }
         }
         proposalRepository.save(proposal);
         return ResponseEntity.ok(proposal);
+    }
+
+    private void requireProposalAdmin() {
+        var me = currentUserService.requireUser();
+        boolean allowed = currentUserService.hasRole(me, "ADMIN")
+                || currentUserService.hasRole(me, "SUPER_ADMIN");
+        if (!allowed) {
+            throw new IllegalStateException("Forbidden");
+        }
     }
 }

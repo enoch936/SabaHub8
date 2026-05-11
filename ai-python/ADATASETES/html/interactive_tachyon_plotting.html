@@ -1,0 +1,64 @@
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function(){ 
+      sagecell.makeSagecell({
+        inputLocation:'#cell012',template:sagecell.templates.minimal,
+        evalButtonText:'run'}); });
+    </script>
+  </head>
+  <style>
+  h3 {color:#aa33ff; text-shadow:4px 4px 4px slategray;}
+  pre {width:99%; padding-left:3px; border:2px double slategray; } 
+  .sagecell_output {width:99%; border:2px double slategray; padding-right:1px;}
+  .sagecell_interactControlLabel:hover {padding-left:3px; color:#aa33ff; font-size:120%;}
+  .sagecell_interactOutput {padding-left:3px;}
+  </style>  
+  <body>   
+<h3>$$\large{\mathbb{Interactive \; Tachyon \; Plotting}}$$</h3>
+<p>Click the $\large{\mathbb{run}}$ button to display an example.</p>
+<pre><code>
+@interact
+def _(a=[1,2,3,4],b=[2,3,1],
+      c=[3,2,1],d=[7,6,5,4]):
+    sx='x(t)=%s*sin(%s*t/2)*cos(%s*t/2)&#60;br/&#62;'
+    sy='y(t)=%s*cos(%s*t/3)*cos(%s*t/3)&#60;br/&#62;'
+    sz='z(t)=%s*sin(%s*t/2)*sin(%s*t/2)'
+    s='&#60;p style=%s&#62;'%'font-size:120%;'
+    s+=sx%(a,c,c)+sy%(b,a,c)+sz%(c,a,a)+'&#60;/p&#62;'
+    pretty_print(html(s))
+    f=lambda p:(a*sin(c*p/2)*cos(c*p/2),
+                b*cos(a*p/3)*cos(c*p/3),
+                c*sin(a*p/2)*sin(a*p/2))
+    t=Tachyon(xres=400,yres=400,camera_center=(-6,-6,2))
+    t.texture('t1',color=(0,0,.3),opacity=.5)
+    t.texture('t2',color=(.7,.7,.7),texfunc=2)
+    t.parametric_plot(f,0,6*pi,'t1',r=.05,min_depth=d)
+    t.plane((7,7,-7),(0,-1,1),'t2')
+    t.light((-7,-7,7),2,(1,1,1)); t.show()
+
+</code></pre><br/>     
+<div id='cell012'><script type='text/x-sage'>
+@interact
+def _(a=[1,2,3,4],b=[2,3,1],
+      c=[3,2,1],d=[7,6,5,4]):
+    sx='x(t)=%s*sin(%s*t/2)*cos(%s*t/2)<br/>'
+    sy='y(t)=%s*cos(%s*t/3)*cos(%s*t/3)<br/>'
+    sz='z(t)=%s*sin(%s*t/2)*sin(%s*t/2)'
+    s='<p style=%s>'%'font-size:120%;'
+    s+=sx%(a,c,c)+sy%(b,a,c)+sz%(c,a,a)+'</p>'
+    pretty_print(html(s))
+    f=lambda p:(a*sin(c*p/2)*cos(c*p/2),
+                b*cos(a*p/3)*cos(c*p/3),
+                c*sin(a*p/2)*sin(a*p/2))
+    t=Tachyon(xres=400,yres=400,camera_center=(-6,-6,2))
+    t.texture('t1',color=(0,0,.3),opacity=.5)
+    t.texture('t2',color=(.7,.7,.7),texfunc=2)
+    t.parametric_plot(f,0,6*pi,'t1',r=.05,min_depth=d)
+    t.plane((7,7,-7),(0,-1,1),'t2')
+    t.light((-7,-7,7),2,(1,1,1)); t.show()
+</script></div>
+  </body>
+</html>

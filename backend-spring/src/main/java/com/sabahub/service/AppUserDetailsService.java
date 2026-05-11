@@ -8,6 +8,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashSet;
+import java.util.Locale;
+
 @Service
 public class AppUserDetailsService implements UserDetailsService {
 
@@ -22,10 +25,33 @@ public class AppUserDetailsService implements UserDetailsService {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        var authorities = user.getRoles().stream()
-                .map(SimpleGrantedAuthority::new)
+        var normalizedRoles = (user.getRoles() == null ? java.util.Set.<String>of() : user.getRoles()).stream()
+                .map(this::normalizeRole)
+                .filter(value -> !value.isBlank())
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+
+        boolean hasWorkspaceRole = normalizedRoles.contains("EMPLOYER") || normalizedRoles.contains("FREELANCER");
+        if (hasWorkspaceRole) {
+            normalizedRoles.add("EMPLOYER");
+            normalizedRoles.add("FREELANCER");
+        }
+
+        var authorities = normalizedRoles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                 .toList();
 
         return new User(user.getEmail(), user.getPasswordHash(), authorities);
+    }
+
+    private String normalizeRole(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        String normalized = value.trim().toUpperCase(Locale.ROOT);
+        if (normalized.startsWith("ROLE_")) {
+            normalized = normalized.substring(5);
+        }
+        return normalized;
     }
 }

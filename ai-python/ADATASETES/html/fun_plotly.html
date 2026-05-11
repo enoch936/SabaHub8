@@ -1,0 +1,20 @@
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<div id='test_plotly' style='width:99%; height:99%;'>
+<script>
+TEST1=document.getElementById('test_plotly');
+var n=80,d=.05
+var x1=Array(n).fill(d).map((r,t)=>r*(t-40)),
+    y1=Array(n).fill(d).map((r,t)=>Math.exp(-Math.pow(r*(t-40),2))),
+    y2=Array(n).fill(d).map((r,t)=>-Math.exp(-Math.pow(r*(t-40),2))),
+    y3=Array(n).fill(d).map((r,t)=>
+       Math.sin(Math.PI*Math.pow(r*(t-40),3))*Math.exp(-Math.pow(r*(t-40),2)));
+Plotly.plot(TEST1,[{x:x1,y:y1,line:{color:'#3636ff'},
+	                marker:{symbol:317},mode:'markers',
+                    hoverinfo:'y',name:'f(x)=e^(-x^2)'}]);
+Plotly.plot(TEST1,[{x:x1,y:y2,line:{color:'#36ff36'},
+	                marker:{symbol:218},mode:'markers',
+                    hoverinfo:'y',name:'f(x)=-e^(-x^2)'}]);
+Plotly.plot(TEST1,[{x:x1,y:y3,line:{color:'#ff3636'},
+	                mode:'text',text:'☕',hoverinfo:'y',
+	                name:'f(x)=sin(πx^3)*e^(-x^2)'}]);
+</script>

@@ -1,0 +1,849 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <title>MLE_ND_P3_SMC</title>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function(){
+      sagecell.makeSagecell({inputLocation:'div.linked',linked:true,evalButtonText:'Run Linked Cells'});  
+      sagecell.makeSagecell({inputLocation:'div.sage',evalButtonText:'Run'});});
+    </script>
+    <script src='https://code.highcharts.com/highcharts.js'></script>
+  </head>
+  <style>
+    @import 'https://fonts.googleapis.com/css?family=Orbitron|Roboto';
+    body {margin:5px 5px 5px 15px; background-color:ghostwhite;}
+    a,p {color:#5a8bbd; font-family:'Roboto';} 
+    h1 {color:#1b2c45; font-family:'Orbitron'; text-shadow:4px 4px 4px #ccc;} 
+    h2,h3 {color:slategray; font-family:'Orbitron'; text-shadow:4px 4px 4px #ccc;}
+    h4 {color:#1b2c45; font-family:'Roboto';}
+    .sagecell .CodeMirror-scroll {min-height:3em; max-height:60em;}
+    .sagecell table.table_form tr.row-a {background-color:lightgray;} 
+    .sagecell table.table_form tr.row-b {background-color:ghostwhite;}
+    .sagecell table.table_form td {padding:5px 15px; color:#5a8bbd; font-family:'Roboto';}
+    .sagecell_sessionOutput,.sagecell_sessionOutput pre {color:#5a8bbd; font-family:'Roboto';}
+  </style>  
+  <body>
+    <h1>🏙 Machine Learning Engineer Nanodegree &nbsp;
+      <a href='https://olgabelitskaya.github.io/README.html'>&#x1F300; &nbsp; Home Page &nbsp; &nbsp; &nbsp;</a></h1>
+    <h2>Unsupervised Learning</h2>
+    <h1>&#x1F4D1; &nbsp;P3: Creating Customer Segments</h1>
+    <h2>Getting Started</h2>
+    <h3>Dataset</h3>
+In this project, we will analyze a dataset containing data on various customers' annual spending amounts<br/>
+(reported in monetary units) of diverse product categories for internal structure.<br/>
+One goal of this project is to best describe the variation in the different types of customers that a wholesale distributor interacts with.<br/>
+Doing so would equip the distributor with insight into how to best structure their delivery service to meet the needs of each customer.<br/>
+The dataset for this project can be found on the 
+<a href='https://archive.ics.uci.edu/ml/datasets/Wholesale+customers'>&#x1F578;UCI Machine Learning Repository.</a><br/> 
+For the purposes of this project, the features <i>Channel</i> and <i>Region</i> will be excluded in the analysis — <br/>
+with focus instead on the six product categories recorded for customers.      
+    <h3>Resources</h3>
+<a href='http://archive.ics.uci.edu/ml/datasets.php'>&#x1F578;UCI Machine Learning Repository&nbsp;</a>
+<a href='https://scikit-learn.org/stable/index.html'>&#x1F578;scikit-learn. Machine Learning in Python&nbsp;</a>
+<a href='http://seaborn.pydata.org/index.html'>&#x1F578;seaborn: statistical data visualization&nbsp;</a><br/>
+    <h3>Code Library</h3> 
+<div class='linked'><script type='text/x-sage'>
+import warnings; warnings.filterwarnings('ignore')
+from sklearn.exceptions import DataConversionWarning
+warnings.filterwarnings('ignore',category=DataConversionWarning)
+import numpy,pandas,pylab,seaborn,time
+pylab.style.use('seaborn-pastel')
+cmap=seaborn.cubehelix_palette(2,start=.1,rot=-.25,as_cmap=True)
+from sklearn.model_selection import train_test_split,cross_val_score
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
+from sklearn.metrics import silhouette_score
+</script></div><br/>     
+<div class='linked'><script type='text/x-sage'>
+# https://github.com/udacity/machine-learning/blob/master/projects/customer_segments/visuals.py
+def pca_results(good_data,pca):
+    dimensions=['Dimension {}'.format(i) 
+                for i in range(1,len(pca.components_)+1)]
+    components=pandas.DataFrame(
+        numpy.round(pca.components_,4),columns=good_data.keys())
+    components.index=dimensions
+    ratios=pca.explained_variance_ratio_.reshape(len(pca.components_),1)
+    variance_ratios=pandas.DataFrame(
+        numpy.round(ratios,4),columns=['Explained Variance'])
+    variance_ratios.index=dimensions 
+    fig,ax=pylab.subplots(figsize=(10,5))
+    components.plot(ax=ax,kind='bar');
+    ax.set_ylabel('Feature Weights',fontsize=12)
+    ax.set_xticklabels(dimensions,rotation=0)
+    for i,ev in enumerate(pca.explained_variance_ratio_):
+        ax.text(i-.40,ax.get_ylim()[1]+.05,
+                'Explained Variance \n %.4f'%(ev))
+    pylab.grid(); pylab.tight_layout(); pylab.show()
+    return pandas.concat([variance_ratios,components],axis=int(1))
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+def cluster_results(reduced_data,preds,centers,pca_samples,alg):
+    predictions=pandas.DataFrame(preds,columns=['Cluster'])
+    plot_data=pandas.concat([predictions,reduced_data],axis=int(1))
+    fig,ax=pylab.subplots(figsize=(10,7))
+    for i,cluster in plot_data.groupby('Cluster'):   
+        cluster.plot(
+            ax=ax,kind='scatter',x='Dimension 1',y='Dimension 2',
+            alpha=.8,edgecolors='slategray',s=30,
+            c=cmap((i)*1./(len(centers)-1)),label='Cluster %i'%(i));
+    for i,c in enumerate(centers):
+        ax.scatter(x=c[0],y=c[1],color='white',edgecolors='black',
+                   alpha=1,linewidth=2,marker='o',s=250);
+        ax.scatter(x=c[0],y=c[1],marker='$%d$'%(i),
+                   alpha=1,s=120,color='black');
+        ax.scatter(x=pca_samples[:,0],y=pca_samples[:,1],s=150,
+                   linewidth=4,color='#ff5a8b',marker='x');
+    ti='%s Cluster Learning on PCA-Reduced Data\n'+\
+       'Centroids Marked by Numbers\n'+\
+       'Transformed Sample Data Marked by Red Crosses'
+    ax.set_title(ti%alg,fontsize=15,color='#5a8bbd')
+    pylab.tight_layout(); pylab.show()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+def biplot(good_data,reduced_data,pca):
+    fig,ax=pylab.subplots(figsize=(10,5))
+    x=reduced_data.loc[:,'Dimension 1']
+    y=reduced_data.loc[:,'Dimension 2']
+    ax.scatter(x=x,y=y,facecolors='slategray',
+               edgecolors=cmap((x*y)**2),s=70,alpha=.4)
+    feature_vectors=pca.components_.T
+    arrow_size,text_pos=7.,5.
+    for i,v in enumerate(feature_vectors):
+        ax.arrow(0,0,arrow_size*v[0],arrow_size*v[1],
+                 head_width=.2,head_length=.2,
+                 linewidth=2,color='#ff5a8b')
+        ax.text(v[0]*text_pos,v[1]*text_pos,
+                good_data.columns[i],color='black',
+                ha='center',va='center',fontsize=12)
+    ax.set_xlabel('Dimension 1',fontsize=10)
+    ax.set_ylabel('Dimension 2',fontsize=10)
+    ti='PC plane with original feature projections.'
+    ax.set_title(ti,fontsize=15,color='#5a8bbd')
+    pylab.tight_layout(); pylab.show()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+def channel_results(reduced_data,outliers,pca_samples):
+    path='https://raw.githubusercontent.com/OlgaBelitskaya/'+\
+         'machine_learning_engineer_nd009/master/'+\
+         'Machine_Learning_Engineer_ND_P3/'
+    full_data=pandas.read_csv(path+'customers.csv')
+    channel=pandas.DataFrame(full_data['Channel'],columns=['Channel'])
+    channel=channel.drop(channel.index[outliers]).reset_index(drop=True)
+    labeled=pandas.concat([reduced_data,channel],axis=int(1))
+    fig,ax=pylab.subplots(figsize=(10,5))
+    labels=['Hotel/Restaurant/Cafe','Retailer']
+    grouped=labeled.groupby('Channel')
+    for i,channel in grouped:   
+        channel.plot(ax=ax,kind='scatter',
+                     x='Dimension 1',y='Dimension 2',
+                     color=cmap((i-1)*1./2),label=labels[i-1],s=30)  
+    for i,sample in enumerate(pca_samples):
+        ax.scatter(x=sample[0],y=sample[1],s=230,linewidth=3,
+                   color='black',marker='o',facecolors='none');
+        ax.scatter(x=sample[0]+.25,y=sample[1]+.3,
+                   marker='$%d$'%(i),alpha=1,s=200,color='black')
+    ti='PCA-Reduced Data Labeled by `Channel`\n'+\
+       'Transformed Sample Data Circled'
+    ax.set_title(ti,fontsize=15,color='#5a8bbd')
+    pylab.tight_layout(); pylab.show()
+</script></div><br/>
+    <h2>Data Exploration</h2>
+In this section, we will begin exploring the data through visualizations and code to understand 
+how each feature is related to the others.<br/>
+We will observe a statistical description of the dataset, consider the relevance of each feature, <br/>
+and select a few sample data points from the dataset which you will track through the course of this project.<br/>
+The dataset is composed of six important product categories: 
+<i>Fresh, Milk, Grocery, Frozen, Detergents_Paper</i>, and <i>Delicatessen</i>.<br/> 
+Consider what each category represents in terms of products we could purchase.
+    <h3>Data Loading</h3>    
+<div class='linked'><script type='text/x-sage'>
+path='https://raw.githubusercontent.com/OlgaBelitskaya/'+\
+         'machine_learning_engineer_nd009/master/'+\
+         'Machine_Learning_Engineer_ND_P3/'
+data=pandas.read_csv(path+'customers.csv')
+data.drop(['Region','Channel'],axis=1,inplace=True)
+ti='The dataset has {} samples with {} features each.'
+print(ti.format(*data.shape)); data.describe()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+data.plot.area(stacked=False,figsize=(10,5))
+pylab.grid(); pylab.tight_layout(); pylab.show()
+</script></div><br/>
+    <h3>Implementation: Selecting Samples</h3>
+To get a better understanding of the customers and how their data will transform through the analysis,<br/>
+it would be best to select a few sample data points and explore them in more detail.<br/>
+In the code block below, add three indices of your choice to the indices list which will represent the customers to track.<br/>
+It is suggested to try different sets of samples until you obtain customers that vary significantly from one another.
+<div class='linked'><script type='text/x-sage'>
+indices=[23,25,27]
+def hex_to_rgb(chex):
+        chex=chex.lstrip('#'); n=len(chex)
+        return tuple(int(chex[i:i+n//3],16)/255. for i in range(0,n,n//3))
+samples=pandas.DataFrame(data.loc[indices],
+                         columns=data.keys()).reset_index(drop=True)
+samples.index=['C0','C1','C2']; samples.loc['Mean']=samples.mean()
+print ('Chosen samples of the Wholesale Customers` dataset:')
+display(samples)
+cols=['#1b2c45','#5a8bbd','#008b8b','#ff5a8b']
+samples.T.plot(figsize=(10,5),color=[hex_to_rgb(el) for el in cols])
+pylab.grid(); pylab.tight_layout(); pylab.show()
+</script></div><br/>
+    <h3>Question 1</h3>
+<i>Consider the total purchase cost of each product category and the statistical description 
+  of the dataset above for your sample customers.<br/>
+What kind of establishment (customer) could each of the three samples you've chosen represent?</i>
+    <h3>Answer 1</h3>
+I have built a plot for comparing the feature values with the means and a heatmap to visualize 
+for each customer the spending amount per feature in percentages.
+    <p></p>
+<div class='sage'><script type='text/x-sage'>
+%%html
+<div id='test_highcharts' style='width:1000px; height:500px;'/><script>
+Highcharts.chart('test_highcharts',{
+    xAxis:{categories:['Fresh','Milk','Grocery','Frozen',
+                       'Detergents_Paper','Delicatessen']},
+    yAxis:{title:{text:'Value'}},
+    title:{style:{'color':'#5a8bbd','fontSize':'24px'},
+           text:'Chosen samples of the wholesale customers` dataset'},
+    series:[{name:'C0',color:'#1b2c45',data:[26373,36423,22019,5154,4337,16523]},
+            {name:'C1',color:'#5a8bbd',data:[16165,4230,7595,201,4003,57]},
+            {name:'C2',color:'#008b8b',data:[14276,803,3045,485,100,518]},
+            {name:'Mean',color:'#ff5a8b',data:[18938,13819,10886,1947,2813,5699]}] },
+    function(chart){
+        var point=chart.series.data,
+        text=chart.renderer.text(point.plotX+chart.plotLeft+10,
+        point.plotY+chart.plotTop-10).add(),
+        box=text.getBBox();});
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+pylab.figure(figsize=(10,5))
+p_samples=samples.iloc[:].T.apply(lambda x:100.0*x/x.sum())
+seaborn.heatmap(p_samples,cmap=cmap,annot=True,
+                annot_kws={'color':'White','size':20},fmt='.1f')
+ti='Product categories in percentages for the sample customers'
+pylab.title(ti,fontsize=15,color='#5a8bbd')
+pylab.xticks(ha='center',fontsize=12)
+pylab.yticks(fontsize=10); pylab.show()
+</script></div><br/>
+<b>Customer C0</b> - food-oriented supermarket:<br/>
+- the wide range of products with big values; <br/>
+- the significant excess of the purchasing volumes of categories <i>Fresh, Milk</i> over others;<br/>
+- the purchasing volumes of categories <i>Fresh, Grocery, Milk, Delicatessen</i> are much higher than the mean values;<br/>
+- the categories <i>Detergents_Paper, Frozen</i> are close to the means values.<br/>
+<b>Customer C1</b> - market for the nearest neighborhood:<br/>
+- the highest purchasing volumes are in the category <i>Fresh</i>;<br/>
+- the purchasing volumes of all categories are close to the mean values.<br/>
+<b>Customer C2</b> - vegetarian cafe or restaurant:<br/>
+- the significant excess of the purchasing volumes of the category <i>Fresh</i> over others;<br/>
+- the purchasing volumes of categories <i>Frozen, Grocery, Milk, Detergents_Paper</i> are lower than the mean values;<br/>
+- the purchasing volumes of the category <i>Detergents_Paper</i> are extremely small.
+    <h3>Implementation: Feature Relevance</h3>
+One interesting thought to consider is if one (or more) of the six product categories is actually relevant for understanding customer purchasing.<br/>
+That is to say, is it possible to determine whether customers purchasing some amount of one category<br/> 
+of products will necessarily purchase some proportional amount of another category of products?<br/> 
+We can make this determination quite easily by training a supervised regression learner on a subset of the data with one feature removed,<br/>
+and then score how well that model can predict the removed feature.<br/>
+In the code block below, we will need to implement the following:<br/>
+Assign <i>new_data</i> a copy of the data by removing a feature of our choice using the <i>DataFrame.drop</i> function.<br/>
+Use <i>sklearn.model_selection.train_test_split</i> to split the dataset into training and testing sets.<br/>
+&nbsp;&nbsp;Use the removed feature as our target label.<br/>
+&nbsp;&nbsp;Set the <i>test_size</i> of 0.25 and set the <i>random_state</i> parameter.<br/>
+      Import the <i>Decision Tree Regressor</i>, set the <i>random_state</i> parameter, and fit the learner to the training data.<br/>
+Report the prediction score of the testing set using the regressor's score function.<br/>
+    <h4>Experiment with <i>Delicatessen</i></h4>
+<div class='linked'><script type='text/x-sage'>
+new_data=data.drop('Delicatessen',axis=int(1))
+target=data['Delicatessen']
+new_data_target=pandas.concat([new_data,target],axis=int(1))
+print ('The correlation table for the choosen feature `Delicatessen`')
+pearson=new_data_target.corr(method='pearson')
+corr_with_delicatessen=pearson.iloc[int(-1)][:-int(1)]
+pandas.DataFrame(
+    corr_with_delicatessen[abs(corr_with_delicatessen)\
+    .argsort()[::-int(1)]]);
+</script></div><br/> 
+<div class='linked'script type='text/x-sage'>
+pylab.figure(figsize=(10,5))
+seaborn.distplot(target,color='#1b2c45',bins=200,
+                 hist_kws={'color':'SlateGrey'})
+pylab.xlabel('Delicatessen',fontsize=15)
+pylab.title('Customers` Annual Spending',fontsize=15,color='#5a8bbd')
+pylab.grid(); pylab.tight_layout(); pylab.show()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+def split_fit():
+    X_train,X_test,y_train,y_test=\
+    train_test_split(new_data,target,test_size=.25,random_state=1)
+    print ('Training and testing splitting was successful.')
+    regressor1=DecisionTreeRegressor(random_state=1)
+    regressor1.fit(X_train,y_train)
+    regressor2=RandomForestRegressor(random_state=1)
+    regressor2.fit(X_train,y_train)
+    score1=regressor1.score(X_test,y_test)
+    score2=regressor2.score(X_test,y_test)
+    st1='Decision Tree Regressor. '
+    st2='Random Forest Regressor. '
+    st3='The score of the prediction using the testing set is {}.'
+    print(st1+st3.format(score1)); print(st2+st3.format(score2))
+    return regressor1,regressor2
+def plot_feature_importance(f,regressor1,regressor2):
+    D1=dict(zip(new_data,regressor1.feature_importances_))
+    D2=dict(zip(new_data,regressor2.feature_importances_))
+    pylab.figure(figsize=(10,5)); 
+    pylab.subplot(121); pylab.grid()
+    pylab.bar(range(len(D1)),D1.values(),alpha=.5,
+              color='slategrey',align='center')
+    pylab.xticks(range(len(D1)),D1.keys(),fontsize=7)
+    st='Experiment with `%s`: Feature Importances, \n'
+    pylab.title(st%f+'Decision Tree Regressor',fontsize=12,color='#5a8bbd')
+    pylab.subplot(122); pylab.grid()
+    pylab.bar(range(len(D2)),D2.values(),alpha=.5,
+              color='slategrey',align='center')
+    pylab.xticks(range(len(D2)),D2.keys(),fontsize=7)
+    pylab.title(st%f+'Random Forest Regressor',fontsize=12,color='#5a8bbd')
+    pylab.tight_layout(); pylab.show()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+regressor1,regressor2=split_fit()
+plot_feature_importance('Delicatessen',regressor1,regressor2)
+</script></div><br/>
+    <h4>Experiment with <i>Grocery</i></h4>      
+<div class='linked'><script type='text/x-sage'>
+new_data=data.drop('Grocery',axis=int(1)); target=data['Grocery']
+new_data_target=pandas.concat([new_data,target],axis=int(1))
+print ('The correlation table for the choosen feature `Grocery`')
+pearson=new_data_target.corr(method='pearson')
+corr_with_grocery=pearson.iloc[int(-1)][:-int(1)]
+pandas.DataFrame(
+    corr_with_grocery[abs(corr_with_grocery)\
+    .argsort()[::-int(1)]]);
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+pylab.figure(figsize=(10,5))
+seaborn.distplot(target,color='#1b2c45',bins=200,
+                 hist_kws={'color':'SlateGrey'})
+pylab.xlabel('Grocery',fontsize=15)
+pylab.title('Customers` Annual Spending',fontsize=15,color='#5a8bbd')
+pylab.grid(); pylab.tight_layout(); pylab.show()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+regressor1,regressor2=split_fit()
+plot_feature_importance('Grocery',regressor1,regressor2)
+</script></div><br/>
+    <h3>Question 2</h3>
+<i>Which feature did you attempt to predict? What was the reported prediction score? Is this feature is necessary for identifying customers' spending habits?</i>
+    <h3>Answer 2</h3>
+I have chosen <i>Grocery</i>.<br/>
+In this case, the reported score for predictions is much higher, and the feature has a strong correlation with at least two others (<i>Detergents_Paper</i> and <i>Milk</i>).<br/>
+Therefore, it was easy to predict <i>Grocery</i> values by applying a simple regressor (<i>Decision Tree</i>).<br/> 
+An ensemble regressor (<i>Random Forest</i>) demonstrates better results and confirms the assumptions.<br/>
+It means also that this feature is not so important for identifying spending habits of customers, and these strong<br/> relationships between variables make possible to run the procedure of dimensionality reduction.<br/>
+The experiment with <i>Delicatessen</i> demonstrates the fact that it's hard to predict the values of this feature based on others, so <i>Delicatessen</i> is important for custom clustering.<br/>
+    <h3>Visualize Feature Distributions</h3>
+To get a better understanding of the dataset, we can construct a scatter matrix of each of the six product features present in the data.<br/> 
+If we found that the feature we attempted to predict above is relevant for identifying a specific customer,<br/>
+then the scatter matrix below may not show any correlation between that feature and the others.<br/> 
+Conversely, if we believe that feature is not relevant for identifying a specific customer,<br/>
+the scatter matrix might show a correlation between that feature and another feature in the data.
+<div class='linked'><script type='text/x-sage'>
+axes=pandas.plotting.scatter_matrix(
+    data,alpha=.3,figsize=(10,9),diagonal='hist',c='#1b2c45',
+    hist_kwds={'color':'SlateGrey','bins':100})
+corr=data.corr().values
+for i,j in zip(*numpy.triu_indices_from(axes,k=1)):
+    axes[i,j].annotate('%.3f'%corr[i,j],(.8,.8),fontsize=12,
+                       xycoords='axes fraction',ha='center',va='center')
+pylab.grid(); pylab.tight_layout(); pylab.show()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+print ('Pearson correlation coefficients')
+data.corr(method='pearson')
+</script></div><br/>
+    <h3>Question 3</h3>
+<i>Are there any pairs of features which exhibit some degree of correlation?<br/> 
+Does this confirm or deny your suspicions about the relevance of the feature you attempted to predict?<br/>
+How is the data for those features distributed?</i>
+    <h3>Answer 3</h3>
+The highest degree of correlation has the pair <i>Grocery-Detergents_Paper</i>. These scatter plots demonstrate it very clearly.<br/> 
+There are some pairs else with a well-detectable correlation: <i>Milk-Grocery</i> and <i>Milk-Detergents_Paper</i>.<br/>
+These facts confirm the thoughts about the relevance of the feature we attempted to predict.<br/>
+We should also note that the features is not normally distributed. But the log-normal distribution looks very similar with our features.<br/>
+I have created the random example of the log-normal distribution for visual comparing.      
+<div class='linked'><script type='text/x-sage'>
+pylab.figure(figsize=(10,5)); mu,sigma=3.,1.
+s=numpy.random.lognormal(mu,sigma,2000)
+count,bins,ignored=pylab.hist(
+    s,200,align='mid',alpha=.5,color='slategrey')
+x=numpy.linspace(min(bins),max(bins),2000)
+pdf=(2000*numpy.exp(-(numpy.log(x)-mu)**2/(2*sigma**2))\
+     /(x*sigma*numpy.sqrt(2*numpy.pi)))
+pylab.plot(x,pdf,linewidth=2,color='#1b2c45')
+pylab.title('Example of a Random Log-Normal Distribution',
+            fontsize=15,color='#5a8bbd')
+pylab.tight_layout(); pylab.grid(); pylab.show()
+</script></div><br/>
+    <h2>Data Preprocessing</h2>
+In this section, we will preprocessing the data to create a better representation of customers by performing a scaling on the data and detecting (and optionally removing) outliers.<br/>
+Preprocessing data is often times a critical step in assuring that results you obtain from your analysis are significant and meaningful.
+    <h3>Implementation: Feature Scaling</h3>
+If data is not normally distributed, especially if the mean and median vary significantly (indicating a large skew), 
+it is most often appropriate <br/>
+to apply a non-linear scaling — particularly for financial data.<br/>
+One way to achieve this scaling is by using a Box-Cox test, which calculates the best power transformation of the data that reduces skewness<br/> 
+A simpler approach which can work in most cases would be applying the natural logarithm.<br/>
+Now we will do the following steps:<br/>
+&nbsp;&nbsp;Assign a copy of the data to <i>log_data</i> after applying logarithmic scaling. Use the <i>numpy.log</i> function for this.<br/>
+&nbsp;&nbsp;Assign a copy of the sample data to <i>log_samples</i> after applying logarithmic scaling. Again, use <i>numpy.log</i>.
+<div class='linked'><script type='text/x-sage'>
+log_data=numpy.log(data); log_samples=numpy.log(samples)
+corr=data.corr().values
+axes=pandas.plotting.scatter_matrix(
+    log_data,alpha=.3,figsize=(10,9),diagonal='hist',c='#1b2c45',
+    hist_kwds={'color':'SlateGrey','bins':100})
+for i,j in zip(*numpy.triu_indices_from(axes,k=1)):
+    axes[i,j].annotate('%.3f'%corr[i,j],(.2,.2),fontsize=12,
+                       xycoords='axes fraction',ha='center',va='center')
+pylab.grid(); pylab.tight_layout(); pylab.show()
+</script></div><br/>
+    <h3>Observation</h3>
+After applying a natural logarithm scaling to the data, the distribution of each feature should appear much more normal.<br/> 
+For any pairs of features we may have identified earlier as being correlated, observe here whether that correlation is still present (and whether it is now stronger or weaker than before).
+<div class='linked'><script type='text/x-sage'>
+log_samples
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+print ('Pearson correlation coefficients')
+log_data.corr(method='pearson')
+</script></div><br/>
+    <h3>Implementation: Outlier Detection</h3>
+Detecting outliers in the data is extremely important in the data preprocessing step of any analysis.<br/> 
+The presence of outliers can often skew results which take into consideration these data points.<br/> 
+There are many "rules of thumb" for what constitutes an outlier in a dataset.<br/>
+Here, we will use the <a href='https://www.itl.nist.gov/div898/handbook/prc/section4/prc471.htm'>&#x1F578;Tukey's Method</a> for identfying outliers: an <b>outlier step</b> is calculated as 1.5 times the interquartile range (IQR).<br/>
+A data point with a feature that is beyond an outlier step outside of the IQR for that feature is considered abnormal.<br/>
+So the next steps are the following:<br/>
+Assign the value of the 25th percentile for the given feature to Q1. Use numpy.percentile for this.<br/>
+Assign the value of the 75th percentile for the given feature to Q3. Again, use numpy.percentile.<br/>
+Assign the calculation of an outlier step for the given feature to step.<br/>
+Optionally remove data points from the dataset by adding indices to the outliers list.
+<div class='linked'><script type='text/x-sage'>
+for feature in log_data.keys():
+    Q1,Q3=numpy.percentile(log_data[feature],25),\
+          numpy.percentile(log_data[feature],75)
+    step=(Q3-Q1)*1.5
+    st='Data points considered outliers for the feature `{}`:'
+    print(st.format(feature))
+    display(log_data[~((log_data[feature]>=Q1-step)&(log_data[feature]<=Q3+step))])
+outliers=[65,66,75,128,154]
+print('Data outliers: `{}`'.format(outliers))
+good_data=log_data.drop(log_data.index[outliers]).reset_index(drop=True)
+</script></div><br/>
+    <h3>Question 4</h3>
+<i>Are there any data points considered outliers for more than one feature based on the definition above? <br/>
+Should these data points be removed from the dataset?<br/>
+    If any data points were added to the outliers list to be removed, explain why.</i>
+    <h3>Answer 4</h3>
+Five data points [65, 66, 75, 128, 154] can be detected as outliers for more than one feature.<br/> 
+It's confirmed by another method with a heatmap in the original data. I think it needs to remove them from the data.<br/> 
+When we apply k-means the results can be distorted by outliers: clusters are constructed with calculations of cluster-centers<br/>as the averages of all data points from this cluster, so outliers can have a great influence.<br/> 
+If we do not remove outliers from the dataset, they can form additional artificial clusters for the outliers which can get some data points from the real clusters.
+<div class='linked'><script type='text/x-sage'>
+out_percentiles=data.rank(pct=True).iloc[outliers]
+pylab.figure(figsize=(10,5))
+pylab.xticks(fontsize=10); pylab.yticks(fontsize=10)
+seaborn.heatmap(out_percentiles,annot=True,cmap=cmap,
+                annot_kws={'color':'White','size':'20'})
+pylab.title('Multiple Outliers Heatmap',fontsize=15,color='#5a8bbd')
+pylab.tight_layout(); pylab.show()
+</script></div><br/>
+    <h2>Feature Transformation</h2>
+In this section we will use principal component analysis (PCA) to draw conclusions about the underlying structure of the wholesale customer data.<br/> 
+Since using PCA on a dataset calculates the dimensions which best maximize variance, we will find which compound combinations of features best describe customers.
+    <h3>Implementation: PCA</h3>
+Now that the data has been scaled to a more normal distribution and has had any necessary outliers removed,<br/>  
+we can now apply PCA to the good_data to discover which dimensions about the data best maximize the variance of features involved.<br/>  
+In addition to finding these dimensions, PCA will also report the explained variance ratio of each dimension — how much variance within the data is explained by that dimension alone.<br/>  
+Note that a component (dimension) from PCA can be considered a new "feature" of the space, however it is a composition of the original features present in the data.<br/> 
+The next steps are the following:<br/> 
+Import <i>sklearn.decomposition.PCA</i> and assign the results of fitting PCA in six dimensions with <i>good_data</i> to pca.<br/> 
+Apply a PCA transformation of <i>log_samples</i> using <i>pca.transform</i>, and assign the results to <i>pca_samples</i>.
+<div class='linked'><script type='text/x-sage'>
+pca=PCA(n_components=len(good_data.keys())).fit(good_data)
+pca_samples=pca.transform(log_samples) 
+pca_result=pca_results(good_data,pca); pca_result
+</script></div><br/>     
+<div class='linked'><script type='text/x-sage'>
+pylab.figure(figsize=(10,4))
+pylab.xlabel('Dimension',fontsize=10)
+pylab.plot(numpy.arange(1,7),
+           numpy.cumsum(pca.explained_variance_ratio_),'-o',c='#1b2c45')
+pylab.title('Explained Variance Ratio',fontsize=15,color='#5a8bbd')
+pylab.grid(); pylab.tight_layout(); pylab.show()
+</script></div><br/>
+    <h3>Question 5</h3>
+<i>How much variance in the data is explained in total by the first and second principal component? What about the first four principal components?<br/>
+Using the visualization provided above, discuss what the first four dimensions best represent in terms of customer spending.</i>
+    <h3>Answer 5</h3>
+<b>Dimension 1</b>: features <i>Milk, Grocery, Detergents_Paper</i> have the highest influence, so it seems like a regular household spending on retail goods in supermarkets.<br/>
+We noted in the previous section that these three features are highly correlated.<br/>
+<b>Dimension 2</b>: features <i>Fresh, Frozen, Delicatessen</i> are the most important, so it can be a spending for restaurants and cafes with a wide spectrum of the menu.<br/>
+<b>Dimension 3</b>: features <i>Fresh, Frozen, Delicatessen</i> are the most important also but they have different directions,<br/>so it can be a spending on retail goods in the nearest stores and markets.<br/>
+<b>Dimension 4</b>: features <i>Fresh, Frozen, Delicatessen</i> are the most important again but <i>Frozen</i> has the highest influence,<br/>
+so it can be a spending for restaurants and cafes with a special spectrum of the menu (fast food, for example).<br/>
+The first four dimensions represent enough well in terms of customer spending because they have explained the main part of the spending variance.
+<div class='linked'><script type='text/x-sage'>
+print ('The first and second principal components explained {}%'\
+.format(sum(pca_result['Explained Variance'][:int(2)])*100.))
+print ('The first four principal components explained {}%'\
+.format(sum(pca_result['Explained Variance'][:int(4)])*100.))
+</script></div><br/>
+    <h3>PCA Observation</h3>
+Let us have a look how the log-transformed sample data has changed after having a PCA transformation applied to it in six dimensions.<br/>
+Observe the numerical value for the first four dimensions of the sample points.<br/>
+Consider if this is consistent with our initial interpretation of the sample points.
+<div class='linked'><script type='text/x-sage'>
+pandas.DataFrame(
+    numpy.round(pca_samples,4),
+    columns=pca_result.index.values,
+    index=['C0','C1','C2','Mean'])
+</script></div><br/> 
+    <h3>Implementation: Dimensionality Reduction</h3>
+When using principal component analysis, one of the main goals is to reduce the dimensionality of the data — in effect, reducing the complexity of the problem.<br/> 
+Dimensionality reduction comes at a cost: Fewer dimensions used implies less of the total variance in the data is being explained.<br/>
+Because of this, the cumulative explained variance ratio is extremely important for knowing how many dimensions are necessary for the problem.<br/>
+Additionally, if a signifiant amount of variance is explained by only two or three dimensions, the reduced data can be visualized afterwards.<br/>
+The next steps are the following:<br/>
+Assign the results of fitting PCA in two dimensions with <i>good_data</i> to pca.<br/>
+Apply a PCA transformation of <i>good_data</i> using <i>pca.transform</i>, and assign the results to <i>reduced_data</i>.<br/>
+Apply a PCA transformation of <i>log_samples</i> using <i>pca.transform</i>, and assign the results to <i>pca_samples</i>.
+<div class='linked'><script type='text/x-sage'>
+pca=PCA(n_components=2).fit(good_data)
+pca_samples=pca.transform(log_samples)
+reduced_data=pandas.DataFrame(
+    pca.transform(good_data),
+    columns=['Dimension 1','Dimension 2'])
+</script></div><br/> 
+    <h3>Dimensionality Reduction Observation</h3>
+Let's see how the log-transformed sample data has changed after having a PCA transformation applied to it using only two dimensions.<br/>
+Observe how the values for the first two dimensions remains unchanged when compared to a PCA transformation in six dimensions. 
+<div class='linked'><script type='text/x-sage'>
+pandas.DataFrame(
+    numpy.round(pca_samples,4),
+    columns=['Dimension 1','Dimension 2'],
+    index=['C0','C1','C2','Mean'])
+</script></div><br/>
+    <h3>Visualizing a Biplot</h3>
+A biplot is a scatterplot where each data point is represented by its scores along the principal components.<br/>
+The axes are the principal components (in this case <i>Dimension 1</i> and  <i>Dimension 2</i>).<br/>
+In addition, the biplot shows the projection of the original features along the components.<br/>
+A biplot can help us interpret the reduced dimensions of the data, and discover relationships between the principal components and original features.
+<div class='linked'><script type='text/x-sage'>
+biplot(good_data,reduced_data,pca)
+</script></div><br/>
+    <h3>Biplot Observation</h3>
+Once we have the original feature projections (in red), it is easier to interpret the relative position of each data point in the scatterplot.<br/>
+For instance, a point the lower right corner of the figure will likely correspond to a customer that spends a lot on <i>Milk</i>, <i>Grocery</i> and <i>Detergents_Paper</i>,<br/>but not so much on the other product categories.<br/>
+<i>From the biplot, which of the original features are most strongly correlated with the first component?<br/>
+What about those that are associated with the second component?<br/>
+Do these observations agree with the pca_results plot we obtained earlier?</i><br/>
+The features <i>Milk, Grocery, Detergents_Paper</i> are most strongly correlated with the first component (their projections are very close to the horizontal line).<br/>
+The features <i>Fresh, Frozen, Delicatessen</i> are correlated with the second component but not so strongly (their projections are close to the vertical line).<br/>
+The <i>pca_results</i> plot displays exactly the same observations.
+      <h2>Clustering</h2>
+In this section, we will choose to use either a <b>K-Means</b> clustering algorithm or a <b>Gaussian Mixture Model</b> clustering algorithm<br/>to identify the various customer segments hidden in the data.<br/>
+We will then recover specific data points from the clusters to understand their significance by transforming them back into their original dimension and scale.<br/>
+      <h3>Question 6</h3>
+<i>What are the advantages to using a K-Means clustering algorithm?<br/>
+What are the advantages to using a Gaussian Mixture Model clustering algorithm?<br/>
+Given your observations about the wholesale customer data so far, which of the two algorithms will you use and why?</i>
+      <h3>Answer 6</h3>
+The advantages of the K-Means clustering in comparing with the Gaussian Mixture Model clustering are speed and simplicity.<br/> 
+K-means only maintains cluster centers (linearly correlated with the feature numbers) and it will be much faster in model training.<br/>
+The advantages of the Gaussian Mixture Model are a "soft" classification (indicated how likely the concrete data point belongs to the certain cluster) and<br/>
+a good performance with different data distributions.<br/>
+Theoretically, the Gaussian Mixture Model can do the job better thanks to its soft classification,<br/> 
+but the K-Means also can predict correctly without additional complexity of the model.<br/> 
+This project is not so large so we can try to apply both just to compare algorithms in action.
+      <h3>Implementation: Creating Clusters</h3>
+Depending on the problem, the number of clusters that we expect to be in the data may already be known.<br/> 
+When the number of clusters is not known a priori, there is no guarantee that a given number of clusters best segments the data,<br/>
+since it is unclear what structure exists in the data — if any.<br/> 
+However, we can quantify the "goodness" of a clustering by calculating each data point's silhouette coefficient.<br/>
+The silhouette coefficient for a data point measures how similar it is to its assigned cluster from -1 (dissimilar) to 1 (similar).<br/>
+Calculating the <b>mean silhouette coefficient</b> provides for a simple scoring method of a given clustering.<br/>
+Now we need to implement the following:<br/>
+Fit a clustering algorithm to the <i>reduced_data</i> and assign it to clusterer.<br/>
+Predict the cluster for each data point in <i>reduced_data</i> using <i>clusterer.predict</i> and assign them to <i>preds</i>.<br/>
+Find the cluster centers using the algorithm's respective attribute and assign them to <i>centers</i>.<br/>
+Predict the cluster for each sample data point in <i>pca_samples</i> and assign them <i>sample_preds</i>.<br/>
+Import <i>sklearn.metrics.silhouette_score</i> and calculate the <i>silhouette score</i> of <i>reduced_data</i> against <i>preds</i>.<br/>
+&nbsp;&nbsp;Assign the <i>silhouette score</i> to <i>score</i> and print the result.
+      <h3>Question 7</h3>
+<i>Report the silhouette score for several cluster numbers you tried. Of these, which number of clusters has the best silhouette score?</i>
+      <h3>Answer 7</h3>
+I have printed scores for the K-Means clustering and the Gaussian Mixture Model.<br/>
+We can see the highest scores in case of 2 clusters for both algorithms. So it should be our choice.
+<div class='linked'><script type='text/x-sage'>
+for n in list(range(2,12)):
+    clusterer=KMeans(n_clusters=n).fit(reduced_data)
+    preds=clusterer.predict(reduced_data)
+    centers=clusterer.cluster_centers_
+    sample_preds=clusterer.predict(pca_samples)
+    score=silhouette_score(reduced_data,preds)
+    st='For number of clusters = {}, the silhouette_score is : {}'
+    print(st.format(n,score))
+</script></div><br/> 
+<div class='linked'><script type='text/x-sage'>
+for n in list(range(2,12)):
+    clusterer2=GaussianMixture(n_components=n,
+                               covariance_type='full').fit(reduced_data)
+    preds2=clusterer2.predict(reduced_data); centers2=clusterer2.means_
+    sample_preds2=clusterer2.predict(pca_samples)
+    score2=silhouette_score(reduced_data,preds2,metric='mahalanobis')
+    print('For number of clusters = {}, the silhouette_score is : {}'\
+          .format(n,score2))
+</script></div><br/>
+We also can run the speed comparison for the K-Means clustering and the Gaussian Mixture Model.
+<div class='linked'><script type='text/x-sage'>
+n,k=100,6; kmeans_train_times=[]; gmm_train_times=[]
+for k in range(2,k+1):
+    cum_time=0.
+    for i in range(n):
+        start=time.time()
+        KMeans(n_clusters=k).fit(reduced_data)
+        cum_time+=(time.time()-start)
+    kmeans_train_times.append([k,cum_time/n])
+km_df=pandas.DataFrame(
+    kmeans_train_times,columns=['KM_Clusters','KM_Time'])
+for k in range(2,k+1):
+    cum_time=0.
+    for i in range(n):
+        start=time.time()
+        GaussianMixture(n_components=k).fit(reduced_data)
+        cum_time+=(time.time()-start)
+    gmm_train_times.append([k,cum_time/n])
+gmm_df=pandas.DataFrame(
+    gmm_train_times,columns=['GMM_Components','GMM_Time'])
+times_df=km_df.join(gmm_df)
+pylab.figure(figsize=(10,4))
+pylab.plot(times_df.GMM_Components,times_df.GMM_Time*1000.,
+           '-o',c='#5a8bbd',label='GMM Train Time')
+pylab.plot(times_df.GMM_Components,times_df.KM_Time*1000.,
+           '-o',c='#008b8b',label='Kmeans Train Time')
+pylab.ylabel('Train time (in millisec.)',fontsize=10)
+pylab.xlabel('Cluster/Components Used in Training',fontsize=10)
+st='Training Time for Different Cluster/Component Sizes\n'+\
+   'Averaged Over {} Runs Per Size'
+pylab.title(st.format(n),fontsize=15,color='#5a8bbd')
+pylab.legend(loc='best'); pylab.grid()
+pylab.tight_layout(); pylab.show()
+</script></div><br/> 
+    <h3>Cluster Visualization</h3>
+Once we've chosen the optimal number of clusters for the clustering algorithm using the scoring metric above, we can now visualize the results.<br/>
+Note that, for experimentation purposes, it's useful to adjust the number of clusters for the clustering algorithm to see various visualizations.<br/> 
+The final visualization provided should, however, correspond with the optimal number of clusters.
+<div class='linked'><script type='text/x-sage'>
+clusterer=KMeans(n_clusters=2).fit(reduced_data)
+sample_preds=clusterer.predict(pca_samples)
+preds=clusterer.predict(reduced_data)
+centers=clusterer.cluster_centers_
+score=silhouette_score(reduced_data,preds)
+cluster_results(reduced_data,preds,centers,pca_samples,'K-Means')
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+clusterer2=GaussianMixture(
+    n_components=2,covariance_type='full').fit(reduced_data)
+sample_preds2=clusterer2.predict(pca_samples)
+preds2=clusterer2.predict(reduced_data)
+centers2=clusterer2.means_; score2=silhouette_score(reduced_data,preds2)
+cluster_results(reduced_data,preds2,centers2,
+                pca_samples,'Gaussian Mixture Model')
+</script></div><br/>
+    <h3>Implementation: Data Recovery</h3>
+Each cluster present in the visualization above has a central point.<br/> 
+These centers (or means) are not specifically data points from the data, but rather the averages of all the data points predicted in the respective clusters.<br/> 
+For the problem of creating customer segments, a cluster's center point corresponds to the average customer of that segment.<br/>
+Since the data is currently reduced in dimension and scaled by a logarithm,<br/>
+we can recover the representative customer spending from these data points by applying the inverse transformations.<br/>
+It's time for the next steps:<br/>
+Apply the inverse transform to <i>centers</i> using <i>pca.inverse_transform</i> and assign the new centers to <i>log_centers</i>.<br/>
+Apply the inverse function of <i>numpy.log</i> to <i>log_centers</i> using <i>numpy.exp</i> 
+and assign the true centers to <i>true_centers</i>.
+<div class='linked'><script type='text/x-sage'>
+print ('Data Means')
+pandas.DataFrame(numpy.mean(data)).T
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+log_centers=pca.inverse_transform(centers)
+true_centers=numpy.exp(log_centers)
+segments=['Segment {}'.format(i) for i in range(0,len(centers))]
+true_centers=pandas.DataFrame(
+    numpy.round(true_centers),columns=data.keys(),index=segments)
+print ('K-Means True Centers'); true_centers
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+true_centers=true_centers.append(data.describe().loc['mean'])
+true_centers.plot(kind='bar',figsize=(10,4))
+pylab.title('Comparing K-Means Centers with Data Means',
+            fontsize=15,color='#5a8bbd')
+pylab.xticks(rotation=0,fontsize=10); pylab.grid() 
+pylab.tight_layout(); pylab.show()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+log_centers2=pca.inverse_transform(centers2)
+true_centers2=numpy.exp(log_centers2)
+segments2=['Segment {}'.format(i) for i in range(0,len(centers2))]
+true_centers2=pandas.DataFrame(
+    numpy.round(true_centers2),columns=data.keys(),index=segments2)
+print ('Gaussian Mixture Model True Centers'); true_centers2
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+true_centers2=true_centers2.append(data.describe().loc['mean'])
+true_centers2.plot(kind='bar',figsize=(10,4))
+st='Comparing Gaussian Mixture Model Centers with Data Means'
+pylab.title(st,fontsize=15,color='#5a8bbd')
+pylab.xticks(rotation=0,fontsize=10); pylab.grid()
+pylab.tight_layout(); pylab.show()
+</script></div><br/>
+    <h3>Question 8</h3>
+<i>Consider the total purchase cost of each product category for the representative data points above,<br/>
+and reference the statistical description of the dataset at the beginning of this project.<br/>
+What set of establishments could each of the customer segments represent?</i>
+    <h3>Answer 8</h3>
+The values in categories are perfect indicators:<br/>
+<i>Detergents_Paper, Grocery, Milk, Delicatessen</i> are higher than the mean for <b>Retail</b> and less than the mean for <b>HoReCa</b> (Hotel/Restaurant/Cafe).<br/>
+<i>Fresh</i> has the highest level among others for <b>HoReCa</b> than for <b>Retail</b>.<br/>
+<i>Detergents_Paper</i> has an extremely small level for <b>HoReCa</b>.
+<div class='linked'><script type='text/x-sage'>
+clusters=pandas.DataFrame(
+    2*[['','']],columns=['K-Means','Gaussian Mixture'],
+    index=['Segment 0','Segment 1'])
+if true_centers['Fresh']['Segment 0']>true_centers['Fresh']['Segment 1']:
+    clusters['K-Means']['Segment 0']='HoReCa'
+    clusters['K-Means']['Segment 1']='Retail'
+else: 
+    clusters['K-Means']['Segment 0']='Retail'
+    clusters['K-Means']['Segment 1']='HoReCa'
+if true_centers2['Fresh']['Segment 0']>true_centers2['Fresh']['Segment 1']:
+    clusters['Gaussian Mixture']['Segment 0']='HoReCa'
+    clusters['Gaussian Mixture']['Segment 1']='Retail'
+else: 
+    clusters['Gaussian Mixture']['Segment 0']='Retail'
+    clusters['Gaussian Mixture']['Segment 1']='HoReCa'
+clusters
+</script></div><br/>
+    <h3>Question 9</h3>
+<i>For each sample point, which customer segment from Question 8 best represents it?<br/> 
+Are the predictions for each sample point consistent with this?</i>
+    <h3>Answer 9</h3>
+<div class='linked'><script type='text/x-sage'>
+clusters2=pandas.DataFrame(
+    3*[['','']],columns=['K-Means','Gaussian Mixture'],
+    index=['C0','C1','C2'])
+clusters2['Cluster']=['Retail','Retail','HoReCa']
+for el in ['K-Means','Gaussian Mixture']:
+    if clusters[el].values[0]=='Retail': 
+        clusters2[el]=['Segment 0','Segment 0','Segment 1']
+    else: 
+        clusters2[el]=['Segment 1','Segment 1','Segment 0']
+clusters2
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+st1='Sample point {} predicted to be in Cluster {}'
+st2='The distance between sample point {} and center of Cluster {}:'
+print ('K-Means')
+for i,pred in enumerate(sample_preds):
+    print (st1.format(i,pred))
+    print (st2.format(i,pred))
+    print (samples.iloc[i]-true_centers.iloc[pred])
+print ('\n\nGaussian Mixture Model')
+for i,pred in enumerate(sample_preds2):
+    print (st1.format(i,pred))
+    print (st2.format(i,pred))
+    print (samples.iloc[i]-true_centers2.iloc[pred])
+</script></div><br/>
+    <h2>Conclusion</h2>
+In this final section, we will investigate ways that we can make use of the clustered data.<br/> 
+First, we will consider how the different groups of customers, the customer segments, may be affected differently by a specific delivery scheme.<br/>
+Next, we will consider how giving a label to each customer (which segment that customer belongs to) can provide for additional features about the customer data.<br/>
+Finally, we will compare the customer segments to a hidden variable present in the data, to see whether the clustering identified certain relationships.
+    <h3>Question 10</h3>
+<i>Companies will often run A/B tests when making small changes to their products or services to determine whether making that change will affect its customers positively or negatively.<br/>
+The wholesale distributor is considering changing its delivery service from currently 5 days a week to 3 days a week.<br/> 
+However, the distributor will only make this change in delivery service for customers that react positively.<br/>
+How can the wholesale distributor use the customer segments to determine which customers, if any, would react positively to the change in delivery service?</i>
+    <h3>Answer 10</h3>
+If we reduce the delivery frequency for Retail it's possible to have a positive reaction:<br/> 
+they do not order a lot of fresh food, it can reduce the transport cost, and their spending values are more predictable and regular.<br/> 
+But some reactions could be negative: many supermarkets try to minimize inventory to save cost.<br/>
+The customers in HoReCa (Hotel/Restaurant/Cafe) can react positively if they have enough places for saving food.<br/> 
+But a negative reaction also can be: some of them do not have enough space for saving, but they need fresh food for their business.<br/>
+For both segments, a negative effect is possible.<br/>
+Only an A/B test can detect if actually true.<br/>
+We can run the A/B test with randomly selected samples for each cluster.<br/> 
+It is possible to have absolutely different tendencies in the test results.<br/>
+One segment could have the significant effect, another segment could not demonstrate it.<br/> 
+Their spending habits are not similar. If we mixed them we could lose information about the real effect.
+    <h3>Question 11</h3>
+<i>Additional structure is derived from originally unlabeled data when using clustering techniques.<br/>
+Since each customer has a customer segment it best identifies with (depending on the clustering algorithm applied),<br/> 
+we can consider 'customer segment' as an engineered feature for the data.<br/> 
+Assume the wholesale distributor recently acquired ten new customers and each provided estimates for anticipated annual spending of each product category.<br/> 
+Knowing these estimates, the wholesale distributor wants to classify each new customer to a customer segment to determine the most appropriate delivery service.<br/>
+How can the wholesale distributor label the new customers using only their estimated product spending and the customer segment data?</i>
+    <h3>Answer 11</h3>
+There are several ways for using and improving analytic predictions for labels:<br/>
+- the clustering algorithms K-Means and GMMs updated for the new data points to include them into the certain clusters;<br/>
+- supervised learning algorithms to detect differences between clusters, cluster labels can be just a target in the model predictions for new data points.<br/>
+    <h3>Visualizing Underlying Distributions</h3>
+At the beginning of this project, it was discussed that the <i>Channel</i> and 'Region' features would be excluded from the dataset<br/>so that the customer product categories were emphasized in the analysis.<br/> 
+By reintroducing the <i>Channel</i> feature to the dataset, an interesting structure emerges when considering<br/>the same PCA dimensionality reduction applied earlier to the original dataset.<br/>
+Let's see how each data point is labeled either <i>HoReCa</i> (Hotel/Restaurant/Cafe) or <i>Retail</i> the reduced space.<br/>
+In addition, we will find the sample points are circled in the plot, which will identify their labeling.
+<div class='linked'><script type='text/x-sage'>
+channel_results(reduced_data,outliers,pca_samples[:3])
+</script></div><br/>
+    <h3>Question 12</h3>
+<i>How well does the clustering algorithm and number of clusters you've chosen compare to this underlying distribution of Hotel/Restaurant/Cafe customers to Retailer customers?<br/> 
+Are there customer segments that would be classified as purely <i>Retailers</i> or <i>Hotels/Restaurants/Cafes</i> by this distribution?<br/> 
+Would you consider these classifications as consistent with your previous definition of the customer segments?</i>
+    <h3>Answer 12</h3>
+The number of clusters is consistent with the underlying distribution so both clustering algorithms work enough well.<br/> 
+As we can see the K-Means simplicity does not affect the efficiency in this case.<br/>
+The customer segments classified as purely <i>Retailers</i> or <i>Hotels/Restaurants/Cafes</i> on the left side and on the right side accordingly.<br/>
+The algorithmic classification in the majority of cases is in line with the real results.<br/>
+We should note that for both algorithms borders of clusters are more clearly detectable.<br/>
+Differences between actual and algorithmic classification may indicate a lack of the number of clusters for this market.<br/> Perhaps it needs a greater number to detect spending habits.
+<div class='linked'><script type='text/x-sage'>
+channel_data=pandas.read_csv(path+'customers.csv')
+channel_data=channel_data.drop(
+    channel_data.index[outliers]).reset_index(drop=True)
+if clusters2['K-Means'].values[0]=='Segment 0': v11,v12=0,1
+else: v11,v12=1,0
+if clusters2['Gaussian Mixture'].values[0]=='Segment 0': v21,v22=0,1
+else: v21,v22=1,0
+df=numpy.where(channel_data['Channel']==2,v11,v12)
+percentage_kmeans=sum(df==preds)/float(len(preds))
+df2=numpy.where(channel_data['Channel']==2,v21,v22)
+percentage_gaussian_mixture=sum(df2==preds2)/float(len(preds2))
+print ('K-Means')
+print ('Percentage of correctly classified customers: {:.2%}'\
+.format(percentage_kmeans))
+print ('\nGaussian Mixture Model')
+print ('Percentage of correctly classified customers: {:.2%}'\
+.format(percentage_gaussian_mixture))
+</script></div><br/>
+    <h3>Reflections</h3>
+It would be interesting to repeat the steps of this project in R and compare the results.<br/>
+Or try animation for clustering algorithms to compare the borders of clusters with real data labels during the learning process.
+    <h3>Additional Code Cell</h3>
+<div class='linked'><script type='text/x-sage'>
+
+</script></div><br/>
+  </body>
+</html>

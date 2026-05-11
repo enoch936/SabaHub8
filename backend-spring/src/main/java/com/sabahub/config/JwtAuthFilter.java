@@ -1,14 +1,14 @@
 package com.sabahub.config;
 
 import com.sabahub.service.AppUserDetailsService;
+import com.sabahub.service.SessionTrackingService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -22,16 +22,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final AppUserDetailsService userDetailsService;
-    private final StringRedisTemplate redis;
+    private final SessionTrackingService sessionTrackingService;
 
-    public JwtAuthFilter(JwtService jwtService, AppUserDetailsService userDetailsService, ObjectProvider<StringRedisTemplate> redisProvider) {
+    public JwtAuthFilter(JwtService jwtService,
+                         AppUserDetailsService userDetailsService,
+                         SessionTrackingService sessionTrackingService) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
-        this.redis = redisProvider.getIfAvailable();
+        this.sessionTrackingService = sessionTrackingService;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         String path = request.getRequestURI();
         String method = request.getMethod();
@@ -80,19 +82,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             System.out.println("Failed to extract JTI: " + e.getMessage());
         }
         
-        // Check blacklist only if Redis is available
-        if (jti != null && redis != null) {
+        if (jti != null) {
             try {
-                String bl = redis.opsForValue().get("bl:" + jti);
-                if (bl != null) {
-                    // Token is blacklisted
+                if (sessionTrackingService.isTokenBlacklisted(jti)) {
                     filterChain.doFilter(request, response);
                     return;
                 }
             } catch (Exception e) {
-                // Redis connection failed - log but don't block request
-                // In production, you may want to reject requests or use a fallback cache
-                System.err.println("Redis connection failed: " + e.getMessage());
+                System.err.println("Session blacklist lookup failed: " + e.getMessage());
             }
         }
 
@@ -116,6 +113,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             userDetails, null, userDetails.getAuthorities());
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    sessionTrackingService.trackSession(token, email, request);
                     System.out.println("Authentication set successfully");
                 } else {
                     System.out.println("Token INVALID for user: " + email);

@@ -1,0 +1,309 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <title>MLE_ND_P0_SMC</title>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function () {
+      sagecell.makeSagecell({inputLocation:'div.linked',linked:true,evalButtonText:'Run Linked Cells'});  
+      sagecell.makeSagecell({inputLocation:'div.sage',evalButtonText:'Run'}); });
+    </script>
+  </head>
+  <style>
+    @import 'https://fonts.googleapis.com/css?family=Orbitron|Roboto';
+    body {margin:5px 5px 5px 15px; background-color:oldlace;}; 
+    a {color:darksalmon; font-family:Roboto;} 
+    h1 {color:#ff603b; font-family:Orbitron; text-shadow:4px 4px 4px #ccc;} 
+    h2,h3 {color:slategray; font-family:Orbitron; text-shadow:4px 4px 4px #ccc;}
+    h4 {color:#ff603b; font-family:Roboto;}
+    .sagecell .CodeMirror-scroll {min-height:3em; max-height:70em;}
+  </style>  
+  <body>
+    <h1>🏙 Machine Learning Engineer Nanodegree &nbsp;
+      <a href='https://olgabelitskaya.github.io/README.html'>&#x1F300; &nbsp; Home Page &nbsp; &nbsp; &nbsp;</a></h1>
+    <h2>Introduction and Foundations</h2>
+    <h1>&#x1F4D1; &nbsp;P0: Titanic Survival Exploration</h1>
+In 1912, the ship RMS Titanic struck an iceberg on its maiden voyage and sank, resulting in the deaths of most of its passengers and crew.<br/>
+In this introductory project, we will explore a subset of the RMS Titanic passenger manifest to determine which features best predict whether someone survived or did not survive.
+    <h2>Getting Started</h2>
+    <h3>Resources</h3>
+<a href='https://www.udacity.com/course/intro-to-data-science--ud359'>&#x1F578; Intro to Data Science. Udacity &nbsp;</a>
+<a href='http://scipy-lectures.org/packages/statistics/index.html'>&#x1F578; Statistics in Python. Scipy Lecture Notes &nbsp;</a>
+<a href='http://www.r2d3.us/visual-intro-to-machine-learning-part-1/'>&#x1F578; A Visual Introduction to Machine Learning. Part 1 &nbsp;</a>
+<a href='https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics'>&#x1F578; The scikit-learn metrics</a>
+    <h3>Code Tools</h3>
+<div class='linked'><script type='text/x-sage'>
+import numpy,pandas,pylab; pylab.style.use('ggplot')
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+# https://github.com/udacity/machine-learning/blob/master/projects/titanic_survival_exploration/visuals.py
+def filter_data(data,condition):
+    field,sign,value=condition.split(' ')
+    try: value=float(value)
+    except: value=value.strip('\'\"')
+    if sign=='>': exp=data[field]>value
+    elif sign=='<': exp=data[field]<value
+    elif sign=='>=': exp=data[field]>=value
+    elif sign=='<=': exp=data[field]<=value
+    elif sign=='==': exp=data[field]==value
+    elif sign=='!=': exp=data[field]!=value
+    else:
+        st='Invalid comparison operator. Only >, <, >=, <=, ==, != allowed.'
+        raise Exception(st)
+    return data[exp].reset_index(drop=True)    
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+def survival_stats(data,outcomes,key,filters=[]):
+    if (key not in data.columns.values):
+        st11='`{}` is not a feature of the Titanic data. '
+        st12='Did you spell something wrong?'
+        print(st11.format(key)+st12); return False
+    if (key=='Cabin' or key=='PassengerId' or key=='Ticket'):
+        st21='`{}` has too many unique categories to display! '
+        st22='Try a different feature.'
+        print(st21.format(key)+st22); return False
+    all_data=data.T.append(outcomes).T
+    for condition in filters: all_data=filter_data(all_data,condition)
+    all_data=all_data[[key,'Survived']]
+    pylab.figure(figsize=(10,5))
+    if (key=='Age' or key=='Fare'):
+        all_data=all_data[~pandas.isnull(all_data[key])]
+        min_value=all_data[key].min(); max_value=all_data[key].max()
+        value_range=max_value-min_value
+        if(key=='Fare'): 
+            bins=numpy.arange(0,all_data['Fare'].max()+20,20)
+        if(key=='Age'): 
+            bins=numpy.arange(0,all_data['Age'].max()+10,10)
+        nonsurv_vals=all_data[all_data['Survived']==0][key]\
+        .reset_index(drop=True).astype('float')
+        surv_vals=all_data[all_data['Survived']==1][key]\
+        .reset_index(drop=True).astype('float')
+        pylab.hist(nonsurv_vals,bins=bins,alpha=.8,
+                   color='#FF7F50',label='Did not survive')
+        pylab.hist(surv_vals,bins=bins,alpha=.8,
+                   color='#338DD4',label='Survived')
+        pylab.xlim(0,bins.max()); pylab.legend(framealpha=.8)
+    else:
+        if (key=='Pclass'): values=numpy.arange(1,4)
+        if (key=='Parch' or key=='SibSp'): 
+            values=numpy.arange(0,numpy.max(data[key])+1)
+        if (key=='Embarked'): values=['C','Q','S']
+        if (key=='Sex'): values=['male','female']
+        frame=pandas.DataFrame(index=numpy.arange(len(values)),
+                               columns=(key,'Survived','NSurvived'))
+        for i,value in enumerate(values):
+            frame.loc[i]=[value,
+                          len(all_data[(all_data['Survived']==1)&(all_data[key]==value)]),
+                          len(all_data[(all_data['Survived']==0)&(all_data[key]==value)])]
+        bar_width=.4
+        for i in numpy.arange(len(frame)):
+            nonsurv_bar=pylab.bar(i-bar_width,frame.loc[i]['NSurvived'],
+                                  width=bar_width,color='#FF7F50')
+            surv_bar=pylab.bar(i,frame.loc[i]['Survived'],
+                               width=bar_width,color='#338DD4')
+            pylab.xticks(numpy.arange(len(frame)),values)
+            pylab.legend((nonsurv_bar[0],surv_bar[0]),
+                         ('Did not survive','Survived'),framealpha=.8)
+    pylab.xlabel(key); pylab.ylabel('Number of Passengers')
+    ti='Passenger Survival Statistics With the `%s` Feature'
+    pylab.title(ti%(key)); pylab.tight_layout(); pylab.show()
+    if sum(pandas.isnull(all_data[key])):
+        nan_outcomes=all_data[pandas.isnull(all_data[key])]['Survived']
+        ms='Passengers with missing `{}` values: {} ({} survived, {} did not survive)'
+        print (ms.format(key,len(nan_outcomes),
+                         sum(nan_outcomes==1),sum(nan_outcomes==0)))
+</script></div><br/>
+To begin working with the RMS Titanic passenger data, we'll first need to import 
+the functionality we need, and load our data into a pandas DataFrame.<br/>
+Run the code cell below to load our data and display the first few entries (passengers) for examination using the .head() function.
+<div class='linked'><script type='text/x-sage'>
+path='https://raw.githubusercontent.com/OlgaBelitskaya/'+\
+     'machine_learning_engineer_nd009/master/Machine_Learning_Engineer_ND_P0/'
+full_data=pandas.read_csv(path+'titanic_data.csv'); full_data.head()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+full_data.info();
+</script></div><br/>
+From a sample of the RMS Titanic data, we can see the various features present for each passenger on the ship:<br/>
+<b>Survived:</b> Outcome of survival (0 = No; 1 = Yes)<br/>
+<b>Pclass:</b> Socio-economic class (1 = Upper class; 2 = Middle class; 3 = Lower class)<br/>
+<b>Name:</b> Name of passenger<br/>
+<b>Sex:</b> Sex of the passenger<br/>
+<b>Age:</b> Age of the passenger (Some entries contain NaN)<br/>
+<b>SibSp:</b> Number of siblings and spouses of the passenger aboard<br/>
+<b>Parch:</b> Number of parents and children of the passenger aboard<br/>
+<b>Ticket:</b> Ticket number of the passenger<br/>
+<b>Fare:</b> Fare paid by the passenger<br/>
+<b>Cabin:</b> Cabin number of the passenger (Some entries contain NaN)<br/>
+<b>Embarked:</b> Port of embarkation of the passenger (C = Cherbourg; Q = Queenstown; S = Southampton)<br/>
+Since we're interested in the outcome of survival for each passenger or crew member,<br/>
+we can remove the <b>Survived</b> feature from this dataset and store it as its own separate variable outcomes.<br/> 
+We will use these outcomes as our prediction targets.      
+<div class='linked'><script type='text/x-sage'>
+outcomes=full_data['Survived']
+data=full_data.drop('Survived',axis=1); data.head()
+</script></div><br/>
+The very same sample of the RMS Titanic data now shows the <b>Survived</b> feature removed from the DataFrame.<br/>
+Note that the passenger data and the outcomes of survival are now paired. That means for any passenger <i>data.loc[i]</i>, 
+they have the survival <i>outcomes[i]</i>.<br/>
+To measure the performance of our predictions, we need a metric to score our predictions against the true outcomes of survival - the function <i>accuracy_score()</i>.<br/>
+Since we are interested in how accurate our predictions are, we will calculate the proportion of passengers 
+where our prediction of their survival is correct.<br/>
+<b>Think:</b> Out of the first five passengers, if we predict that all of them survived, 
+what would you expect the accuracy of our predictions to be?      
+<div class='linked'><script type='text/x-sage'>
+def accuracy_score(truth, pred):
+    if len(truth)==len(pred): 
+        return 'Predictions have an accuracy of {:.2f}%.'\
+        .format((truth==pred).mean()*100)    
+    else:
+        return 'Number of predictions does not match number of outcomes!'
+predictions=pandas.Series(numpy.ones(5,dtype=int)).astype('int')
+accuracy_score(outcomes[:int(5),],predictions)
+</script></div><br/>
+      <h2>Making Predictions</h2>
+If we were asked to make a prediction about any passenger aboard the RMS Titanic whom we knew nothing about,<br/> 
+then the best prediction we could make would be that they did not survive.<br/>
+This is because we can assume that a majority of the passengers (more than 50%) did not survive the ship sinking.<br/>
+The <i>predictions_0()</i> function below will always predict that a passenger did not survive.
+<div class='linked'><script type='text/x-sage'>
+def predictions_0(data):
+    predictions=[]
+    for _,passenger in data.iterrows(): predictions.append(0)
+    return pandas.Series(predictions).astype('int')
+predictions=predictions_0(data)
+</script></div><br/>
+      <h3>Question 1</h3>
+Using the RMS Titanic data, how accurate would a prediction be that none of the passengers survived?
+      <h3>Answer 1</h3>     
+<div class='linked'><script type='text/x-sage'>
+accuracy_score(outcomes,predictions)
+</script></div><br/>
+Let's take a look at whether the feature <b>Sex</b> has any indication of survival rates among passengers using the <i>survival_stats()</i> function.<br/>
+This function is defined in the <i>visualizations.py</i>. Python script included with this project.<br/> 
+The first two parameters passed to the function are the RMS Titanic data and passenger survival outcomes, respectively.<br/> 
+The third parameter indicates which feature we want to plot survival statistics across.  
+<div class='linked'><script type='text/x-sage'>
+survival_stats(data,outcomes,'Sex')
+</script></div><br/>
+Examining the survival statistics, a large majority of males did not survive the ship sinking.<br/>
+However, a majority of females did survive the ship sinking.<br/> 
+Let's build on our previous prediction: if a passenger was female, then we will predict that they survived.<br/>
+Otherwise, we will predict the passenger did not survive.
+<div class='linked'><script type='text/x-sage'>
+def predictions_1(data):
+    predictions=[]
+    for _,passenger in data.iterrows():
+        if passenger['Sex']=='female': predictions.append(1)
+        else: predictions.append(0)
+    return pandas.Series(predictions).astype('int')
+predictions=predictions_1(data)
+</script></div><br/>
+    <h3>Question 2</h3>
+How accurate would a prediction be that all female passengers survived and the remaining passengers did not survive (<i>prediction_1()</i>)?
+    <h3>Answer 2</h3>     
+<div class='linked'><script type='text/x-sage'>
+accuracy_score(outcomes,predictions)
+</script></div><br/>
+Using just the <b>Sex</b> feature for each passenger, we are able to increase the accuracy of our predictions by a significant margin.<br/>
+Now, let's consider using an additional feature to see if we can further improve our predictions.<br/>
+For example, consider all of the male passengers aboard the RMS Titanic: can we find a subset of those passengers that had a higher rate of survival?<br/>
+Let's start by looking at the <b>Age</b> of each male, by again using the <i>survival_stats()</i> function.<br/> 
+This time, we'll use the fourth parameter to filter out the data so that only passengers with the <b>Sex</b> 'male' will be included.     
+<div class='linked'><script type='text/x-sage'>
+survival_stats(data,outcomes,'Age',['Sex == "male"'])
+</script></div><br/>
+Examining the survival statistics, the majority of males younger than 10 survived the ship sinking, whereas most males age 10 or older did not survive the ship sinking.<br/>
+Let's continue to build on our previous prediction: if a passenger was female, then we will predict they survive.<br/> 
+If a passenger was male and younger than 10, then we will also predict they survive. Otherwise, we will predict they do not survive.      
+<div class='linked'><script type='text/x-sage'>
+def predictions_2(data):
+    predictions=[]
+    for _,passenger in data.iterrows():
+        if passenger['Sex']=='female': 
+            predictions.append(1)
+        elif passenger['Sex']=='male' and passenger['Age']<10: 
+            predictions.append(1)
+        else: 
+            predictions.append(0)
+    return pandas.Series(predictions).astype('int')
+predictions=predictions_2(data)
+</script></div><br/>
+    <h3>Question 3</h3>
+How accurate would a prediction be that all female passengers and all male passengers younger than 10 survived (<i>prediction_2()</i>)?
+    <h3>Answer 3</h3>     
+<div class='linked'><script type='text/x-sage'>
+accuracy_score(outcomes,predictions)
+</script></div><br/>
+Adding the feature <b>Age</b> as a condition in conjunction with <b>Sex</b> improves the accuracy by a small margin more than with simply using the feature <b>Sex</b> alone.<br/>
+Now we can try to find a series of features and conditions to split the data on to obtain an outcome prediction accuracy of at least 80%.<br/>
+This may require multiple features and multiple levels of conditional statements to succeed.<br/>
+We can use the same feature multiple times with different conditions.<br/>
+There are some experiments and the function <i>prediction_final()</i> as a result:
+<div class='linked'><script type='text/x-sage'>
+survival_stats(data,outcomes,'SibSp',['Sex == "male"','Age < 15'])
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+survival_stats(data,outcomes,'Pclass',['Sex == "male"','Age < 15'])
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+def predictions_final(data):   
+    predictions=[]
+    for _,passenger in data.iterrows():
+        if (passenger['Sex']=='female'): predictions.append(1)                
+        elif passenger['Pclass'] in [1,2] and \
+            (passenger['Age']<16 or passenger['Age']>75): predictions.append(1)            
+        elif passenger['Age']<15 and passenger['SibSp']<3: predictions.append(1)            
+        else: predictions.append(0)
+    return pandas.Series(predictions).astype('int') 
+predictions=predictions_final(data)
+</script></div><br/>
+    <h3>Question 4</h3>
+Describe the steps you took to implement the final prediction model so that it got an accuracy of at least 80%.<br/>
+What features did you look at? Were certain features more informative than others?<br/>
+Which conditions did you use to split the survival outcomes into the data? How accurate are your predictions?
+    <h3>Answer 4</h3>
+The final set of features <b>Sex</b>, <b>Age</b>, <b>SibSp</b> and <b>Pclass</b> are the most informative on my opinion.<br/>
+As we noted the percentage of survivors of passengers is much higher among women than among men, and it was used in our predictions.<br/>
+Next, I proceed from the assumption that because of humanitarian reasons people rescue children and elders at first.<br/> Unfortunately, this was only valid for the passengers of the first and second classes in this dataset.<br/>
+And the latest clarification, which overcomes the border of 80% in prediction accuracy:<br/>
+if a family has more than three children, absolutely all the family may not be survived in catastrophic situations and in an atmosphere of panic.     
+<div class='linked'><script type='text/x-sage'>
+accuracy_score(outcomes,predictions)
+</script></div><br/>
+    <h3>Scikit-learn Metrics</h3>
+There is a set of metrics in the <b>scikit-learn</b> package for evaluation the quality of predictions.
+<div class='linked'><script type='text/x-sage'>
+from sklearn.metrics import recall_score,\
+accuracy_score,precision_score
+print ('Predictions have an accuracy of {:.2f}%.'\
+.format(accuracy_score(outcomes, predictions)*100))
+print ('Predictions have a recall score equal to {:.2f}%.'\
+.format(recall_score(outcomes, predictions)*100))
+print ('Predictions have a precision score equal to {:.2f}%.'\
+.format(precision_score(outcomes,predictions)*100))
+</script></div><br/>
+The evaluation terminology:
+<p>$accuracy \ = \ \frac{number \ of \ people \ that \ are \ correctly \ predicted \ as \ survived \ or \ non−survived}{number \ of \ all \ people \ in \ the \ dataset}$</p>
+<p>$recall \ = \ \frac{number \ of \ people \ that \ are \ predicted \ as \ survived \ and \ they \ are \ actually \ survived}{number \ of \ people \ that \ are \ actually \ survived}$</p>
+<p>$precision \ = \ \frac{number \ of \ people \ that \ are \ predicted \ as \ survived \ and \ they \ are \ actually \ survived}{number \ of \ people \ that \ are \ predicted \ as \ survived}$</p>
+It's easy to see that we could be enough confident in this prediction. I think this model can be improved and it's possible to find a way for that.
+    <h3>Question 5</h3>
+Think of a real-world scenario where supervised learning could be applied. What would be the outcome variable that you are trying to predict?<br/>
+Name two features about the data used in this scenario that might be helpful for making the predictions.
+    <h3>Answer 5</h3>
+There are several natural ideas for applying supervised learning.<br/>
+I.<br/>For every catastrophic situation, find out the exact sequence of steps and technical facilities which maximally decrease the damage.<br/>On the basis of the identified trends, it is possible to develop and check in practice clear guidelines to save lives and restore economic activities (for example, during and after the floods).<br/>Applying the scientific methods, in this case, means thousands of lives and quick recovering the economics.<br/>The useful features can evaluate disasters (areas, time period), damage (lost human lives, economic indicators) and recovery process (speed, effectiveness).<br/>As a target, we can use the <i>damage_in_general</i> measured in any financial units.<br/>
+II.<br/>The same techniques could be useful in the process of creating self-learning facilities of virtual reality in order to bring the process<br/>of their development to the real counterparts, predict it and make corrections in time. Here the set of concrete features is very individual and depends on the object.<br/>For example, it can be growth, flowering, etc. for the plant and its imitation.<br/>In this case, the outcomes can be number indicators which evaluate how well the development of virtual objects is correlated to the real processes.
+    <h2>Conclusion</h2>
+In this project, we use a manual implementation of a simple machine learning model:<br/>
+the <b>decision tree</b> splits a set of data into smaller and smaller groups (called nodes), by one feature at a time.<br/> Our predictions become more accurate if each of the resulting subsets is more homogeneous (contain similar labels) than before.<br/><br/>
+The decision tree algorithm is just one of many models that come from <b>supervised learning</b>,<br/>i.e. learning a model from labeled training data to make predictions about unseen or future data in a set of samples the desired outputs are already known.<br/><br/>
+Overvaluation of meaning and application of machine learning is unlikely to succeed. And the particular supervised method has a special importance<br/>because of the possibility of a permanent correlation of the predictions with the result of real actions.
+    <h3>For Additional Code Experiments</h3>
+<div class='linked'><script type='text/x-sage'>
+
+</script></div><br/>
+  </body>
+</html>

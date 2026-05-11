@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang='en'><head><meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width,initial-scale=.9'>
+<script src='https://cdn.jsdelivr.net/npm/danfojs@0.1.1/dist/index.min.js'> 
+</script></head>
+<body><h1>CSV =>>> Danfo DataFrames</h1>
+<p>Table Examples</p>
+<div id='div015_1'></div>
+<p>Chart Examples</p>
+<div id='div015_2'></div><script>
+var url='https://raw.githubusercontent.com/OlgaBelitskaya/'
+    .concat('machine_learning_engineer_nd009/master/')
+    .concat('Machine_Learning_Engineer_ND_P3/customers.csv');
+dfd.read_csv(url)
+   .then(df=>{df.plot('div015_1').table()})
+   .catch(err=>{console.log(err);});
+dfd.read_csv(url)
+   .then(df=>{df.plot('div015_2').line(
+   	{columns:['Fresh','Milk','Grocery','Frozen',
+   	          'Detergents_Paper','Delicatessen']})})
+   .catch(err=>{console.log(err);})
+</script></body></html>

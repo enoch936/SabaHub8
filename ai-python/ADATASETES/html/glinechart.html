@@ -1,0 +1,40 @@
+<script type='text/javascript' 
+        src='https://www.gstatic.com/charts/loader.js'></script>
+<div id='div004' style='width:500px; height:500px;'></div>
+<script>
+function get_int(xmin,xmax) {
+    return Math.floor(Math.random()*(xmax-xmin+1))+xmin;};
+function get_color(k) {
+    return '#'+get_int(10*k,255).toString(16)+
+            get_int(10*k,255).toString(16)+
+            get_int(10*k,255).toString(16);};
+function fx(a,b,c,q,n,t,k) {
+    var x1=Math.cos(Math.PI*t/n+k*Math.PI/q),
+        x2=Math.cos(a*Math.PI*t/n+k*Math.PI/q),
+        x3=Math.cos(b*Math.PI*t/n+k*Math.PI/q),
+        x4=Math.cos(c*Math.PI*t/n+k*Math.PI/q);
+    return x1+x2+x3+x4};
+function fy(a,b,c,q,n,t,k) {
+    var y1=Math.sin(Math.PI*t/n+k*Math.PI/q),
+        y2=Math.sin(a*Math.PI*t/n+k*Math.PI/q),
+        y3=Math.sin(b*Math.PI*t/n+k*Math.PI/q),
+        y4=Math.sin(c*Math.PI*t/n+k*Math.PI/q);
+    return y1+y2+y3+y4};
+function ar(a,b,c,q,n,k) {
+    return Array(2*n+1).fill(k).map((k,t)=>
+          [fx(a,b,c,q,n,t,k),fy(a,b,c,q,n,t,k)]);};
+google.charts.load('current',{'packages':['corechart']}); 
+google.charts.setOnLoadCallback(drawChart);
+function drawChart() {
+    var a=get_int(5,9),b=get_int(10,14),c=get_int(15,19),
+        q=get_int(3,6),n=get_int(4,16); 
+    var xy=ar(a,b,c,q,n,1); xy.unshift(['x',[a,b,c,q,n].toString()]); 
+    for (var k=2; k<2*q+2; k++) {xy=xy.concat(ar(a,b,c,q,n,k));};
+    var data=google.visualization.arrayToDataTable(xy); 
+    var options={chartArea:{left:0,top:0,right:0,bottom:20},
+                 legend:{position:'bottom'},curveType:'none',
+                 lineWidth:1,pointSize:3,colors:[get_color(a)],
+                 hAxis:{textColor:'#fff'},vAxis:{textColor:'#fff'}};
+    var chart=new google.visualization.LineChart(document.getElementById('div004')); 
+    chart.draw(data,options); };
+</script>

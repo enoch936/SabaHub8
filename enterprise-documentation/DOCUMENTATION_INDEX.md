@@ -102,6 +102,16 @@
 
 ---
 
+### 🛡️ Trust and Safety
+
+**[ENTERPRISE_CONTENT_MODERATION_TRUST_AND_SAFETY_MASTER_PROMPT.md](ENTERPRISE_CONTENT_MODERATION_TRUST_AND_SAFETY_MASTER_PROMPT.md)**
+- Enterprise Trust and Safety administrator operating prompt
+- Content moderation, abuse investigation, fraud removal, and dispute handling responsibilities
+- Moderation pipeline, compliance controls, automation directives, and output requirements
+- **FOR:** Trust and Safety moderators, admin operations, policy and compliance teams
+
+---
+
 ## 🔑 Quick Reference
 
 ### Technology Stack

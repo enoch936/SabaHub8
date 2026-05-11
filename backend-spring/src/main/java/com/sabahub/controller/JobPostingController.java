@@ -2,6 +2,7 @@ package com.sabahub.controller;
 
 import com.sabahub.domain.Job;
 import com.sabahub.repository.JobRepository;
+import com.sabahub.service.AITaxonomyService;
 import com.sabahub.service.JobPostingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,9 @@ public class JobPostingController {
 
     @Autowired
     private JobRepository jobRepository;
+
+    @Autowired
+    private AITaxonomyService aiTaxonomyService;
 
     // ========== Job Creation & Management ==========
 
@@ -65,10 +70,27 @@ public class JobPostingController {
             log.info("Job created successfully: {}", created.getId());
             
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (IllegalStateException e) {
+            String message = e.getMessage() == null ? "Forbidden" : e.getMessage();
+            if ("Unauthorized".equalsIgnoreCase(message) || "User not found".equalsIgnoreCase(message)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(createErrorResponse(message));
+            }
+            if (
+                    "Forbidden".equalsIgnoreCase(message) ||
+                    message.toLowerCase().contains("only employers") ||
+                    message.toLowerCase().contains("switch to employer mode")
+            ) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse(message));
+            }
+            return ResponseEntity.badRequest().body(createErrorResponse(message));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
         } catch (Exception e) {
             log.error("Error creating job", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Failed to create job: " + e.getMessage()));
+                    .body(createErrorResponse("Failed to create job"));
         }
     }
 
@@ -112,7 +134,8 @@ public class JobPostingController {
                 }
             });
 
-            List<Job> created = jobRepository.saveAll(jobs.stream().filter(Objects::nonNull).toList());
+            List<Job> validJobs = new ArrayList<>(jobs.stream().filter(Objects::nonNull).toList());
+            List<Job> created = jobRepository.saveAll(validJobs);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
@@ -154,11 +177,30 @@ public class JobPostingController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(createErrorResponse("You can only update your own jobs"));
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
+            String message = e.getMessage() == null ? "Forbidden" : e.getMessage();
+            if (message.toLowerCase().contains("only employers") || message.toLowerCase().contains("switch to employer mode")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(createErrorResponse(message));
+            }
+            return ResponseEntity.badRequest().body(createErrorResponse(message));
         } catch (Exception e) {
             log.error("Error updating job", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Failed to update job: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/taxonomy/suggest")
+    @PreAuthorize("hasRole('EMPLOYER')")
+    public ResponseEntity<?> suggestJobTaxonomy(@RequestBody Job job) {
+        try {
+            return ResponseEntity.ok(aiTaxonomyService.suggestJob(job == null ? new Job() : job));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(createErrorResponse(e.getMessage() == null ? "Forbidden" : e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error suggesting job taxonomy", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Failed to suggest taxonomy"));
         }
     }
 
@@ -176,6 +218,9 @@ public class JobPostingController {
         } catch (IllegalAccessError e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(createErrorResponse("You can only publish your own jobs"));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(createErrorResponse(e.getMessage() == null ? "Forbidden" : e.getMessage()));
         } catch (Exception e) {
             log.error("Error publishing job", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -198,6 +243,9 @@ public class JobPostingController {
         } catch (IllegalAccessError e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(createErrorResponse("You can only close your own jobs"));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(createErrorResponse(e.getMessage() == null ? "Forbidden" : e.getMessage()));
         } catch (Exception e) {
             log.error("Error closing job", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -327,10 +375,26 @@ public class JobPostingController {
     @GetMapping("/employer/my-jobs")
     @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<?> getMyJobs(
-            @RequestParam(name = "limit", required = false) Integer limit) {
+            @RequestParam(name = "limit", required = false) Integer limit,
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(name = "size", required = false, defaultValue = "20") Integer size) {
         try {
-            List<Job> jobs = jobPostingService.getEmployerJobs(limit);
+            // Preserve old behavior for clients using ?limit=.
+            if (limit != null) {
+                List<Job> jobs = jobPostingService.getEmployerJobs(limit);
+                return ResponseEntity.ok(jobs);
+            }
+
+            Page<Job> jobs = jobPostingService.getEmployerJobs(page, size);
             return ResponseEntity.ok(jobs);
+        } catch (IllegalStateException e) {
+            String message = e.getMessage() == null ? "Unauthorized" : e.getMessage();
+            if ("Forbidden".equalsIgnoreCase(message)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Forbidden"));
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(createErrorResponse("Unauthorized"));
         } catch (Exception e) {
             log.error("Error fetching employer jobs", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

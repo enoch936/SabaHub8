@@ -2,6 +2,7 @@ package com.sabahub.service;
 
 import com.sabahub.domain.Job;
 import com.sabahub.domain.User;
+import com.sabahub.repository.EmployerRepository;
 import com.sabahub.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,9 @@ public class JobPostingService {
     private JobRepository jobRepository;
 
     @Autowired
+    private EmployerRepository employerRepository;
+
+    @Autowired
     private CurrentUserService currentUserService;
 
     @Autowired
@@ -43,16 +47,21 @@ public class JobPostingService {
     @Transactional
     public Job createJob(Job job) {
         User employer = currentUserService.requireUser();
-        
-        if (!employer.getRoles().contains("EMPLOYER")) {
-            throw new IllegalStateException("Only employers can create jobs");
-        }
+        currentUserService.requireEmployerMode(employer);
 
         job.setEmployerId(employer.getId());
-        job.setStatus(Job.Status.DRAFT);
+        if (job.getStatus() == null) {
+            job.setStatus(Job.Status.OPEN);
+        }
         job.setCreatedAt(Instant.now());
         job.setUpdatedAt(Instant.now());
-        job.setIsEnterpriseOnly(true);
+        if (job.getIsEnterpriseOnly() == null) {
+            job.setIsEnterpriseOnly(true);
+        }
+        if (job.getCompanyName() == null || job.getCompanyName().isBlank()) {
+            job.setCompanyName(resolveEmployerDisplayName(employer));
+        }
+        job.setMaxConcurrentProjects(normalizeHiringCapacity(job.getMaxConcurrentProjects()));
 
         Job saved = jobRepository.save(job);
         
@@ -73,6 +82,7 @@ public class JobPostingService {
         Job job = getJobById(jobId);
         
         User employer = currentUserService.requireUser();
+        currentUserService.requireEmployerMode(employer);
         if (!job.getEmployerId().equals(employer.getId())) {
             throw new IllegalAccessError("Only job owner can publish");
         }
@@ -100,6 +110,7 @@ public class JobPostingService {
         Job job = getJobById(jobId);
         
         User employer = currentUserService.requireUser();
+        currentUserService.requireEmployerMode(employer);
         if (!job.getEmployerId().equals(employer.getId())) {
             throw new IllegalAccessError("Only job owner can update");
         }
@@ -122,6 +133,9 @@ public class JobPostingService {
         if (jobUpdate.getCurrency() != null) job.setCurrency(jobUpdate.getCurrency());
         if (jobUpdate.getPricingModel() != null) job.setPricingModel(jobUpdate.getPricingModel());
         if (jobUpdate.getSlaDeliveryDays() != null) job.setSlaDeliveryDays(jobUpdate.getSlaDeliveryDays());
+        if (jobUpdate.getMaxConcurrentProjects() != null) {
+            job.setMaxConcurrentProjects(normalizeHiringCapacity(jobUpdate.getMaxConcurrentProjects()));
+        }
         if (jobUpdate.getRequiredSkills() != null) job.setRequiredSkills(jobUpdate.getRequiredSkills());
         if (jobUpdate.getRequiredTools() != null) job.setRequiredTools(jobUpdate.getRequiredTools());
         if (jobUpdate.getRequiredQualifications() != null) job.setRequiredQualifications(jobUpdate.getRequiredQualifications());
@@ -171,6 +185,7 @@ public class JobPostingService {
         Job job = getJobById(jobId);
         
         User employer = currentUserService.requireUser();
+        currentUserService.requireEmployerMode(employer);
         if (!job.getEmployerId().equals(employer.getId())) {
             throw new IllegalAccessError("Only job owner can close");
         }
@@ -204,10 +219,9 @@ public class JobPostingService {
     public Page<Job> getOpenJobsByCategory(String categoryId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         if (categoryId == null || categoryId.isBlank()) {
-            return jobRepository.findByStatusAndIsEnterpriseOnly(Job.Status.OPEN, false, pageable);
+            return jobRepository.findByStatus(Job.Status.OPEN, pageable);
         }
-        return jobRepository.findByCategoryIdAndStatusAndIsEnterpriseOnly(
-                categoryId, Job.Status.OPEN, false, pageable);
+        return jobRepository.findByStatusAndCategoryId(Job.Status.OPEN, categoryId, pageable);
     }
 
     /**
@@ -215,8 +229,8 @@ public class JobPostingService {
      */
     public Page<Job> getJobsByEngagementType(Job.EngagementType engagementType, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return jobRepository.findByEngagementTypeAndStatusAndIsEnterpriseOnly(
-                engagementType, Job.Status.OPEN, false, pageable);
+        return jobRepository.findByEngagementTypeAndStatus(
+                engagementType, Job.Status.OPEN, pageable);
     }
 
     /**
@@ -224,8 +238,8 @@ public class JobPostingService {
      */
     public Page<Job> getJobsByDeliverableType(Job.DeliverableType deliverableType, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return jobRepository.findByDeliverableTypeAndStatusAndIsEnterpriseOnly(
-                deliverableType, Job.Status.OPEN, false, pageable);
+        return jobRepository.findByDeliverableTypeAndStatus(
+                deliverableType, Job.Status.OPEN, pageable);
     }
 
     /**
@@ -233,6 +247,7 @@ public class JobPostingService {
      */
     public List<Job> getEmployerJobs(Integer limit) {
         User employer = currentUserService.requireUser();
+        currentUserService.requireEmployerMode(employer);
         if (limit != null) {
             return jobRepository.findByEmployerIdOrderByCreatedAtDesc(employer.getId())
                     .stream()
@@ -240,6 +255,18 @@ public class JobPostingService {
                     .collect(Collectors.toList());
         }
         return jobRepository.findByEmployerIdOrderByCreatedAtDesc(employer.getId());
+    }
+
+    /**
+     * Get employer's own jobs as a page.
+     */
+    public Page<Job> getEmployerJobs(int page, int size) {
+        User employer = currentUserService.requireUser();
+        currentUserService.requireEmployerMode(employer);
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(100, Math.max(1, size));
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by("createdAt").descending());
+        return jobRepository.findByEmployerId(employer.getId(), pageable);
     }
 
     // ========== Advanced Search & Filtering ==========
@@ -343,6 +370,7 @@ public class JobPostingService {
      */
     public Map<String, Object> getEmployerJobStats() {
         User employer = currentUserService.requireUser();
+        currentUserService.requireEmployerMode(employer);
         List<Job> employerJobs = jobRepository.findByEmployerId(employer.getId());
 
         Map<String, Object> stats = new HashMap<>();
@@ -365,6 +393,28 @@ public class JobPostingService {
                         .thenComparing(j -> j.getBudgetMax() != null ? j.getBudgetMax() : 0, Comparator.reverseOrder()))
                 .limit(limit)
                 .collect(Collectors.toList());
+    }
+
+    private String resolveEmployerDisplayName(User employer) {
+        return employerRepository.findByUserId(employer.getId())
+                .map(profile -> profile.getCompanyProfile() != null ? profile.getCompanyProfile().getCompanyName() : null)
+                .filter(name -> name != null && !name.isBlank())
+                .orElseGet(() -> {
+                    if (employer.getFullName() != null && !employer.getFullName().isBlank()) {
+                        return employer.getFullName();
+                    }
+                    if (employer.getEmail() != null && !employer.getEmail().isBlank()) {
+                        return employer.getEmail();
+                    }
+                    return "Employer";
+                });
+    }
+
+    private Integer normalizeHiringCapacity(Integer value) {
+        if (value == null) {
+            return 1;
+        }
+        return Math.max(1, value);
     }
 
     // ========== Helper Classes ==========

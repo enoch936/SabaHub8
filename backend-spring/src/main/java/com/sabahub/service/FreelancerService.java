@@ -5,9 +5,14 @@ import com.sabahub.dto.freelancer.FreelancerDTOs.*;
 import com.sabahub.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,35 +53,46 @@ public class FreelancerService {
     private final TimeEntryRepository timeEntryRepository;
     private final InvoiceRepository invoiceRepository;
     private final WithdrawalRepository withdrawalRepository;
+    private final UserRepository userRepository;
     private final AuditService auditService;
     private final NotificationService notificationService;
 
     public Freelancer createFreelancerProfile(String userId, FreelancerProfileRequest request) {
         log.info("Creating freelancer profile for user: {}", userId);
-        
-        Freelancer freelancer = Freelancer.builder()
-                .userId(userId)
-                .professionalTitle(request.getProfessionalTitle())
-                .bio(request.getBio())
-                .hourlyRate(request.getHourlyRate())
-                .availability(request.getAvailability())
-                .categories(request.getCategories())
-                .skills(new ArrayList<>())
-                .portfolio(new ArrayList<>())
-                .certifications(new ArrayList<>())
-                .languages(request.getLanguages())
-                .isActive(true)
-                .build();
 
-        Freelancer saved = freelancerRepository.save(freelancer);
-        auditService.logAction(userId, "FREELANCER_PROFILE_CREATED", saved.getId());
-        
+        boolean existed = findFreelancerByUserReference(userId).isPresent();
+        Freelancer freelancer = ensureFreelancerProfile(userId);
+
+        Freelancer saved = freelancerRepository.save(applyProfileRequest(freelancer, request));
+        if (existed) {
+            auditService.logAction(userId, "FREELANCER_PROFILE_UPDATED", saved.getId());
+        }
+
         return saved;
     }
 
     public Freelancer getFreelancerByUserId(String userId) {
-        return freelancerRepository.findByUserId(userId)
+        return findFreelancerByUserReference(userId)
                 .orElseThrow(() -> new RuntimeException("Freelancer profile not found for user: " + userId));
+    }
+
+    public Freelancer ensureFreelancerProfile(String userId) {
+        Optional<Freelancer> existing = findFreelancerByUserReference(userId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found for freelancer profile: " + userId));
+
+        Freelancer baseline = buildBaselineProfile(user);
+        try {
+            Freelancer saved = freelancerRepository.save(baseline);
+            auditService.logAction(userId, "FREELANCER_PROFILE_CREATED", saved.getId());
+            return saved;
+        } catch (DuplicateKeyException ex) {
+            return getFreelancerByUserId(userId);
+        }
     }
 
     public Freelancer getFreelancerById(String id) {
@@ -86,15 +102,9 @@ public class FreelancerService {
 
     public Freelancer updateProfile(String freelancerId, FreelancerProfileRequest request) {
         Freelancer freelancer = getFreelancerById(freelancerId);
-        
-        freelancer.setProfessionalTitle(request.getProfessionalTitle());
-        freelancer.setBio(request.getBio());
-        freelancer.setHourlyRate(request.getHourlyRate());
-        freelancer.setAvailability(request.getAvailability());
-        freelancer.setCategories(request.getCategories());
-        freelancer.setLanguages(request.getLanguages());
-        
-        return freelancerRepository.save(freelancer);
+
+        Freelancer updated = applyProfileRequest(freelancer, request);
+        return freelancerRepository.save(updated);
     }
 
     public Freelancer addSkill(String freelancerId, Freelancer.Skill skill) {
@@ -135,8 +145,203 @@ public class FreelancerService {
         return projectRepository.findAll();
     }
 
+    private Optional<Freelancer> findFreelancerByUserReference(String userReference) {
+        if (userReference == null || userReference.isBlank()) {
+            return Optional.empty();
+        }
+
+        Optional<Freelancer> direct = freelancerRepository.findByUserId(userReference);
+        if (direct.isPresent()) {
+            return direct;
+        }
+
+        Optional<User> userById = userRepository.findById(userReference);
+        if (userById.isPresent()) {
+            return findOrMigrateLegacyProfile(userById.get());
+        }
+
+        Optional<User> userByEmail = userRepository.findByEmailIgnoreCase(userReference);
+        if (userByEmail.isPresent()) {
+            User user = userByEmail.get();
+
+            Optional<Freelancer> canonical = freelancerRepository.findByUserId(user.getId());
+            if (canonical.isPresent()) {
+                return canonical;
+            }
+
+            return findOrMigrateLegacyProfile(user);
+        }
+
+        return Optional.empty();
+    }
+
+    private Optional<Freelancer> findOrMigrateLegacyProfile(User user) {
+        if (user == null || user.getEmail() == null || user.getEmail().isBlank()) {
+            return Optional.empty();
+        }
+
+        Optional<Freelancer> legacy = freelancerRepository.findByUserId(user.getEmail());
+        if (legacy.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Freelancer freelancer = legacy.get();
+        if (user.getId() != null && !user.getId().isBlank() && !user.getId().equals(freelancer.getUserId())) {
+            freelancer.setUserId(user.getId());
+            freelancer.setUpdatedAt(LocalDateTime.now());
+            return Optional.of(freelancerRepository.save(freelancer));
+        }
+
+        return Optional.of(freelancer);
+    }
+
+    private Freelancer buildBaselineProfile(User user) {
+        LocalDateTime now = LocalDateTime.now();
+        UserProfile profile = user.getProfile();
+
+        return Freelancer.builder()
+                .userId(user.getId())
+                .professionalTitle(null)
+                .bio(profile != null ? profile.getBio() : null)
+                .profilePicture(profile != null ? profile.getProfilePictureUrl() : null)
+                .coverImage(null)
+                .location(profile != null ? profile.getLocation() : null)
+                .timezone(profile != null ? profile.getTimezone() : null)
+                .languages(defaultLanguages(profile))
+                .skills(defaultSkills(profile))
+                .categories(defaultCategories(profile))
+                .portfolio(new ArrayList<>())
+                .certifications(new ArrayList<>())
+                .education(new ArrayList<>())
+                .hourlyRate(parseBigDecimal(profile != null ? profile.getHourlyRate() : null))
+                .currency("USD")
+                .minimumProjectBudget(null)
+                .availability(hasText(profile != null ? profile.getAvailability() : null) ? profile.getAvailability() : "FULL_TIME")
+                .hoursPerWeek(null)
+                .availableFrom(null)
+                .preferredProjectTypes(new ArrayList<>())
+                .preferredProjectSizes(new ArrayList<>())
+                .remoteOnly(Boolean.TRUE)
+                .preferredIndustries(new ArrayList<>())
+                .totalEarnings(BigDecimal.ZERO)
+                .completedProjects(0)
+                .activeProjects(0)
+                .totalProposals(0)
+                .acceptedProposals(0)
+                .successRate(0.0)
+                .rating(0.0)
+                .reviewCount(0)
+                .jobSuccessScore(0)
+                .verificationStatus("PENDING")
+                .verificationDocuments(new ArrayList<>())
+                .emailVerified(profile != null ? profile.getEmailVerified() : null)
+                .phoneVerified(profile != null ? profile.getPhoneVerified() : null)
+                .identityVerified(profile != null ? profile.getIdentityVerified() : null)
+                .currentBalance(BigDecimal.ZERO)
+                .pendingBalance(BigDecimal.ZERO)
+                .totalWithdrawn(BigDecimal.ZERO)
+                .createdAt(now)
+                .updatedAt(now)
+                .lastActive(now)
+                .isActive(true)
+                .build();
+    }
+
+    private Freelancer applyProfileRequest(Freelancer freelancer, FreelancerProfileRequest request) {
+        if (request == null) {
+            freelancer.setUpdatedAt(LocalDateTime.now());
+            return freelancer;
+        }
+
+        if (request.getProfessionalTitle() != null) freelancer.setProfessionalTitle(request.getProfessionalTitle());
+        if (request.getBio() != null) freelancer.setBio(request.getBio());
+        if (request.getProfilePicture() != null) freelancer.setProfilePicture(request.getProfilePicture());
+        if (request.getCoverImage() != null) freelancer.setCoverImage(request.getCoverImage());
+        if (request.getLocation() != null) freelancer.setLocation(request.getLocation());
+        if (request.getTimezone() != null) freelancer.setTimezone(request.getTimezone());
+        if (request.getHourlyRate() != null) freelancer.setHourlyRate(request.getHourlyRate());
+        if (request.getCurrency() != null) freelancer.setCurrency(request.getCurrency());
+        if (request.getMinimumProjectBudget() != null) freelancer.setMinimumProjectBudget(request.getMinimumProjectBudget());
+        if (request.getAvailability() != null) freelancer.setAvailability(request.getAvailability());
+        if (request.getHoursPerWeek() != null) freelancer.setHoursPerWeek(request.getHoursPerWeek());
+        if (request.getAvailableFrom() != null) freelancer.setAvailableFrom(request.getAvailableFrom());
+        if (request.getCategories() != null) freelancer.setCategories(new ArrayList<>(request.getCategories()));
+        if (request.getLanguages() != null) freelancer.setLanguages(new ArrayList<>(request.getLanguages()));
+        if (request.getPreferredProjectTypes() != null) freelancer.setPreferredProjectTypes(new ArrayList<>(request.getPreferredProjectTypes()));
+        if (request.getPreferredProjectSizes() != null) freelancer.setPreferredProjectSizes(new ArrayList<>(request.getPreferredProjectSizes()));
+        if (request.getRemoteOnly() != null) freelancer.setRemoteOnly(request.getRemoteOnly());
+        if (request.getPreferredIndustries() != null) freelancer.setPreferredIndustries(new ArrayList<>(request.getPreferredIndustries()));
+        if (request.getSkills() != null) freelancer.setSkills(new ArrayList<>(request.getSkills()));
+        if (request.getEducation() != null) freelancer.setEducation(new ArrayList<>(request.getEducation()));
+
+        if (freelancer.getPortfolio() == null) freelancer.setPortfolio(new ArrayList<>());
+        if (freelancer.getCertifications() == null) freelancer.setCertifications(new ArrayList<>());
+        if (freelancer.getEducation() == null) freelancer.setEducation(new ArrayList<>());
+        if (freelancer.getLanguages() == null) freelancer.setLanguages(new ArrayList<>());
+        if (freelancer.getSkills() == null) freelancer.setSkills(new ArrayList<>());
+        if (freelancer.getCategories() == null) freelancer.setCategories(new ArrayList<>());
+        if (freelancer.getPreferredProjectTypes() == null) freelancer.setPreferredProjectTypes(new ArrayList<>());
+        if (freelancer.getPreferredProjectSizes() == null) freelancer.setPreferredProjectSizes(new ArrayList<>());
+        if (freelancer.getPreferredIndustries() == null) freelancer.setPreferredIndustries(new ArrayList<>());
+        if (freelancer.getVerificationDocuments() == null) freelancer.setVerificationDocuments(new ArrayList<>());
+
+        freelancer.setIsActive(Boolean.TRUE.equals(freelancer.getIsActive()) || freelancer.getIsActive() == null);
+        freelancer.setLastActive(LocalDateTime.now());
+        freelancer.setUpdatedAt(LocalDateTime.now());
+        if (freelancer.getCreatedAt() == null) {
+            freelancer.setCreatedAt(LocalDateTime.now());
+        }
+
+        return freelancer;
+    }
+
+    private List<String> defaultLanguages(UserProfile profile) {
+        if (profile == null || !hasText(profile.getLanguage())) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(List.of(profile.getLanguage().trim()));
+    }
+
+    private List<Freelancer.Skill> defaultSkills(UserProfile profile) {
+        if (profile == null || profile.getSkills() == null) {
+            return new ArrayList<>();
+        }
+
+        return profile.getSkills().stream()
+                .filter(this::hasText)
+                .map(skill -> Freelancer.Skill.builder().name(skill.trim()).level("INTERMEDIATE").build())
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private List<String> defaultCategories(UserProfile profile) {
+        if (profile == null || profile.getPreferredCategories() == null) {
+            return new ArrayList<>();
+        }
+        return profile.getPreferredCategories().stream()
+                .filter(this::hasText)
+                .map(String::trim)
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private BigDecimal parseBigDecimal(String value) {
+        if (!hasText(value)) {
+            return null;
+        }
+        try {
+            return new BigDecimal(value.trim());
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
     public Proposal submitProposal(String freelancerId, ProposalRequest request) {
         Freelancer freelancer = getFreelancerById(freelancerId);
+        Project project = projectRepository.findById(request.getProjectId())
+                .orElseThrow(() -> new RuntimeException("Project not found"));
         
         Proposal proposal = new Proposal();
         proposal.setFreelancerId(freelancerId);
@@ -148,12 +353,54 @@ public class FreelancerService {
         
         Proposal saved = proposalRepository.save(proposal);
         auditService.logAction(freelancer.getUserId(), "PROPOSAL_SUBMITTED", saved.getId());
+
+        notificationService.notifyProposalSubmitted(
+                project.getEmployerId(),
+                project.getId(),
+                project.getTitle(),
+                freelancer.getUserId(),
+                saved.getBidAmount()
+        );
         
         return saved;
     }
 
     public List<Proposal> getProposalsByFreelancer(String freelancerId) {
         return proposalRepository.findByFreelancerId(freelancerId);
+    }
+
+    public List<Proposal> getProposalsForFreelancerUser(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return List.of();
+        }
+
+        LinkedHashMap<String, Proposal> unique = new LinkedHashMap<>();
+
+        // Newer proposal flow stores freelancerId as authenticated user id.
+        proposalRepository.findByFreelancerId(userId).forEach(proposal -> {
+            if (proposal.getId() != null && !proposal.getId().isBlank()) {
+                unique.putIfAbsent(proposal.getId(), proposal);
+            }
+        });
+
+        // Legacy flow stores freelancerId as freelancer profile id.
+        freelancerRepository.findByUserId(userId).ifPresent(profile -> {
+            if (profile.getId() != null && !profile.getId().isBlank()) {
+                proposalRepository.findByFreelancerId(profile.getId()).forEach(proposal -> {
+                    if (proposal.getId() != null && !proposal.getId().isBlank()) {
+                        unique.putIfAbsent(proposal.getId(), proposal);
+                    }
+                });
+            }
+        });
+
+        return unique.values().stream()
+                .sorted((left, right) -> {
+                    java.time.Instant leftCreated = left.getCreatedAt() == null ? java.time.Instant.EPOCH : left.getCreatedAt();
+                    java.time.Instant rightCreated = right.getCreatedAt() == null ? java.time.Instant.EPOCH : right.getCreatedAt();
+                    return rightCreated.compareTo(leftCreated);
+                })
+                .toList();
     }
 
     public Contract acceptContract(String freelancerId, String contractId) {
@@ -277,6 +524,50 @@ public class FreelancerService {
 
     public List<Withdrawal> getWithdrawalsByFreelancer(String freelancerId) {
         return withdrawalRepository.findByFreelancerId(freelancerId);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<MarketplaceFreelancerCard> discoverFreelancers(int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 60);
+        PageRequest pageable = PageRequest.of(safePage, safeSize);
+
+        Page<Freelancer> verifiedPage = freelancerRepository.findActiveVerifiedFreelancers(pageable);
+        Page<Freelancer> sourcePage = verifiedPage;
+
+        if (verifiedPage.isEmpty()) {
+            List<Freelancer> fallbackItems = freelancerRepository.findAll().stream()
+                    .filter(freelancer -> Boolean.TRUE.equals(freelancer.getIsActive()))
+                    .sorted(
+                            Comparator.comparing(
+                                            (Freelancer freelancer) -> freelancer.getRating() != null ? freelancer.getRating() : 0.0,
+                                            Comparator.reverseOrder()
+                                    )
+                                    .thenComparing(
+                                            freelancer -> freelancer.getReviewCount() != null ? freelancer.getReviewCount() : 0,
+                                            Comparator.reverseOrder()
+                                    )
+                                    .thenComparing(
+                                            freelancer -> freelancer.getUpdatedAt() != null ? freelancer.getUpdatedAt() : LocalDateTime.MIN,
+                                            Comparator.reverseOrder()
+                                    )
+                    )
+                    .toList();
+
+            int fromIndex = Math.min(safePage * safeSize, fallbackItems.size());
+            int toIndex = Math.min(fromIndex + safeSize, fallbackItems.size());
+            sourcePage = new PageImpl<>(
+                    fallbackItems.subList(fromIndex, toIndex),
+                    pageable,
+                    fallbackItems.size()
+            );
+        }
+
+        List<MarketplaceFreelancerCard> items = sourcePage.getContent().stream()
+                .map(this::toMarketplaceFreelancerCard)
+                .toList();
+
+        return new PageImpl<>(items, pageable, sourcePage.getTotalElements());
     }
 
     @Transactional(readOnly = true)
@@ -419,6 +710,76 @@ public class FreelancerService {
         );
     }
 
+    private MarketplaceFreelancerCard toMarketplaceFreelancerCard(Freelancer freelancer) {
+        User user = resolveFreelancerUser(freelancer);
+        String name = user != null && user.getFullName() != null && !user.getFullName().isBlank()
+                ? user.getFullName()
+                : buildDisplayName(freelancer.getUserId());
+
+        List<String> skillNames = freelancer.getSkills() == null
+                ? List.of()
+                : freelancer.getSkills().stream()
+                        .filter(Objects::nonNull)
+                        .map(Freelancer.Skill::getName)
+                        .filter(Objects::nonNull)
+                        .map(String::trim)
+                        .filter(value -> !value.isEmpty())
+                        .distinct()
+                        .toList();
+
+        List<String> certifications = freelancer.getCertifications() == null
+                ? List.of()
+                : freelancer.getCertifications().stream()
+                        .filter(Objects::nonNull)
+                        .map(Freelancer.Certification::getName)
+                        .filter(Objects::nonNull)
+                        .map(String::trim)
+                        .filter(value -> !value.isEmpty())
+                        .distinct()
+                        .toList();
+
+        return new MarketplaceFreelancerCard(
+                freelancer.getId(),
+                freelancer.getUserId(),
+                name,
+                freelancer.getProfessionalTitle(),
+                freelancer.getBio(),
+                freelancer.getProfilePicture(),
+                skillNames,
+                freelancer.getHourlyRate() != null ? freelancer.getHourlyRate().doubleValue() : null,
+                freelancer.getCurrency(),
+                freelancer.getRating(),
+                freelancer.getReviewCount(),
+                freelancer.getCompletedProjects(),
+                freelancer.getAvailability(),
+                freelancer.getLocation(),
+                freelancer.getLanguages() == null ? List.of() : List.copyOf(freelancer.getLanguages()),
+                certifications,
+                freelancer.getLastActive() != null ? freelancer.getLastActive().toString() : null,
+                "VERIFIED".equalsIgnoreCase(freelancer.getVerificationStatus())
+                        || Boolean.TRUE.equals(freelancer.getIdentityVerified())
+        );
+    }
+
+    private User resolveFreelancerUser(Freelancer freelancer) {
+        if (freelancer == null) {
+            return null;
+        }
+
+        if (freelancer.getUserId() != null && !freelancer.getUserId().isBlank()) {
+            Optional<User> byId = userRepository.findById(freelancer.getUserId());
+            if (byId.isPresent()) {
+                return byId.get();
+            }
+            Optional<User> byEmail = userRepository.findByEmail(freelancer.getUserId());
+            if (byEmail.isPresent()) {
+                return byEmail.get();
+            }
+        }
+
+        return null;
+    }
+
     private String selectReviewBody(Freelancer freelancer) {
         if (freelancer.getPortfolio() != null) {
             for (Freelancer.PortfolioItem item : freelancer.getPortfolio()) {
@@ -502,6 +863,27 @@ public class FreelancerService {
             Double rating,
             Integer reviewCount,
             String avatarUrl
+    ) {}
+
+    public record MarketplaceFreelancerCard(
+            String id,
+            String userId,
+            String name,
+            String title,
+            String bio,
+            String profileImageUrl,
+            List<String> skills,
+            Double hourlyRate,
+            String currency,
+            Double rating,
+            Integer reviewCount,
+            Integer completedProjects,
+            String availability,
+            String location,
+            List<String> languages,
+            List<String> certifications,
+            String lastActive,
+            boolean verified
     ) {}
 
     public record ReviewSeedResult(

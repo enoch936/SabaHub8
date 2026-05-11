@@ -1,0 +1,53 @@
+<script type='text/javascript' 
+        src='https://www.gstatic.com/charts/loader.js'></script>
+<style>
+@import 'https://fonts.googleapis.com/css?family=Ewert';
+.centered_resized {position:fixed; top:50%; left:50%; 
+                   transform:translate(-50%,-50%);
+                   width:500; height:500; margin:0 auto;}
+.centered_head {position:fixed; top:5%; left:33%;}
+</style>
+<h2 class='centered_head' style='font-family:Ewert; color:#3636ff'>
+Random Parametric Curves</h2>
+<div id='div012' class='centered_resized'></div>
+<script>
+function randi(xmin,xmax) {
+    return Math.floor(Math.random()*(xmax-xmin+1))+xmin;};
+function randi_colorGB(k) {
+    return '#00'+randi(10*k,255).toString(16)+
+           randi(10*k,255).toString(16);};
+function fx(a,b,c,q,n,t,k) {
+    var x1=Math.cos(Math.PI*t/n+k*Math.PI/q),
+        x2=Math.cos(a*Math.PI*t/n+k*Math.PI/q),
+        x3=Math.cos(b*Math.PI*t/n+k*Math.PI/q),
+        x4=Math.cos(c*Math.PI*t/n+k*Math.PI/q);
+    return x1+x2+x3+x4};
+function fy(a,b,c,q,n,t,k) {
+    var y1=Math.sin(Math.PI*t/n+k*Math.PI/q),
+        y2=Math.sin(a*Math.PI*t/n+k*Math.PI/q),
+        y3=Math.sin(b*Math.PI*t/n+k*Math.PI/q),
+        y4=Math.sin(c*Math.PI*t/n+k*Math.PI/q);
+    return y1-y2+y3-y4};
+function ar(a,b,c,q,n,k) {
+    return Array(2*n+1).fill(k).map((k,t)=>
+           [fx(a,b,c,q,n,t,k),fy(a,b,c,q,n,t,k)]);};
+google.charts.load('current',{'packages':['corechart']}); 
+google.charts.setOnLoadCallback(drawChart);
+function drawChart() {
+    var a=randi(5,9),b=randi(10,14),c=randi(15,19),
+        q=randi(3,8),n=randi(10,350); 
+    var xy=ar(a,b,c,q,n,1); 
+    xy.unshift(['x',[a,b,c,q,n].toString()]); 
+    for (var k=2; k<2*q+1; k++) {
+        xy=xy.concat(ar(a,b,c,q,n,k));};
+    var data=google.visualization.arrayToDataTable(xy);
+    var options={chartArea:{left:0,top:0,right:0,bottom:20},
+                 legend:{position:'bottom'},
+                 curveType:'none',lineWidth:.3,
+                 colors:[randi_colorGB(a)],
+                 hAxis:{ticks:[],baselineColor:'#fff'},
+                 vAxis:{ticks:[],baselineColor:'#fff'}};
+    var chart=new google.visualization.LineChart(
+        document.getElementById('div012')); 
+    chart.draw(data,options); };
+</script>

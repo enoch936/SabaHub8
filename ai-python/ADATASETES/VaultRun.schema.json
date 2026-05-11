@@ -1,0 +1,39 @@
+{
+    "type": "object",
+    "required": [
+        "run_id",
+        "case_id",
+        "case_title",
+        "vault_reference",
+        "status",
+        "sealed_utc",
+        "artifacts",
+        "summary"
+    ],
+    "properties": {
+        "run_id": {
+            "type": "string"
+        },
+        "case_id": {
+            "type": "string"
+        },
+        "case_title": {
+            "type": "string"
+        },
+        "vault_reference": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string"
+        },
+        "sealed_utc": {
+            "type": "string"
+        },
+        "artifacts": {
+            "type": "array"
+        },
+        "summary": {
+            "type": "object"
+        }
+    }
+}

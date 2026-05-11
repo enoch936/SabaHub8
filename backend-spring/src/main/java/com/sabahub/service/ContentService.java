@@ -26,9 +26,34 @@ public class ContentService {
         return contentRepository.findByTypeAndStatus(t, ContentItem.Status.PUBLISHED);
     }
 
+    public List<ContentItem> adminList(String type, String status) {
+        User me = currentUserService.requireUser();
+        if (!hasContentAdminAccess(me)) {
+            throw new IllegalStateException("Forbidden");
+        }
+
+        ContentItem.Type typeFilter = null;
+        ContentItem.Status statusFilter = null;
+        if (type != null && !type.isBlank()) {
+            typeFilter = ContentItem.Type.valueOf(type.trim().toUpperCase());
+        }
+        if (status != null && !status.isBlank()) {
+            statusFilter = ContentItem.Status.valueOf(status.trim().toUpperCase());
+        }
+
+        ContentItem.Type finalTypeFilter = typeFilter;
+        ContentItem.Status finalStatusFilter = statusFilter;
+        return contentRepository.findAll().stream()
+                .filter(item -> finalTypeFilter == null || item.getType() == finalTypeFilter)
+                .filter(item -> finalStatusFilter == null || item.getStatus() == finalStatusFilter)
+                .toList();
+    }
+
     public ContentItem adminCreate(ContentItem item) {
         User me = currentUserService.requireUser();
-        currentUserService.requireRole(me, "ADMIN");
+        if (!hasContentAdminAccess(me)) {
+            throw new IllegalStateException("Forbidden");
+        }
 
         item.setId(null);
         if (item.getStatus() == null) {
@@ -49,7 +74,9 @@ public class ContentService {
 
     public ContentItem adminUpdate(String id, ContentItem patch) {
         User me = currentUserService.requireUser();
-        currentUserService.requireRole(me, "ADMIN");
+        if (!hasContentAdminAccess(me)) {
+            throw new IllegalStateException("Forbidden");
+        }
 
         ContentItem existing = contentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Content not found"));
@@ -72,5 +99,10 @@ public class ContentService {
         ));
         
         return updated;
+    }
+
+    private boolean hasContentAdminAccess(User user) {
+        return currentUserService.hasRole(user, "ADMIN")
+                || currentUserService.hasRole(user, "SUPER_ADMIN");
     }
 }

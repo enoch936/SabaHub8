@@ -1,0 +1,48 @@
+<script src='https://www.gstatic.com/charts/loader.js'></script>
+<style>
+ @import 'https://fonts.googleapis.com/css?family=Ewert';
+.centered {position:fixed; top:50%; left:50%; 
+          transform:translate(-50%,-50%);}
+</style>
+<div id='div010' class='centered'></div>
+<script>
+google.charts.load('current',{packages:['corechart']}); 
+google.charts.setOnLoadCallback(drawChart);
+function drawChart() {
+    var chartFont='Ewert';
+    var data=google.visualization.arrayToDataTable([
+        ['Category','Amount',{role:'style'}],
+        ['Fresh',26373,'color:#ff355e; fill-opacity:'+
+        (.3+Math.random()/2)+'; stroke-width:4; stroke-color:silver;'],
+        ['Milk',36423,'color:#ff9966; fill-opacity:'+
+         (.3+Math.random()/2)+'; stroke-width:5; stroke-color:silver;'],
+        ['Grocery',22019,'color:#ffff66; fill-opacity:'+
+         (.3+Math.random()/2)+'; stroke-width:4; stroke-color:silver;'],
+        ['Frozen',5154,'color:#66ff66; fill-opacity:'+
+        (.3+Math.random()/2)+'; stroke-width:5; stroke-color:silver;'],
+        ['Detergents Paper',4337,'color:#50bfe6; fill-opacity:'+
+         (.3+Math.random()/2)+'; stroke-width:4; stroke-color:silver;'],
+        ['Delicatessen',16523,'color:#ff00cc; fill-opacity:'+
+         (.3+Math.random()/2)+'; stroke-width:5; stroke-color:silver;']]);
+    var view=new google.visualization.DataView(data);
+    view.setColumns(
+        [0,{calc:'stringify',sourceColumn:1,
+            type:'string',role:'annotation'}]);
+    var options={title:'Product Categories for One Customer',
+                 titleTextStyle:{color:'black',
+                                 fontSize:13,fontName:chartFont},
+                 vAxis:{gridlines:{color:'silver'},
+                        textStyle:{color:'black',
+                                   fontSize:13,fontName:chartFont}},
+                 hAxis:{textStyle:{color:'black',
+                                   fontSize:13,fontName:chartFont}},
+                 tooltip:{textStyle:{color:'black',
+                                     fontSize:12,fontName:chartFont}},
+                 backgroundColor:'whitesmoke',
+                 width:500,height:500,
+                 bar:{groupWidth:'80%'},
+                 legend:{position:'none'}};
+    var doc=document.getElementById('div010');
+    var chart=new google.visualization.ColumnChart(doc); 
+    chart.draw(data,options); };
+</script>

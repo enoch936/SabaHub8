@@ -1,0 +1,145 @@
+<style>
+    .node {stroke:slategray; stroke-width:2px;}
+    .link {fill:none; stroke:#000; stroke-opacity:.5; opacity:.5}
+    .directed {fill:none; stroke:#000; stroke-opacity:.5; opacity:.5}
+    marker {fill:slategray;}
+</style>
+<script src='https://d3js.org/d3.v3.min.js'></script>
+<script type='text/javascript'>
+window.onload=function(){
+  var pos;
+  var div1=document.getElementById('graph001')
+  var graph_as_string=div1.innerHTML
+  var graph=eval('('+graph_as_string+')');
+  var width=document.documentElement.clientWidth-20;
+  var height=document.documentElement.clientHeight-20;
+  var color=d3.scale.category10();
+  var force=d3.layout.force().charge(graph.charge)
+              .linkDistance(graph.link_distance)
+              .linkStrength(graph.link_strength)
+              .gravity(graph.gravity).size([width,height])
+              .links(graph.links).nodes(graph.nodes);
+  if(graph.pos.length!=0){center_and_scale(graph);}
+  var svg=d3.select('body').append('svg')
+            .attr('width',width).attr('height',height)
+            .attr('pointer-events','all').append('svg:g')
+            .call(d3.behavior.zoom().on('zoom',redraw_on_zoom))
+            .append('svg:g');
+  svg.append('svg:rect').attr('x',-10000).attr('y',-10000)
+     .attr('width',2*10000).attr('height',2*10000)
+     .attr('fill','ghostwhite');
+  var drag_in_progress=false;
+  function redraw_on_zoom() {
+      if(!drag_in_progress){
+        svg.attr('transform','translate('+d3.event.translate+
+                 ') scale('+d3.event.scale+')');} }
+  var link=svg.selectAll('.link').data(force.links())
+              .enter().append('path')
+              .attr('class',function(d) { return 'link directed'; })
+              .attr('marker-end',function(d) { return 'url(#directed)'; })
+              .style('stroke',function(d) { return d.color; })
+              .style('stroke-width',graph.edge_thickness+'px');
+  var loops=svg.selectAll('.loop').data(graph.loops)
+               .enter().append('circle').attr('class','link')
+               .attr('r',function(d) { return d.curve; })
+               .style('stroke',function(d) { return d.color; })
+               .style('stroke-width',graph.edge_thickness+'px');
+  var node=svg.selectAll('.node').data(force.nodes())
+              .enter().append('circle').attr('class','node')
+              .attr('r',graph.vertex_size)
+              .style('fill', function(d) { return color(d.group); })
+              .call(force.drag()
+              .on('dragstart',function (){ drag_in_progress=true; })
+              .on('dragend',function (){ drag_in_progress=false;}))
+  node.append('title').text(function(d) { return d.name; });
+  if(graph.vertex_labels) {
+    var v_labels=svg.selectAll('.v_label').data(force.nodes()).enter()
+                    .append('svg:text').attr('vertical-align','middle')
+                    .text(function(d) { return d.name; }).style('font-size',15)}
+  if(graph.edge_labels) {
+    var e_labels=svg.selectAll('.e_label').data(force.links()).enter()
+                    .append('svg:text').attr('text-anchor','middle')
+                    .text(function(d) { return d.name; })
+    var l_labels=svg.selectAll('.l_label').data(graph.loops).enter()
+                    .append('svg:text').attr('text-anchor','middle')
+                    .text(function(d,i) { return graph.loops[i].name; })}
+  if(graph.directed){
+    svg.append('svg:defs').selectAll('marker').data(['directed']).enter()
+       .append('svg:marker').attr('id',String).attr('viewBox','0 -2 4 4')
+       .attr('refX',Math.ceil(2*Math.sqrt(graph.vertex_size))).attr('refY',0)
+       .attr('markerWidth',5).attr('markerHeight',5)
+       .attr('preserveAspectRatio',false).attr('orient','auto')
+       .append('svg:path').attr('d','M0,-1L4,0L0,1');}
+  var line=d3.svg.line().interpolate('cardinal').tension(.3)
+                 .x(function(d) {return d.x;}).y(function(d) {return d.y;})
+  force.on('tick',function() {
+    node.attr('cx',function(d) { return d.x; })
+        .attr('cy',function(d) { return d.y; });
+    link.attr('d',function(d) {
+      if(d.curve==0) { return 'M'+d.source.x+','+d.source.y+' L'+d.target.x+','+d.target.y; }
+      else { p=third_point_of_curved_edge(d.source,d.target,d.curve)
+             return line([{'x':d.source.x,'y':d.source.y},
+                         {'x':p[0],'y':p[1]},
+                         {'x':d.target.x,'y':d.target.y}]) } });
+    if(graph.loops.length!=0){
+      loops.attr('cx',function(d) { return force.nodes()[d.source].x; })
+           .attr('cy',function(d) { return force.nodes()[d.source].y-d.curve; })}
+    if(graph.vertex_labels){
+      v_labels.attr('x',function(d) { return d.x+graph.vertex_size; })
+              .attr('y',function(d) { return d.y; })}
+    if(graph.edge_labels){
+      e_labels.attr('x',function(d) { 
+        return third_point_of_curved_edge(d.source,d.target,d.curve+3)[0]; })
+              .attr('y',function(d) { 
+        return third_point_of_curved_edge(d.source,d.target,d.curve+3)[1]; })
+      l_labels.attr('x',function(d,i) { return force.nodes()[d.source].x; })
+              .attr('y',function(d,i) { return force.nodes()[d.source].y-2*d.curve-1; })}});
+  function third_point_of_curved_edge(pa,pb,d){
+    var ox=pa.x,oy=pa.y,dx=pb.x,dy=pb.y;
+    var cx=(dx+ox)/2,cy=(dy+oy)/2,ny=-(dx-ox),nx=dy-oy;
+    var nn=Math.sqrt(nx*nx+ny*ny)
+    return [cx+d*nx/nn,cy+d*ny/nn]}
+  function center_and_scale(graph){
+    var minx=graph.pos[0][0],maxx=graph.pos[0][0],
+        miny=graph.pos[0][1],maxy=graph.pos[0][1];
+    graph.nodes.forEach(function(d,i) {
+        maxx=Math.max(maxx,graph.pos[i][0]);
+        minx=Math.min(minx,graph.pos[i][0]);
+        maxy=Math.max(maxy,graph.pos[i][1]);
+        miny=Math.min(miny,graph.pos[i][1]);});
+    var border=30;
+    var xspan=maxx-minx,yspan=maxy-miny;
+    var scale=Math.min((height-border)/yspan,(width-border)/xspan);
+    var xshift=(width-scale*xspan)/2,yshift=(height-scale*yspan)/2;
+    force.nodes().forEach(function(d,i) {
+      d.x=scale*(graph.pos[i][0]-minx)+xshift;
+      d.y=scale*(graph.pos[i][1]-miny)+yshift;});}
+  force.start();
+  if(graph.pos.length!=0){ force.tick(); force.stop();
+                           graph.nodes.forEach(function(d,i) {d.fixed=true;});} }
+</script>
+<body><div id='graph001' style='display:none'>
+{'link_distance':100,'link_strength':1,'charge':-200,
+ 'pos':[],'loops':[],'directed':true,'gravity':.02,
+ 'edge_thickness':3,'edge_labels':false,'vertex_size':7,'vertex_labels':true,   
+ 'links':[{'strength':0,'target':1,'color':'slategray','curve':5,'source':0,'name':''}, 
+          {'strength':0,'target':7,'color':'slategray','curve':5,'source':0,'name':''}, 
+          {'strength':0,'target':2,'color':'slategray','curve':5,'source':1,'name':''}, 
+          {'strength':0,'target':5,'color':'slategray','curve':5,'source':1,'name':''},
+          {"strength":0,'target':4,'color':'slategray','curve':5,'source':3,'name':''}, 
+          {'strength':0,'target':10,'color':'slategray','curve':5,'source':3,'name':''}, 
+          {'strength':0,'target':2,'color':'slategray','curve':5,'source':4,'name':''}, 
+          {'strength':0,'target':5,'color':'slategray','curve':5,'source':4,'name':''}, 
+          {'strength':0,'target':1,'color':'slategray','curve':5,'source':6,'name':''}, 
+          {'strength':0,'target':7,'color':'slategray','curve':5,'source':6,'name':''}, 
+          {'strength':0,'target':8,'color':'slategray','curve':5,'source':7,'name':''}, 
+          {'strength':0,'target':11,'color':'slategray','curve':5,'source':7,'name':''}, 
+          {'strength':0,'target':4,'color':'slategray','curve':5,'source':9,'name':''}, 
+          {'strength':0,'target':10,'color':'slategray','curve':5,'source':9,'name':''}, 
+          {'strength':0,'target':8,'color':'slategray','curve':5,'source':10,'name':''}, 
+          {'strength':0,'target':11,'color':'slategray','curve':5,'source':10,'name':''}],  
+ 'nodes':[{'group':'0','name':'(a,0)'},{'group':'0','name':'(a,1)'},{'group':'0','name':'(a,2)'},
+          {'group':'1','name':'(b,0)'},{'group':'1','name':'(b,1)'},{'group':'1','name':'(b,2)'},
+          {'group':'2','name':'(c,0)'},{'group':'2','name':'(c,1)'},{'group':'2','name':'(c,2)'},
+          {'group':'3','name':'(d,0)'},{'group':'3','name':'(d,1)'},{'group':'3','name':'(d,2)'}]}
+</div></body>

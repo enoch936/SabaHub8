@@ -1,0 +1,42 @@
+{
+    "case_id": "10",
+    "case_title": "CodeRabbit Contamination Blueprint Audit",
+    "vault_reference": "CLASSY-CODE-RBT-0531-ETH",
+    "findings": [
+        {
+            "vault_capability": "Agent-as-Editor Orchestration\u2122",
+            "coderabbit_claim": "AI reviewer that converses, suggests, and blocks merges",
+            "risk": "High"
+        },
+        {
+            "vault_capability": "Frictionless Funnel Framework\u2122",
+            "coderabbit_claim": "Inline suggestions, 1-click fixes, reduce review time",
+            "risk": "High"
+        },
+        {
+            "vault_capability": "Outcome Assurance Cadence\u2122",
+            "coderabbit_claim": "Ship faster, higher quality, production-ready",
+            "risk": "High"
+        },
+        {
+            "vault_capability": "Scene Delegation Logic\u2122",
+            "coderabbit_claim": "Describe what you want fixed \u2192 tool rewrites + commits",
+            "risk": "High"
+        },
+        {
+            "vault_capability": "Policy-as-Story\u2122",
+            "coderabbit_claim": "Enforce standards, prevent regressions, consistency across teams",
+            "risk": "Medium"
+        },
+        {
+            "vault_capability": "No-Manual-Work Frame\u2122",
+            "coderabbit_claim": "No need to write comments, auto-summary, auto-labels",
+            "risk": "High"
+        },
+        {
+            "vault_capability": "Cinematic Rhythm",
+            "coderabbit_claim": "Ship faster. Merge safer. Scale quicker.",
+            "risk": "Medium"
+        }
+    ]
+}

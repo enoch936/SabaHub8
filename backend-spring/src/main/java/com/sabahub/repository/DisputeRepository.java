@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface DisputeRepository extends MongoRepository<Dispute, String> {
     List<Dispute> findByContractId(String contractId);
+    List<Dispute> findByContractIdAndStatusIn(String contractId, List<Dispute.Status> statuses);
 
     List<Dispute> findByOpenedByUserId(String openedByUserId);
 

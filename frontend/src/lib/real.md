@@ -111,8 +111,8 @@ This document is written as an **implementation-ready plan**: scope, architectur
 ### 3.1 Pages/Routes (minimum)
 - Public: Landing, Browse Jobs, Browse Freelancers (optional)
 - Auth: /login, /register, /verify-email, /forgot-password
-- Dashboards:
-  - /dashboard (role-aware)
+- Workspaces:
+  - /jobs (role-aware workspace entry)
   - Employer: jobs, proposals, contracts, escrow/wallet
   - Freelancer: proposals, contracts, portfolio, earnings
   - Admin: users, jobs, transactions, disputes (CRP), content (CMP), analytics

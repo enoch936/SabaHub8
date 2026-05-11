@@ -1,0 +1,3 @@
+interface EmptyStateProps { emoji?: string; title: string; description?: string; action?: { label: string; onClick: () => void };
+} export default function EmptyState({ emoji = '📭', title, description, action }: EmptyStateProps) { return ( <div className="flex flex-col items-center justify-center py-16 px-4 text-center"> <div className="text-5xl mb-4">{emoji}</div> <h3 className="text-lg font-semibold mb-2">{title}</h3> {description && <p className="text-muted-foreground text-sm max-w-sm mb-6">{description}</p>} {action && ( <button onClick={action.onClick} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity" > {action.label} </button> )} </div> );
+}

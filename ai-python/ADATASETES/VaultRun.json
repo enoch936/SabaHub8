@@ -1,0 +1,158 @@
+{
+    "run_id": "bf3cb026-81c9-4c8a-b491-5121babb4e79",
+    "case_id": "10",
+    "case_title": "CodeRabbit Contamination Blueprint Audit",
+    "vault_reference": "CLASSY-CODE-RBT-0531-ETH",
+    "status": "sealed",
+    "sealed_utc": "2025-08-25T06:26:17.867490Z",
+    "environment": {
+        "python": "3.11.13",
+        "platform": "Linux-6.6.56+-x86_64-with-glibc2.35"
+    },
+    "artifacts": [
+        {
+            "file": "BlueprintMatch.json",
+            "path": "case10_exports/BlueprintMatch.json",
+            "size_bytes": 3309,
+            "modified_utc": "2025-08-25T06:26:17.440782Z",
+            "sha256": "9b53c58075703ae8ae0f35cec9edc980e58b11b92637cd8988621f3465787180"
+        },
+        {
+            "file": "BlueprintMatch.md",
+            "path": "case10_exports/BlueprintMatch.md",
+            "size_bytes": 252,
+            "modified_utc": "2025-08-25T06:26:17.441782Z",
+            "sha256": "a313b348ffa93cf4f7dc1da3c8f3c6ad31e44bf4bd51968b14218b2163adf1d9"
+        },
+        {
+            "file": "BlueprintMatch.schema.json",
+            "path": "case10_exports/BlueprintMatch.schema.json",
+            "size_bytes": 492,
+            "modified_utc": "2025-08-25T06:26:17.441782Z",
+            "sha256": "b0fb490f0789c210558fd3f47ccac29ac1ce31a1a15de639f32ca7ecdffa202c"
+        },
+        {
+            "file": "Case10_CertIntro.json",
+            "path": "case10_exports/Case10_CertIntro.json",
+            "size_bytes": 2236,
+            "modified_utc": "2025-08-25T06:26:17.770811Z",
+            "sha256": "b8bc63b65fc8881ccd6afdd4857547a0de88887247d71d82d4f2038b199c6618"
+        },
+        {
+            "file": "Case10_CertIntro.schema.json",
+            "path": "case10_exports/Case10_CertIntro.schema.json",
+            "size_bytes": 1109,
+            "modified_utc": "2025-08-25T06:26:17.770811Z",
+            "sha256": "920f1b6f4544b7853b46550cf8ce963daf8ee40291ec8e42256b2b500c170efa"
+        },
+        {
+            "file": "Case10_Evidence.json",
+            "path": "case10_exports/Case10_Evidence.json",
+            "size_bytes": 501,
+            "modified_utc": "2025-08-25T06:26:17.798813Z",
+            "sha256": "70330204e0bf6073089c29073ffb21157cc321d111999e8f369915436a06b3dc"
+        },
+        {
+            "file": "Case10_Evidence.schema.json",
+            "path": "case10_exports/Case10_Evidence.schema.json",
+            "size_bytes": 1425,
+            "modified_utc": "2025-08-25T06:26:17.798813Z",
+            "sha256": "9403dec0a70e34797b239239657a74742bfccef0a902b2b72d6142521bd5ccb4"
+        },
+        {
+            "file": "Case10_Overlap.json",
+            "path": "case10_exports/Case10_Overlap.json",
+            "size_bytes": 1564,
+            "modified_utc": "2025-08-25T06:26:17.638799Z",
+            "sha256": "7da7f3d502fa4e5ba8ea58c02446fc414e175fc6f29af163f69524c17634895b"
+        },
+        {
+            "file": "Case10_Overlap.schema.json",
+            "path": "case10_exports/Case10_Overlap.schema.json",
+            "size_bytes": 1169,
+            "modified_utc": "2025-08-25T06:26:17.639800Z",
+            "sha256": "7fac96922647056b011a348ac8173a05c6232e8e0da3e1f0d30f1c8bc1da75df"
+        },
+        {
+            "file": "CertificationFooter.json",
+            "path": "case10_exports/CertificationFooter.json",
+            "size_bytes": 417,
+            "modified_utc": "2025-08-25T06:26:17.825816Z",
+            "sha256": "31047f38c343f828bec743dcdea912c0a4785f94b3d696bb5ec3f90749c095b5"
+        },
+        {
+            "file": "CertificationFooter.schema.json",
+            "path": "case10_exports/CertificationFooter.schema.json",
+            "size_bytes": 770,
+            "modified_utc": "2025-08-25T06:26:17.826816Z",
+            "sha256": "3d21b9f17552d9f7ec24ba4bd8606002e8c6fd33a01c27c829140142ac3a008e"
+        },
+        {
+            "file": "Certification_Footer.md",
+            "path": "case10_exports/Certification_Footer.md",
+            "size_bytes": 273,
+            "modified_utc": "2025-08-25T06:26:17.721807Z",
+            "sha256": "f9e26a4ec7f5e552616f87a1f4d644b9470f34ba5c94626ae5ba005303ebb347"
+        },
+        {
+            "file": "EvaluationReport.json",
+            "path": "case10_exports/EvaluationReport.json",
+            "size_bytes": 912,
+            "modified_utc": "2025-08-25T06:26:17.666802Z",
+            "sha256": "50b0fb88fdea7ab8bee6e81a9bd4934741f95d073340f55e2cc507f9cbf4812b"
+        },
+        {
+            "file": "EvaluationReport.schema.json",
+            "path": "case10_exports/EvaluationReport.schema.json",
+            "size_bytes": 600,
+            "modified_utc": "2025-08-25T06:26:17.666802Z",
+            "sha256": "def59515480854d7d9e799cc2bb8bc9025efe62384bbf784962e23ab153e0134"
+        },
+        {
+            "file": "Evaluation_CrossMatch.md",
+            "path": "case10_exports/Evaluation_CrossMatch.md",
+            "size_bytes": 404,
+            "modified_utc": "2025-08-25T06:26:17.667802Z",
+            "sha256": "25908a0cc28b369a56dcc90ded84ed69e769be3f775c4ee5cb24472dc725ed31"
+        },
+        {
+            "file": "OutputManifest.json",
+            "path": "case10_exports/OutputManifest.json",
+            "size_bytes": 4250,
+            "modified_utc": "2025-08-25T06:26:17.694804Z",
+            "sha256": "a0c3e510d8bcb7b050d0b6e6a4925741b53338595b9905b5bfab904c64e76697"
+        },
+        {
+            "file": "OutputManifest.schema.json",
+            "path": "case10_exports/OutputManifest.schema.json",
+            "size_bytes": 667,
+            "modified_utc": "2025-08-25T06:26:17.695804Z",
+            "sha256": "d3b748e84d46006a3a0ca048d1a3c9afb0dd173f6a3986bded3516078b4525e4"
+        },
+        {
+            "file": "VaultRun.json",
+            "path": "case10_exports/VaultRun.json",
+            "size_bytes": 6115,
+            "modified_utc": "2025-08-25T06:26:17.741808Z",
+            "sha256": "54a7ea85f77f4fd9198992625bab96dd4a58901480a52318df0dd7eeab68bd31"
+        },
+        {
+            "file": "VaultRun.schema.json",
+            "path": "case10_exports/VaultRun.schema.json",
+            "size_bytes": 214,
+            "modified_utc": "2025-08-25T06:26:17.741808Z",
+            "sha256": "2731482410eafac9e02fc4ce52f5a3f43aee2d93352e36b9d99f5762cf91a2b7"
+        },
+        {
+            "file": "blueprint_match_chart.png",
+            "path": "case10_exports/blueprint_match_chart.png",
+            "size_bytes": 32747,
+            "modified_utc": "2025-08-25T06:26:17.560793Z",
+            "sha256": "ebea22f92bbb103bcad3d51b1994fa1dfe1a608e485aa6f8a58dc9f8a6892d64"
+        }
+    ],
+    "summary": {
+        "artifact_count": 20,
+        "total_size_bytes": 59426
+    }
+}

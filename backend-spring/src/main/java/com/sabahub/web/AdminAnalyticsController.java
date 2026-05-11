@@ -7,10 +7,18 @@ import com.sabahub.repository.DisputeRepository;
 import com.sabahub.repository.JobRepository;
 import com.sabahub.repository.TransactionRepository;
 import com.sabahub.repository.UserRepository;
+import com.sabahub.service.AdminAnalyticsReportingService;
 import com.sabahub.service.CurrentUserService;
+import com.sabahub.web.dto.admin.AdminAnalyticsDTOs;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
@@ -23,6 +31,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/analytics")
+@Validated
 public class AdminAnalyticsController {
 
     private final UserRepository userRepository;
@@ -30,23 +39,25 @@ public class AdminAnalyticsController {
     private final TransactionRepository transactionRepository;
     private final DisputeRepository disputeRepository;
     private final CurrentUserService currentUserService;
+    private final AdminAnalyticsReportingService adminAnalyticsReportingService;
 
     public AdminAnalyticsController(UserRepository userRepository,
                                     JobRepository jobRepository,
                                     TransactionRepository transactionRepository,
                                     DisputeRepository disputeRepository,
-                                    CurrentUserService currentUserService) {
+                                    CurrentUserService currentUserService,
+                                    AdminAnalyticsReportingService adminAnalyticsReportingService) {
         this.userRepository = userRepository;
         this.jobRepository = jobRepository;
         this.transactionRepository = transactionRepository;
         this.disputeRepository = disputeRepository;
         this.currentUserService = currentUserService;
+        this.adminAnalyticsReportingService = adminAnalyticsReportingService;
     }
 
     @GetMapping("/summary")
     public ResponseEntity<Map<String, Object>> summary() {
-        var me = currentUserService.requireUser();
-        currentUserService.requireRole(me, "ADMIN");
+        requireAdmin();
 
         long users = userRepository.count();
         long jobs = jobRepository.count();
@@ -55,7 +66,7 @@ public class AdminAnalyticsController {
                 .mapToDouble(tx -> tx.getAmount() != null ? tx.getAmount() : 0.0)
                 .sum();
         long disputesOpen = disputeRepository.findAll().stream()
-                .filter(d -> d.getStatus() == com.sabahub.domain.Dispute.Status.OPEN || d.getStatus() == com.sabahub.domain.Dispute.Status.INVESTIGATING)
+                .filter(d -> d.getStatus() == com.sabahub.domain.Dispute.Status.OPEN || d.getStatus() == com.sabahub.domain.Dispute.Status.UNDER_REVIEW)
                 .count();
 
         return ResponseEntity.ok(Map.of(
@@ -71,8 +82,7 @@ public class AdminAnalyticsController {
      */
     @GetMapping("/daily")
     public ResponseEntity<Map<String, Object>> daily() {
-        var me = currentUserService.requireUser();
-        currentUserService.requireRole(me, "ADMIN");
+        requireAdmin();
 
         Instant now = Instant.now();
         Instant start30 = now.minus(30, ChronoUnit.DAYS);
@@ -129,5 +139,48 @@ public class AdminAnalyticsController {
                 "jobs", jobCounts,
                 "revenue", revenueAmounts
         ));
+    }
+
+    @GetMapping("/workspace")
+    public ResponseEntity<AdminAnalyticsDTOs.WorkspaceResponse> workspace(
+            @RequestParam(defaultValue = "30") @Min(7) @Max(365) int days) {
+        requireAdmin();
+        return ResponseEntity.ok(adminAnalyticsReportingService.getWorkspace(days));
+    }
+
+    @PostMapping("/reports/executive")
+    public ResponseEntity<AdminAnalyticsDTOs.ExecutiveReportResponse> executiveReport(
+            @RequestParam(defaultValue = "30") @Min(7) @Max(365) int days) {
+        requireAdmin();
+        return ResponseEntity.ok(adminAnalyticsReportingService.generateExecutiveReport(days));
+    }
+
+    @GetMapping("/export/json")
+    public ResponseEntity<AdminAnalyticsDTOs.ExportBundle> exportJson(
+            @RequestParam(defaultValue = "30") @Min(7) @Max(365) int days) {
+        requireAdmin();
+        return ResponseEntity.ok(adminAnalyticsReportingService.exportBundle(days));
+    }
+
+    @GetMapping(value = "/export/csv", produces = "text/csv")
+    public ResponseEntity<String> exportCsv(
+            @RequestParam(defaultValue = "30") @Min(7) @Max(365) int days) {
+        requireAdmin();
+        String filename = "admin-analytics-" + Instant.now().truncatedTo(ChronoUnit.SECONDS).toString().replace(":", "-") + ".csv";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(adminAnalyticsReportingService.exportCsv(days));
+    }
+
+    private User requireAdmin() {
+        User me = currentUserService.requireUser();
+        boolean allowed = currentUserService.hasRole(me, "ADMIN")
+                || currentUserService.hasRole(me, "SUPER_ADMIN")
+                || currentUserService.hasRole(me, "SUPPORT_ADMIN")
+                || currentUserService.hasRole(me, "FINANCE_ADMIN");
+        if (!allowed) {
+            throw new IllegalStateException("Forbidden");
+        }
+        return me;
     }
 }

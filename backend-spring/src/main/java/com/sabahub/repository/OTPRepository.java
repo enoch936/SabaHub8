@@ -12,9 +12,15 @@ public interface OTPRepository extends MongoRepository<OTP, String> {
     
     // Find latest OTP for an identifier (email or phone)
     Optional<OTP> findFirstByIdentifierOrderByCreatedAtDesc(String identifier);
+
+    // Find latest OTP for an identifier and purpose
+    Optional<OTP> findFirstByIdentifierAndPurposeOrderByCreatedAtDesc(String identifier, OTP.OTPPurpose purpose);
     
     // Find OTP by identifier and code
     Optional<OTP> findByIdentifierAndOtpCode(String identifier, String otpCode);
+
+    // Find OTP by identifier, code and purpose
+    Optional<OTP> findByIdentifierAndOtpCodeAndPurpose(String identifier, String otpCode, OTP.OTPPurpose purpose);
     
     // Find pending OTP for verification
     Optional<OTP> findByIdentifierAndOtpCodeAndStatus(String identifier, String otpCode, OTP.OTPStatus status);

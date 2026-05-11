@@ -1,7 +1,10 @@
 package com.sabahub.web;
 
 import com.sabahub.domain.*;
+import com.sabahub.repository.EmployerRepository;
+import com.sabahub.service.CurrentUserService;
 import com.sabahub.service.EmployerService;
+import com.sabahub.service.MarketplaceSearchService;
 import com.sabahub.web.dto.EmployerDTOs.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +25,9 @@ import java.util.Map;
 public class EmployerController {
 
     private final EmployerService employerService;
+    private final CurrentUserService currentUserService;
+    private final EmployerRepository employerRepository;
+    private final MarketplaceSearchService marketplaceSearchService;
 
     // ==================== KYC & Account Management ====================
 
@@ -322,15 +328,47 @@ public class EmployerController {
         }
     }
 
+    @GetMapping("/marketplace/search")
+    @PreAuthorize("hasAnyRole('EMPLOYER', 'FREELANCER')")
+    public ResponseEntity<?> searchMarketplace(
+            @RequestParam(name = "q", required = false, defaultValue = "") String q,
+            @RequestParam(name = "limit", required = false, defaultValue = "20") int limit,
+            @RequestParam(name = "skill", required = false) String skill,
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "minBudget", required = false) Double minBudget,
+            @RequestParam(name = "maxBudget", required = false) Double maxBudget,
+            @RequestParam(name = "minPrice", required = false) Double minPrice,
+            @RequestParam(name = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(name = "mediaFilter", required = false, defaultValue = "ALL") String mediaFilter) {
+        try {
+            return ResponseEntity.ok(marketplaceSearchService.searchMarketplace(
+                    q,
+                    limit,
+                    skill,
+                    category,
+                    minBudget,
+                    maxBudget,
+                    minPrice,
+                    maxPrice,
+                    mediaFilter
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
     // ==================== Helper Methods ====================
 
     private String getCurrentUserId() {
-        // TODO: Extract from JWT token
-        return "current-user-id";
+        return currentUserService.getCurrentUserId();
     }
 
     private String getCurrentEmployerId() {
-        // TODO: Extract from JWT token
-        return "current-employer-id";
+        User currentUser = currentUserService.requireUser();
+        currentUserService.requireEmployerMode(currentUser);
+        return employerRepository.findByUserId(currentUser.getId())
+                .map(Employer::getId)
+                .orElseThrow(() -> new IllegalStateException("Employer account not found for current user"));
     }
 }

@@ -1,0 +1,4 @@
+"use client"; import { Briefcase, ExternalLink } from 'lucide-react';
+import Link from 'next/link'; interface JobInviteCardProps { jobId: string; jobTitle: string;
+} export function JobInviteCard({ jobId, jobTitle }: JobInviteCardProps) { return ( <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 max-w-xs"> <div className="flex items-center gap-2 mb-2"> <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center"> <Briefcase className="w-4 h-4 text-blue-600" /> </div> <div> <p className="text-xs text-muted-foreground">Job Invitation</p> <p className="text-sm font-medium">{jobTitle}</p> </div> </div> <Link href={`/jobs/${jobId}`} className="flex items-center gap-1 text-xs text-primary hover:underline"> <ExternalLink className="w-3 h-3" />View Job </Link> </div> );
+}

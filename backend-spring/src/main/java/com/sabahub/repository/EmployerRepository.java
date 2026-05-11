@@ -15,6 +15,12 @@ public interface EmployerRepository extends MongoRepository<Employer, String> {
      * Find employer by user ID
      */
     Optional<Employer> findByUserId(String userId);
+
+    /**
+     * Find employer workspace by team member user ID
+     */
+    @Query("{ 'teamMembers.userId': ?0 }")
+    Optional<Employer> findByTeamMembersUserId(String userId);
     
     /**
      * Find all verified employers

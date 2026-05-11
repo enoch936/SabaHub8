@@ -6,6 +6,7 @@ import com.sabahub.repository.AuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -31,6 +32,14 @@ public class AuditService {
             me = null;
         }
 
+        Map<String, Object> resolvedMetadata = new HashMap<>();
+        if (metadata != null) {
+            resolvedMetadata.putAll(metadata);
+        }
+        resolvedMetadata.putIfAbsent("location", resolveLocation());
+        resolvedMetadata.putIfAbsent("timezone", normalizeOptional(request.getHeader("X-Timezone")));
+        resolvedMetadata.putIfAbsent("device", detectDevice(request.getHeader("User-Agent")));
+
         AuditLog audit = new AuditLog();
         audit.setActorUserId(me == null ? null : me.getId());
         audit.setAction(action);
@@ -38,7 +47,7 @@ public class AuditService {
         audit.setEntityId(entityId);
         audit.setIp(extractClientIp());
         audit.setUserAgent(request.getHeader("User-Agent"));
-        audit.setMetadata(metadata);
+        audit.setMetadata(resolvedMetadata);
         auditLogRepository.save(audit);
     }
     
@@ -52,5 +61,92 @@ public class AuditService {
             return xff.split(",")[0].trim();
         }
         return request.getRemoteAddr();
+    }
+
+    private String resolveLocation() {
+        String cloudFrontCity = request.getHeader("CloudFront-Viewer-City");
+        String cloudFrontCountry = request.getHeader("CloudFront-Viewer-Country-Name");
+        String cloudFrontLocation = joinLocation(cloudFrontCity, cloudFrontCountry);
+
+        return normalizeOptional(firstNonBlank(
+                request.getHeader("X-Session-Location"),
+                request.getHeader("X-Location"),
+                cloudFrontLocation,
+                request.getHeader("X-Timezone"),
+                request.getHeader("CF-IPCountry")
+        ));
+    }
+
+    private String joinLocation(String city, String country) {
+        String normalizedCity = normalizeOptional(city);
+        String normalizedCountry = normalizeOptional(country);
+        if (normalizedCity == null && normalizedCountry == null) {
+            return null;
+        }
+        if (normalizedCity == null) {
+            return normalizedCountry;
+        }
+        if (normalizedCountry == null) {
+            return normalizedCity;
+        }
+        return normalizedCity + ", " + normalizedCountry;
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            String normalized = normalizeOptional(value);
+            if (normalized != null) {
+                return normalized;
+            }
+        }
+        return null;
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        return normalized.isBlank() ? null : normalized.replace("_", " ").replace("/", " / ");
+    }
+
+    private String detectDevice(String userAgent) {
+        if (userAgent == null || userAgent.isBlank()) {
+            return "Unknown device";
+        }
+
+        String ua = userAgent.toLowerCase();
+        String platform;
+        if (ua.contains("android")) {
+            platform = "Android";
+        } else if (ua.contains("iphone") || ua.contains("ipad") || ua.contains("ios")) {
+            platform = "iOS";
+        } else if (ua.contains("windows")) {
+            platform = "Windows";
+        } else if (ua.contains("mac os") || ua.contains("macintosh")) {
+            platform = "macOS";
+        } else if (ua.contains("linux")) {
+            platform = "Linux";
+        } else {
+            platform = "Unknown OS";
+        }
+
+        String browser;
+        if (ua.contains("edg/")) {
+            browser = "Edge";
+        } else if (ua.contains("chrome/")) {
+            browser = "Chrome";
+        } else if (ua.contains("safari/") && !ua.contains("chrome/")) {
+            browser = "Safari";
+        } else if (ua.contains("firefox/")) {
+            browser = "Firefox";
+        } else {
+            browser = "Browser";
+        }
+
+        return platform + " · " + browser;
     }
 }

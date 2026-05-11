@@ -16,6 +16,8 @@ public class OTPRequestDTO {
     private String phoneNumber;
 
     private String firstName;
+    private String verificationMethod;
+    private String challengeId;
 
     // Constructors
     public OTPRequestDTO() {}
@@ -35,4 +37,10 @@ public class OTPRequestDTO {
 
     public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getVerificationMethod() { return verificationMethod; }
+    public void setVerificationMethod(String verificationMethod) { this.verificationMethod = verificationMethod; }
+
+    public String getChallengeId() { return challengeId; }
+    public void setChallengeId(String challengeId) { this.challengeId = challengeId; }
 }

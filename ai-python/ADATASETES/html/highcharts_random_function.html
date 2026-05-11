@@ -1,0 +1,31 @@
+<script src='https://code.highcharts.com/highcharts.js'></script>
+<h3>Functions:</h3>
+<h3>x(t)=k*(cos(t)+cos(a*t)/2+sin((a+b)*t)/3); 
+y(t)=k*(sin(t)+sin(a*t)/2+cos((a+b)*t)/3</h3>
+<div id='div007' style='height:85%; width:85%; margin:0 auto'></div>
+<script>
+function randi(min,max){
+    return Math.floor(Math.random()*(max-min+1))+min;};
+function ar(k,a,b){var d=.01,m=640;
+    return Array(m).fill(k).map((k,t)=>
+           [k*(Math.cos(d*t)+Math.cos(a*d*t)/2+
+               Math.sin((a+b)*d*t)/3),
+            k*(Math.sin(d*t)+Math.sin(a*d*t)/2+
+               Math.cos((a+b)*d*t)/3)]);};
+function col(i){
+    var r=randi(10*i,255),
+        g=randi(10*i,255),
+        b=randi(10*i,255);
+    return 'rgb('+r+','+g+','+b+')';}; 
+var series=[],n=12;
+var a=randi(7,15),b=randi(10,24);
+for (var i=1; i<n+1; i++){
+    series.push({name:'k='+i,color:col(i),
+                 lineWidth:1,data:ar(i,a,b)})};
+Highcharts.chart('div007',{
+    chart:{type:'line',backgroundColor:'mintcream'},
+    xAxis:{title:{text:'x'}},yAxis:{title:{text:'y'}},
+    title:{text:'Random Parameters: a,b = '+[a,b]},
+    credits:{enabled:false},legend:{enabled:false},
+    series:series});
+</script>

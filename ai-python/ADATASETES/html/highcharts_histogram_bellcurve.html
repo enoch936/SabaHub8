@@ -1,0 +1,27 @@
+<script src='https://code.highcharts.com/highcharts.js'></script>
+<script src='https://code.highcharts.com/modules/histogram-bellcurve.js'></script>
+<style>
+.centered_resized {position:fixed; top:50%; left:50%; 
+                   transform:translate(-50%,-50%);
+                   width:500; height:600; margin:0 auto;}
+</style>
+<div id='div011' class='centered_resized'></div>
+<script>
+function randi(xmin,xmax){
+    return Math.floor(Math.random()*(xmax-xmin+1))+xmin;};
+var n=3000,m=randi(6,24),p=randi(2,4);
+var col='rgb('+randi(10,240)+','+randi(10,240)+','+randi(10,240)+')';
+var data=Array(n).fill(m).map((a,t)=>
+    [Math.cos(a*t*.01)*Math.cos(t*.01),
+     Math.pow(a*t*.01,p)*Math.sin(t*.01)])
+Highcharts.chart('div011',{
+    title:{text:'Function Parameters: [a,p]='+[m,p]},
+    xAxis:[{title:{text:'Values'},alignTicks:false},
+           {title: {text:'Histogram'},alignTicks:false,opposite:true}],
+    yAxis:[{title:{text:'Values'}},
+           {title:{text:'Histogram'},opposite:true}],
+    series:[{name:'Histogram',type:'histogram',color:'silver',
+             xAxis:1,yAxis:1,baseSeries:'s1',zIndex:-1},
+            {name:'Data',type:'scatter',color:col,
+             data:data,id:'s1',marker:{radius:1}}]});
+</script>

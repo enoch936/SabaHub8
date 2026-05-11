@@ -1,0 +1,31 @@
+{
+    "case_id": "10",
+    "case_title": "CodeRabbit Contamination Blueprint Audit",
+    "created_at_utc": "2025-08-25T06:26:17.667093Z",
+    "source_file": "BlueprintMatch.json",
+    "rubric_scoring": {
+        "severity_of_harm": {
+            "score": 8.5,
+            "level": "High (7\u20138.9)"
+        },
+        "breadth_of_harm": {
+            "score": 7.0,
+            "level": "High (7\u20138.9)"
+        },
+        "novelty": {
+            "score": 7.5,
+            "level": "High (7\u20138.9)"
+        },
+        "reproducibility": {
+            "score": 9.0,
+            "level": "Critical (9\u201310)"
+        },
+        "methodological_insight": {
+            "score": 8.0,
+            "level": "High (7\u20138.9)"
+        }
+    },
+    "narrative": {
+        "summary": "Overlap confirms authorship echo. Contamination meets high-severity criteria and cannot be explained by coincidence."
+    }
+}

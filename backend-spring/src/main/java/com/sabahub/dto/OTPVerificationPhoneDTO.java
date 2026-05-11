@@ -14,6 +14,7 @@ public class OTPVerificationPhoneDTO {
     @NotBlank(message = "OTP code is required")
     @Size(min = 6, max = 6, message = "OTP must be 6 digits")
     private String otpCode;
+    private String challengeId;
 
     public OTPVerificationPhoneDTO() {}
 
@@ -27,4 +28,7 @@ public class OTPVerificationPhoneDTO {
 
     public String getOtpCode() { return otpCode; }
     public void setOtpCode(String otpCode) { this.otpCode = otpCode; }
+
+    public String getChallengeId() { return challengeId; }
+    public void setChallengeId(String challengeId) { this.challengeId = challengeId; }
 }

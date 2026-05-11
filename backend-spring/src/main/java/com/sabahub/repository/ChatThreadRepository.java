@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface ChatThreadRepository extends MongoRepository<ChatThread, String> {
     List<ChatThread> findByParticipantIdsContaining(String userId);
+    List<ChatThread> findByParticipantIdsContainingOrderByLastMessageAtDesc(String userId);
 }

@@ -2,11 +2,11 @@ package com.sabahub.web;
 
 import com.sabahub.service.WalletService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.HashMap;
+import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Map;
 
 @RestController
@@ -20,23 +20,24 @@ public class WalletController {
     }
 
     @GetMapping("/wallet")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getWallet() {
+        return ResponseEntity.ok(walletService.getWallet());
+    }
+
+    @GetMapping("/wallet/forecast")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> getWalletForecast(
+            @RequestParam(defaultValue = "30D") String range,
+            @RequestParam(required = false) Integer horizon,
+            @RequestParam(required = false) String currency
+    ) {
         try {
-            return ResponseEntity.ok(walletService.getWallet());
-        } catch (IllegalStateException e) {
-            // Return empty wallet for unauthenticated users (development mode)
-            Map<String, Object> emptyWallet = new HashMap<>();
-            emptyWallet.put("userId", null);
-            emptyWallet.put("balance", 0.0);
-            emptyWallet.put("availableBalance", 0.0);
-            emptyWallet.put("currency", "ETB");
-            emptyWallet.put("escrowHeld", 0.0);
-            emptyWallet.put("pendingPayouts", 0.0);
-            emptyWallet.put("holds", 0.0);
-            emptyWallet.put("pendingLocalTopups", 0);
-            emptyWallet.put("entries", new java.util.ArrayList<>());
-            emptyWallet.put("transactions", new java.util.ArrayList<>());
-            return ResponseEntity.ok(emptyWallet);
+            Map<String, Object> wallet = walletService.getWallet();
+            String userId = wallet.get("userId") == null ? null : String.valueOf(wallet.get("userId"));
+            return ResponseEntity.ok(walletService.getWalletForecast(userId, range, horizon, currency));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
     }
 }

@@ -1,0 +1,27 @@
+<style>
+@import url('https://fonts.googleapis.com/css?family=Ewert');
+button { background-color:silver; color:#3636ff; 
+        font-family:Ewert; font-size:200%; }
+</style>
+<button type='button' id='button002'
+onclick='uri_encode("\\frac{x^2}{p^2}+\\frac{y^2}{q^2}=1")'>
+Click to encode URI components
+</button><br/>
+\\frac{x^2}{p^2}+\\frac{y^2}{q^2}=1<br/>
+<p id='p002'></p>
+<button onclick='document.getElementById("img002").style.display="block";'>
+Check with the script</button><br/>
+https://render.githubusercontent.com/render/math?math=\\<br/>
+%5Cfrac%7Bx%5E2%7D%7Bp%5E2%7D%2B%5Cfrac%7By%5E2%7D%7Bq%5E2%7D%3D1 
+<br/>from 
+<a href='https://render.githubusercontent.com/'>
+Github rendering => => =></a><br/>
+<img width='200px' id='img002' style='display:none;'
+src='https://render.githubusercontent.com/render/math?math=\\
+%5Cfrac%7Bx%5E2%7D%7Bp%5E2%7D%2B%5Cfrac%7By%5E2%7D%7Bq%5E2%7D%3D1'>
+</img>
+<script>
+function uri_encode(s){
+    doc=document.getElementById('p002');
+    doc.innerHTML=encodeURIComponent(s);};
+</script>

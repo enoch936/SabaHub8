@@ -1,0 +1,585 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <title>MLE_ND_P2_SMC</title>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function(){
+      sagecell.makeSagecell({inputLocation:'div.linked',linked:true,evalButtonText:'Run Linked Cells'});  
+      sagecell.makeSagecell({inputLocation:'div.sage',evalButtonText:'Run'}); });
+    </script>
+  </head>
+  <style>
+    @import 'https://fonts.googleapis.com/css?family=Orbitron|Roboto';
+    body {margin:5px 5px 5px 15px; background-color:mintcream;}; 
+    a,p {color:#00a050; font-family:Roboto;} 
+    h1 {color:#00a0a0; font-family:Orbitron; text-shadow:4px 4px 4px #ccc;} 
+    h2,h3 {color:slategray; font-family:Orbitron; text-shadow:4px 4px 4px #ccc;}
+    h4 {color:#00a0a0; font-family:Roboto;}
+    .sagecell .CodeMirror-scroll {min-height:3em; max-height:70em;}
+    .sagecell table.table_form tr.row-a {background-color:lightgray;} 
+    .sagecell table.table_form tr.row-b {background-color:mintcream;}
+    .sagecell table.table_form td {padding:5px 15px; color:#00a050; font-family:Roboto;}
+    .sagecell_sessionOutput,.sagecell_sessionOutput pre {color:#00a050; font-family:Roboto;}
+  </style>  
+  <body>
+    <h1>🏙 Machine Learning Engineer Nanodegree &nbsp;
+      <a href='https://olgabelitskaya.github.io/README.html'>&#x1F300; &nbsp; Home Page &nbsp; &nbsp; &nbsp;</a></h1>
+    <h2>Supervised Learning</h2>
+    <h1>&#x1F4D1; &nbsp;P2: Finding Donors for CharityML</h1>
+    <h2>Getting Started</h2>
+    <h3>Data</h3>
+In this project, we will employ several supervised algorithms of your choice to accurately model individuals' income using data collected from the 1994 U.S. Census.<br/>
+We will then choose the best candidate algorithm from preliminary results and further optimize this algorithm to best model the data.<br/>
+The goal with this implementation is to construct a model that accurately predicts whether an individual makes more than $50,000.<br/>
+This sort of task can arise in a non-profit setting, where organizations survive on donations.<br/>
+Understanding an individual's income can help a non-profit better understand how large of a donation to request, or whether or not they should reach out to begin with.<br/>
+While it can be difficult to determine an individual's general income bracket directly from public sources, we can (as we will see) infer this value from other publically available features.<br/>
+The dataset for this project originates from the <a href='https://archive.ics.uci.edu/ml/datasets/Census+Income'>&#x1F578;UCI Machine Learning Repository.</a><br/>
+The datset was donated by Ron Kohavi and Barry Becker, after being published in the article "Scaling Up the Accuracy of Naive-Bayes Classifiers: A Decision-Tree Hybrid".<br/>
+You can find the article by Ron Kohavi <a href='https://www.aaai.org/Papers/KDD/1996/KDD96-033.pdf'>&#x1F578;online.</a><br/>
+The data we investigate here consists of small changes to the original dataset, such as removing the <i>fnlwgt</i> feature and records with missing or ill-formatted entries.
+      <h3>Resources</h3>
+<a href='http://archive.ics.uci.edu/ml/datasets.php'>&#x1F578;UCI Machine Learning Repository&nbsp;</a><br/>
+<a href='https://scikit-learn.org/stable/index.html'>&#x1F578;scikit-learn. Machine Learning in Python&nbsp;</a>
+<a href='http://seaborn.pydata.org/index.html'>&#x1F578;seaborn: statistical data visualization&nbsp;</a><br/>
+<a href='https://machinelearningmastery.com/gentle-introduction-gradient-boosting-algorithm-machine-learning/'>&#x1F578;A Gentle Introduction to the Gradient Boosting Algorithm for Machine Learning</a><br/>
+<a href='https://www.youtube.com/watch?v=9wn1f-30_ZY'>&#x1F578;Gradient Boosting Method and Random Forest</a>
+<a href='https://www.is.uni-freiburg.de/ressourcen/business-analytics/10_ensemblelearning.pdf'>&#x1F578;Data Mining: Ensemble Learning</a>
+      <h3>Code Library</h3> 
+<div class='linked'><script type='text/x-sage'>
+import warnings; warnings.filterwarnings('ignore')
+from sklearn.exceptions import DataConversionWarning
+warnings.filterwarnings('ignore',category=DataConversionWarning)
+import numpy,pandas,pylab,seaborn,time
+pylab.style.use('seaborn-whitegrid')
+import matplotlib.patches as mpatches
+from sklearn.base import clone
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split,GridSearchCV
+from sklearn.metrics import f1_score,accuracy_score,fbeta_score
+from sklearn.metrics import confusion_matrix,make_scorer
+from sklearn.ensemble import \
+AdaBoostClassifier,GradientBoostingClassifier,RandomForestClassifier
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import SGDClassifier
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+# https://github.com/udacity/machine-learning/blob/master/projects/finding_donors/visuals.py
+def distribution(data,transformed=False):
+    fig=pylab.figure(figsize=(10,5))
+    st1='Log-transformed Distributions of Continuous Census Data Features'
+    st2='Skewed Distributions of Continuous Census Data Features'
+    for i,feature in enumerate(['capital-gain','capital-loss']):
+        ax=fig.add_subplot(1,2,i+1)
+        ax.hist(data[feature],bins=30,color='#00A0A0')
+        ax.set_title('`%s` Feature Distribution'%(feature),fontsize=12)
+        ax.set_xlabel('Value'); ax.set_ylabel('Number of Records')
+        ax.set_ylim((0,2000)); ax.set_yticks([0,500,1000,1500,2000])
+        ax.set_yticklabels([0,500,1000,1500,'>2000'])
+    if transformed:
+        fig.suptitle(st1,fontsize=12,y=.03)
+    else:
+        fig.suptitle(st2,fontsize=12,y=.03)
+    fig.tight_layout(); pylab.show()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+def evaluate(results,accuracy,f1):
+    fig,ax=pylab.subplots(2,3,figsize=(10,9))
+    ti='Performance Metrics for Three Supervised Learning Models'
+    bar_width=.3; colors=['#A00000','#00A0A0','#00A000']
+    for k,learner in enumerate(results.keys()):
+        for j,metric in enumerate(['train_time','acc_train','f_train',
+                                   'pred_time','acc_test','f_test']):
+            for i in numpy.arange(3):
+                ax[int(j/3),j%3].bar(i+k*bar_width,results[learner][i][metric],
+                                     width=bar_width,color=colors[k])
+                ax[int(j/3),j%3].set_xticks([.45,1.45,2.45])
+                ax[int(j/3),j%3].set_xticklabels(['1%','10%','100%'])
+                ax[int(j/3),j%3].set_xlabel('Training Set Size')
+                ax[int(j/3),j%3].set_xlim((-.1,3.))
+    ax[0,0].set_ylabel('Time (in seconds)')
+    ax[0,1].set_ylabel('Accuracy Score'); ax[0,2].set_ylabel('F-score')
+    ax[1,0].set_ylabel('Time (in seconds)')
+    ax[1,1].set_ylabel('Accuracy Score'); ax[1,2].set_ylabel('F-score')
+    ax[0,0].set_title('Model Training')
+    ax[0,1].set_title('Accuracy Score on Training Subset')
+    ax[0,2].set_title('F-score on Training Subset')
+    ax[1,0].set_title('Model Predicting')
+    ax[1,1].set_title('Accuracy Score on Testing Set')
+    ax[1,2].set_title('F-score on Testing Set')
+    ax[0,1].axhline(y=accuracy,xmin=-.1,xmax=3.,
+                    linewidth=1,color='k',linestyle='dashed')
+    ax[1,1].axhline(y=accuracy,xmin=-.1,xmax=3.,
+                    linewidth=1,color='k',linestyle='dashed')
+    ax[0,2].axhline(y=f1,xmin=-.1,xmax=3.,
+                    linewidth=1,color='k',linestyle='dashed')
+    ax[1,2].axhline(y=f1,xmin=-.1,xmax=3.,
+                    linewidth=1,color='k',linestyle='dashed')
+    ax[0,1].set_ylim((0,1)); ax[0,2].set_ylim((0,1))
+    ax[1,1].set_ylim((0,1)); ax[1,2].set_ylim((0,1))
+    patches=[]
+    for i,learner in enumerate(results.keys()): 
+        patches.append(mpatches.Patch(color=colors[i],label=learner))
+    pylab.legend(handles=patches,bbox_to_anchor=(-.8,-.3),
+                 loc='upper center',borderaxespad=0.,ncol=3,fontsize='large')
+    pylab.suptitle(ti,fontsize=12,y=.05)
+    pylab.tight_layout(); pylab.show()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+def feature_plot(importances,X_train,y_train):
+    ti='Normalized Weights for First Five Most Predictive Features'
+    indices=numpy.argsort(importances)[::-1]
+    columns=X_train.columns.values[indices[:5]]
+    values=importances[indices][:5]
+    fig=pylab.figure(figsize=(10,5))
+    pylab.title(ti,fontsize=16)
+    pylab.bar(numpy.arange(5),values,width=.6,align='center',
+              color='#00A000',label='Feature Weight')
+    pylab.bar(numpy.arange(5)-.3,numpy.cumsum(values),width=.2,
+              align='center',color='#00A0A0',label='Cumulative Feature Weight')
+    pylab.xticks(numpy.arange(5),columns); pylab.xlim((-.5,4.5))
+    pylab.ylabel('Weight',fontsize=12)
+    pylab.xlabel('Feature',fontsize=12)   
+    pylab.legend(loc='upper center')
+    pylab.tight_layout(); pylab.show()  
+</script></div><br/>
+    <h2>Exploring the Data</h2>
+Let's load the census data.<br/>
+Note that the last column from this dataset, <i>income</i>, will be our <b>target</b> label (whether an individual makes more than, or at most, $50,000 annually).<br/> 
+All other columns are <b>features</b> about each individual in the census database.
+<div class='linked'><script type='text/x-sage'>
+path='https://raw.githubusercontent.com/OlgaBelitskaya/'+\
+     'machine_learning_engineer_nd009/master/Machine_Learning_Engineer_ND_P2/'
+data=pandas.read_csv(path+'census.csv')
+display(data.head().T); data.describe()
+</script></div><br/>
+    <h3>Implementation: Data Exploration</h3>
+A cursory investigation of the dataset will determine how many individuals fit into either group, and will tell us about the percentage of these individuals making more than 50,000 USD.<br/> 
+We need to compute the following:<br/>
+- The total number of records, <i>n_records</i>.<br/>
+- The number of individuals making more than 50,000 USD annually, <i>n_greater_50k</i>.<br/>
+- The number of individuals making at most 50,000 USD annually, <i>n_at_most_50k</i>.<br/>
+- The percentage of individuals making more than 50,000 USD annually, <i>greater_percent</i>.<br/>
+<div class='linked'><script type='text/x-sage'>
+n_greater_50k=len(data[data['income']=='>50K'])
+n_at_most_50k=len(data[data['income']=='<=50K'])
+n_records=len(data)
+greater_percent=float(n_greater_50k*100.0/n_records)
+table([('Total number of records: ',n_records),
+       ('Individuals making more than $50,000: ',n_greater_50k),
+       ('Individuals making at most $50,000: ',(n_at_most_50k)),
+       ('Percentage of individuals making more than $50,000: ',greater_percent)])
+</script></div><br/>
+    <h3>Features' Description</h3>
+<b>age</b>: continuous.<br/>
+<b>workclass</b>: Private, Self-emp-not-inc, Self-emp-inc, Federal-gov, Local-gov, State-gov, Without-pay, Never-worked.<br/>
+<b>education</b>: Bachelors, Some-college, 11th, HS-grad, Prof-school, Assoc-acdm, Assoc-voc, 9th, 7th-8th, 12th, Masters, 1st-4th, 10th, Doctorate, 5th-6th, Preschool.<br/>
+<b>education-num</b>: continuous.<br/>
+<b>marital-status</b>: Married-civ-spouse, Divorced, Never-married, Separated, Widowed, Married-spouse-absent, Married-AF-spouse.<br/>
+<b>occupation</b>: Tech-support, Craft-repair, Other-service, Sales, Exec-managerial, Prof-specialty, Handlers-cleaners, <br/>Machine-op-inspct, Adm-clerical, Farming-fishing, Transport-moving, Priv-house-serv, Protective-serv, Armed-Forces.<br/>
+<b>relationship</b>: Wife, Own-child, Husband, Not-in-family, Other-relative, Unmarried.<br/>
+<b>race</b>: Black, White, Asian-Pac-Islander, Amer-Indian-Eskimo, Other.<br/>
+<b>sex</b>: Female, Male.<br/>
+<b>capital-gain</b>: continuous.<br/>
+<b>capital-loss</b>: continuous.<br/>
+<b>hours-per-week</b>: continuous.<br/>
+<b>native-country</b>: United-States, Cambodia, England, Puerto-Rico, Canada, Germany, Outlying-US(Guam-USVI-etc), India, Japan, Greece, South, China, Cuba, Iran,<br/>Honduras, Philippines, Italy, Poland, Jamaica, Vietnam, Mexico, Portugal, Ireland, France, Dominican-Republic, Laos, Ecuador, Taiwan, Haiti, Columbia, Hungary, Guatemala,<br/>Nicaragua, Scotland, Thailand, Yugoslavia, El-Salvador, Trinadad&Tobago, Peru, Hong, Holand-Netherlands.
+    <h2>Preparing the Data</h2>
+Before data can be used as input for machine learning algorithms, it often must be cleaned, formatted, and restructured — this is typically known as <b>preprocessing</b>.<br/>
+Fortunately, for this dataset, there are no invalid or missing entries we must deal with, however, there are some qualities about certain features that must be adjusted.<br/>
+This preprocessing can help tremendously with the outcome and predictive power of nearly all learning algorithms.
+    <h3>Transforming Skewed Continuous Features</h3>
+A dataset may sometimes contain at least one feature whose values tend to lie near a single number,<br/>but will also have a non-trivial number of vastly larger or smaller values than that single number.<br/>
+Algorithms can be sensitive to such distributions of values and can underperform if the range is not properly normalized.<br/>
+With the census dataset two features fit this description: <i>capital-gain</i> and <i>capital-loss</i>.<br/>
+Let's plot a histogram of these two features and have a look on the range of the values present and how they are distributed.
+<div class='linked'><script type='text/x-sage'>
+income_raw=data['income']
+features_raw=data.drop('income',axis=1)
+distribution(data)
+</script></div><br/>
+For highly-skewed feature distributions such as <i>capital-gain</i> and <i>capital-loss</i>, it is common practice to apply a <a href='https://en.wikipedia.org/wiki/Data_transformation_(statistics)'>&#x1F578;logarithmic transformation</a> on the data <br/>
+so that the very large and very small values do not negatively affect the performance of a learning algorithm.<br/>
+Using a logarithmic transformation significantly reduces the range of values caused by outliers.<br/> 
+Care must be taken when applying this transformation, however: the logarithm of 0 is undefined,<br/>
+so we must translate the values by a small amount above 0 to apply the logarithm successfully.
+<div class='linked'><script type='text/x-sage'>
+skewed=['capital-gain','capital-loss']
+features_raw[skewed]=data[skewed].apply(lambda x:numpy.log(x+1))
+distribution(features_raw,transformed=True)
+</script></div><br/>
+    <h3>Normalizing Numerical Features</h3>
+In addition to performing transformations on features that are highly skewed, 
+it is often good practice to perform some type of scaling on numerical features.<br/>
+Applying a scaling to the data does not change the shape of each feature's distribution (such as <i>capital-gain</i> or 
+<i>capital-loss</i> above);<br/>
+however, normalization ensures that each feature is treated equally when applying supervised learners.<br/> 
+Note that once scaling is applied, observing the data in its raw form will no longer have the same original meaning.     
+<div class='linked'><script type='text/x-sage'>
+scaler=MinMaxScaler()
+numerical=['age','education-num','capital-gain','capital-loss','hours-per-week']
+features_raw[numerical]=scaler.fit_transform(data[numerical])
+features_raw.head().T
+</script></div><br/>
+    <h3>Implementation: Data Preprocessing</h3>
+From the table in <b>Exploring the Data</b> above, we can see there are several features for each record that are non-numeric.<br/> Typically, learning algorithms expect input to be numeric, which requires that non-numeric features (called <b>categorical variables</b>) be converted.<br/>
+One popular way to convert categorical variables is by using the <b>one-hot encoding</b> scheme.<br/>
+One-hot encoding creates a <b>"dummy"</b> variable for each possible category of each non-numeric feature.<br/>
+For example, assume someFeature has three possible entries: A, B, or C.<br/>
+We then encode this feature into <i>someFeature_A</i>, <i>someFeature_B</i> and <i>someFeature_C</i>.
+<div class='linked'><script type='text/x-sage'>
+table([[' ','someFeature',' ','someFeature_A','someFeature_B','someFeature_C'],
+       ['0','B',' ','0','1','0'],
+       ['1','C','=> one-hot encode =>','0','0','1'],
+       ['2','A',' ','1','0','0']])
+</script></div><br/>
+Additionally, as with the non-numeric features, we need to convert the non-numeric target label, <i>income</i> to numerical values for the learning algorithm to work.<br/>
+      Since there are only two possible categories for this label (<i>&#8924;50K</i> and <i>&#62;50K</i>),<br/>
+we can avoid using one-hot encoding and simply encode these two categories as 0 and 1, respectively.<br/>
+In code cell below, we will need to implement the following:<br/>
+Use <i>pandas.get_dummies()</i> to perform one-hot encoding on the <i>features_raw</i> data.<br/>
+Convert the target label <i>income_raw</i> to numerical entries.<br/>
+Set records with <i>&#8924;50K</i> to 0 and records with <i>&#62;50K</i> to 1.
+<div class='linked'><script type='text/x-sage'>
+categorical=['workclass','education_level','marital-status',
+             'occupation','relationship','race','sex','native-country']
+features=pandas.DataFrame(features_raw)
+income=income_raw.replace(['<=50K','>50K'],[0,1]) 
+for element in categorical: 
+    features[element]=pandas.get_dummies(features_raw[element])
+encoded=list(features[categorical].columns) 
+print ('{} total features after one-hot encoding.'\
+.format(len(encoded))); print (encoded)
+</script></div><br/>
+    <h3>Shuffle and Split Data</h3>
+Now all <b>categorical</b> variables have been converted into <b>numerical</b> features, and all numerical features have been normalized.<br/> 
+As always, we will now split the data (both features and their labels) into training and test sets.<br/> 
+80% of the data will be used for training and 20% for testing.<br/>
+<div class='linked'><script type='text/x-sage'>
+X_train,X_test,y_train,y_test=\
+train_test_split(features,income,test_size=.2,random_state=0)
+print ('Training set has {} samples.'.format(X_train.shape[0])) 
+print ('Testing set has {} samples.'.format(X_test.shape[0]))
+</script></div><br/>
+    <h2>Evaluating Model Performance</h2>
+In this section, we will investigate four different algorithms, and determine which is best at modeling the data.<br/>
+Three of these algorithms will be supervised learners of your choice, and the fourth algorithm is known as a naive predictor.<br/>
+    <h3>Metrics and the Naive Predictor</h3>
+<b>CharityML</b>, equipped with their research, knows individuals that make more than 50,000 USD are most likely to donate to their charity.<br/> 
+Because of this, CharityML is particularly interested in predicting who makes more than 50,000 USD accurately.<br/> 
+It would seem that using <b>accuracy</b> as a metric for evaluating a particular model's performace would be appropriate.<br/>
+Additionally, identifying someone that <b>does not make more than 50,000 USD</b> as someone who does would be detrimental to CharityML, since they are looking to find individuals willing to donate.<br/>
+Therefore, a model's ability to <b>precisely</b> predict those that make more than 50,000 USD is <b>more important</b> than the model's ability to recall those individuals.<br/>
+We can use <b>F-beta</b> score as a metric that considers both precision and recall:<br/>
+<p>$F_{\beta} = (1 + \beta^2) \cdot = \frac {precision \cdot recall}{(\beta^2 \cdot precision) + recall}$</p>
+In particular, when  $\beta = 0.5$ , more emphasis is placed on precision. This is called the $F_{0.5}$  score (or F-score for simplicity).<br/>
+Looking at the distribution of classes (those who make at most 50,000 USD, and those who make more), it's clear most individuals do not make more than 50,000 USD.<br\>
+This can greatly affect accuracy, since we could simply say "this person <b>does not make more than 50,000 USD</b>" and generally be right, without ever looking at the data!<br/> 
+Making such a statement would be called naive, since we have not considered any information to substantiate the claim.<br/> 
+It is always important to consider the <b>naive prediction</b> for your data, to help establish a benchmark for whether a model is performing well.<br/>
+That been said, using that prediction would be pointless: If we predicted all people made less than 50,000 USD, CharityML would identify no one as donors.<br/>
+<p>Note: Recap of accuracy, precision, recall.</p>
+<b>Accuracy</b> measures how often the classifier makes the correct prediction.<br/>
+It’s the ratio of the number of correct predictions to the total number of predictions (the number of test data points).
+<p>$accuracy = \frac {number \ of \ correct \ predictions}{total \ number \ of \ predictions}$</p>
+<b>Precision</b> tells us what proportion of data points we classified as individuals making more than 50,000 USD, actually made more than 50,000 USD.<br/>
+It is a ratio of true positives to all positives (all points classified as individuals making more than 50,000 USD, irrespective of whether that was the correct classification),<br/>
+in other words it is the ratio of
+<p>$precision = \frac {true \ positives}{true \ positives + false \ positives}$</p>
+<b>Recall</b> (sensitivity) tells us what proportion of individuals that actually made more than 50,000 USD were classified by us as individuals making more than 50,000 USD.<br/> 
+It is a ratio of true positives to all individuals that actually made more than 50,000 USD, in other words it is the ratio of<br/>
+<p>$recall = \frac {true \ positives}{true \ positives + false \ negatives}$</p>
+For classification problems that are skewed in their classification distributions like in our case, accuracy by itself is not a very good metric.<br\>
+Precision and recall help a lot and can be combined to get the F1 score, which is the weighted average (harmonic mean) of the precision and recall scores.<br/>
+This score can range from 0 to 1, with 1 being the best possible F1 score (we take the harmonic mean as we are dealing with ratios).
+    <h3>Question 1 - Naive Predictor Performace</h3>
+<i>If we chose a model that always predicted an individual made more than 50,000 USD, what would that model's accuracy and F-score be on this dataset?</i>
+    <h3>Answer 1</h3>
+The code cell below displays both indicators in the output.
+<div class='linked'><script type='text/x-sage'>
+accuracy0=accuracy_score(income,numpy.array([1]*len(income)))
+recall=1 # ==numpy.sum(income)/(numpy.sum(income)+0) 
+beta=.5; precision=numpy.sum(income)/len(income)
+fscore0=(1 + beta**2)*(precision*recall)/((beta**2*precision)+recall)
+# alternative method 
+fscore0=fbeta_score(income,numpy.array([1]*len(income)),beta=.5) 
+print ('Naive Predictor: accuracy score - {:.4f}, F-score - {:.4f}'\
+.format(accuracy0,fscore0))
+</script></div><br/>
+    <h3>Supervised Learning Models</h3>
+The following supervised learning models are currently available in scikit-learn that you may choose from:<br/>
+- Gaussian Naive Bayes (GaussianNB)<br/>
+- Decision Trees<br/>
+- Ensemble Methods (Bagging, AdaBoost, Random Forest, Gradient Boosting)<br/>
+- K-Nearest Neighbors (KNeighbors)<br/>
+- Stochastic Gradient Descent Classifier (SGDC)<br/>
+- Support Vector Machines (SVM)<br/>
+- Logistic Regression<br/>
+    <h3>Question 2 - Model Application</h3>
+<i>List three of the supervised learning models above that are appropriate for this problem that you will test on the census data.</i><br/><i>For each model chosen:</i><br/>
+<i>- Describe one real-world application in industry where the model can be applied. (You may need to do research for this — give references!)</i><br/>
+<i>- What are the strengths of the model; when does it perform well?</i><br/>
+<i>- What are the weaknesses of the model; when does it perform poorly?</i><br/>
+<i>- What makes this model a good candidate for the problem, given what you know about the data?</i><br/>
+    <h3>Answer 2</h3>
+I have chosen the following models: <i>GradientBoostingClassifier(); RandomForestClassifier(); AdaBoostClassifier()</i>.<br/> 
+All of them are <b>ensemble</b> methods and combine the predictions of several base estimators to improve generalizability / robustness over a single estimator.<br/>
+Let's have a look at their applications and characteristics:<br/>
+1) <i>GradientBoostingClassifier</i>.<br/>
+<b>Applications</b>: in the field of learning to rank (for example, web-seach), in ecology, etc.<br/>
+<a href='http://proceedings.mlr.press/v14/mohan11a/mohan11a.pdf'>&#x1F578;Web-Search Ranking with Initialized Gradient Boosted Regression Trees</a><br/>
+<a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3885826/'>&#x1F578;Gradient boosting machines, a tutorial</a><br/>
+The advantages and the disadvantages (Gradient Tree Boosting).<br/>
+<b>Strengths</b>: natural handling of data of mixed type (= heterogeneous features), predictive power, robustness to outliers in output space (via robust loss functions).<br/>
+<b>Weaknesses</b>: scalability, due to the sequential nature of boosting it can hardly be parallelized.<br/>
+2) <i>RandomForestClassifier</i>.<br/>
+<b>Applications</b>: in ecology, bioinformatics, etc.<br/>
+<a href='https://esajournals.onlinelibrary.wiley.com/doi/abs/10.1890/07-0539.1'>&#x1F578;Random Forests for Classification in Ecology</a><br/>
+<a href='http://www.cs.cmu.edu/~qyj/papersA08/11-rfbook.pdf'>&#x1F578;Random Forest for Bioinformatics</a><br/>
+The advantages and the disadvantages (Random Forests).<br/>
+<b>Strengths</b>: runs efficiently on large data bases; gives estimates of what variables are important in the classification;<br/> maintains accuracy when a large proportion of the data are missing; high prediction accuracy.<br/>
+<b>Weaknesses</b>: difficult to interpret, can be slow to evaluate.<br/>
+3) <i>AdaBoostClassifier</i>.<br/>
+<b>Applications</b>: the problem of face detection, text classification, etc.<br/>
+<a href='https://www.sciencedirect.com/science/article/pii/S1077314210000871'>&#x1F578;AdaBoost-based face detection for embedded systems</a><br/>
+<a href='http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.443.8019&rep=rep1&type=pdf'>&#x1F578;Text Classification by Boosting Weak Learners based on Terms and Concepts</a><br/>
+The advantages and the disadvantages (Ada Boost).<br/>
+<b>Strengths</b>: can be used with data that is textual, numeric, discrete, etc.; can be combined with any other learning algorithm, not prone to overfitting; simple to implement.<br/>
+<b>Weaknesses</b>: can be sensitive to noisy data and outliers; the performance depends on data and weak learner (can fail if weak classifiers too complex).<br/>
+The outputs in our case are the variant of social ranking and it's a well-known fact that ensemble classifiers tend to be a better choice for this ranking.<br/>
+All these algorithms will produce enough good predictions because of some reasons:<br/>
+- they usually demonstrate high performance in practical tasks;<br/>
+- do not so prone to overfitting;<br/>
+- work well with mixed types of features (categorical and numeric).<br/>
+    <h3>Implementation: Creating a Training and Predicting Pipeline</h3>
+To properly evaluate the performance of each model we've chosen, it's important that we create a training and predicting pipeline<br/>
+that allows us to quickly and effectively train models using various sizes of training data and perform predictions on the testing data.<br/>
+The implementation here will be used in the following section.<br/>
+We will do the following points:<br/>
+- Import <i>fbeta_score</i> and <i>accuracy_score</i> from <i>sklearn.metrics</i>.<br/>
+- Fit the learner to the sampled training data and record the training time.<br/>
+- Perform predictions on the test data <i>X_test</i>, and also on the first 300 training points <i>X_train[:300]</i>.<br/>
+&nbsp;&nbsp;- Record the total prediction time.<br/>
+- Calculate the accuracy score for both the training subset and testing set.<br/>
+- Calculate the F-score for both the training subset and testing set.<br/>
+&nbsp;&nbsp;- Make sure that you set the <i>beta</i> parameter!    
+<div class='linked'><script type='text/x-sage'>
+def train_predict(learner,sample_size,X_train,y_train,X_test,y_test):   
+    results={}; n=int(300); start=time.time()
+    learner.fit(X_train[:sample_size],y_train[:sample_size]) 
+    end=time.time(); results['train_time']=end-start; start=time.time()
+    predictions_test=learner.predict(X_test)
+    predictions_train=learner.predict(X_train[:n])
+    end=time.time(); results['pred_time']=end-start
+    results['acc_train']=accuracy_score(y_train[:n],predictions_train)
+    results['acc_test']=accuracy_score(y_test,predictions_test)
+    results['f_train']=fbeta_score(y_train[:n],predictions_train,
+                                   average='macro',beta=.5)
+    results['f_test']=fbeta_score(y_test,predictions_test,
+                                  average='macro',beta=.5)
+    print ('{} trained on {} samples.'\
+    .format(learner.__class__.__name__,sample_size))
+    return results
+</script></div><br/>
+    <h3>Implementation: Initial Model Evaluation</h3>
+Next steps are the following:<br/>
+Import the three supervised learning models you've discussed in the previous section.<br/>
+Initialize the three models and store them in <i>clf_A</i>, <i>clf_B</i>, and <i>clf_C</i>.<br/>
+Use the <i>random_state</i> parameter for each model you use, if provided.<br/>
+Note: Use the default settings for each model — you will tune one specific model in a later section.<br/>
+Calculate the number of records equal to 1%, 10%, and 100% of the training data.<br/>
+Store those values in <i>samples_1</i>, <i>samples_10</i>, and <i>samples_100</i> respectively.
+<div class='linked'><script type='text/x-sage'>
+clf_A=GradientBoostingClassifier(random_state=10)
+clf_B=RandomForestClassifier()
+clf_C=AdaBoostClassifier()
+samples_1=int(len(X_train)/100)
+samples_10=int(len(X_train)/10)
+samples_100=len(X_train)
+results={}
+for clf in [clf_A,clf_B,clf_C]:
+    clf_name=clf.__class__.__name__; results[clf_name]={}
+    for i,samples in enumerate([samples_1,samples_10,samples_100]):
+        results[clf_name][i]=\
+        train_predict(clf,samples,X_train,y_train,X_test,y_test)
+evaluate(results,accuracy0,fscore0)
+</script></div><br/>
+    <h3>Improving Results</h3>
+In this final section, we will choose from the three supervised learning models the best model to use on the student data.<br/> 
+We will then perform a grid search optimization for the model over the entire training set (<i>X_train</i> and <i>y_train</i>)<br/> by tuning at least one parameter to improve upon the untuned model's F-score.
+    <h3>Question 3 - Choosing the Best Model</h3>
+<i>Based on the evaluation you performed earlier, in one to two paragraphs, explain to CharityML which of the three models you believe<br/>to be most appropriate for the task of identifying individuals that make more than 50,000 USD.</i>
+      <h3>Answer 3</h3>
+I think that for this case, we need to choose the <i>GradientBoostingClassifier</i> algorithm as it showed the highest accuracy and F-score for the testing set and escaped overfitting.<br/>
+The algorithm is proved to be very time-consuming in the training process, but it can be ignored since the amount of data is not very big.<br/>
+The <b>confusion matrix</b> can be used to evaluate the quality of the output for the chosen classifier.
+<div class='linked'><script type='text/x-sage'>
+model=clf_A; pylab.figure(figsize=(10,5))
+cm=confusion_matrix(y_test.values,model.predict(X_test))
+seaborn.heatmap(cm,annot=True,cmap='BuGn',
+                xticklabels=['no','yes'],yticklabels=['no','yes'])
+pylab.ylabel('True label'); pylab.xlabel('Predicted label')
+pylab.title('Confusion matrix for:\n{}'\
+.format(model.__class__.__name__)); pylab.show()
+</script></div><br/>
+    <h3>Question 4 - Describing the Model in Layman's Terms</h3>
+<i>In one to two paragraphs, explain to CharityML, in layman's terms, how the final model chosen is supposed to work.<br/>
+Be sure that you are describing the major qualities of the model, such as how the model is trained and how the model makes a prediction.<br/> 
+Avoid using advanced mathematical or technical jargon, such as describing equations or discussing the algorithm implementation.</i>
+    <h3>Answer 4</h3>
+Let's describe the mechanism of the model with three important component:<br/>
+- the measurement for checking how well our model predicts the outputs based on input values,<br/> 
+- the algorithm from the certain group (for examples, decision trees) for making predictions,<br/>
+- the additive mechanism for algorithms for minimizing the measure function.<br/>
+At first, we set up the most important component (a measurement) that maps every event onto a real number intuitively representing some "cost" associated with this event.<br/> 
+The goal of estimation for supervised learning is to find the measure function that models all inputs (events) well:<br/> 
+if it were applied to the training set, it should predict the output values enough well.<br/> 
+Then we check the model effectiveness applied it to the testing set.<br/>
+The measurement quantifies the amount by which the predictions deviate from the actual output values. Naturally, our task is to reach the minimum "cost".<br/>
+At each particular Gradient Boosting iteration, a new algorithm (in practice, it's almost always from a tree-based group) is trained with respect to the error that was learned so far.<br/>
+This procedure has the following steps:<br/>
+- add one algorithm that can reduce the loss based on the current estimates (existing algorithms in the model are not changed);<br/>
+- use an effective procedure called gradient descent to minimize the loss:<br/>
+&nbsp;&nbsp;- fit a new model to the data;<br/>
+&nbsp;&nbsp;- choose the directions for changing the measure function by finding the negative moving rates of this function, it helps to get a lower cost on the next iteration;<br/>
+&nbsp;&nbsp;- find the best step-size in the chosen directions, the step magnitude is multiplied by a factor between 0 and 1 called a learning rate;<br/>
+&nbsp;&nbsp;- update the measure function;<br/>
+- repeat till the fixed number of algorithms are added or the loss reaches an acceptable level or the loss no longer improves on an external validation dataset.<br/>
+The result of the model training should be that predictions slowly converge toward observed values.<br/>
+The model for the CharityML is trained to produce the best predictions for the <i>income</i> categorical variable,<br/>
+and the loss function evaluates how these predictions deviate from the actual values.
+    <h3>Implementation: Model Tuning</h3>
+We will tune the chosen model and use grid search (<i>GridSearchCV</i>) with at least one important parameter tuned with at least 3 different values.<br/>
+We will need to use the entire training set for this.<br/>
+Our steps:<br/>
+Import <i>sklearn.grid_search.GridSearchCV</i> and <i>sklearn.metrics.make_scorer</i>.<br/>
+Initialize the classifier you've chosen and store it in <i>clf</i>.<br/>
+&nbsp;&nbsp;Set a <i>random_state</i> if one is available to the same state you set before.<br/>
+Create a dictionary of parameters you wish to tune for the chosen model.<br/>
+&nbsp;&nbsp;Example: <i>parameters = {'parameter' : [list of values]}</i>.<br/>
+&nbsp;&nbsp;Note: Avoid tuning the <i>max_features</i> parameter of your learner if that parameter is available!<br/>
+Use <i>make_scorer</i> to create a <i>fbeta_score</i> scoring object (with $\beta=0.5$).<br/>
+Perform grid search on the classifier <i>clf</i> using <i>scorer</i>, and store it in <i>grid_obj</i>.<br/>
+Fit the grid search object to the training data (<i>X_train, y_train</i>), and store it in <i>grid_fit</i>.<br/>
+<div class='linked'><script type='text/x-sage'>
+clf=GradientBoostingClassifier(random_state=10)
+parameters={'n_estimators':[104,208],
+            'learning_rate':[.2,.3],'max_depth':[2,3]}
+scorer=make_scorer(fbeta_score,beta=.5)
+grid_obj=GridSearchCV(estimator=clf,
+                      param_grid=parameters,scoring=scorer)
+grid_fit=grid_obj.fit(X_train,y_train)
+best_clf=grid_fit.best_estimator_
+predictions=(clf.fit(X_train,y_train)).predict(X_test)
+best_predictions=best_clf.predict(X_test)
+print ('Unoptimized model\n------')
+print ('Accuracy score on testing data: {:.4f}'\
+.format(accuracy_score(y_test,predictions)))
+print ('F-score on testing data: {:.4f}'\
+.format(fbeta_score(y_test,predictions,beta=.5)))
+print ('\nOptimized Model\n------')
+print ('Final accuracy score on the testing data: {:.4f}'\
+.format(accuracy_score(y_test,best_predictions)))
+print ('Final F-score on the testing data: {:.4f}'\
+.format(fbeta_score(y_test,best_predictions,beta=.5)))
+print ('\nOptimized Model Parameters\n------')
+best_clf.get_params()
+</script></div><br/>
+    <h3>Question 5 - Final Model Evaluation</h3>
+<i>What is your optimized model's accuracy and F-score on the testing data? Are these scores better or worse than the unoptimized model?<br/>
+How do the results from your optimized model compare to the naive predictor benchmarks you found earlier in Question 1?</i>
+<div class='linked'><script type='text/x-sage'>
+table([['Metric','Benchmark Predictor',
+        'Unoptimized Model','Optimized Model'],
+       ['Accuracy Score',accuracy0,
+        accuracy_score(y_test,predictions),
+        accuracy_score(y_test,best_predictions)],
+       ['F-score',fscore0,
+        fbeta_score(y_test,predictions,beta=.5),
+        fbeta_score(y_test,best_predictions,beta=.5)]])
+</script></div><br/>
+    <h3>Answer 5</h3>
+Final accuracy score and F-score on the testing data are represented in the last column.<br/>
+These indicators are better than for the non-optimized model and they are 4-5 times greater than the initial prediction indicators for the naive predictor benchmarks.
+    <h2>Feature Importance</h2>
+An important task when performing supervised learning on a dataset like the census data we study here is determining which features provide the most predictive power.<br/>
+By focusing on the relationship between only a few crucial features and the target label we simplify our understanding of the phenomenon, which is most always a useful thing to do.<br/> 
+In the case of this project, that means we wish to identify a small number of features that most strongly predict whether an individual makes at most or more than 50,000 USD.<br/>
+We will choose a scikit-learn classifier (e.g., Ada Boost, Random Forest) that has the <i>feature_importance_</i> attribute,<br/>
+which is a function that ranks the importance of features according to the chosen classifier,<br/>
+in the next python cell fit this classifier to training set and use this attribute to determine the top 5 most important features for the census dataset.
+    <h3>Question 6 - Feature Relevance Observation</h3>
+<i>In <b>Exploring the Data</b>, it was shown there are thirteen available features for each individual on record in the census data.<br/>
+Of these thirteen records, which five features do you believe to be most important for prediction, and in what order would you rank them and why?</i>
+    <h3>Answer 6</h3>
+For me, the variables “age”, “education-num”, “occupation”, “relationship”, “hours-per-week” look like the most influential.<br/> 
+Of course, it's expected to receive a higher pay if the person has studied longer, has a high paying occupation, is older and more experienced,<br/>has a longtime relationship and works more hours per week.
+I would rank them in the following order:<br/> 
+1) education-num; 2) age; 3) hours-per-week; 4) occupation; 5) relationship.
+    <h3>Implementation: Extracting Feature Importance</h3>
+We will choose a scikit-learn supervised learning algorithm that has a feature_importance_ attribute availble for it.<br/>
+This attribute is a function that ranks the importance of each feature when making predictions based on the chosen algorithm.<br/>
+We will need to implement the following:<br/>
+Import a supervised learning model from sklearn if it is different from the three used earlier.<br/>
+Train the supervised model on the entire training set.<br/>
+Extract the feature importances using <i>.feature_importances_</i>. 
+<div class='linked'><script type='text/x-sage'>
+model=GradientBoostingClassifier(
+    n_estimators=208,learning_rate=.3,
+    max_depth=2,random_state=10).fit(X_train,y_train)
+importances=model.feature_importances_
+feature_plot(importances,X_train,y_train)
+</script></div><br/>
+    <h3>Question 7 - Extracting Feature Importance</h3>
+<i>Observe the visualization created above which displays the five most relevant features for predicting if an individual makes at most or above 50,000 USD.<br/>
+How do these five features compare to the five features you discussed in Question 6? If you were close to the same answer, how does this visualization confirm your thoughts?<br/>
+If you were not close, why do you think these features are more relevant?</i>
+    <h3>Answer 7</h3>
+This visualization confirms my thoughts about the most influential features but, in many cases, does not confirm the order which I predicted and include the features capital-gain and capital-loss.<br/>
+I think it happens because the age in practice has more meaning than I expected. <br/>
+And the capital gain and capital loss variables show a high correlation to income levels so these variables can be used for prediction.
+    <h3>Implementation: Feature Selection</h3>
+How does a model perform if we only use a subset of all the available features in the data?<br/>
+With less features required to train, the expectation is that training and prediction time is much lower — at the cost of performance metrics.<br/>
+From the visualization above, we see that the top five most important features contribute more than half of the importance of all features present in the data.<br/>
+This hints that we can attempt to <b>reduce the feature space</b> and simplify the information required for the model to learn.<br/>
+The code cell below will use the same optimized model we found earlier, and train it on the same training set with only the <b>top five important</b> features.
+<div class='linked'><script type='text/x-sage'>
+X_train_reduced=X_train[X_train.columns\
+.values[(numpy.argsort(importances)[::-1])[:5]]]
+X_test_reduced=X_test[X_test.columns\
+.values[(numpy.argsort(importances)[::-1])[:5]]]
+clf=(clone(best_clf)).fit(X_train_reduced,y_train)
+reduced_predictions=clf.predict(X_test_reduced)
+metrics=[accuracy_score(y_test,best_predictions),
+         fbeta_score(y_test,best_predictions,beta=.5),
+         accuracy_score(y_test,reduced_predictions),
+         fbeta_score(y_test,reduced_predictions,beta=.5)]
+print ('Final Model trained on full data\n------')
+print ('Accuracy on testing data: {:.4f}'.format(metrics[0]))
+print ('F-score on testing data: {:.4f}'.format(metrics[1]))
+print ('\nFinal Model trained on reduced data\n------')
+print ('Accuracy on testing data: {:.4f}'.format(metrics[2]))
+print ('F-score on testing data: {:.4f}'.format(metrics[3]))
+</script></div><br/>
+    <h3>Question 8 - Effects of Feature Selection</h3>
+<i>How does the final model's F-score and accuracy score on the reduced data using only five features compare to those same scores when all features are used?<br/>
+If training time was a factor, would you consider using the reduced data as your training set?</i>
+    <h3>Answer 8</h3>
+The final model's F-score and accuracy score on the reduced data does not decrease a lot. 
+<div class='linked'><script type='text/x-sage'>
+print ('They become [{:.4f},{:.4f}] instead of [{:.4f},{:.4f}]'\
+.format(metrics[2],metrics[3],metrics[0],metrics[1]))
+</script></div><br/> 
+This means we can confirm the use of the reduced data with a high level of confidence if training time is an important factor.
+    <h2>Conclusion</h2>
+In this project, models of classifiers and their application to predict categorical variables were discussed in detail.<br/>
+We studied the methods of data preparing and model optimizing as well.
+    <h3>For Additional Code Experiments</h3>
+<div class='linked'><script type='text/x-sage'>
+
+</script></div><br/>
+  </body>
+</html>

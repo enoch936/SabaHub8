@@ -1,0 +1,36 @@
+<script src='https://code.highcharts.com/highcharts.js'></script>
+<div id='div003' style='height:90%; width:90%; margin:0 auto'></div>
+<script>
+function getinteger(min,max) {
+    return Math.floor(Math.random()*(max-min+1))+min;};
+function fx(a,b,c,q,n,t,k) {
+    var x1=Math.cos(Math.PI*t/n+k*Math.PI/q),
+        x2=Math.cos(a*Math.PI*t/n+k*Math.PI/q),
+        x3=Math.cos(b*Math.PI*t/n+k*Math.PI/q),
+        x4=Math.cos(c*Math.PI*t/n+k*Math.PI/q);
+    return x1+x2+x3+x4};
+function fy(a,b,c,q,n,t,k) {
+    var y1=Math.sin(Math.PI*t/n+k*Math.PI/q),
+        y2=Math.sin(a*Math.PI*t/n+k*Math.PI/q),
+        y3=Math.sin(b*Math.PI*t/n+k*Math.PI/q),
+        y4=Math.sin(c*Math.PI*t/n+k*Math.PI/q);
+    return y1+y2+y3+y4};
+function ar(a,b,c,q,n,k) {
+    return Array(2*n+1).fill(k).map((k,t)=>
+          [fx(a,b,c,q,n,t,k),fy(a,b,c,q,n,t,k)]);};
+function colrb(i) {var r=getinteger(i,255),g=0,b=getinteger(i,255);
+    return 'rgb('+r.toString()+','+g.toString()+','+b.toString()+')';};   
+var a=getinteger(5,9),b=getinteger(10,14),c=getinteger(15,19);
+var q=getinteger(3,6),n=getinteger(4,24); var series=[];
+for (var k=1; k<2*q+2; k++) {
+    series.push({name:[k,a,b,c,n].toString(),
+                 marker:{symbol:'circle',radius:1},
+                 color:colrb(k),lineWidth:0.5,
+                 data:ar(a,b,c,q,n,k)})};
+Highcharts.chart('div003', {
+    chart:{type:'line',backgroundColor:'ghostwhite'},
+    xAxis:{title:{text:'x'}},yAxis:{title:{text:'y'}},
+    title:{text:'Random Parametric Polygons'},
+    credits:{enabled:false},
+    legend:{enabled:false},series:series});
+ </script>

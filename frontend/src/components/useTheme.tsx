@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
-export { SegmentedThemeToggle, ThemeIconButton } from "./ThemeToggle";
+export { SegmentedThemeToggle, ThemeIconButton } from "./mui/ThemeToggle";
 
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>("light");
@@ -33,8 +33,8 @@ export function useTheme() {
     
     // Apply inline styles for critical elements
     const root = document.documentElement;
-    root.style.setProperty("--background", nextTheme === "dark" ? "#0a0a0a" : "#ffffff");
-    root.style.setProperty("--foreground", nextTheme === "dark" ? "#ededed" : "#171717");
+    root.style.setProperty("--background", nextTheme === "dark" ? "#111827" : "#f9fafb");
+    root.style.setProperty("--foreground", nextTheme === "dark" ? "#e5e7eb" : "#0f172a");
     
     // Save to localStorage
     try {
@@ -42,16 +42,23 @@ export function useTheme() {
     } catch {}
   }, []);
 
+  const resolveTheme = useCallback((): Theme => {
+    if (typeof window === "undefined") return "light";
+    const saved = localStorage.getItem("sabahub-theme");
+    if (saved === "light" || saved === "dark") return saved;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }, []);
+
   // Initialize on mount and listen for changes
   useEffect(() => {
     const initializeTheme = () => {
       try {
-        const saved = localStorage.getItem("sabahub-theme");
-        const initialTheme = (saved === "dark" ? "dark" : "light") as Theme;
+        const initialTheme = resolveTheme();
         setThemeState(initialTheme);
         applyThemeToDOM(initialTheme);
       } catch {
-        applyThemeToDOM("light");
+        const fallbackTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        applyThemeToDOM(fallbackTheme);
       }
     };
 
@@ -60,11 +67,20 @@ export function useTheme() {
 
     // Listen for storage changes from other tabs/windows
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "sabahub-theme" && e.newValue) {
-        const newTheme = (e.newValue === "dark" ? "dark" : "light") as Theme;
+      if (e.key === "sabahub-theme") {
+        const newTheme = resolveTheme();
         setThemeState(newTheme);
         applyThemeToDOM(newTheme);
       }
+    };
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleSystemChange = () => {
+      const saved = localStorage.getItem("sabahub-theme");
+      if (saved === "light" || saved === "dark") return;
+      const systemTheme = media.matches ? "dark" : "light";
+      setThemeState(systemTheme);
+      applyThemeToDOM(systemTheme);
     };
 
     // Listen for class changes on html element
@@ -81,12 +97,22 @@ export function useTheme() {
 
     observer.observe(document.documentElement, { attributes: true });
     window.addEventListener("storage", handleStorageChange);
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", handleSystemChange);
+    } else {
+      media.addListener(handleSystemChange);
+    }
 
     return () => {
       observer.disconnect();
       window.removeEventListener("storage", handleStorageChange);
+      if (typeof media.removeEventListener === "function") {
+        media.removeEventListener("change", handleSystemChange);
+      } else {
+        media.removeListener(handleSystemChange);
+      }
     };
-  }, [applyThemeToDOM]);
+  }, [applyThemeToDOM, resolveTheme]);
 
   const setTheme = useCallback(
     (next: Theme) => {

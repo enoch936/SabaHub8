@@ -10,16 +10,53 @@ SabaHub8 is a full-stack freelancer marketplace with a **Next.js 16** frontend a
 
 ## Quick Start (Local)
 
+### 0) Start Entire Main Project (Recommended)
+
+Requirements for this mode: `tmux` installed.
+
+From repository root:
+
+```bash
+./start-main.sh
+```
+
+This starts:
+
+- Python AI service (`:8090`)
+- Spring Boot backend (`:8080`)
+- Next.js frontend (`:3000`)
+
+Utility commands:
+
+```bash
+./status-main.sh
+./stop-main.sh
+```
+
+Live log management:
+
+```bash
+tmux attach -t sabahub
+```
+
+Inside tmux, each service runs in its own window (`python-ai`, `backend-spring`, `frontend`).
+
 ### 1) Backend (Maven)
 
 **Requirements:** Java 21, Maven, MongoDB (local or Atlas), Redis (optional)
 
 ```bash
-cd backend-spring
-mvn spring-boot:run
+./start-backend.sh
 ```
 
-Default backend URL: http://localhost:8080
+This command auto-starts:
+
+- Python AI service (`:8090`)
+- Spring Boot backend (`:8080`) with hybrid Python AI enabled
+
+It also runs each service in its own tmux window for live logs.
+
+Default backend URL: <http://localhost:8080>
 
 ### 2) Backend (Docker)
 
@@ -38,7 +75,7 @@ pnpm install
 pnpm dev
 ```
 
-Default frontend URL: http://localhost:3000
+Default frontend URL: <http://localhost:3000>
 
 ## Environment Configuration
 
@@ -57,7 +94,7 @@ Edit backend-spring/.env and set the following (examples):
 
 Edit frontend/.env.local and set:
 
-- NEXT_PUBLIC_API_BASE — backend base URL (e.g. http://localhost:8080)
+- NEXT_PUBLIC_API_BASE — backend base URL (e.g. <http://localhost:8080>)
 
 ## Key Endpoints
 

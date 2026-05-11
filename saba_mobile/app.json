@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Sabahub Mobile",
+    "slug": "sabahub-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "scheme": "sabahubmobile",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sabahub.mobile"
+    },
+    "android": {
+      "package": "com.sabahub.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "updates": {
+      "enabled": false,
+      "checkAutomatically": "NEVER",
+      "fallbackToCacheTimeout": 0
+    },
+    "plugins": [
+      "expo-dev-client",
+      "@config-plugins/react-native-webrtc"
+    ],
+    "extra": {
+      "apiBaseUrl": "http://10.0.2.2:8080/api",
+      "wsBaseUrl": "ws://10.0.2.2:8080/ws"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

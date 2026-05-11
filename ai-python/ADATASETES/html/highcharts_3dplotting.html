@@ -1,0 +1,55 @@
+<script src='https://code.highcharts.com/highcharts.js'></script>
+<script src='https://code.highcharts.com/highcharts-3d.js'></script>
+<script src='https://code.highcharts.com/modules/accessibility.js'></script>
+<div id='div013' style='width:600px; height:600px;'></div>
+<script>
+function randi(min,max) {
+    return Math.floor(Math.random()*(max-min+1))+min;};
+var d=.005,l=6,n=3,a=randi(11,19),b=randi(24,64);
+function ar(k,a,b) {return Array(1280).fill(k).map((k,t)=>
+    [k*(Math.cos(d*t)+Math.sin(a*d*t)/2-Math.cos(b*d*t)/6),
+     k*(Math.sin(d*t)+Math.cos(a*d*t)/2-Math.sin(b*d*t)/6),
+     2*k]);};
+var series=[],colors=['#9636ff','#3696ff','#ff9636','#ff3696'];
+for (var i=1; i<n+1; i++){
+    series.push({name:i,color:colors[i-1],opacity:1.2-.2*i,
+                 accessibility:{exposeAsGroupOnly:true},
+                 marker:{symbol:'o',radius:.5+i/4},
+                 data:ar(i,a,b)})};
+var chart=new Highcharts.Chart({
+    chart:{renderTo:'div013',margin:100,type:'scatter3d',
+    animation:false,
+    options3d:{enabled:true,alpha:20,beta:20,depth:250,
+               viewDistance:5,fitToPlot:false,
+               frame:{bottom:{size:1,color:'rgba(0,0,0,0.05)'},
+                      back:{size:1,color:'rgba(0,0,0,0.1)'},
+                      side:{ size:1,color:'rgba(0,0,0,0.15)'}}} },
+  title:{text:'3D Scatter Plots with Rotation'},
+  plotOptions:{scatter:{width:l,height:l,depth:l}},
+  yAxis:{min:-l,max:l,title:null},
+  xAxis:{min:-l,max:l,gridLineWidth:1},
+  zAxis:{min:0,max:2*l,showFirstLabel:false},
+  legend:{enabled:false},series:series});
+(function(H){function dragStart(eStart){
+    eStart=chart.pointer.normalize(eStart);
+    var posX=eStart.chartX,posY=eStart.chartY,
+        alpha=chart.options.chart.options3d.alpha,
+        beta=chart.options.chart.options3d.beta,
+        sensitivity=3,handlers=[];
+    function drag(e){
+      e=chart.pointer.normalize(e);
+      chart.update({chart:{
+          options3d:{alpha:alpha+(e.chartY-posY)/sensitivity,
+                     beta:beta+(posX-e.chartX)/sensitivity}}},
+                     undefined,undefined,false);}
+    function unbindAll(){handlers.forEach(function(unbind){
+        if (unbind){unbind();}});
+        handlers.length=0;}
+    handlers.push(H.addEvent(document,'mousemove', drag));
+    handlers.push(H.addEvent(document,'touchmove', drag));
+    handlers.push(H.addEvent(document,'mouseup',unbindAll));
+    handlers.push(H.addEvent(document,'touchend',unbindAll));}
+  H.addEvent(chart.container,'mousedown',dragStart);
+  H.addEvent(chart.container,'touchstart',dragStart);
+}(Highcharts));
+</script>

@@ -1,12 +1,19 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Alert, Box, Button, Card, CardContent, Container, Stack, Typography } from "@mui/material";
 
 export default function VerifyEmailPage() {
-  const sp = useSearchParams();
-  const token = sp.get("token");
-  const [status, setStatus] = useState<string>("Verifying…");
+  const [token, setToken] = useState<string | null>(null);
+  const [status, setStatus] = useState<string>("Verifying...");
+  const [ok, setOk] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setToken(params.get("token"));
+  }, []);
 
   useEffect(() => {
     async function run() {
@@ -18,18 +25,32 @@ export default function VerifyEmailPage() {
         });
         if (!res.ok) throw new Error("failed");
         setStatus("Email verified. You can now login.");
+        setOk(true);
       } catch {
         setStatus("Invalid or expired verification link.");
+        setOk(false);
       }
     }
     if (token) run();
+    else {
+      setStatus("Missing verification token.");
+      setOk(false);
+    }
   }, [token]);
 
   return (
-    <main className="mx-auto max-w-xl p-6">
-      <h1 className="mb-2 text-2xl font-bold">Verify email</h1>
-      <p>{status}</p>
-      <a href="/login" className="mt-4 inline-block rounded border border-slate-300 px-4 py-2">Go to login</a>
-    </main>
+    <Box sx={{ minHeight: "100vh", py: 8, bgcolor: "#ffffff" }}>
+      <Container maxWidth="sm">
+        <Card sx={{ borderRadius: 4 }}>
+          <CardContent>
+            <Stack spacing={2}>
+              <Typography variant="h4" fontWeight={800}>Verify Email</Typography>
+              <Alert severity={ok === null ? "info" : ok ? "success" : "error"}>{status}</Alert>
+              <Button component={Link} href="/login" variant="outlined">Go to login</Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Container>
+    </Box>
   );
 }

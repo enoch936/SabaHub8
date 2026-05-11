@@ -1,23 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { cookies } from "next/headers";
+import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
-import { use } from "react";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const sans = Manrope({
+  variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const display = Space_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const mono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "SabaHub | Professional Freelance Marketplace",
-  description: "Live job marketplace with professional role details, trusted workflows, and enterprise-ready delivery tooling.",
+  title: "SabaHub | Clean Hiring Workspace",
+  description: "SabaHub keeps hiring, freelance work, contracts, payments, and team operations in one clean workspace.",
 };
 
 export default function RootLayout({
@@ -25,8 +31,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = use(cookies());
-  
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -35,21 +39,22 @@ export default function RootLayout({
             __html: `
 (function(){
   try {
-    var saved = localStorage.getItem('sabahub-theme');
-    var theme = saved === 'dark' ? 'dark' : 'light';
     var root = document.documentElement;
+    var stored = localStorage.getItem('sabahub-theme');
+    var theme = (stored === 'dark' || stored === 'light')
+      ? stored
+      : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     root.classList.remove('dark', 'light');
     root.classList.add(theme);
+    root.setAttribute('data-theme', theme);
     root.style.colorScheme = theme;
-  } catch (e) {
-    console.error('Theme initialization failed:', e);
-  }
+  } catch (_e) {}
 })();
             `.trim(),
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body suppressHydrationWarning className={`${sans.variable} ${display.variable} ${mono.variable} antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

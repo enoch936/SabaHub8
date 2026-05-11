@@ -1,0 +1,37 @@
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<button onclick='javascript:randplt();'>add a random line</button>
+<div id='div014' style='width:600px;height:600px;'></div>
+<script>doc1=document.getElementById('div014');
+function randi(min,max){
+    return Math.floor(Math.random()*(max-min+1))+min;};
+function f(a,b,c,d,e,q,n,t,k){
+    var x1=a+.1*b*Math.cos(c*Math.PI*t/n+k*Math.PI/q),
+        x2=.1*a+.01*d*Math.cos(e*Math.PI*t/n+k*Math.PI/q),
+        x3=1+Math.sin(Math.PI*t/n+k*Math.PI/q); return x1*x2*x3};
+function fx(a,b,c,d,e,q,n,t,k){
+    return f(a,b,c,d,e,q,n,t,k)*Math.cos(Math.PI*t/n+k*Math.PI/q)};
+function fy(a,b,c,d,e,q,n,t,k){
+    return f(a,b,c,d,e,q,n,t,k)*Math.sin(Math.PI*t/n+k*Math.PI/q)};
+function arx(a,b,c,d,e,q,n,k){
+    return Array(2*n+1).fill(k).map((k,t)=>fx(a,b,c,d,e,q,n,t,k));};
+function ary(a,b,c,d,e,q,n,k){
+    return Array(2*n+1).fill(k).map((k,t)=>fy(a,b,c,d,e,q,n,t,k));};
+function col(k,q){
+    if (k in [1,3,5,7,9]) {
+        return 'rgb(0,'+(k/(2*q+2)).toString()+','+
+               (1-k/(2*q+2)).toString()+')';}
+    else {return 'rgb('+(k/(2*q+2)).toString()+',0,'+
+                 (1-k/(2*q+2)).toString()+')';};};
+function plt(k,col) {
+    return Plotly.plot(doc1,
+        [{x:arx(a,b,c,d,e,q,n,k),
+          y:ary(a,b,c,d,e,q,n,k),
+          line:{color:col,width:.5},
+          name:[a,b,c,d,e,q,n,k]}]); };
+var a=randi(3,11),b=randi(3,25),c=randi(8,16),d=randi(5,9),
+    e=randi(200,300),q=randi(2,10),n=randi(30,300);    
+plt(1,col(1,q));;
+function randplt() {
+    var randk=Math.floor(Math.random()*10);
+    return plt(randk,col(randk,q))};
+</script>

@@ -30,6 +30,9 @@ public class JobService {
         if (job.getStatus() == null) {
             job.setStatus(Job.Status.OPEN);
         }
+        if (job.getMaxConcurrentProjects() == null || job.getMaxConcurrentProjects() < 1) {
+            job.setMaxConcurrentProjects(1);
+        }
         if (job.getCurrency() == null || job.getCurrency().isBlank()) {
             job.setCurrency("ETB");
         }

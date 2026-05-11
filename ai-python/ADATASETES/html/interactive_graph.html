@@ -1,0 +1,41 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function () {
+    sagecell.makeSagecell({inputLocation:'div.interactive',
+                           template:sagecell.templates.minimal,
+                           evalButtonText:'run'}); });
+    </script>
+  </head>
+  <style>
+  h3 {color:#aa33ff; text-shadow:3px 3px 3px slategray;}
+  pre {width:99%; padding-left:3px; border:2px double slategray; } 
+  .sagecell_output {width:99%; border:2px double slategray; padding-right:1px;}
+  .sagecell_interactControlLabel:hover {padding-left:3px; color:#aa33ff; font-size:120%;}
+  .sagecell_interactOutput {padding-left:3px;}
+  body {margin:5px 5px 5px 15px;}
+  </style>  
+  <body>
+    <h3>$$\mathbb{ Interactive \; Digraphs }$$</h3>
+<pre><code>
+@interact
+def _(layout=['spring','circular'],n=[3,4,5]):
+    dg=digraphs.Kautz(n,2)
+    dg.show(vertex_color='silver',vertex_size=300,
+            layout=layout,edge_style='-.',
+            color_by_label=True,figsize=(7,7))
+
+</code></pre><br/> 
+<div id='cell005' class='interactive'><script type='text/x-sage'>
+@interact
+def _(layout=['spring','circular'],n=[3,4,5]):
+    dg=digraphs.Kautz(n,2)
+    dg.show(vertex_color='silver',vertex_size=300,
+            layout=layout,edge_style='-.',
+            color_by_label=True,figsize=(7,7))
+</script></div><br/>
+  </body>
+</html>

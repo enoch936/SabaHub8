@@ -124,6 +124,44 @@ public class OTPService {
     }
 
     /**
+     * Verify OTP with attempt tracking and strict purpose matching
+     */
+    public boolean verifyOTPWithAttempts(String identifier, String otpCode, OTP.OTPPurpose purpose) {
+        log.info("Verifying OTP with attempt tracking for identifier: {} and purpose: {}", identifier, purpose);
+
+        Optional<OTP> otpOptional = otpRepository.findByIdentifierAndOtpCodeAndPurpose(identifier, otpCode, purpose);
+
+        if (otpOptional.isEmpty()) {
+            log.warn("OTP not found for identifier: {} and purpose: {}", identifier, purpose);
+            return false;
+        }
+
+        OTP otp = otpOptional.get();
+
+        if (otp.getStatus() == OTP.OTPStatus.BLOCKED) {
+            log.warn("OTP is blocked - max attempts reached for: {}", identifier);
+            throw new RuntimeException("OTP is blocked. Please request a new OTP.");
+        }
+
+        if (otp.getStatus() == OTP.OTPStatus.VERIFIED) {
+            log.warn("OTP already verified for: {}", identifier);
+            return true;
+        }
+
+        if (otp.isExpired()) {
+            log.warn("OTP expired for: {}", identifier);
+            otp.setStatus(OTP.OTPStatus.EXPIRED);
+            otpRepository.save(otp);
+            return false;
+        }
+
+        otp.verify();
+        otpRepository.save(otp);
+        log.info("OTP verified with attempt tracking for: {} and purpose: {}", identifier, purpose);
+        return true;
+    }
+
+    /**
      * Handle failed OTP verification attempt
      */
     public void recordFailedAttempt(String identifier, String otpCode) {
@@ -138,6 +176,25 @@ public class OTPService {
             
             if (otp.getStatus() == OTP.OTPStatus.BLOCKED) {
                 log.error("OTP blocked for identifier: {} (max attempts reached)", identifier);
+            }
+        }
+    }
+
+    /**
+     * Handle failed OTP verification attempt with strict purpose matching
+     */
+    public void recordFailedAttempt(String identifier, String otpCode, OTP.OTPPurpose purpose) {
+        log.warn("Recording failed OTP attempt for identifier: {} and purpose: {}", identifier, purpose);
+
+        Optional<OTP> otpOptional = otpRepository.findByIdentifierAndOtpCodeAndPurpose(identifier, otpCode, purpose);
+
+        if (otpOptional.isPresent()) {
+            OTP otp = otpOptional.get();
+            otp.incrementAttempts();
+            otpRepository.save(otp);
+
+            if (otp.getStatus() == OTP.OTPStatus.BLOCKED) {
+                log.error("OTP blocked for identifier: {} and purpose: {} (max attempts reached)", identifier, purpose);
             }
         }
     }
@@ -200,5 +257,19 @@ public class OTPService {
     public OTP.OTPStatus getOTPStatus(String identifier) {
         Optional<OTP> otpOptional = getLatestOTP(identifier);
         return otpOptional.map(OTP::getStatus).orElse(null);
+    }
+
+    public OTP.OTPStatus getOTPStatus(String identifier, OTP.OTPPurpose purpose) {
+        Optional<OTP> otpOptional = otpRepository.findFirstByIdentifierAndPurposeOrderByCreatedAtDesc(identifier, purpose);
+        return otpOptional.map(OTP::getStatus).orElse(null);
+    }
+
+    public void expireLatestOTP(String identifier, OTP.OTPPurpose purpose) {
+        Optional<OTP> otpOptional = otpRepository.findFirstByIdentifierAndPurposeOrderByCreatedAtDesc(identifier, purpose);
+        if (otpOptional.isPresent()) {
+            OTP otp = otpOptional.get();
+            otp.setStatus(OTP.OTPStatus.EXPIRED);
+            otpRepository.save(otp);
+        }
     }
 }

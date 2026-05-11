@@ -1,0 +1,72 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function () {
+    sagecell.makeSagecell({inputLocation:'div.evaluated',autoeval:true,
+                           template:sagecell.templates.minimal,
+                           evalButtonText:'run'}); });
+    </script>
+  </head>
+  <style>
+  h3 {color:#aa33ff; text-shadow:4px 4px 4px slategray;}
+  pre {width:99%; padding-left:3px; border:2px double slategray; } 
+  .sagecell_output {width:99%; border:2px double slategray; padding-right:1px;}
+  </style>  
+  <body>
+    <h3>$$\mathbb{ Rotated \; Cubegraphs \; with \; Bezier \; Paths }$$</h3>
+<pre><code>
+def rotate_line(a,l): 
+    return [[(cos(a)*x-sin(a)*y).n(),
+             (sin(a)*x+cos(a)*y).n()] 
+            for [x,y] in l]
+def linegraph(g):
+    vg=g.get_pos(); eg=g.edges(); ne=len(eg)
+    return [[list(vg[eg[i][0]]),
+             list(vg[eg[i][1]])] 
+            for i in range(ne)]    
+def rotate_bezier_path_cubegraph(m,k):
+    g=graphs.CubeGraph(m) 
+    lg=linegraph(g); LG=Graphics()
+    rlg=[[rotate_line(j*pi/k,lg[i]) 
+          for i in range(len(lg))] 
+         for j in range(2*k)] 
+    for i in range(2*k): 
+        col=(random(),0,random())
+        LG+=bezier_path(rlg[i],color=col,
+                        thickness=.3)
+    LG.show(axes=False,figsize=(5,5),
+            title=r'$m=%d; \ k=%d$'%(m,k))
+m,k=randint(3,5),randint(3,5)
+rotate_bezier_path_cubegraph(m,k)
+
+</code></pre><br/> 
+<div id='cell010' class='evaluated'><script type='text/x-sage'>
+def rotate_line(a,l): 
+    return [[(cos(a)*x-sin(a)*y).n(),
+             (sin(a)*x+cos(a)*y).n()] 
+            for [x,y] in l]
+def linegraph(g):
+    vg=g.get_pos(); eg=g.edges(); ne=len(eg)
+    return [[list(vg[eg[i][0]]),
+             list(vg[eg[i][1]])] 
+            for i in range(ne)]    
+def rotate_bezier_path_cubegraph(m,k):
+    g=graphs.CubeGraph(m) 
+    lg=linegraph(g); LG=Graphics()
+    rlg=[[rotate_line(j*pi/k,lg[i]) 
+          for i in range(len(lg))] 
+         for j in range(2*k)] 
+    for i in range(2*k): 
+        col=(random(),0,random())
+        LG+=bezier_path(rlg[i],color=col,
+                        thickness=.3)
+    LG.show(axes=False,figsize=(5,5),
+            title=r'$m=%d; \ k=%d$'%(m,k))
+m,k=randint(3,5),randint(3,5)
+rotate_bezier_path_cubegraph(m,k)
+</script></div><br/>
+  </body>
+</html>

@@ -20,6 +20,9 @@ public interface WithdrawalRepository extends MongoRepository<Withdrawal, String
     @Query("{ 'status': 'PENDING' }")
     List<Withdrawal> findPendingWithdrawals();
 
+    @Query("{ '$or': [ { 'statusEnum': { $in: ?0 } }, { 'status': { $in: ?1 } } ] }")
+    Page<Withdrawal> findForAdminReview(List<Withdrawal.Status> enumStatuses, List<String> statuses, Pageable pageable);
+
     // New userId-based queries
     Page<Withdrawal> findByUserId(String userId, Pageable pageable);
     

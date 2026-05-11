@@ -1,0 +1,35 @@
+<script src='https://d3js.org/d3.v4.min.js'></script>
+<svg id='svg002' style='background-color:silver;'></svg>
+<script>
+var n=645,m=20,d=.01,margin={top:m,right:m,bottom:m,left:m},
+    width=document.documentElement.clientWidth-100;
+    height=document.documentElement.clientHeight-100;
+    tr='translate('+margin.left+','+margin.top+')'; 
+function f(t){
+    return Math.exp(Math.pow(Math.cos(d*t),2)+
+                    Math.sin(d*t))-3*Math.cos(4*d*t);};
+function randi(xmin,xmax){
+    return Math.floor(Math.random()*(xmax-xmin+1))+xmin;};
+function rcolor(i){
+    var r=randi(i,255),g=randi(i,255),b=randi(i,255);
+    return '#'+r.toString(16)+g.toString(16)+b.toString(16);} 
+function make_data(k){return d3.range(1,n).map(function(t){
+    return {'x':d*k*f(t)*Math.cos(d*t),
+            'y':d*k*f(t)*Math.sin(d*t)}});};    
+var xScale=d3.scaleLinear()
+             .domain([-10*d*m,10*d*m]).range([0,width+2*m]),
+    yScale=d3.scaleLinear()
+             .domain([-5*d*m,5*d*m]).range([height+4*m,0]); 
+var svg=d3.select('#svg002')
+          .attr('width',width+margin.left+margin.right)
+          .attr('height',height+margin.top+margin.bottom)
+          .attr('transform',tr);
+var line=d3.line().curve(d3.curveMonotoneX)
+           .x(function(d){return xScale(d.x);})
+           .y(function(d){return yScale(d.y);});
+for (var i=1; i<m; i++) {var data=make_data(i),col=rcolor(i);
+    svg.append('path').datum(data)
+       .attr('class','line').attr('d',line)
+       .attr('stroke',col).attr('fill','none')
+       .style('stroke-width',1);}
+</script>

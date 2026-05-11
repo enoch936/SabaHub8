@@ -2,7 +2,6 @@ package com.sabahub.web;
 
 import com.sabahub.domain.Contract;
 import com.sabahub.service.ContractService;
-import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,9 +23,44 @@ public class ContractController {
         return ResponseEntity.ok(contractService.listMyContracts());
     }
 
+    @PostMapping("/contracts")
+    public ResponseEntity<Contract> createContract(@RequestBody Contract contract) {
+        return ResponseEntity.ok(contractService.createDraftContract(contract));
+    }
+
     @GetMapping("/contracts/{id}")
     public ResponseEntity<Contract> getContract(@PathVariable String id) {
         return ResponseEntity.ok(contractService.getContract(id));
+    }
+
+    @PostMapping("/contracts/{id}/accept")
+    public ResponseEntity<Contract> acceptContract(@PathVariable String id) {
+        return ResponseEntity.ok(contractService.acceptContract(id));
+    }
+
+    @PostMapping("/contracts/{id}/milestones")
+    public ResponseEntity<Contract> addMilestone(@PathVariable String id, @RequestBody Contract.PaymentMilestone milestone) {
+        return ResponseEntity.ok(contractService.addMilestone(id, milestone));
+    }
+
+    @PostMapping("/contracts/{contractId}/milestones/{milestoneId}/submit")
+    public ResponseEntity<Contract> submitMilestone(
+            @PathVariable String contractId,
+            @PathVariable String milestoneId,
+            @RequestBody(required = false) Map<String, String> body
+    ) {
+        String note = body == null ? null : body.get("note");
+        return ResponseEntity.ok(contractService.submitMilestone(contractId, milestoneId, note));
+    }
+
+    @PostMapping("/contracts/{contractId}/milestones/{milestoneId}/approve")
+    public ResponseEntity<Contract> approveMilestone(
+            @PathVariable String contractId,
+            @PathVariable String milestoneId,
+            @RequestBody(required = false) Map<String, String> body
+    ) {
+        String feedback = body == null ? null : body.get("feedback");
+        return ResponseEntity.ok(contractService.approveMilestone(contractId, milestoneId, feedback));
     }
 
     @PostMapping("/contracts/{id}/deliver")

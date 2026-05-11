@@ -1,6 +1,7 @@
 package com.sabahub.config;
 
 import com.sabahub.domain.User;
+import com.sabahub.domain.UserRole;
 import com.sabahub.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +10,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Configuration
@@ -24,7 +26,7 @@ public class AdminInitializer {
     CommandLineRunner ensureAdmin(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             // Use environment variables or properties
-            String email = System.getenv().getOrDefault("ADMIN_EMAIL", adminEmail);
+            String email = System.getenv().getOrDefault("ADMIN_EMAIL", adminEmail).toLowerCase();
             String password = System.getenv().getOrDefault("ADMIN_PASSWORD", adminPassword);
 
             // Do not create an admin without an explicit password.
@@ -34,13 +36,24 @@ public class AdminInitializer {
             }
 
             try {
-                if (userRepository.existsByEmail(email)) {
-                    System.out.println("[AdminInitializer] Admin user already exists: " + email);
+                var existing = userRepository.findByEmail(email);
+                if (existing.isPresent()) {
+                    User user = existing.get();
+                    Set<String> roles = user.getRoles() == null ? new HashSet<>() : new HashSet<>(user.getRoles());
+                    String superAdminRole = UserRole.SUPER_ADMIN.toSpringRole();
+                    if (!roles.contains(superAdminRole)) {
+                        roles.add(superAdminRole);
+                        user.setRoles(roles);
+                        userRepository.save(user);
+                        System.out.println("[AdminInitializer] Updated existing admin user roles: " + email);
+                    } else {
+                        System.out.println("[AdminInitializer] Admin user already exists: " + email);
+                    }
                     return;
                 }
 
                 String hashed = passwordEncoder.encode(password);
-                User admin = new User(email, "Administrator", hashed, Set.of("ROLE_ADMIN", "ROLE_USER", "ADMIN", "USER"));
+                User admin = new User(email, "Administrator", hashed, Set.of(UserRole.SUPER_ADMIN.toSpringRole()));
                 userRepository.save(admin);
                 System.out.println("[AdminInitializer] Created admin user: " + email);
             } catch (DataAccessException ex) {

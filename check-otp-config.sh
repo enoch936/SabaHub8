@@ -16,16 +16,24 @@ echo -e "${BLUE}================================${NC}"
 echo -e "${BLUE}OTP Services Configuration Check${NC}"
 echo -e "${BLUE}================================${NC}\n"
 
+# Resolve .env path used by backend
+ENV_FILE="backend-spring/.env"
+if [ ! -f "$ENV_FILE" ] && [ -f ".env" ]; then
+    ENV_FILE=".env"
+fi
+
 # Check if .env file exists
-if [ ! -f .env ]; then
-    echo -e "${RED}✗ .env file not found!${NC}"
+if [ ! -f "$ENV_FILE" ]; then
+    echo -e "${RED}✗ .env file not found! Expected backend-spring/.env${NC}"
     exit 1
 fi
+
+echo -e "Using env file: ${GREEN}${ENV_FILE}${NC}\n"
 
 # Function to check variable
 check_var() {
     local var_name=$1
-    local var_value=$(grep "^${var_name}=" .env | cut -d '=' -f 2- || echo "")
+    local var_value=$(grep "^${var_name}=" "$ENV_FILE" | cut -d '=' -f 2- || echo "")
     
     if [ -z "$var_value" ] || [ "$var_value" = "YOUR_${var_name}_HERE" ] || [[ "$var_value" =~ ^YOUR_.* ]]; then
         echo -e "${RED}✗ ${var_name}${NC} - Not configured"
@@ -65,6 +73,7 @@ echo "────────────────────────�
 twilio_ok=true
 check_var "TWILIO_ACCOUNT_SID" || twilio_ok=false
 check_var "TWILIO_AUTH_TOKEN" || twilio_ok=false
+check_var "TWILIO_VERIFY_SERVICE_SID" || twilio_ok=false
 check_var "TWILIO_PHONE_NUMBER" || twilio_ok=false
 
 if [ "$twilio_ok" = true ]; then

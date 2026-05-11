@@ -1,0 +1,47 @@
+{
+    "type": "object",
+    "required": [
+        "case_id",
+        "case_title",
+        "vault_reference",
+        "findings"
+    ],
+    "properties": {
+        "case_id": {
+            "type": "string"
+        },
+        "case_title": {
+            "type": "string"
+        },
+        "vault_reference": {
+            "type": "string"
+        },
+        "findings": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "vault_capability",
+                    "coderabbit_claim",
+                    "risk"
+                ],
+                "properties": {
+                    "vault_capability": {
+                        "type": "string"
+                    },
+                    "coderabbit_claim": {
+                        "type": "string"
+                    },
+                    "risk": {
+                        "type": "string",
+                        "enum": [
+                            "High",
+                            "Medium",
+                            "Low"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

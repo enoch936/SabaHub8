@@ -2,6 +2,7 @@ package com.sabahub.domain;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -34,6 +35,9 @@ public class Asset {
     @CreatedDate
     private Instant createdAt;
 
+    @Transient
+    private String downloadUrl;
+
     public Asset() {}
 
     public String getId() { return id; }
@@ -65,4 +69,7 @@ public class Asset {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public String getDownloadUrl() { return downloadUrl; }
+    public void setDownloadUrl(String downloadUrl) { this.downloadUrl = downloadUrl; }
 }

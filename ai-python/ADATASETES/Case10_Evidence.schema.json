@@ -1,0 +1,59 @@
+{
+    "type": "object",
+    "required": [
+        "case_id",
+        "case_title",
+        "vault_reference",
+        "status",
+        "detected_signals",
+        "rubric_scoring"
+    ],
+    "properties": {
+        "case_id": {
+            "type": "string",
+            "const": "10"
+        },
+        "case_title": {
+            "type": "string"
+        },
+        "vault_reference": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string"
+        },
+        "detected_signals": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "rubric_scoring": {
+            "type": "object",
+            "required": [
+                "severity_of_harm",
+                "breadth_of_harm",
+                "novelty",
+                "reproducibility",
+                "methodological_insight"
+            ],
+            "properties": {
+                "severity_of_harm": {
+                    "type": "number"
+                },
+                "breadth_of_harm": {
+                    "type": "number"
+                },
+                "novelty": {
+                    "type": "number"
+                },
+                "reproducibility": {
+                    "type": "number"
+                },
+                "methodological_insight": {
+                    "type": "number"
+                }
+            }
+        }
+    }
+}

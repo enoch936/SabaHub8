@@ -1,6 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  Link,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { bootstrapSession } from "@/lib/session";
 import { api } from "@/lib/api";
 
@@ -18,72 +29,75 @@ export default function TestAuthPage() {
   const testSaveSettings = async () => {
     setLoading(true);
     setTestResult("Testing...");
-    
+
     try {
       const response = await api.patch("/user/settings", {
-        bio: "Test bio from test page - " + new Date().toISOString()
+        bio: `Test bio from test page - ${new Date().toISOString()}`,
       });
-      
-      setTestResult("✅ SUCCESS! Settings saved: " + JSON.stringify(response.data, null, 2));
+      setTestResult(`SUCCESS\n${JSON.stringify(response.data, null, 2)}`);
     } catch (error: any) {
       const errorMsg = error?.response?.data || error?.message || "Unknown error";
-      setTestResult("❌ FAILED: " + JSON.stringify(errorMsg, null, 2));
-      console.error("Full error:", error);
+      setTestResult(`FAILED\n${JSON.stringify(errorMsg, null, 2)}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Authentication & Settings Test</h1>
-      
-      <div className="space-y-4">
-        <div className="border rounded p-4">
-          <h2 className="font-semibold mb-2">Token Status:</h2>
-          {token ? (
-            <div>
-              <p className="text-green-600">✅ Token exists</p>
-              <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-2 mt-2 overflow-x-auto rounded">
-                {token.substring(0, 100)}...
-              </pre>
-              <p className="text-xs text-gray-500 mt-1">
-                Contains "mock-signature-for-development": {token.includes("mock-signature-for-development") ? "✅ Yes" : "❌ No"}
-              </p>
-            </div>
-          ) : (
-            <p className="text-red-600">❌ No token found - reload page</p>
-          )}
-        </div>
+    <Box sx={{ py: 3, background: "linear-gradient(180deg, #f6f8fb 0%, #ffffff 45%)", minHeight: "100vh" }}>
+      <Container maxWidth="md">
+        <Stack spacing={2}>
+          <Typography variant="h4" fontWeight={800}>Authentication & Settings Test</Typography>
 
-        <div className="border rounded p-4">
-          <h2 className="font-semibold mb-2">Test Settings Save:</h2>
-          <button
-            onClick={testSaveSettings}
-            disabled={loading || !token}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Testing..." : "Test PATCH /api/user/settings"}
-          </button>
-          
-          {testResult && (
-            <pre className="mt-4 text-xs bg-gray-100 dark:bg-gray-800 p-4 rounded overflow-x-auto whitespace-pre-wrap">
-              {testResult}
-            </pre>
-          )}
-        </div>
+          <Card sx={{ borderRadius: 3 }}>
+            <CardContent>
+              <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>Token Status</Typography>
+              {token ? (
+                <Stack spacing={1}>
+                  <Alert severity="success">Token exists</Alert>
+                  <Box component="pre" sx={{ m: 0, p: 1.5, fontSize: 12, bgcolor: "grey.100", borderRadius: 1, overflowX: "auto" }}>
+                    {token.substring(0, 100)}...
+                  </Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Token loaded from current session storage.
+                  </Typography>
+                </Stack>
+              ) : (
+                <Alert severity="error">No token found. Reload page.</Alert>
+              )}
+            </CardContent>
+          </Card>
 
-        <div className="border rounded p-4">
-          <h2 className="font-semibold mb-2">Instructions:</h2>
-          <ol className="list-decimal list-inside space-y-2 text-sm">
-            <li>Check that token exists above</li>
-            <li>Click "Test PATCH /api/user/settings" button</li>
-            <li>If you see ✅ SUCCESS, the system is working</li>
-            <li>If you see ❌ FAILED, check the browser console for details</li>
-            <li>Go to <a href="/dashboard/settings" className="text-blue-600 underline">/dashboard/settings</a> to test the real page</li>
-          </ol>
-        </div>
-      </div>
-    </div>
+          <Card sx={{ borderRadius: 3 }}>
+            <CardContent>
+              <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>Test Settings Save</Typography>
+              <Button variant="contained" onClick={testSaveSettings} disabled={loading || !token}>
+                {loading ? "Testing..." : "Test PATCH /api/user/settings"}
+              </Button>
+              {testResult ? (
+                <Box component="pre" sx={{ mt: 1.5, mb: 0, p: 1.5, fontSize: 12, bgcolor: "grey.100", borderRadius: 1, overflowX: "auto", whiteSpace: "pre-wrap" }}>
+                  {testResult}
+                </Box>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          <Card sx={{ borderRadius: 3 }}>
+            <CardContent>
+              <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>Instructions</Typography>
+              <Stack spacing={0.5}>
+                <Typography variant="body2">1. Check that token exists above.</Typography>
+                <Typography variant="body2">2. Click "Test PATCH /api/user/settings".</Typography>
+                <Typography variant="body2">3. If you see SUCCESS, the system is working.</Typography>
+                <Typography variant="body2">4. If you see FAILED, inspect browser console/network.</Typography>
+                <Typography variant="body2">
+                  5. Go to <Link href="/jobs/settings" underline="hover">/jobs/settings</Link> to test the real page.
+                </Typography>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Stack>
+      </Container>
+    </Box>
   );
 }

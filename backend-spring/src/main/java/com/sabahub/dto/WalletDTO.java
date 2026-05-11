@@ -8,6 +8,8 @@ public class WalletDTO {
     private String currency;
     private String paymentMethod;
     private Map<String, String> bankDetails;
+    private String action;
+    private String note;
 
     // Constructors
     public WalletDTO() {}
@@ -32,4 +34,10 @@ public class WalletDTO {
 
     public Map<String, String> getBankDetails() { return bankDetails; }
     public void setBankDetails(Map<String, String> bankDetails) { this.bankDetails = bankDetails; }
+
+    public String getAction() { return action; }
+    public void setAction(String action) { this.action = action; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 }

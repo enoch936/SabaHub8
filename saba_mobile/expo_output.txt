@@ -1,0 +1,7 @@
+Starting project at /home/enoch/sabahub8-main/saba_mobile
+› Port 8081 is running this app in another window
+  /home/enoch/sabahub8-main/saba_mobile (pid 206486)
+Input is required, but 'npx expo' is in non-interactive mode.
+Required input:
+> Use port 8082 instead?
+› Skipping dev server

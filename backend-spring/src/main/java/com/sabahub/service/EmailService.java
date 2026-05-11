@@ -2,7 +2,6 @@ package com.sabahub.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -29,9 +28,6 @@ public class EmailService {
     @Value("${spring.mail.password:}")
     private String smtpPassword;
 
-    @Value("${OTP_FAKE:false}")
-    private boolean otpFake;
-
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
@@ -40,8 +36,6 @@ public class EmailService {
      * Check if email service is properly configured
      */
     public boolean isConfigured() {
-         // If OTP_FAKE is enabled, treat email service as "configured" for dev/testing
-         if (otpFake) return true;
          return smtpUsername != null && !smtpUsername.isEmpty() && 
              smtpPassword != null && !smtpPassword.isEmpty();
     }
@@ -51,11 +45,6 @@ public class EmailService {
      */
     public void sendOTPEmail(String toEmail, String otpCode, String userName) {
         log.info("Sending OTP email to: {}", toEmail);
-        // Dev fallback: if OTP_FAKE is enabled, log and skip actual SMTP send
-        if (otpFake) {
-            log.warn("OTP_FAKE enabled - logging OTP instead of sending via SMTP. Recipient: {} OTP: {}", toEmail, otpCode);
-            return;
-        }
         
         String subject = "Your SabaHub Verification Code";
         String htmlBody = buildOTPEmailHTML(otpCode, userName);
@@ -74,11 +63,6 @@ public class EmailService {
      */
     public void sendPasswordResetEmail(String toEmail, String otpCode, String userName) {
         log.info("Sending password reset email to: {}", toEmail);
-        // Dev fallback: if OTP_FAKE is enabled, log and skip actual SMTP send
-        if (otpFake) {
-            log.warn("OTP_FAKE enabled - logging password reset OTP instead of sending via SMTP. Recipient: {} OTP: {}", toEmail, otpCode);
-            return;
-        }
         
         String subject = "Password Reset Verification - SabaHub";
         String htmlBody = buildPasswordResetEmailHTML(otpCode, userName);

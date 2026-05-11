@@ -2,14 +2,13 @@ package com.sabahub.config;
 
 import com.sabahub.service.EmailService;
 import com.sabahub.service.SMSService;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
  * Health check for OTP services on application startup
- * Logs warnings if email or SMS services are not properly configured
+ * Fails fast when SMTP or Twilio OTP services are not properly configured.
  */
 @Slf4j
 @Component
@@ -23,7 +22,7 @@ public class OTPServicesHealthCheck {
         this.smsService = smsService;
     }
 
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void checkOTPServicesOnStartup() {
         log.info("=".repeat(80));
         log.info("OTP SERVICES CONFIGURATION CHECK");
@@ -55,18 +54,30 @@ public class OTPServicesHealthCheck {
             log.warn("   → Get credentials at: https://www.twilio.com/console");
         }
         
-        // Overall Status
+        // Overall Status (strict mode: both providers are mandatory)
         log.info("-".repeat(80));
         if (emailConfigured && smsConfigured) {
             log.info("✅ OTP System Status: FULLY OPERATIONAL (Email + SMS)");
-        } else if (emailConfigured || smsConfigured) {
-            log.warn("⚠️  OTP System Status: PARTIALLY OPERATIONAL");
-            log.warn("   → Only " + (emailConfigured ? "Email" : "SMS") + " service is available");
         } else {
-            log.error("❌ OTP System Status: NOT OPERATIONAL");
-            log.error("   → Neither Email nor SMS service is configured");
-            log.error("   → OTP endpoints will return service unavailable errors");
+            StringBuilder missing = new StringBuilder();
+            if (!emailConfigured) {
+                missing.append("SMTP (spring.mail.username / spring.mail.password)");
+            }
+            if (!smsConfigured) {
+                if (missing.length() > 0) {
+                    missing.append(", ");
+                }
+                missing.append("Twilio Verify (twilio.account-sid / twilio.auth-token / twilio.verify-service-sid)");
+            }
+
+            String errorMessage = "OTP strict startup check failed. Missing required configuration: " + missing;
+            log.error("❌ OTP System Status: STARTUP BLOCKED");
+            log.error("   → {}", errorMessage);
+            log.error("   → Refusing to boot until both SMTP and Twilio are configured.");
+            log.info("=".repeat(80));
+            throw new IllegalStateException(errorMessage);
         }
+
         log.info("=".repeat(80));
     }
 }

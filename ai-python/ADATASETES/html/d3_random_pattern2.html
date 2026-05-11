@@ -1,0 +1,50 @@
+<script src='https://d3js.org/d3.v4.min.js'></script>
+<style>
+  .centered {position:fixed; top:50%; left:50%; 
+             transform:translate(-50%,-50%);}
+  #svg008 {background-color:ghostwhite;}
+</style>
+<svg id='svg008' class='centered'></svg>
+<script>
+const n=640,m=20;
+var margin={top:m,right:m,bottom:m,left:m},
+    width=500-margin.left-margin.right,
+    height=500-margin.top-margin.bottom,
+    trans='translate('+margin.left+','+margin.top+')';
+function randi(xmin,xmax) {
+    return Math.floor(Math.random()*(xmax-xmin+1))+xmin;};
+function randcolRB(i) {
+    var r=randi(30*(i+1),255),g=randi(i+10,50),b=randi(3*(i+1),255);
+    return '#'+r.toString(16)+g.toString(16)+b.toString(16);}
+function randcolGB(i) {
+    var r=randi(i+10,50),g=randi(30*(i+1),255),b=randi(3*(i+1),255);
+    return '#'+r.toString(16)+g.toString(16)+b.toString(16);}
+var a=randi(7,15),b=randi(10,24);           
+function make_data(j) {
+    return d3.range(0,n).map(function(i) {
+        return {'x':5*j*(Math.cos(0.01*i)+
+                         Math.cos(a*0.01*i)/2+
+                         Math.sin((a+b)*0.01*i)/3),
+                'y':5*j*(Math.sin(0.01*i)+
+                         Math.sin(a*0.01*i)/2+
+                         Math.cos((a+b)*0.01*i)/3)} }); };
+var xScale=d3.scaleLinear().domain([-30,30]).range([0,width+2*m]),
+    yScale=d3.scaleLinear().domain([-30,30]).range([height+2*m,0]); 
+var svg=d3.select('#svg008').attr('width',width+margin.left+margin.right)
+                            .attr('height',height+margin.top+margin.bottom)
+                            .attr('transform',trans);
+var line=d3.line().curve(d3.curveMonotoneX)
+           .x(function(d) {return xScale(d.x);})
+           .y(function(d) {return yScale(d.y);});
+for (var k=1; k<4; k++) {
+    var data=make_data(k);
+    svg.append('path').datum(data)
+       .attr('class','line').attr('d',line)
+       .attr('fill','none').attr('stroke-width',2)
+       .transition().duration(5000)
+       .styleTween('stroke',function() {
+            var col1=randcolRB(k),col2=randcolGB(k); 
+            return d3.interpolate(col1,col2);}); };
+svg.append('text').attr('transform',trans)
+   .style('fill','slategray').text('a='+a+'; b='+b);
+</script>

@@ -1,120 +1,450 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { AppBar, Box, Chip, CircularProgress, Drawer, IconButton, Stack, Toolbar, Typography, useMediaQuery } from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import SoftButton from "@/components/mui/SoftButton";
+import { ThemeIconButton } from "@/components/mui/ThemeToggle";
+import {
+  adminListContent,
+  adminListJobs,
+  adminListProposals,
+  adminPlatformControl,
+  adminSecurityGovernance,
+  listDisputes,
+  listThreads,
+  me,
+} from "@/lib/api";
+import {
+  adminHierarchy,
+  adminNavigationGroups,
+  createInitialExpandedParents,
+  itemMatches,
+  resolveActiveAdminContext,
+} from "@/lib/admin/navigation";
+import { isTokenUsable, logout } from "@/lib/auth";
+import { normalizeRoleList } from "@/lib/role-mode";
 import { bootstrapSession, useSession } from "@/lib/session";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+const DRAWER_WIDTH = 320;
+
+type ModerationSidebarBadges = {
+  platformControlAlerts: number;
+  securityAlerts: number;
+  flaggedJobs: number;
+  openDisputes: number;
+  unpublishedPolicyUpdates: number;
+  jobs: number;
+  proposals: number;
+  unreadMessages: number;
+  total: number;
+};
+
+const emptyModerationBadges: ModerationSidebarBadges = {
+  platformControlAlerts: 0,
+  securityAlerts: 0,
+  flaggedJobs: 0,
+  openDisputes: 0,
+  unpublishedPolicyUpdates: 0,
+  jobs: 0,
+  proposals: 0,
+  unreadMessages: 0,
+  total: 0,
+};
+
+function isLikelyFlaggedJob(job: { title?: string | null; description?: string | null; status?: string | null }) {
+  const status = (job.status ?? "").toUpperCase();
+  const combined = `${job.title ?? ""} ${job.description ?? ""}`.toLowerCase();
+  const suspicious = ["scam", "fraud", "fake", "crypto giveaway", "guaranteed return"];
+  return status === "OPEN" && suspicious.some((term) => combined.includes(term));
+}
+
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const sectionQuery = searchParams.get("section");
   const role = useSession((s) => s.role);
-  const [isDark, setIsDark] = useState(true);
+  const clearSession = useSession((s) => s.clear);
+  const hydrateFromUser = useSession((s) => s.hydrateFromUser);
+
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
+  const isDarkMode = theme.palette.mode === "dark";
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
+  const [expandedParents, setExpandedParents] = useState<Record<string, boolean>>(createInitialExpandedParents);
+  const [focusedGroupKey, setFocusedGroupKey] = useState<string | null>(null);
+  const [moderationBadges, setModerationBadges] = useState<ModerationSidebarBadges>(emptyModerationBadges);
+
+  const activeContext = useMemo(() => resolveActiveAdminContext(pathname, sectionQuery), [pathname, sectionQuery]);
+  const activeAccent = activeContext.group?.accent ?? "#18283b";
+  const activeLabel = activeContext.child?.label ?? activeContext.item?.label ?? "Admin";
+  const activeDescription = activeContext.child
+    ? activeContext.item?.description ?? "Admin tools."
+    : activeContext.item?.description ?? "Operations and controls";
+  const liveStatusLabel = moderationBadges.total > 0 ? `${moderationBadges.total} live alerts` : "Nominal";
+  const focusedGroup = useMemo(
+    () => adminNavigationGroups.find((group) => group.key === focusedGroupKey) ?? activeContext.group ?? adminNavigationGroups[0],
+    [activeContext.group, focusedGroupKey],
+  );
+  const activeGroupLabel = pathname === "/admin" ? "Overview" : activeContext.group?.label ?? focusedGroup.label;
 
   useEffect(() => {
-    bootstrapSession();
-    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-    if (!token) {
-      router.replace("/login");
+    const currentParent = adminHierarchy.find((item) => itemMatches(pathname, sectionQuery, item));
+    if (currentParent) {
+      setExpandedParents((prev) => ({ ...prev, [currentParent.key]: true }));
+    }
+  }, [pathname, sectionQuery]);
+
+  useEffect(() => {
+    if (activeContext.group?.key) {
+      setFocusedGroupKey(activeContext.group.key);
+    }
+  }, [activeContext.group?.key]);
+
+  useEffect(() => {
+    setSidebarOpen(isDesktop);
+  }, [isDesktop]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const initialize = async () => {
+      bootstrapSession();
+      const token = localStorage.getItem("auth_token");
+
+      if (!isTokenUsable(token)) {
+        clearSession();
+        localStorage.removeItem("auth_token");
+        router.replace("/login");
+        return;
+      }
+
+      try {
+        const currentUser = await me();
+        const normalizedRoles = normalizeRoleList(currentUser.roles);
+        hydrateFromUser(currentUser);
+
+        if (!normalizedRoles.includes("ADMIN")) {
+          router.replace("/forbidden");
+          return;
+        }
+
+        if (!cancelled) {
+          setAuthReady(true);
+        }
+      } catch {
+        if (!cancelled) {
+          clearSession();
+          localStorage.removeItem("auth_token");
+          router.replace("/login");
+        }
+      }
+    };
+
+    void initialize();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clearSession, hydrateFromUser, router]);
+
+  useEffect(() => {
+    if (!authReady || !role) {
       return;
     }
-    
-    // Initialize theme from localStorage
-    const theme = localStorage.getItem('theme') || 'dark';
-    setIsDark(theme === 'dark');
-  }, [router]);
 
-  useEffect(() => {
-    // Guard: only ADMIN may access /admin
-    if (role && role !== "ADMIN") {
+    if (role !== "ADMIN") {
       router.replace("/forbidden");
     }
-  }, [role, router, pathname]);
+  }, [authReady, role, router]);
+
+  useEffect(() => {
+    if (!isDesktop) {
+      setSidebarOpen(false);
+    }
+  }, [isDesktop, pathname]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadModerationBadges = async () => {
+      if (!authReady) {
+        return;
+      }
+
+      const [
+        platformControlResult,
+        securityGovernanceResult,
+        jobsResult,
+        proposalsResult,
+        disputesResult,
+        contentResult,
+        threadsResult,
+      ] = await Promise.allSettled([
+        adminPlatformControl(),
+        adminSecurityGovernance(),
+        adminListJobs(),
+        adminListProposals(),
+        listDisputes(),
+        adminListContent(),
+        listThreads(),
+      ]);
+
+      if (cancelled) {
+        return;
+      }
+
+      const jobs = jobsResult.status === "fulfilled" ? jobsResult.value : [];
+      const disputes = disputesResult.status === "fulfilled" ? disputesResult.value : [];
+      const content = contentResult.status === "fulfilled" ? contentResult.value : [];
+      const proposals = proposalsResult.status === "fulfilled" ? proposalsResult.value : [];
+      const threads = threadsResult.status === "fulfilled" ? threadsResult.value : [];
+      const platformControlAlerts = platformControlResult.status === "fulfilled" ? platformControlResult.value.alerts.length : 0;
+      const securityAlerts = securityGovernanceResult.status === "fulfilled" ? securityGovernanceResult.value.alerts.length : 0;
+
+      const flaggedJobs = jobs.filter((job) => isLikelyFlaggedJob(job)).length;
+      const openDisputes = disputes.filter((dispute) => {
+        const status = (dispute.status ?? "").toUpperCase();
+        return status === "OPEN" || status === "INVESTIGATING";
+      }).length;
+      const unpublishedPolicyUpdates = content.filter((item) => (item.status ?? "").toUpperCase() === "DRAFT").length;
+      const unreadMessages = threads.reduce((total, thread) => total + Math.max(0, Number(thread.unreadCount ?? 0)), 0);
+
+      setModerationBadges({
+        platformControlAlerts,
+        securityAlerts,
+        flaggedJobs,
+        openDisputes,
+        unpublishedPolicyUpdates,
+        jobs: jobs.length,
+        proposals: proposals.length,
+        unreadMessages,
+        total: platformControlAlerts + securityAlerts + flaggedJobs + openDisputes + unpublishedPolicyUpdates + unreadMessages,
+      });
+    };
+
+    void loadModerationBadges();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authReady]);
 
   const onLogout = () => {
-    try {
-      // Clear token and session, then redirect
-      localStorage.removeItem("auth_token");
-    } finally {
-      router.replace("/login");
-    }
+    clearSession();
+    logout();
+    router.replace("/login");
   };
 
-  const toggleTheme = () => {
-    try {
-      const root = document.documentElement;
-      const newIsDark = !isDark;
-      setIsDark(newIsDark);
-      
-      root.classList.remove('theme-light', 'theme-dark');
-      const next = newIsDark ? 'theme-dark' : 'theme-light';
-      root.classList.add(next);
-      localStorage.setItem('theme', newIsDark ? 'dark' : 'light');
-      
-      // Set cookie for server-side rendering
-      document.cookie = `theme=${newIsDark ? 'dark' : 'light'}; path=/; max-age=31536000`;
-    } catch {}
-  };
+  if (!authReady) {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          background: (themeValue) => themeValue.palette.background.default,
+        }}
+      >
+        <CircularProgress size={28} />
+      </Box>
+    );
+  }
 
   return (
-    <div className={isDark ? "min-h-screen bg-slate-900" : "min-h-screen bg-white"}>
-      <header className={isDark ? "fixed top-0 left-0 right-0 z-50 border-b border-slate-800 bg-slate-900/80 backdrop-blur" : "fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur"}>
-        <div className="mx-auto max-w-7xl px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded bg-gradient-to-br from-rose-500 to-fuchsia-600" />
-            <div>
-              <div className={isDark ? "text-slate-100 font-bold" : "text-slate-900 font-bold"}>SabaHub Admin</div>
-              <div className={isDark ? "text-xs text-slate-400" : "text-xs text-slate-500"}>Control Panel</div>
-            </div>
-          </div>
-          <nav className={isDark ? "hidden md:flex items-center gap-2 text-sm" : "hidden md:flex items-center gap-2 text-sm"}>
-            <a className={isDark ? "mx-2 text-slate-300 hover:text-white" : "mx-2 text-slate-600 hover:text-slate-900"} href="/admin">Overview</a>
-            <a className={isDark ? "mx-2 text-slate-300 hover:text-white" : "mx-2 text-slate-600 hover:text-slate-900"} href="/admin/analytics">Analytics</a>
-            <a className={isDark ? "mx-2 text-slate-300 hover:text-white" : "mx-2 text-slate-600 hover:text-slate-900"} href="/admin/users">Users</a>
-            <a className={isDark ? "mx-2 text-slate-300 hover:text-white" : "mx-2 text-slate-600 hover:text-slate-900"} href="/admin/disputes">CRP</a>
-            <a className={isDark ? "mx-2 text-slate-300 hover:text-white" : "mx-2 text-slate-600 hover:text-slate-900"} href="/admin/content">CMP</a>
-            <a className={isDark ? "mx-2 text-slate-300 hover:text-white" : "mx-2 text-slate-600 hover:text-slate-900"} href="/admin/audit-logs">Audit</a>
-            <button onClick={toggleTheme} aria-label="Toggle theme" title="Toggle theme" className={isDark ? "ml-3 inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors" : "ml-3 inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-gray-100 text-slate-700 hover:bg-gray-200 transition-colors"}>
-              {isDark ? (
-                // Sun icon for light mode
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="5"></circle>
-                  <line x1="12" y1="1" x2="12" y2="3"></line>
-                  <line x1="12" y1="21" x2="12" y2="23"></line>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                  <line x1="1" y1="12" x2="3" y2="12"></line>
-                  <line x1="21" y1="12" x2="23" y2="12"></line>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-              ) : (
-                // Moon icon for dark mode
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                </svg>
-              )}
-            </button>
-            <button onClick={onLogout} className={isDark ? "ml-2 rounded bg-slate-800 px-3 py-1.5 text-slate-200 hover:bg-slate-700" : "ml-2 rounded bg-gray-200 px-3 py-1.5 text-slate-900 hover:bg-gray-300"}>Logout</button>
-          </nav>
-        </div>
-      </header>
-      <div className="pt-20">
-        <aside className={isDark ? "fixed left-0 top-16 bottom-0 w-64 border-r border-slate-800 bg-slate-950/60 backdrop-blur overflow-y-auto" : "fixed left-0 top-16 bottom-0 w-64 border-r border-gray-200 bg-gray-50/60 backdrop-blur overflow-y-auto"}>
-          <ul className={isDark ? "p-4 space-y-2 text-sm" : "p-4 space-y-2 text-sm"}>
-            <li><a className={isDark ? "block rounded px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white" : "block rounded px-3 py-2 text-slate-600 hover:bg-gray-200 hover:text-slate-900"} href="/admin">Dashboard</a></li>
-            <li><a className={isDark ? "block rounded px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white" : "block rounded px-3 py-2 text-slate-600 hover:bg-gray-200 hover:text-slate-900"} href="/admin/analytics">Analytics</a></li>
-            <li><a className={isDark ? "block rounded px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white" : "block rounded px-3 py-2 text-slate-600 hover:bg-gray-200 hover:text-slate-900"} href="/admin/users">Manage Users</a></li>
-            <li><a className={isDark ? "block rounded px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white" : "block rounded px-3 py-2 text-slate-600 hover:bg-gray-200 hover:text-slate-900"} href="/admin/jobs">Jobs Moderation</a></li>
-            <li><a className={isDark ? "block rounded px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white" : "block rounded px-3 py-2 text-slate-600 hover:bg-gray-200 hover:text-slate-900"} href="/admin/proposals">Proposals</a></li>
-            <li><a className={isDark ? "block rounded px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white" : "block rounded px-3 py-2 text-slate-600 hover:bg-gray-200 hover:text-slate-900"} href="/admin/transactions">Transactions</a></li>
-            <li><a className={isDark ? "block rounded px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white" : "block rounded px-3 py-2 text-slate-600 hover:bg-gray-200 hover:text-slate-900"} href="/admin/chat">Admin Chat</a></li>
-            <li><a className={isDark ? "block rounded px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white" : "block rounded px-3 py-2 text-slate-600 hover:bg-gray-200 hover:text-slate-900"} href="/admin/disputes">CRP (Disputes)</a></li>
-            <li><a className={isDark ? "block rounded px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white" : "block rounded px-3 py-2 text-slate-600 hover:bg-gray-200 hover:text-slate-900"} href="/admin/content">CMP (Content)</a></li>
-            <li><a className={isDark ? "block rounded px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white" : "block rounded px-3 py-2 text-slate-600 hover:bg-gray-200 hover:text-slate-900"} href="/admin/audit-logs">Audit Logs</a></li>
-          </ul>
-        </aside>
-        <main className={isDark ? "lg:ml-64 p-6 text-slate-100" : "lg:ml-64 p-6 text-slate-900"}>{children}</main>
-      </div>
-    </div>
+    <Box
+      className="sheet-shell"
+      sx={{
+        minHeight: "100vh",
+        position: "relative",
+        overflow: "hidden",
+        bgcolor: (t) => (t.palette.mode === "light" ? "#f8f8f6" : t.palette.background.default),
+      }}
+    >
+      <AppBar
+        position="fixed"
+        color="inherit"
+        elevation={0}
+        sx={{
+          bgcolor: theme.palette.background.paper,
+          boxShadow: `0 10px 30px ${alpha("#07101d", isDarkMode ? 0.22 : 0.05)}`,
+        }}
+      >
+        <Toolbar
+          sx={{
+            gap: 1,
+            px: { xs: 1, sm: 1.25 },
+            py: { xs: 0.5, sm: 0 },
+            minHeight: { xs: "64px !important", sm: "60px !important" },
+          }}
+        >
+          <IconButton
+            onClick={() => setSidebarOpen((prev) => !prev)}
+            edge="start"
+            aria-label={sidebarOpen ? "Hide menu" : "Show menu"}
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: 2,
+              bgcolor: alpha(activeAccent, isDarkMode ? 0.16 : 0.05),
+              boxShadow: "0 10px 24px rgba(15,23,42,0.05)",
+            }}
+          >
+            <MenuRoundedIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+
+          <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" alignItems="center" sx={{ mb: 0.25 }}>
+              <Chip
+                label={activeGroupLabel}
+                size="small"
+                sx={{
+                  height: 20,
+                  borderRadius: 999,
+                  bgcolor: alpha(activeAccent, isDarkMode ? 0.2 : 0.08),
+                  color: activeAccent,
+                  border: "1px solid",
+                  borderColor: alpha(activeAccent, isDarkMode ? 0.34 : 0.14),
+                  ".MuiChip-label": { px: 0.9, fontSize: 9.8, fontWeight: 800, letterSpacing: "0.04em" },
+                }}
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10.4 }}>
+                {activeLabel}
+              </Typography>
+            </Stack>
+            <Typography variant="subtitle2" fontWeight={900} sx={{ fontSize: 13.8, lineHeight: 1.08 }}>
+              Admin
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10.2 }}>
+              {activeDescription}
+            </Typography>
+          </Stack>
+
+          <Stack direction="row" spacing={0.75} alignItems="center" sx={{ display: { xs: "none", md: "flex" } }}>
+            <Chip
+              label={liveStatusLabel}
+              size="small"
+              color={moderationBadges.total > 0 ? "warning" : "success"}
+              variant={moderationBadges.total > 0 ? "filled" : "outlined"}
+              sx={{ height: 22, ".MuiChip-label": { px: 1, fontSize: 10.2, fontWeight: 800 } }}
+            />
+            <Chip
+              label={role ?? "ADMIN"}
+              size="small"
+              variant="outlined"
+              sx={{
+                height: 22,
+                borderColor: alpha(activeAccent, isDarkMode ? 0.32 : 0.16),
+                ".MuiChip-label": { px: 1, fontSize: 10.2, fontWeight: 700 },
+              }}
+            />
+          </Stack>
+
+          <ThemeIconButton
+            size="small"
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: 2,
+              bgcolor: alpha(activeAccent, isDarkMode ? 0.16 : 0.05),
+              border: "1px solid",
+              borderColor: alpha(activeAccent, isDarkMode ? 0.34 : 0.14),
+              "&:hover": { bgcolor: alpha(activeAccent, isDarkMode ? 0.22 : 0.08) },
+            }}
+          />
+
+          <SoftButton
+            onClick={onLogout}
+            variant="outlined"
+            color="error"
+            size="small"
+            sx={{
+              px: { xs: 1.15, sm: 1.6 },
+              minWidth: { xs: "auto", sm: 94 },
+              borderRadius: 2.6,
+            }}
+          >
+            Logout
+          </SoftButton>
+        </Toolbar>
+      </AppBar>
+
+      <Box>
+        <Drawer
+          variant={isDesktop ? "persistent" : "temporary"}
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            width: DRAWER_WIDTH,
+            flexShrink: 0,
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              boxSizing: "border-box",
+              top: { xs: 64, sm: 60 },
+              height: { xs: "calc(100vh - 64px)", sm: "calc(100vh - 60px)" },
+              bgcolor: theme.palette.background.paper,
+              boxShadow: "none",
+              overflowX: "hidden",
+            },
+          }}
+        >
+          <AdminSidebar
+            activeContext={activeContext}
+            expandedParents={expandedParents}
+            focusedGroup={focusedGroup}
+            isDarkMode={isDarkMode}
+            moderationBadges={moderationBadges}
+            pathname={pathname}
+            role={role}
+            sectionQuery={sectionQuery}
+            onFocusGroup={setFocusedGroupKey}
+            onNavigate={(href) => router.push(href)}
+            onToggleParent={(itemKey) => {
+              setExpandedParents((prev) => ({ ...prev, [itemKey]: !prev[itemKey] }));
+            }}
+          />
+        </Drawer>
+
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            ml: isDesktop && sidebarOpen ? `${DRAWER_WIDTH}px` : 0,
+            width: `calc(100% - ${isDesktop && sidebarOpen ? DRAWER_WIDTH : 0}px)`,
+            p: 0,
+            maxWidth: "100%",
+            transition: "margin-left 220ms ease, width 220ms ease",
+          }}
+        >
+          <Toolbar sx={{ minHeight: { xs: 64, sm: 60 } }} />
+          <Box
+            sx={{
+              minHeight: { xs: "calc(100vh - 64px)", sm: "calc(100vh - 60px)" },
+              overflowX: "hidden",
+              position: "relative",
+            }}
+          >
+            <Box sx={{ position: "relative", zIndex: 1, px: { xs: 1.5, md: 2.5 }, py: { xs: 1.25, md: 2 } }}>
+              {children}
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </Suspense>
   );
 }

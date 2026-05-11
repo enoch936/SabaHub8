@@ -3,7 +3,6 @@ package com.sabahub.service;
 import com.twilio.Twilio;
 import com.twilio.rest.verify.v2.service.Verification;
 import com.twilio.rest.verify.v2.service.VerificationCheck;
-import com.twilio.type.PhoneNumber;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -31,15 +30,10 @@ public class SMSService {
 
     private boolean isInitialized = false;
 
-    @Value("${OTP_FAKE:false}")
-    private boolean otpFake;
-
     /**
      * Check if SMS service is properly configured
      */
     public boolean isConfigured() {
-         // If OTP_FAKE is enabled, treat SMS service as configured for dev/testing
-         if (otpFake) return true;
          return twilioAccountSid != null && !twilioAccountSid.isEmpty() && 
              twilioAuthToken != null && !twilioAuthToken.isEmpty() &&
              twilioVerifyServiceSid != null && !twilioVerifyServiceSid.isEmpty();
@@ -62,11 +56,6 @@ public class SMSService {
      */
     public void sendOTPSMS(String phoneNumber, String otpCode) {
         log.info("Sending OTP SMS via Verify API to: {}", phoneNumber);
-        // Dev fallback: if OTP_FAKE is enabled, log and skip Twilio call
-        if (otpFake) {
-            log.warn("OTP_FAKE enabled - logging OTP SMS instead of sending via Twilio Verify. Recipient: {} OTP: {}", phoneNumber, otpCode);
-            return;
-        }
 
         if (!isConfigured()) {
             String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
@@ -101,11 +90,6 @@ public class SMSService {
      */
     public void sendVerificationCode(String phoneNumber) {
         log.info("Sending verification code via Verify API to: {}", phoneNumber);
-        if (otpFake) {
-            log.warn("OTP_FAKE enabled - skipping Twilio Verify send. Recipient: {}", phoneNumber);
-            return;
-        }
-
         if (!isConfigured()) {
             String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
             log.warn(errorMsg);
@@ -135,11 +119,6 @@ public class SMSService {
      */
     public boolean verifyCode(String phoneNumber, String code) {
         log.info("Verifying SMS code via Verify API for: {}", phoneNumber);
-        if (otpFake) {
-            log.warn("OTP_FAKE enabled - accepting verification code for: {}", phoneNumber);
-            return true;
-        }
-
         if (!isConfigured()) {
             String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
             log.warn(errorMsg);
@@ -170,12 +149,6 @@ public class SMSService {
      */
     public void sendPasswordResetSMS(String phoneNumber, String otpCode) {
         log.info("Sending password reset SMS via Verify API to: {}", phoneNumber);
-        // Dev fallback: if OTP_FAKE is enabled, log and skip Twilio call
-        if (otpFake) {
-            log.warn("OTP_FAKE enabled - logging password reset SMS OTP instead of sending via Twilio Verify. Recipient: {} OTP: {}", phoneNumber, otpCode);
-            return;
-        }
-
         if (!isConfigured()) {
             String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
             log.warn(errorMsg);

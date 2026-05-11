@@ -1,0 +1,471 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <title>MLE_ND_P1_SMC</title>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function(){
+      sagecell.makeSagecell({inputLocation:'div.linked',linked:true,evalButtonText:'Run Linked Cells'});  
+      sagecell.makeSagecell({inputLocation:'div.sage',evalButtonText:'Run'});});
+    </script>
+  </head>
+  <style>
+    @import 'https://fonts.googleapis.com/css?family=Orbitron|Roboto';
+    body {margin:5px 5px 5px 15px; background-color:aliceblue;}; 
+    a {color:#4876ff; font-family:Roboto;} 
+    h1 {color:#348ABD; font-family:Orbitron; text-shadow:4px 4px 4px #ccc;} 
+    h2,h3 {color:slategray; font-family:Orbitron; text-shadow:4px 4px 4px #ccc;}
+    h4 {color:#348ABD; font-family:Roboto;}
+    .sagecell .CodeMirror-scroll {min-height:3em; max-height:70em;}
+  </style>  
+  <body>
+    <h1>🏙 Machine Learning Engineer Nanodegree &nbsp;
+      <a href='https://olgabelitskaya.github.io/README.html'>&#x1F300; &nbsp; Home Page &nbsp; &nbsp; &nbsp;</a></h1>
+    <h2>Model Evaluation and Validation</h2>
+    <h1>&#x1F4D1; &nbsp;P1: Predicting Boston Housing Prices</h1>
+    <h2>Getting Started</h2>
+    <h3>Dataset</h3>
+In this project, we will evaluate the performance and predictive power of a model that has been trained and tested on data collected from homes in suburbs of Boston, Massachusetts.<br/>A model trained on this data that is seen as a good fit could then be used to make certain predictions about a home — in particular, its monetary value.<br/>This model would prove to be invaluable for someone like a real estate agent who could make use of such information on a daily basis.<br/>
+<i>Origin</i>: This dataset was taken from the StatLib library which is maintained at Carnegie Mellon University.<br/>
+<i>Creators</i>: Harrison, D. and Rubinfeld, D.L.<br/>
+<i>Data Set Information</i>: Concerns housing values in suburbs of Boston.<br/>
+<i>Attribute Information</i>:<br/>
+CRIM: per capita crime rate by town<br/>
+ZN: proportion of residential land zoned for lots over 25,000 sq.ft.<br/>
+INDUS: proportion of non-retail business acres per town<br/>
+CHAS: Charles River dummy variable (= 1 if tract bounds river; 0 otherwise)<br/>
+NOX: nitric oxides concentration (parts per 10 million)<br/>
+RM: average number of rooms per dwelling<br/>
+AGE: proportion of owner-occupied units built prior to 1940<br/>
+DIS: weighted distances to five Boston employment centres<br/>
+RAD: index of accessibility to radial highways<br/>
+TAX: full-value property-tax rate per 10,000 USD<br/>
+PTRATIO: pupil-teacher ratio by town<br/>
+B: 1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town<br/>
+LSTAT: % lower status of the population<br/>
+MEDV: Median value of owner-occupied homes in 1000 USD<br/>
+The Boston housing data was collected in 1978 and each of the 506 entries represents aggregated data about 14 features for homes from various suburbs.<br/>
+For the purposes of this project, the following preprocessing steps have been made to the dataset:<br/>
+16 data points have an 'MEDV' value of 50.0. These data points likely contain missing or censored values and have been removed.<br/>
+1 data point has an 'RM' value of 8.78. This data point can be considered an outlier and has been removed.<br/>
+The features 'RM', 'LSTAT', 'PTRATIO', and 'MEDV' are essential. The remaining non-relevant features have been excluded.<br/>
+The feature 'MEDV' has been multiplicatively scaled to account for 35 years of market inflation.
+      <h3>Resources</h3>
+<a href='https://archive.ics.uci.edu/ml/machine-learning-databases/housing/'>&#x1F578;UCI Housing Dataset&nbsp;</a>
+<a href='http://archive.ics.uci.edu/ml/datasets.php'>&#x1F578;UCI Machine Learning Repository&nbsp;</a>
+<a href='https://scikit-learn.org/stable/index.html'>&#x1F578;scikit-learn. Machine Learning in Python&nbsp;</a>
+<a href='http://seaborn.pydata.org/index.html'>&#x1F578;seaborn: statistical data visualization&nbsp;</a>
+      <h3>Code Library</h3>      
+<div class='linked'><script type='text/x-sage'>
+import warnings; warnings.filterwarnings('ignore')
+import numpy,pandas,pylab,seaborn
+pylab.style.use('seaborn-whitegrid')
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import ShuffleSplit,GridSearchCV
+from sklearn.metrics import mean_squared_error,r2_score,make_scorer
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import learning_curve,validation_curve
+from sklearn import datasets
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+# https://github.com/udacity/machine-learning/blob/master/projects/boston_housing/visuals.py
+def ModelLearning(X,y):
+    cv=ShuffleSplit(n_splits=10,test_size=.2,random_state=1)
+    train_sizes=numpy.rint(numpy.linspace(1,X.shape[0]*.8-1,9)).astype(int)
+    fig=pylab.figure(figsize=(10,8))
+    for k,depth in enumerate([1,3,6,10]):
+        regressor=DecisionTreeRegressor(max_depth=depth)
+        sizes,train_scores,test_scores=\
+        learning_curve(regressor,X,y,cv=cv,
+                       train_sizes=train_sizes,scoring='r2')
+        train_std=numpy.std(train_scores,axis=1)
+        train_mean=numpy.mean(train_scores,axis=1)
+        test_std=numpy.std(test_scores,axis=1)
+        test_mean=numpy.mean(test_scores,axis=1)
+        ax=fig.add_subplot(2,2,k+1)
+        ax.plot(sizes,train_mean,'o-',color='#E24A33',label='Training Score')
+        ax.plot(sizes,test_mean,'o-',color='#348ABD',label='Testing Score')
+        ax.fill_between(sizes,train_mean-train_std,
+                        train_mean+train_std,alpha=.15,color='#E24A33')
+        ax.fill_between(sizes,test_mean-test_std,
+                        test_mean+test_std,alpha=.15,color='#348ABD')
+        ax.set_title('max_depth=%s'%(depth))
+        ax.set_xlabel('Number of Training Points')
+        ax.set_ylabel('Score')
+        ax.set_xlim([0,X.shape[0]*.8]); ax.set_ylim([-.05,1.05])
+    ax.legend(bbox_to_anchor=(1.05,1.05),
+              loc='lower left',borderaxespad=.1)
+    st='Decision Tree Regressor Learning Performances'
+    fig.suptitle(st,fontsize=16,y=1.03)
+    fig.tight_layout(); pylab.show()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+def ModelComplexity(X,y):
+    cv=ShuffleSplit(n_splits=10,test_size=.2,random_state=0)
+    max_depth=numpy.arange(1,11)
+    train_scores,test_scores=\
+    validation_curve(DecisionTreeRegressor(),X,y,
+                     param_name='max_depth',param_range=max_depth,
+                     cv=cv,scoring='r2')
+    train_mean=numpy.mean(train_scores,axis=1)
+    train_std=numpy.std(train_scores,axis=1)
+    test_mean=numpy.mean(test_scores,axis=1)
+    test_std=numpy.std(test_scores,axis=1)
+    pylab.figure(figsize=(10,5))
+    pylab.title('Decision Tree Regressor Complexity Performance')
+    pylab.plot(max_depth, train_mean,'o-',
+               color='#E24A33',label='Training Score')
+    pylab.plot(max_depth,test_mean,'o-',
+               color='#348ABD',label='Validation Score')
+    pylab.fill_between(max_depth,train_mean-train_std,
+                       train_mean+train_std,alpha=.15,color='#E24A33')
+    pylab.fill_between(max_depth,test_mean-test_std,
+                       test_mean+test_std,alpha=.15,color='#348ABD')
+    pylab.legend(loc='lower right')
+    pylab.xlabel('Maximum Depth'); pylab.ylabel('Score')
+    pylab.ylim([-.05,1.05]); pylab.tight_layout(); pylab.show()
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+def PredictTrials(X,y,fitter,data):
+    prices=[]
+    for k in range(10):
+        X_train,X_test,y_train,y_test=\
+        train_test_split(X,y,test_size=.2,random_state=k)
+        reg=fitter(X_train,y_train).best_estimator_
+        pred=reg.predict([data[0]])[0]
+        prices.append(pred)
+        print ('Trial {}: ${:,.2f}'.format(k+1,pred))
+    print('\nRange in prices: ${:,.2f}'\
+    .format(max(prices)-min(prices)))
+</script></div><br/>
+      <h2>Data Exploration</h2>
+In this first section of this project, we will make a cursory investigation about the Boston housing data and provide the observations.<br/>
+Familiarizing ourself with the data through an explorative process is a fundamental practice 
+to help us better understand and justify the results.<br/>
+Since the main goal of this project is to construct a working model which has the capability of predicting the value of houses,
+<br/>we will need to separate the dataset into the <b>features</b> and the <b>target</b> variable.<br/>
+The features, 'RM', 'LSTAT', and 'PTRATIO', give us quantitative information about each data point.<br/>
+The <b>target</b> variable, 'MEDV', will be the variable we seek to predict. These are stored in features and prices, respectively.    
+<div class='linked'><script type='text/x-sage'>
+path='https://raw.githubusercontent.com/OlgaBelitskaya/'+\
+'machine_learning_engineer_nd009/master/Machine_Learning_Engineer_ND_P1/'
+data=pandas.read_csv(path+'housing.csv')
+prices=data['MEDV']; features=data.drop('MEDV',axis=1)
+print ('Boston housing dataset has '+\
+       '{} data points with {} variables each.'.format(*data.shape))
+data.describe().T
+</script></div><br/>
+    <h3>Implementation: Calculate Statistics</h3>
+For the very first coding implementation, we will calculate descriptive statistics about the Boston housing prices.<br/>
+Since numpy has already been imported, this library is used to perform the necessary calculations.<br/> 
+These statistics will be extremely important later on to analyze various prediction results from the constructed model.<br/> 
+In the code cell below, we will need to implement the following:<br/>
+Calculate the minimum, maximum, mean, median, and standard deviation of 'MEDV', which is stored in prices.<br/>
+Store each calculation in their respective variable.<br/>
+<div class='linked'><script type='text/x-sage'>
+table([('Boston Housing Dataset Statistics: \n',''),
+       ('Number of houses = ',len(prices)),
+       ('Number of features = ',len(list(features.keys()))),
+       ('Minimum house price = ',numpy.min(prices)),
+       ('Maximum house price = ',numpy.max(prices)),
+       ('Mean house price = ',numpy.mean(prices)),
+       ('Median house price = ',numpy.median(prices)),
+       ('Standard deviation of house prices = ',numpy.std(prices))])
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+pylab.figure(figsize=(10,5))
+seaborn.histplot(
+    prices,color='#348ABD',edgecolor='slategray',bins=30,kde=True)
+pylab.title('Boston Housing Data')
+pylab.xlabel('Prices')
+pylab.tight_layout(); pylab.show()
+</script></div><br/>
+    <h3>Question 1 - Feature Observation</h3>
+As a reminder, we are using three features from the Boston housing dataset: 'RM', 'LSTAT', and 'PTRATIO'.<br/>
+For each data point (neighborhood):<br/>
+'RM' is the average number of rooms among homes in the neighborhood.<br/>
+'LSTAT' is the percentage of homeowners in the neighborhood considered "lower class" (working poor).<br/>
+'PTRATIO' is the ratio of students to teachers in primary and secondary schools in the neighborhood.<br/>
+<i>Using your intuition, for each of the three features above, do you think that an increase in the value of that feature</i> <br/>
+<i>would lead to an <b>increase</b> in the value of 'MEDV' or a <b>decrease</b> in the value of 'MEDV'? Justify your answer for each.</i>
+    <h3>Answer 1</h3>
+My assumptions could be:<br/>
+'RM': shows the level of home comfort, its increase would lead to the increase in the value of 'MEDV';<br/>
+'PTRATIO': shows the level of educational resources, its increase would lead to the decrease in the value of 'MEDV';<br/>
+'LSTAT': indicates the level of social environment comfort, its increase would lead to the decrease in the value of 'MEDV'.<br/>
+I have made the correlation list for all features in the original dataset to confirm the assumptions and 
+created plots for the transformed features<br/>with the least squares regression fitted line and the hexagon-aggregated 2D histograms as an example to illustrate the trends.
+<div class='linked'><script type='text/x-sage'>
+boston_data=datasets.load_boston()
+boston_df=pandas.DataFrame(boston_data.data,columns=boston_data.feature_names)
+boston_df['MEDV']=boston_data.target; pearson=boston_df.corr(method='pearson')
+corr_with_prices=pearson['MEDV'].loc[:'LSTAT'] 
+corr_with_prices[abs(corr_with_prices).sort_values(ascending=False).index]
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+def lstsq_plot(feature):
+    pylab.figure(figsize=(10,5))
+    x,y=features[feature],prices
+    x1=numpy.array([[v,1] for v in x])
+    y1=numpy.array([[v,1] for v in y])
+    (slope,bias),_,_,_=numpy.linalg.lstsq(x1,y1,rcond=None)
+    y_lin=x1*slope+bias
+    pylab.scatter(x1,y1,color='#348ABD',marker='*',
+                  facecolors='none',label='Original data')
+    pylab.scatter(x1,y_lin,color='#104E8B',marker='v',
+                  facecolors='none',label='Fitted line')
+    pylab.xlabel('Feature %s'%feature); pylab.ylabel('Prices')
+    pylab.title('Boston Housing Data'); pylab.legend(); pylab.show()
+seaborn.jointplot(features['RM'],prices,kind='hex',
+                  joint_kws={'alpha':.8},height=5,color='#348ABD')
+pylab.tight_layout(); pylab.show(); lstsq_plot('RM')
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+seaborn.jointplot(features['PTRATIO'],prices,kind='hex',
+                  joint_kws={'alpha':.8},height=5,color='#348ABD')
+pylab.tight_layout(); pylab.show(); lstsq_plot('PTRATIO')
+</script></div><br/>
+<div class='linked'><script type='text/x-sage'>
+seaborn.jointplot(features['LSTAT'],prices,kind='hex',
+                  joint_kws={'alpha':.8},height=5,color='#348ABD')
+pylab.tight_layout(); pylab.show(); lstsq_plot('LSTAT')
+</script></div><br/>
+    <h2>Developing a Model</h2>
+In this section of the project, we will develop the tools and techniques necessary for a model to make a prediction.<br/>
+Being able to make accurate evaluations of each model's performance through the use of these tools and techniques helps to greatly reinforce the confidence in the predictions.
+    <h3>Implementation: Define a Performance Metric</h3>
+It is difficult to measure the quality of a given model without quantifying its performance over training and testing.<br/>
+This is typically done using some type of performance metric, whether it is through calculating some type of error, the goodness of fit, or some other useful measurement.<br/>
+For this project, we will be calculating the coefficient of determination, <i>$R^2$</i>, to quantify the model's performance.<br/> 
+The coefficient of determination for a model is a useful statistic in regression analysis, as it often describes how "good" that model is at making predictions.<br/>
+The values for <i>$R^2$</i> range from 0 to 1, which captures the percentage of squared correlation between the predicted and actual values of the target variable.<br/>
+A model with an <i>$R^2$</i> of 0 is no better than a model that always predicts the mean of the target variable, whereas a model with an <i>$R^2$</i> of 1 perfectly predicts the target variable.<br/> 
+Any value between 0 and 1 indicates what percentage of the target variable, using this model, can be explained by the features.<br/>
+A model can be given a negative <i>$R^2$</i> as well, which indicates that the model is arbitrarily worse than one that always predicts the mean of the target variable.<br/>
+For the <i>performance_metric()</i> function, we will need to implement the following:<br/>
+- use <i>r2_score</i> from <i>sklearn.metrics</i> to perform a performance calculation between <i>y_true</i> and <i>y_predict</i>;<br/>
+- assign the performance score to the score variable.
+<div class='linked'><script type='text/x-sage'>
+def performance_metric(y_true,y_predict): 
+    return r2_score(y_true,y_predict)
+</script></div><br/>
+    <h3>Question 2 - Goodness of Fit</h3>
+Assume that a dataset contains five data points and a model made the following predictions for the target variable:
+<table class='table_form'><tbody>
+<tr class='row-a'><td>True Value</td><td>Prediction</td></tr>
+<tr class='row-b'><td><script type='math/tex'>3.0</script></td><td><script type='math/tex'>2.5</script></td></tr>
+<tr class='row-a'><td><script type='math/tex'>-0.5</script></td><td><script type='math/tex'>0.0</script></td></tr>
+<tr class='row-b'><td><script type='math/tex'>2.0</script></td><td><script type='math/tex'>2.1</script></td></tr>
+<tr class='row-a'><td><script type='math/tex'>7.0</script></td><td><script type='math/tex'>7.8</script></td></tr>
+<tr class='row-b'><td><script type='math/tex'>4.2</script></td><td><script type='math/tex'>5.3</script></td></tr>
+</tbody></table>
+<i>Would you consider this model to have successfully captured the variation of the target variable? Why or why not?</i>
+<div class='linked'><script type='text/x-sage'>
+display(table([['True Value','Prediction'],
+               [3.0,2.5],[-0.5,0.0],[2.0,2.1],[7.0,7.8],[4.2,5.3]]))
+score=performance_metric([3,-0.5,2,7,4.2],[2.5,0.0,2.1,7.8,5.3])
+st='Model has a coefficient of determination, R^2, of {:.3f}.'
+print(st.format(score))
+</script></div><br/>
+    <h3>Answer 2</h3>
+<i>$R^2$</i> indicates the performance of the model between the predicted and observed values of the target variable very well (especially for linear regression).<br/>
+It is close to 1 and seems that the model predicts quite accurately. But we must be extremely careful with the conclusions in the case of a small amount of data.<br/>
+In addition, it is unknown whether it is a linear model and how many variables were needed to build it (details are given about the target variable only).<br/>
+Therefore, it can be stated only that a reasonably accurate prediction is possible to build in this case, but it is desirable to have more data.
+    <h3>Implementation: Shuffle and Split Data</h3>
+The next implementation requires that we take the Boston housing dataset and split the data into training and testing subsets.<br/>Typically, the data is splitted and shuffled into a random order when creating the training and testing subsets to remove any bias in the ordering of the dataset.
+<div class='linked'><script type='text/x-sage'>
+X_train,X_test,y_train,y_test=\
+train_test_split(features,prices,test_size=.2,random_state=1)
+print ('Training and testing split was successful.')
+</script></div><br/>
+    <h3>Question 3 - Training and Testing</h3>
+<i>What is the benefit to splitting a dataset into some ratio of training and testing subsets for a learning algorithm?</i>
+    <h3>Answer 3</h3>
+We should not only build a predictive model but also assess the quality of it.<br/> 
+Naturally, we would like to know how our predictions will be relatively close to the actual outcomes.<br/>
+We usually split the data into training and testing subsets exactly for this goal.<br/> 
+The training set is used to choose the most effective parameters for given models.<br/>
+But what kind of model we should apply and how the concrete model works we can evaluate with the test set.<br/>
+It helps to avoid overfitting, i.e. the cases when the built model<br/>
+- will fit extremely well for the training sets and<br/>
+- will not work with real data because of catching non-existing trends.
+    <h2>Analyzing Model Performance</h2>
+In this section of the project, we will take a look at several models' learning and testing performances on various subsets of training data.<br/>
+Additionally, we'll investigate one particular algorithm with an increasing the <i>max_depth</i> parameter on the full training set to observe how model complexity affects performance.<br/>
+Graphing the model's performance based on varying criteria can be beneficial in the analysis process, such as visualizing behavior that may not have been apparent from the results alone.
+    <h3>Learning Curves</h3>
+The following code cell produces four graphs for a decision tree model with different maximum depths.<br/> 
+Each graph visualizes the <b>learning curves</b> of the model for both training and testing as the size of the training set is increased.<br/>
+The shaded region of a learning curve denotes the uncertainty of that curve (measured as the standard deviation).<br/> 
+The model is scored on both the training and testing sets using <i>$R^2$</i>, the coefficient of determination.
+<div class='linked'><script type='text/x-sage'>
+ModelLearning(features,prices)
+</script></div><br/>
+    <h3>Question 4 - Learning the Data</h3>
+<i>Choose one of the graphs above and state the maximum depth for the model. What happens to the score of the training curve as more training points are added?</i><br/>
+<i>What about the testing curve? Would having more training points benefit the model?</i>
+    <h3>Answer 4</h3>
+I would prefer the graph with <i>max_depth = 3</i>. As we can see, the training and testing score curves become enough close to 1 and to each other for this depth.<br/> 
+These facts are important to fit the model well. Let's have a look on each curve in this case.<br/> 
+With an increase in the training set, the training score curve slowly decreases from 1.0 to 0.81-0.82, and stops to decrease at the level of 300 points.<br/>
+The testing score curve, on the contrary, increases (in the beginning - very rapidly) till the certain level (0.78-0.79) and then stays approximately the same.<br/>
+Therefore, after 300 points increasing the number of points in the training set would not lead to the better model.<br/> 
+Most likely, for improving the accuracy of the model, no more points in the training set are required, we just need to add more variables for analysis.
+    <h3>Complexity Curves</h3>
+Now we produces a graph for a decision tree model that has been trained and validated on the training data using different maximum depths.<br/>
+The graph shows two <b>complexity curves</b> — one for training and one for validation.<br/>
+Similar to the learning curves, the shaded regions of both the complexity curves denote the uncertainty in those curves,<br/> 
+and the model is scored on both the training and validation sets using the <i>performance_metric()</i> function.
+<div class='linked'><script type='text/x-sage'>
+ModelComplexity(X_train,y_train)
+</script></div><br/>
+    <h3>Question 5 - Bias-Variance Tradeoff</h3>
+<i>When the model is trained with a maximum depth of 1, does the model suffer from high bias or from high variance?</i><br/>
+<i>How about when the model is trained with a maximum depth of 10? What visual cues in the graph justify your conclusions?</i>
+    <h3>Answer 5</h3>
+With the maximum depth of 1, the model suffers from high bias and underfitting. The train and test datasets have low scores, it means the model does not represent the true relationship.<br/>
+With the maximum depth of 10, there are huge gaps between two curves, and I barely see the testing curve. In this case, the model suffers from overfitting and high variance.<br/>
+The visual cues in the graph confirm these conclusions:<br/> 
+- at the beginning of the graph both curves are close to each other but far away from the relable score 1;<br/>
+- at the end of the graph curves are close to the desired level of accuracy but diverge at a quite big distance from each other.
+    <h3>Question 6 - Best-Guess Optimal Model</h3>
+<i>Which maximum depth do you think results in a model that best generalizes to unseen data? What intuition lead you to this answer?</i>
+    <h3>Answer 6</h3>
+The goal of model building is to simultaneously reduce bias and variance as much as possible to obtain as accurate predictions as is feasible.<br/>
+The tradeoff consists of selecting models of different flexibility or complexity and appropriate training sets to minimize these indicators.<br/>
+The most tradeoff depth seems to equal to 4 in this model:<br/> 
+- before this point - the level of accuracy is not sufficient,<br/>
+- after this point - the curves begin to diverge.
+    <h2>Evaluating Model Performance</h2>
+In this section of the project, we will construct a model and make a prediction on the client's feature set using an optimized model from <i>fit_model()</i>.
+    <h3>Question 7 - Grid Search</h3>
+<i>What is the <b>grid search</b> technique and how it can be applied to optimize a learning algorithm?</i>
+    <h3>Answer 7</h3>
+The <b>grid search</b> is a possible method for tuning the model and provides a set of possible values for each parameter.<br/>
+This algorithm automatically runs the model using each of these parameters and then selects the best ones according to a certain performance metric.
+    <h3>Question 8 - Cross-Validation</h3>
+<i>What is the <b>k-fold cross-validation</b> training technique? What benefit does this technique provide for grid search when optimizing a model?</i>
+    <h3>Answer 8</h3>
+The <b>k-fold cross-validation</b> is a model evaluation method to optimize the use of the training and testing data. The original sample is randomly partitioned into k equal size subsamples.<br/> 
+One of subsamples is retained as the validation data for testing the model, and the remaining k-1 subsamples are used as training data.<br/>
+The process repeated k times, each of the k subsamples is used exactly once as the validation data.<br/>
+The residual evaluations do not give an indication of how well the model will make new predictions for the future or unknown data.<br/>
+The cross validation helps to overcome it and test the performance of the learned model on independent data (the testing set).<br/>
+In our case the grid search algorithm will choose the best parameters for the trained model and evaluate it using cross validation to avoid overfitting and optimize the result with limited data. 
+      <h3>Implementation: Fitting a Model</h3>
+The final implementation requires that we bring everything together and train a model using the <b>decision tree</b> algorithm.<br/> 
+To ensure that you are producing an optimized model, we will train the model using the grid search technique to optimize the <i>max_depth</i> parameter for the decision tree.<br/>
+This parameter can be thought of as how many questions the decision tree algorithm is allowed to ask about the data before making a prediction.<br/> 
+Decision trees are part of a class of algorithms called <b>supervised learning</b> algorithms.<br/>
+In addition, we will use <i>ShuffleSplit()</i> for an alternative form of cross-validation.<br/>
+While it is not the k-fold cross-validation technique we described in Question 8, this type of cross-validation technique is just as useful.<br/>
+The <i>ShuffleSplit()</i> implementation will create 10 (<i>n_splits</i>) shuffled sets, and for each shuffle, 20% (<i>test_size</i>) of the data will be used as the validation set.<br/>
+! Please note that <i>ShuffleSplit()</i> has different parameters in scikit-learn versions.<br/>
+For the <i>fit_model</i> function in the code cell below, you will need to implement the following:<br/>
+- Use <i>DecisionTreeRegressor</i> from <i>sklearn.tree</i> to create a decision tree regressor object.<br/>
+- Assign this object to the <i>regressor</i> variable.<br/>
+- Create a dictionary for <i>max_depth</i> with the values from 1 to 10, and assign this to the <i>params</i> variable.<br/>
+- Use <i>make_scorer</i> from <i>sklearn.metrics</i> to create a scoring function object.<br/>
+- Pass the <i>performance_metric()</i> function as a parameter to the object.<br/>
+- Assign this scoring function to the <i>scoring_fnc</i> variable.<br/>
+- Use <i>GridSearchCV</i> from <i>sklearn.model_selection</i> to create a grid search object.<br/>
+- Pass the variables <i>regressor</i>, <i>params</i>, <i>scoring_fnc</i>, and <i>cv_sets</i> as parameters to the object.<br/>
+- Assign the <i>GridSearchCV</i> object to the <i>grid</i> variable.
+<div class='linked'><script type='text/x-sage'>
+def fit_model(X,y):
+    cv_sets=ShuffleSplit(n_splits=12,test_size=.2,random_state=0)
+    regressor=DecisionTreeRegressor()
+    parameters={'max_depth':[1,2,3,4,5,6,7,8,9,10]}
+    scoring_function=make_scorer(performance_metric)
+    grid=GridSearchCV(estimator=regressor,param_grid=parameters,
+                      scoring=scoring_function,cv=cv_sets)
+    return grid.fit(X,y)
+</script></div><br/>
+    <h3>Making Predictions</h3>
+Once a model has been trained on a given set of data, it can now be used to make predictions on new sets of input data.<br/>
+In the case of a <b>decision tree regressor</b>, the model has learned what the best questions to ask about the input data are, and can respond with a prediction for the <b>target</b> variable.<br/>
+We can use these predictions to gain information about data where the value of the target variable is unknown — such as data the model was not trained on.<br/>
+    <h3>Question 9 - Optimal Model</h3>
+<i>What maximum depth does the optimal model have? How does this result compare to your guess in Question 6?</i>
+    <h3>Answer 9</h3>
+The result corresponds to the expressed in the Answer 6 assumptions based on visualization of the model complexity.      
+<div class='linked'><script type='text/x-sage'>
+fit=fit_model(X_train,y_train); reg=fit.best_estimator_
+results=pandas.DataFrame(fit.cv_results_)
+print('Grid Search Process Results'); display(results.T)
+print ('\nParameter `max_depth` is {} for the optimal model.'\
+       .format(reg.get_params()['max_depth']))
+</script></div><br/>
+    <h3>Question 10 - Predicting Selling Prices</h3>
+Imagine that you were a real estate agent in the Boston area looking to use this model to help price homes owned by your clients that they wish to sell.<br/>
+You have collected the following information from three of your clients:
+<table  class='table_form'><tbody>
+<tr class='row-a'><td>Feature</td><td>Client 1</td><td>Client 2</td><td>Client 3</td></tr>
+<tr class='row-b'><td>Total number of rooms in home</td><td>5 rooms</td><td>4 rooms</td><td>8 rooms</td></tr>
+<tr class='row-a'><td>Neighborhood poverty level (as %)</td><td>17%</td><td>32%</td><td>3%</td></tr>
+<tr class='row-b'><td>Student-teacher ratio of nearby schools</td><td>15-to-1</td><td>22-to-1</td><td>12-to-1</td></tr>
+</tbody></table>
+<i>What price would you recommend each client sell his/her home at? Do these prices seem reasonable given the values for the respective features?</i>
+<div class='linked'><script type='text/x-sage'>
+display(table([['Feature','Client 1','Client 2','Client 3'],
+               ['Total number of rooms in home','5 rooms','4 rooms','8 rooms'],
+               ['Neighborhood poverty level (as %)','17%','32%','3%'],
+               ['Student-teacher ratio of nearby schools',
+                '15-to-1','22-to-1','12-to-1']]))
+client_data=[[5,17,15],[4,32,22],[8,3,12]]
+for i,price in enumerate(reg.predict(client_data)):
+    print('Predicted selling price for Client {}`s home: ${:,.2f}'\
+          .format(i+1,price))   
+</script></div><br/>
+We can compare them to the real prices for the housing of the considered database, extracting items with roughly the same indicators. 
+<div class='linked'><script type='text/x-sage'>
+print(data[(data['RM']>=5)&(data['RM']<5.1)&\
+(data['LSTAT']>=10)&(data['LSTAT']<=20)])
+print(data[(data['RM']>=4)&(data['RM']<4.2)&\
+(data['LSTAT']>=30)&(data['LSTAT']<=40)])
+print(data[(data['RM']>=8)&(data['RM']<8.2)&\
+(data['LSTAT']>=2)&(data['LSTAT']<=4)])
+</script></div><br/>
+The predicted prices look reasonable but somewhat overpriced for a more comfortable housing.<br/>
+They can be recommended the clients as the start level for the sales with possible discounts of up to 10%.<br/>
+The tendency of price change depending on changes in the features under consideration corresponds to the predicted.<br/>
+    <h3>Sensitivity</h3>
+An optimal model is not necessarily a robust model. Sometimes, a model is either too complex or too simple to sufficiently generalize to new data.<br/>
+Sometimes, a model could use a learning algorithm that is not appropriate for the structure of the data given.<br/> 
+Other times, the data itself could be too noisy or contain too few samples to allow a model to adequately capture the target variable — i.e., the model is underfitted.<br/>
+We can run the <i>fit_model()</i> function ten times with different training and testing sets to see how the prediction for a specific client changes with the data it's trained on.
+<div class='linked'><script type='text/x-sage'>
+PredictTrials(features,prices,fit_model,client_data)
+</script></div><br/>
+    <h3>Question 11 - Applicability</h3>
+<i>In a few sentences, discuss whether the constructed model should or should not be used in a real-world setting.<br/>
+- How relevant today is data that was collected from 1978?<br/>
+- Are the features present in the data sufficient to describe a home?<br/>
+- Is the model robust enough to make consistent predictions?<br/>
+- Would data collected in an urban city like Boston be applicable in a rural city?</i>
+    <h3>Answer 11</h3>
+The main methods used in the model are statistically justified. Preferences in house choosing change over time very slowly.<br/> 
+For the population, the features which are similar to our data are significant in our times as well.<br/>
+Comfort inside, the level of external social environment and city infrastructure development will always be the most reasonable in the housing choice.<br/>
+For practical application of the model the user has to perform several specific simple steps:<br/>
+- collect the set of modern data;<br/>
+- update the feature definitions according to the modern trends;<br/>
+- add to the model the certain features which are relevant exactly for the considered region;<br/>
+- apply the described programming steps.
+    <h2>Conclusion</h2>
+The goal of this report was to describe the built model that determined the best result in house pricing.<br/>
+Here various statistical and machine learning techniques were applied to predictions and observations.<br/> 
+The reader can see the parameters of the final model below.      
+<div class='linked'><script type='text/x-sage'>
+reg
+</script></div><br/>
+Of course, the model is a little bit outdated. In the modern version, the project can be implemented in the form of an interactive map<br/>
+of recommended prices with the basic indices of living comfort, which can serve as a guide for buyers and sellers.      
+    <h3>For Additional Code Experiments</h3>
+<div class='linked'><script type='text/x-sage'>
+
+</script></div><br/> 
+  </body>
+</html>

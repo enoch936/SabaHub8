@@ -39,4 +39,20 @@ public class EscrowController {
         double amount = body.get("amount") == null ? 0.0 : ((Number) body.get("amount")).doubleValue();
         return ResponseEntity.ok(escrowService.refundEscrow(contractId, amount));
     }
+
+    @PostMapping("/escrow/refund/request")
+    public ResponseEntity<Contract> requestRefund(@RequestBody Map<String, Object> body) {
+        String contractId = (String) body.get("contractId");
+        double amount = body.get("amount") == null ? 0.0 : ((Number) body.get("amount")).doubleValue();
+        String note = (String) body.get("note");
+        return ResponseEntity.ok(escrowService.requestEscrowRefund(contractId, amount, note));
+    }
+
+    @PostMapping("/escrow/refund/decision")
+    public ResponseEntity<Contract> decideRefund(@RequestBody Map<String, Object> body) {
+        String contractId = (String) body.get("contractId");
+        boolean approve = body.get("approve") instanceof Boolean value && value;
+        String note = (String) body.get("note");
+        return ResponseEntity.ok(escrowService.decideEscrowRefund(contractId, approve, note));
+    }
 }

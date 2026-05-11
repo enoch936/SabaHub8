@@ -37,7 +37,8 @@ public class OTP {
         REGISTRATION,
         PASSWORD_RESET,
         EMAIL_VERIFICATION,
-        PHONE_VERIFICATION
+        PHONE_VERIFICATION,
+        LOGIN
     }
 
     public enum OTPStatus {

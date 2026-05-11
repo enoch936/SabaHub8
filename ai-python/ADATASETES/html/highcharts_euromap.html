@@ -1,0 +1,27 @@
+
+<script src='https://code.highcharts.com/maps/highmaps.js'></script>
+<script src='https://code.highcharts.com/modules/exporting.js'>></script>
+<script src='https://code.highcharts.com/modules/offline-exporting.js'></script>
+<script src='https://code.highcharts.com/mapdata/custom/europe.js'></script>
+<div id='div005' style='width:99%; height:99%;'></div>
+<script>
+var s1='Variants for Highlighting:<br>AL,AD,AM,AT,BY,',
+    s2='BE,BA,BG,CH,CY,CZ,DE,DK,EE,ES,FO,FI,FR,GB,GE,GI,GR,',
+    s3='<br>HU,HR,IE,IS,IT,LT,LU,LV,MC,MK,MT,NO,NL,PL,',
+    s4='PT,RO,RU,SE,SI,SK,SM,TR,UA,VA'; 
+var s=s1.concat(s2).concat(s3).concat(s4);
+Highcharts.mapChart('div005', {
+    chart:{map:'custom/europe',borderWidth:1,backgroundColor:'slategray'},
+    title:{style:{'color':'#fff','fontSize':'18px'},
+           text:'Exploration of Mapping Parameters'},
+    subtitle:{style:{'color':'#fff','fontSize':'14px'},text:s},
+              legend:{enabled:false},
+    series:[{name:'Country',color:'#1636ff',
+             borderColor:'steelblue',borderWidth:1.5,
+             data:[['fr',1],['gb',1],['es',1],['de',1],
+                   ['it',1],['pl',1],['by',1]],
+             dataLabels:{enabled:true,color:'#fff',
+                         formatter:function (){if (this.point.value){
+                            return this.point.name;}}},
+             tooltip:{headerFormat:'',pointFormat:'{point.name}'}}] });
+</script>

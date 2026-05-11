@@ -2,11 +2,14 @@ export const JOB_TAXONOMY_SOURCE = `Software & IT
   ├─ Application Development
   │    ├─ Web Application Development
   │    ├─ Mobile Application Development
+  │    ├─ E-commerce Platform Development
+  │    ├─ Low-Code & No-Code Development
   │    └─ Desktop & Cross-Platform Apps
   ├─ Cloud & DevOps
   │    ├─ Site Reliability Engineering (SRE)
   │    ├─ CI/CD & Build Engineering
-  │    └─ Cloud Architecture & Migration
+  │    ├─ Cloud Architecture & Migration
+  │    └─ Platform Engineering
   ├─ IT Operations & Support
   │    ├─ Helpdesk & Service Desk
   │    ├─ Systems Administration
@@ -39,7 +42,8 @@ Data & AI
   └─ AI Product, Ops & Governance
        ├─ Prompt Engineering & LLM Apps
        ├─ AI Evaluation & Red Teaming
-       └─ Responsible AI & Model Risk
+       ├─ Responsible AI & Model Risk
+       └─ Conversational AI & Agents
 Cybersecurity
   ├─ Security Engineering
   │    ├─ Security Architecture
@@ -111,7 +115,8 @@ Design & Creative
   ├─ Graphic & Visual Design
   │    ├─ Branding & Identity
   │    ├─ Marketing & Advertising Design
-  │    └─ Illustration
+  │    ├─ Illustration
+  │    └─ Document Design & Layout
   ├─ Product & Industrial Design
   │    ├─ Industrial Design
   │    ├─ Packaging Design
@@ -153,7 +158,8 @@ Writing & Translation
   ├─ Technical Writing
   │    ├─ API Documentation
   │    ├─ User Guides & Manuals
-  │    └─ SOPs & Playbooks
+  │    ├─ SOPs & Playbooks
+  │    └─ RFP & Proposal Writing
   ├─ Editing & Proofreading
   │    ├─ Developmental Editing
   │    ├─ Copy Editing
@@ -174,7 +180,8 @@ Business & Management
   ├─ Project & Program Management
   │    ├─ PMO & Governance
   │    ├─ Agile Delivery
-  │    └─ Portfolio Management
+  │    ├─ Portfolio Management
+  │    └─ Technical Program Management
   ├─ Operations Management
   │    ├─ Process Improvement
   │    ├─ Service Operations
@@ -220,7 +227,8 @@ Sales & Marketing
   ├─ Digital Marketing
   │    ├─ SEO/SEM
   │    ├─ Paid Social
-  │    └─ Email Marketing
+  │    ├─ Email Marketing
+  │    └─ Marketing Automation & CRM
   ├─ Brand & Communications
   │    ├─ Brand Strategy
   │    ├─ PR & Media Relations

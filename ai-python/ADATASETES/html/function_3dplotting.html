@@ -1,0 +1,45 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function () {
+    sagecell.makeSagecell({inputLocation:'div.interactive',
+                           template:sagecell.templates.minimal,
+                           evalButtonText:'run'}); });
+    </script>
+  </head>
+  <style>
+  h3 {color:#aa33ff; text-shadow:3px 3px 3px slategray;}
+  pre {width:99%; padding-left:3px; border:2px double slategray; } 
+  .sagecell_output {width:99%; border:2px double slategray; padding-right:1px;}
+  .sagecell_interactControlLabel:hover {padding-left:3px; color:#aa33ff; font-size:120%;}
+  .sagecell_interactOutput {padding-left:3px;}
+  body {margin:5px 5px 5px 15px;}
+  </style>  
+  <body>
+    <h3>$$\mathbb{3D \; Plotting \; of \; Functions}$$</h3>
+<pre><code>
+@interact
+def _(a=[3,4,5,6],b=[3,4,5,6]):
+    var('x,y,z'); c=colormaps.jet(8*a*b)[:3]
+    f=a*(cos(x)+cos(y)+cos(z))+b*cos(x)*cos(y)*cos(z)
+    p=implicit_plot3d(f,(x,-b,b),(y,-b,b),(z,-b,b),
+                      mesh=True,plot_points=10,
+                      alpha=.5,color=c)
+    p.show(frame=False)
+
+</code></pre><br/> 
+<div id='cell003' class='interactive'><script type='text/x-sage'>
+@interact
+def _(a=[3,4,5,6],b=[3,4,5,6]):
+    var('x,y,z'); c=colormaps.jet(8*a*b)[:3]
+    f=a*(cos(x)+cos(y)+cos(z))+b*cos(x)*cos(y)*cos(z)
+    p=implicit_plot3d(f,(x,-b,b),(y,-b,b),(z,-b,b),
+                      mesh=True,plot_points=10,
+                      alpha=.5,color=c)
+    p.show(frame=False)
+</script></div><br/>
+  </body>
+</html>

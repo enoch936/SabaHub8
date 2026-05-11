@@ -1,0 +1,18 @@
+{
+    "case_id": "10",
+    "case_title": "CodeRabbit Contamination Blueprint Audit",
+    "vault_reference": "CLASSY-CODE-RBT-0531-ETH",
+    "status": "sealed",
+    "detected_signals": [
+        "Exact phrase overlaps",
+        "N-gram similarity (2\u20135g cadence)",
+        "Stylometry rhythm overlap"
+    ],
+    "rubric_scoring": {
+        "severity_of_harm": 8.5,
+        "breadth_of_harm": 7.0,
+        "novelty": 7.5,
+        "reproducibility": 9.0,
+        "methodological_insight": 8.0
+    }
+}

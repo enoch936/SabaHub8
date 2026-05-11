@@ -1,0 +1,76 @@
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function(){ 
+      sagecell.makeSagecell({
+        inputLocation:'#cell013',template:sagecell.templates.minimal,
+        evalButtonText:'run'}); });
+    </script>
+  </head>
+  <style>
+  h3 {color:#aa33ff; text-shadow:4px 4px 4px slategray;}
+  pre {width:99%; padding-left:3px; border:2px double slategray; } 
+  .sagecell_output {width:99%; border:2px double slategray; padding-right:1px;}
+  .sagecell_interactControlLabel:hover {padding-left:3px; color:#aa33ff; font-size:120%;}
+  .sagecell_interactOutput {padding-left:3px;}
+  </style>  
+  <body>   
+<h3>$$\large{\mathbb{Interactive \; Tachyon \; Projections}}$$</h3>
+<p>Click the $\large{\mathbb{run}}$ button to display an example.</p>
+<pre><code>
+@interact
+def _(projection=selector(
+          ['perspective','fisheye','perspective_dof']),
+      cmap=selector(
+          ['hsv','jet','cool','hot','prism','ocean'])):
+    k=1; e=[[[k,-k,k],[0,0,0]],[[0,0,0],[k,k,k]],
+            [[k,k,k],[-k,k,k]],[[-k,k,k],[-k,-k,k]],
+            [[-k,-k,k],[k,-k,k]],[[k,-k,k],[k,k,k]],
+            [[k,k,k],[k,k,-k]],[[k,k,-k],[-k,k,-k]],
+            [[-k,k,-k],[-k,-k,-k]],[[-k,-k,-k],[k,-k,-k]],
+            [[k,-k,-k],[k,k,-k]],[[k,k,-k],[0,0,0]],
+            [[0,0,0],[k,-k,-k]],[[k,-k,-k],[k,-k,k]]]
+    if projection=='perspective_dof':
+        t=Tachyon(xres=400,yres=400,projection=projection,
+                  camera_center=(-3.5,0.,0.),
+                  antialiasing=3,raydepth=5,
+                  focallength='2.0',aperture='.003')
+    else: t=Tachyon(xres=400,yres=400,projection=projection,
+                    camera_center=(-3.5,0.,0.))
+    for i in [0..13]:
+        t.texture('t%s'%str(i),opacity=.3,
+                  color=colormaps[cmap](.077*i)[:3])
+        t.fcylinder(e[i][0],e[i][1],.06,'t%s'%str(i)) 
+    t.light((-5,-5,5),.1,(1,1,1)); t.show()
+
+</code></pre><br/>     
+<div id='cell013'><script type='text/x-sage'>
+@interact
+def _(projection=selector(
+          ['perspective','fisheye','perspective_dof']),
+      cmap=selector(
+          ['hsv','jet','cool','hot','prism','ocean'])):
+    k=1; e=[[[k,-k,k],[0,0,0]],[[0,0,0],[k,k,k]],
+            [[k,k,k],[-k,k,k]],[[-k,k,k],[-k,-k,k]],
+            [[-k,-k,k],[k,-k,k]],[[k,-k,k],[k,k,k]],
+            [[k,k,k],[k,k,-k]],[[k,k,-k],[-k,k,-k]],
+            [[-k,k,-k],[-k,-k,-k]],[[-k,-k,-k],[k,-k,-k]],
+            [[k,-k,-k],[k,k,-k]],[[k,k,-k],[0,0,0]],
+            [[0,0,0],[k,-k,-k]],[[k,-k,-k],[k,-k,k]]]
+    if projection=='perspective_dof':
+        t=Tachyon(xres=400,yres=400,projection=projection,
+                  camera_center=(-3.5,0.,0.),
+                  antialiasing=3,raydepth=5,
+                  focallength='2.0',aperture='.003')
+    else: t=Tachyon(xres=400,yres=400,projection=projection,
+                    camera_center=(-3.5,0.,0.))
+    for i in [0..13]:
+        t.texture('t%s'%str(i),opacity=.3,
+                  color=colormaps[cmap](.077*i)[:3])
+        t.fcylinder(e[i][0],e[i][1],.06,'t%s'%str(i)) 
+    t.light((-5,-5,5),.1,(1,1,1)); t.show()
+</script></div>
+  </body>
+</html>

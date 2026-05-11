@@ -1,0 +1,22 @@
+<style>
+body { background:ghostwhite; }
+canvas { border:2px dashed slategray; width:90%; height:90%}
+.centered { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); }
+</style>
+<body><canvas id='canvas001' class='centered' width='1200' height='600'>
+</canvas></body>
+<script>
+var c=document.getElementById('canvas001'); 
+var ctx=c.getContext('2d');
+var grd = ctx.createRadialGradient(600,300,10,600,300,700);
+grd.addColorStop(0,'steelblue'); grd.addColorStop(1,'silver');
+ctx.fillStyle=grd;
+ctx.fillRect(1,1,1198,598);
+ctx.beginPath(); ctx.moveTo(100,50); 
+for (var i=1; i<11; i++) { 
+	ctx.lineTo(100*i,50*(i+1)); ctx.lineTo(100*(i+1),50*(i+1)); }; 
+ctx.stroke();
+ctx.fillStyle='white';
+ctx.font='50px Comic Sans MS'; ctx.textAlign='center';
+ctx.fillText('😜',c.width/2-5,c.height/2-5);
+</script>

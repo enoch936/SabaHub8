@@ -2,6 +2,17 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 type Step = "email" | "otp-email" | "otp-sms" | "reset" | "success";
 
@@ -18,7 +29,6 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Step 1: Request password reset OTP
   async function requestReset(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -26,19 +36,13 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/auth/otp/request-registration`, {
+      const res = await fetch(`/api/auth/otp/request-password-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          phoneNumber,
-          firstName: "User",
-        }),
+        body: JSON.stringify({ email, phoneNumber, firstName: "User" }),
       });
-
       if (!res.ok) throw new Error("Failed to send OTP");
-
-      setStatus("OTP sent to your email and phone!");
+      setStatus("OTP sent to your email and phone.");
       setStep("otp-email");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to request reset");
@@ -47,22 +51,19 @@ export default function ForgotPasswordPage() {
     }
   }
 
-  // Step 2: Verify email OTP
   async function verifyEmailOTP(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/auth/otp/verify-email`, {
+      const res = await fetch(`/api/auth/otp/verify-email-password-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otpCode: emailOTP }),
       });
-
       if (!res.ok) throw new Error("Invalid email OTP");
-
-      setStatus("Email verified! Now verify SMS.");
+      setStatus("Email verified. Now verify SMS.");
       setStep("otp-sms");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Email verification failed");
@@ -71,22 +72,19 @@ export default function ForgotPasswordPage() {
     }
   }
 
-  // Step 3: Verify SMS OTP
   async function verifySMSOTP(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/auth/otp/verify-sms`, {
+      const res = await fetch(`/api/auth/otp/verify-sms-password-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otpCode: smsOTP }),
+        body: JSON.stringify({ phoneNumber, otpCode: smsOTP }),
       });
-
       if (!res.ok) throw new Error("Invalid SMS OTP");
-
-      setStatus("SMS verified! Now reset your password.");
+      setStatus("SMS verified. Set your new password.");
       setStep("reset");
     } catch (err) {
       setError(err instanceof Error ? err.message : "SMS verification failed");
@@ -95,7 +93,6 @@ export default function ForgotPasswordPage() {
     }
   }
 
-  // Step 4: Reset password
   async function resetPassword(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -106,7 +103,6 @@ export default function ForgotPasswordPage() {
       setLoading(false);
       return;
     }
-
     if (newPassword.length < 8) {
       setError("Password must be at least 8 characters");
       setLoading(false);
@@ -119,16 +115,10 @@ export default function ForgotPasswordPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password: newPassword }),
       });
-
       if (!res.ok) throw new Error("Failed to reset password");
-
-      setStatus("Password reset successful! Redirecting to login...");
+      setStatus("Password reset successful. Redirecting to login...");
       setStep("success");
-
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
+      setTimeout(() => router.push("/login"), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Password reset failed");
     } finally {
@@ -137,191 +127,53 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-slate-950 px-4 py-10 text-slate-900">
-      <div className="pointer-events-none absolute inset-0 -z-20" aria-hidden>
-        <img src="/images/backgrounds/aurora-blur.svg" alt="Aurora" className="h-full w-full object-cover opacity-80" />
-      </div>
-      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-        <img src="/images/backgrounds/geo-light-grid.svg" alt="Grid" className="h-full w-full object-cover opacity-55" />
-      </div>
+    <Box sx={{ minHeight: "100vh", py: 8, background: "#ffffff" }}>
+      <Container maxWidth="sm">
+        <Card sx={{ borderRadius: 4 }}>
+          <CardContent>
+            <Typography variant="h4" fontWeight={800}>Reset Password</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Verify your code, then choose a new password.
+            </Typography>
 
-      <div className="mx-auto w-full max-w-3xl">
-        <div className="mb-8 text-center text-white">
-          <p className="text-xs uppercase tracking-[0.35em] text-cyan-200">Account recovery</p>
-          <h1 className="mt-2 text-3xl font-bold">Reset Password</h1>
-          <p className="mt-2 text-sm text-cyan-100/80">Follow the steps to verify email and SMS before choosing a new password.</p>
-        </div>
+            {step === "email" ? (
+              <Stack spacing={2} component="form" onSubmit={requestReset}>
+                <TextField type="email" label="Email" value={email} onChange={(e) => setEmail(e.target.value)} required fullWidth />
+                <TextField type="tel" label="Phone number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required fullWidth />
+                <Button type="submit" variant="contained" disabled={loading}>{loading ? "Sending..." : "Send Verification Codes"}</Button>
+              </Stack>
+            ) : null}
 
-        <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-white/85 p-6 shadow-[0_22px_70px_rgba(8,47,73,0.35)] backdrop-blur">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 via-cyan-400 to-indigo-500" aria-hidden />
-          <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-sky-300/30 blur-3xl" aria-hidden />
-          <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-indigo-300/30 blur-3xl" aria-hidden />
+            {step === "otp-email" ? (
+              <Stack spacing={2} component="form" onSubmit={verifyEmailOTP}>
+                <TextField label="Email OTP" value={emailOTP} onChange={(e) => setEmailOTP(e.target.value.replace(/\D/g, "").slice(0, 6))} required fullWidth />
+                <Button type="submit" variant="contained" disabled={loading || emailOTP.length !== 6}>{loading ? "Verifying..." : "Verify Email OTP"}</Button>
+              </Stack>
+            ) : null}
 
-          <h2 className="mb-4 text-xl font-semibold text-slate-900">Recovery steps</h2>
+            {step === "otp-sms" ? (
+              <Stack spacing={2} component="form" onSubmit={verifySMSOTP}>
+                <TextField label="SMS OTP" value={smsOTP} onChange={(e) => setSmsOTP(e.target.value.replace(/\D/g, "").slice(0, 6))} required fullWidth />
+                <Button type="submit" variant="contained" disabled={loading || smsOTP.length !== 6}>{loading ? "Verifying..." : "Verify SMS OTP"}</Button>
+              </Stack>
+            ) : null}
 
-      {/* Step 1: Email and Phone */}
-      {step === "email" && (
-        <form className="space-y-4" onSubmit={requestReset}>
-          <div>
-            <label className="block text-sm font-medium mb-1">Email Address</label>
-            <input
-              type="email"
-              className="w-full rounded border border-gray-300 p-2"
-              placeholder="your@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+            {step === "reset" ? (
+              <Stack spacing={2} component="form" onSubmit={resetPassword}>
+                <TextField type="password" label="New password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required fullWidth />
+                <TextField type="password" label="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required fullWidth />
+                <Button type="submit" variant="contained" color="success" disabled={loading}>{loading ? "Resetting..." : "Reset Password"}</Button>
+              </Stack>
+            ) : null}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Phone Number</label>
-            <input
-              type="tel"
-              className="w-full rounded border border-gray-300 p-2"
-              placeholder="+1234567890"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              required
-            />
-          </div>
+            {step === "success" ? <Alert severity="success">Password reset successful. Redirecting to login...</Alert> : null}
+            {status ? <Alert severity="info" sx={{ mt: 2 }}>{status}</Alert> : null}
+            {error ? <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert> : null}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Sending..." : "Send Verification Codes"}
-          </button>
-        </form>
-      )}
-
-      {/* Step 2: Email OTP */}
-      {step === "otp-email" && (
-        <form className="space-y-4" onSubmit={verifyEmailOTP}>
-          <p className="text-sm text-gray-600">
-            Check your email for a 6-digit verification code
-          </p>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Email OTP Code</label>
-            <input
-              type="text"
-              className="w-full rounded border border-gray-300 p-2 text-center text-2xl tracking-widest"
-              placeholder="000000"
-              value={emailOTP}
-              onChange={(e) => setEmailOTP(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              maxLength={6}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || emailOTP.length !== 6}
-            className="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Verifying..." : "Verify Email OTP"}
-          </button>
-        </form>
-      )}
-
-      {/* Step 3: SMS OTP */}
-      {step === "otp-sms" && (
-        <form className="space-y-4" onSubmit={verifySMSOTP}>
-          <p className="text-sm text-gray-600">
-            Check your phone for a 6-digit verification code
-          </p>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">SMS OTP Code</label>
-            <input
-              type="text"
-              className="w-full rounded border border-gray-300 p-2 text-center text-2xl tracking-widest"
-              placeholder="000000"
-              value={smsOTP}
-              onChange={(e) => setSmsOTP(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              maxLength={6}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || smsOTP.length !== 6}
-            className="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Verifying..." : "Verify SMS OTP"}
-          </button>
-        </form>
-      )}
-
-      {/* Step 4: Reset Password */}
-      {step === "reset" && (
-        <form className="space-y-4" onSubmit={resetPassword}>
-          <div>
-            <label className="block text-sm font-medium mb-1">New Password</label>
-            <input
-              type="password"
-              className="w-full rounded border border-gray-300 p-2"
-              placeholder="At least 8 characters"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Confirm Password</label>
-            <input
-              type="password"
-              className="w-full rounded border border-gray-300 p-2"
-              placeholder="Confirm your password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-50"
-          >
-            {loading ? "Resetting..." : "Reset Password"}
-          </button>
-        </form>
-      )}
-
-      {/* Success Message */}
-      {step === "success" && (
-        <div className="rounded bg-green-50 p-4 text-center">
-          <p className="text-green-700 font-semibold">✅ Password reset successful!</p>
-          <p className="text-green-600 text-sm mt-2">Redirecting to login...</p>
-        </div>
-      )}
-
-      {/* Status Messages */}
-      {status && (
-        <div className="mt-4 rounded bg-blue-50 p-3 text-blue-700 text-sm">
-          {status}
-        </div>
-      )}
-
-      {error && (
-        <div className="mt-4 rounded bg-red-50 p-3 text-red-700 text-sm">
-          ❌ {error}
-        </div>
-      )}
-
-          {/* Back to Login Link */}
-          <div className="mt-6 text-center">
-            <a href="/login" className="text-sky-700 hover:underline text-sm">
-              Back to Login
-            </a>
-          </div>
-        </div>
-      </div>
-    </main>
+            <Button href="/login" size="small" sx={{ mt: 2 }}>Back to Login</Button>
+          </CardContent>
+        </Card>
+      </Container>
+    </Box>
   );
 }

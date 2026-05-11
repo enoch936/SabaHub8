@@ -1,0 +1,100 @@
+{
+    "case_id": "10",
+    "case_title": "CodeRabbit Contamination Blueprint Audit",
+    "export_dir": "case10_exports",
+    "generated_utc": "2025-08-25T06:26:17.695981Z",
+    "artifact_count": 13,
+    "artifacts": [
+        {
+            "file": "BlueprintMatch.json",
+            "path": "case10_exports/BlueprintMatch.json",
+            "size_bytes": 3309,
+            "modified_utc": "2025-08-25T06:26:17.440782Z",
+            "sha256": "9b53c58075703ae8ae0f35cec9edc980e58b11b92637cd8988621f3465787180"
+        },
+        {
+            "file": "BlueprintMatch.md",
+            "path": "case10_exports/BlueprintMatch.md",
+            "size_bytes": 252,
+            "modified_utc": "2025-08-25T06:26:17.441782Z",
+            "sha256": "a313b348ffa93cf4f7dc1da3c8f3c6ad31e44bf4bd51968b14218b2163adf1d9"
+        },
+        {
+            "file": "BlueprintMatch.schema.json",
+            "path": "case10_exports/BlueprintMatch.schema.json",
+            "size_bytes": 492,
+            "modified_utc": "2025-08-25T06:26:17.441782Z",
+            "sha256": "b0fb490f0789c210558fd3f47ccac29ac1ce31a1a15de639f32ca7ecdffa202c"
+        },
+        {
+            "file": "Case10_CertIntro.json",
+            "path": "case10_exports/Case10_CertIntro.json",
+            "size_bytes": 383,
+            "modified_utc": "2025-08-25T06:26:17.139756Z",
+            "sha256": "f14bec8af0a114f1ee33eaf0b818011c088d86b5cd58ffa43635c9f97e62275a"
+        },
+        {
+            "file": "Case10_CertIntro.schema.json",
+            "path": "case10_exports/Case10_CertIntro.schema.json",
+            "size_bytes": 728,
+            "modified_utc": "2025-08-25T06:26:17.139756Z",
+            "sha256": "038cf9941a8c6479576a7a400fea63585f4a424f9e21202fc068031745be1fd9"
+        },
+        {
+            "file": "Case10_Evidence.json",
+            "path": "case10_exports/Case10_Evidence.json",
+            "size_bytes": 486,
+            "modified_utc": "2025-08-25T06:26:17.612797Z",
+            "sha256": "95d5289a9beeee4ffd235efae91f602e284f3aa20c92b8d18ddafeed07a4099a"
+        },
+        {
+            "file": "Case10_Evidence.schema.json",
+            "path": "case10_exports/Case10_Evidence.schema.json",
+            "size_bytes": 302,
+            "modified_utc": "2025-08-25T06:26:17.612797Z",
+            "sha256": "1f9980c37f1197f211d56eb8319be720e49f220816c985bc8041c6ee5624cfac"
+        },
+        {
+            "file": "Case10_Overlap.json",
+            "path": "case10_exports/Case10_Overlap.json",
+            "size_bytes": 1564,
+            "modified_utc": "2025-08-25T06:26:17.638799Z",
+            "sha256": "7da7f3d502fa4e5ba8ea58c02446fc414e175fc6f29af163f69524c17634895b"
+        },
+        {
+            "file": "Case10_Overlap.schema.json",
+            "path": "case10_exports/Case10_Overlap.schema.json",
+            "size_bytes": 1169,
+            "modified_utc": "2025-08-25T06:26:17.639800Z",
+            "sha256": "7fac96922647056b011a348ac8173a05c6232e8e0da3e1f0d30f1c8bc1da75df"
+        },
+        {
+            "file": "EvaluationReport.json",
+            "path": "case10_exports/EvaluationReport.json",
+            "size_bytes": 912,
+            "modified_utc": "2025-08-25T06:26:17.666802Z",
+            "sha256": "50b0fb88fdea7ab8bee6e81a9bd4934741f95d073340f55e2cc507f9cbf4812b"
+        },
+        {
+            "file": "EvaluationReport.schema.json",
+            "path": "case10_exports/EvaluationReport.schema.json",
+            "size_bytes": 600,
+            "modified_utc": "2025-08-25T06:26:17.666802Z",
+            "sha256": "def59515480854d7d9e799cc2bb8bc9025efe62384bbf784962e23ab153e0134"
+        },
+        {
+            "file": "Evaluation_CrossMatch.md",
+            "path": "case10_exports/Evaluation_CrossMatch.md",
+            "size_bytes": 404,
+            "modified_utc": "2025-08-25T06:26:17.667802Z",
+            "sha256": "25908a0cc28b369a56dcc90ded84ed69e769be3f775c4ee5cb24472dc725ed31"
+        },
+        {
+            "file": "blueprint_match_chart.png",
+            "path": "case10_exports/blueprint_match_chart.png",
+            "size_bytes": 32747,
+            "modified_utc": "2025-08-25T06:26:17.560793Z",
+            "sha256": "ebea22f92bbb103bcad3d51b1994fa1dfe1a608e485aa6f8a58dc9f8a6892d64"
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+logLevel: info
+api: yes
+apiAddress: :9997
+
+rtmp: yes
+rtmpAddress: :1935
+
+# HLS is served by nginx-hls in this stack.
+hls: no
+
+pathDefaults:
+  source: publisher
+  runOnReady: >
+    sh -c 'STREAM_ID="${MTX_PATH##*/}"; STREAM_KEY="$(printf "%s" "${MTX_QUERY}" | sed -n "s/.*[?&]*key=\([^&]*\).*/\1/p")"; wget -qO- --method=POST --header="Content-Type: application/json" --header="X-Stream-Ingest-Secret: ${STREAM_INGEST_CALLBACK_SECRET}" --body-data="{\"streamKey\":\"${STREAM_KEY}\"}" "${STREAM_CALLBACK_BASE_URL}/api/streams/ingest/${STREAM_ID}/started" >/dev/null 2>&1 || true'
+  runOnNotReady: >
+    sh -c 'STREAM_ID="${MTX_PATH##*/}"; STREAM_KEY="$(printf "%s" "${MTX_QUERY}" | sed -n "s/.*[?&]*key=\([^&]*\).*/\1/p")"; wget -qO- --method=POST --header="Content-Type: application/json" --header="X-Stream-Ingest-Secret: ${STREAM_INGEST_CALLBACK_SECRET}" --body-data="{\"streamKey\":\"${STREAM_KEY}\"}" "${STREAM_CALLBACK_BASE_URL}/api/streams/ingest/${STREAM_ID}/stopped" >/dev/null 2>&1 || true'

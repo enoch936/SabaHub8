@@ -3,11 +3,13 @@ package com.sabahub.domain;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
 @Document(collection = "wallet_ledger")
+@CompoundIndex(name = "uniq_wallet_reference_per_user", def = "{ 'userId': 1, 'referenceId': 1 }", unique = true, sparse = true)
 public class WalletLedgerEntry {
 
     public enum Type {
@@ -16,12 +18,18 @@ public class WalletLedgerEntry {
     }
 
     public enum Reason {
+        STRIPE_TOPUP,
         CHAPA_TOPUP,
         LOCAL_TOPUP,
+        ADMIN_COMMIT,
+        ADMIN_ROLLBACK,
         INTERNAL_TRANSFER_IN,
         INTERNAL_TRANSFER_OUT,
         ESCROW_FUND,
         ESCROW_RELEASE,
+        DISPUTE_SETTLEMENT_EMPLOYER,
+        DISPUTE_SETTLEMENT_FREELANCER,
+        DISPUTE_SETTLEMENT_ADMIN,
         REFUND,
         FEE,
         WITHDRAW

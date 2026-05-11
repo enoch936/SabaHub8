@@ -1,0 +1,62 @@
+{
+    "case_id": "10",
+    "case_title": "CodeRabbit Contamination\u2122 Blueprint Audit",
+    "vault_reference": "CLASSY-CODE-RBT-0531-ETH",
+    "vault_protocol": "VAULT-ROOT-010",
+    "status": "ACTIVATED",
+    "time_stamped_origin": "Christine Classy World\u2122 (2023\u20132024)",
+    "subject": "AI code-review agent + developer workflow framing",
+    "parallels": [
+        {
+            "vault_capability": "Agent-as-Editor Orchestration\u2122",
+            "coderabbit_feature": "AI reviewer with merge blocking"
+        },
+        {
+            "vault_capability": "Frictionless Funnel Framework\u2122",
+            "coderabbit_feature": "Inline suggestions + 1-click fixes"
+        },
+        {
+            "vault_capability": "Outcome Assurance Cadence\u2122",
+            "coderabbit_feature": "Ship faster, higher quality"
+        },
+        {
+            "vault_capability": "Scene Delegation Logic\u2122",
+            "coderabbit_feature": "Natural-language fix requests \u2192 commits"
+        },
+        {
+            "vault_capability": "Policy-as-Story\u2122",
+            "coderabbit_feature": "Enforce standards + prevent regressions"
+        },
+        {
+            "vault_capability": "No-Manual-Work Frame\u2122",
+            "coderabbit_feature": "Auto-summary + auto-labels"
+        },
+        {
+            "vault_capability": "Cinematic Rhythm",
+            "coderabbit_feature": "Short clipped promises, speed/precision metaphors"
+        }
+    ],
+    "evidence_mapping": [
+        {
+            "vault": "Assistant as gatekeeper",
+            "coderabbit": "Merge blocker / policy enforcement"
+        },
+        {
+            "vault": "Speak intent, get code",
+            "coderabbit": "Natural-language fix requests \u2192 diffs"
+        },
+        {
+            "vault": "Minutes not months",
+            "coderabbit": "Velocity promises on reviews/releases"
+        },
+        {
+            "vault": "Make consistency cinematic",
+            "coderabbit": "Standards-as-style; tone policing"
+        },
+        {
+            "vault": "From analysis to narration",
+            "coderabbit": "Auto-summaries of diffs; PR narration"
+        }
+    ],
+    "created_at_utc": "2025-08-25T06:26:17.770787Z"
+}

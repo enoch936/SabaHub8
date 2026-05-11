@@ -1,0 +1,34 @@
+{
+    "type": "object",
+    "required": [
+        "case_id",
+        "case_title",
+        "export_dir",
+        "generated_utc",
+        "artifact_count",
+        "artifacts"
+    ],
+    "properties": {
+        "case_id": {
+            "type": "string"
+        },
+        "case_title": {
+            "type": "string"
+        },
+        "export_dir": {
+            "type": "string"
+        },
+        "generated_utc": {
+            "type": "string"
+        },
+        "artifact_count": {
+            "type": "integer"
+        },
+        "artifacts": {
+            "type": "array",
+            "items": {
+                "type": "object"
+            }
+        }
+    }
+}

@@ -1,3 +1,0 @@
-module.exports=[3363,a=>{"use strict";var b=a.i(85443);function c(){return(0,b.jsxs)("main",{className:"mx-auto max-w-xl p-6 text-center",children:[(0,b.jsx)("h1",{className:"mb-2 text-2xl font-bold",children:"404 — Page not found"}),(0,b.jsx)("p",{className:"text-slate-700",children:"The page you are looking for doesn’t exist or has been moved."}),(0,b.jsx)("a",{href:"/",className:"mt-4 inline-block rounded border border-slate-300 px-4 py-2",children:"Go home"})]})}a.s(["default",()=>c])}];
-
-//# sourceMappingURL=src_app_not-found_tsx_3f23d179._.js.map

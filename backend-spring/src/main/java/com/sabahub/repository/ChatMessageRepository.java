@@ -3,10 +3,14 @@ package com.sabahub.repository;
 import com.sabahub.domain.ChatMessage;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface ChatMessageRepository extends MongoRepository<ChatMessage, String> {
     List<ChatMessage> findByThreadIdOrderByCreatedAtAsc(String threadId);
+    ChatMessage findFirstByThreadIdOrderByCreatedAtDesc(String threadId);
+    long countByThreadIdAndSenderIdNot(String threadId, String senderId);
+    long countByThreadIdAndSenderIdNotAndCreatedAtAfter(String threadId, String senderId, Instant createdAt);
     
     // Search messages by sender user ID
     List<ChatMessage> findBySenderIdOrderByCreatedAtDesc(String senderId);

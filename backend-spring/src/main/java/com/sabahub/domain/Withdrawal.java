@@ -52,6 +52,8 @@ public class Withdrawal {
     private String swiftCode;
     private String routingNumber;
     private Map<String, String> bankDetails;
+    private String encryptedPayoutDetails;
+    private String payoutDestinationLast4;
     
     // Status
     private String status; // PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED
@@ -61,12 +63,15 @@ public class Withdrawal {
     // Transaction
     private String transactionId;
     private String referenceNumber;
+    private String settlementReference;
+    private String settledLedgerEntryId;
     
     // Timing
     private LocalDateTime requestedAt;
     private LocalDateTime processedAt;
     private LocalDateTime completedAt;
     private LocalDateTime expectedArrivalDate;
+    private LocalDateTime ledgerSettledAt;
     
     // Metadata
     private LocalDateTime createdAt;

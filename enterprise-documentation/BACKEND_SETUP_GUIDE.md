@@ -73,7 +73,7 @@ mvn clean install
 ### 3. Set Environment Variables
 ```bash
 export APP_JWT_SECRET="MzJieXRlc2VjcmV0Zm9yZGV2dXNlMTIzNDU2Nzg5MDEyMzQ1Njc4OTA="
-export APP_CORS_ALLOWED_ORIGINS="http://localhost:3000,http://localhost:5173"
+export APP_CORS_ALLOWED_ORIGINS="http://localhost:3000"
 export SPRING_REDIS_HOST="localhost"
 export SPRING_REDIS_PORT="6379"
 ```

@@ -7,7 +7,6 @@ import com.sabahub.repository.TransactionRepository;
 import com.sabahub.service.CurrentUserService;
 import com.sabahub.service.PaymentService;
 import com.sabahub.service.WalletService;
-import com.sabahub.config.JwtAuthFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

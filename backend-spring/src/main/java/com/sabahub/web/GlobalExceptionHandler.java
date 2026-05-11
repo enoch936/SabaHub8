@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.security.core.AuthenticationException;
 
 import java.util.HashMap;
@@ -56,6 +57,45 @@ public class GlobalExceptionHandler {
         body.put("error", "ServiceUnavailable");
         body.put("message", "Database unavailable. Check MongoDB connection settings.");
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "BadRequest");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException ex) {
+        String message = ex.getMessage() == null ? "" : ex.getMessage();
+        HttpStatus status;
+        String error;
+
+        if ("Unauthorized".equalsIgnoreCase(message)) {
+            status = HttpStatus.UNAUTHORIZED;
+            error = "Unauthorized";
+        } else if ("Forbidden".equalsIgnoreCase(message)) {
+            status = HttpStatus.FORBIDDEN;
+            error = "Forbidden";
+        } else {
+            status = HttpStatus.CONFLICT;
+            error = "Conflict";
+        }
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", error);
+        body.put("message", message);
+        return ResponseEntity.status(status).body(body);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResourceFound(NoResourceFoundException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "NotFound");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
     @ExceptionHandler(Exception.class)

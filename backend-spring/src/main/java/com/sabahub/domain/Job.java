@@ -85,7 +85,7 @@ public class Job {
 
     // SLA & Quality Requirements
     private Integer slaDeliveryDays; // Standard turnaround time
-    private Integer maxConcurrentProjects;
+    private Integer maxConcurrentProjects = 1;
     private Integer includedRevisionRounds;
     private List<String> qualityStandards; // E.g., "WCAG 2.1 AA", "Brand Compliance"
     private List<String> requiredFormats; // PNG, SVG, MP4, etc.

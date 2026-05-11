@@ -1,0 +1,55 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width'>
+    <script src='https://sagecell.sagemath.org/static/embedded_sagecell.js'></script>
+    <script>$(function () {
+    sagecell.makeSagecell({inputLocation:'div.evaluated',autoeval:true,
+                           template:sagecell.templates.minimal,
+                           evalButtonText:'run'}); });
+    </script>
+  </head>
+  <style>
+  pre {padding-left:3px; border:2px double slategray;}
+  h3 {color:#aa33ff; text-shadow:4px 4px 4px #aaa;}
+  .sagecell_output {width:99%; border:2px double slategray; padding-right:1px;}
+  body {margin:5px 5px 5px 15px;}
+  </style>  
+  <body>
+    <h3>$$\mathbb{ Rotated \; Random \; Polygons }$$</h3>
+<pre><code>
+var('t,k'); n=randint(16,24)
+a,b,c=randint(8,16),randint(13,19),2*randint(3,6)
+s1=r'&#60;p style=%s&#62;'%'color:#00aaff;'+4*r'&nbsp;'
+s2=r'$\mathbb{a=%d; \; b=%d; \; c=%d; \; n=%d}$&#60;/p&#62;'
+pretty_print(html(s1+s2%(a,b,c,n)))
+fy(t,k)=cos(pi*t/n+2*k*pi/c)+\
+cos(a*pi*t/n+2*k*pi/c)+cos(b*pi*t/n+2*k*pi/c)
+fx(t,k)=sin(pi*t/n+2*k*pi/c)-\
+sin(a*pi*t/n+2*k*pi/c)+sin(b*pi*t/n+2*k*pi/c)
+L=[[[fx(t,k),fy(t,k)] 
+    for t in range(2*n)] for k in range(2*c)]
+sum([polygon2d(L[i],color=(0,random(),random()),
+               thickness=.5,alpha=.1,axes=False) 
+     for i in range(2*c)]).show(figsize=7)
+
+</code></pre><br/> 
+<div id='cell011' class='evaluated'><script type='text/x-sage'>
+var('t,k'); n=randint(16,24)
+a,b,c=randint(8,16),randint(13,19),2*randint(3,6)
+s1=r'<p style=%s>'%'color:#00aaff;'+4*r'&nbsp;'
+s2=r'$\mathbb{a=%d; \; b=%d; \; c=%d; \; n=%d}$</p>'
+pretty_print(html(s1+s2%(a,b,c,n)))
+fy(t,k)=cos(pi*t/n+2*k*pi/c)+\
+cos(a*pi*t/n+2*k*pi/c)+cos(b*pi*t/n+2*k*pi/c)
+fx(t,k)=sin(pi*t/n+2*k*pi/c)-\
+sin(a*pi*t/n+2*k*pi/c)+sin(b*pi*t/n+2*k*pi/c)
+L=[[[fx(t,k),fy(t,k)] 
+    for t in range(2*n)] for k in range(2*c)]
+sum([polygon2d(L[i],color=(0,random(),random()),
+               thickness=.5,alpha=.1,axes=False) 
+     for i in range(2*c)]).show(figsize=7)
+</script></div><br/>
+  </body>
+</html>

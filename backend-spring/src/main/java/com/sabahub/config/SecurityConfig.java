@@ -46,15 +46,15 @@ public class SecurityConfig {
                 .requestMatchers("/", "/health", "/actuator/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/auth/**", "/api/auth/**", "/ws/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/assets/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/wallet").permitAll() // Development: allow unauthenticated wallet access
                     .requestMatchers(HttpMethod.GET, "/api/jobs/**").permitAll() // Development: allow unauthenticated job browse (v1)
                     .requestMatchers(HttpMethod.GET, "/api/v2/jobs/**").permitAll() // Development: allow unauthenticated job browse (v2)
                     .requestMatchers(HttpMethod.GET, "/api/freelancer/featured-reviews").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/freelancer/discover").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/freelancer/seed/featured-reviews").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/jobs/seed").permitAll() // Development: allow job seeding via API
-                    .requestMatchers(HttpMethod.POST, "/api/media/**").permitAll() // Development: allow media uploads for seeding
-                .requestMatchers("/api/chat/**").permitAll() // Development: allow unauthenticated chat access
-                    .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll() // Allow user search by ID, email, name
+                    .requestMatchers("/api/media/**").authenticated()
+                    .requestMatchers("/api/chat/**").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
                         .requestMatchers("/api/user/**").authenticated() // User settings require authentication
                         .anyRequest().authenticated()
                 )
