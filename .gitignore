@@ -13,9 +13,10 @@ pnpm-debug.log*
 /.vercel/
 next-env.d.ts
 
-# pnpm
+# pnpm and dependencies
 node_modules/
 pnpm-lock.yaml
+.pnpm-store/
 
 # Build outputs
 /target/
@@ -27,6 +28,13 @@ build/
 venv/
 __pycache__/
 *.py[cod]
+*.joblib
+*.pkl
+*.pickle
+
+# Large datasets
+ai-python/ADATASETES/
+ai-python/models/
 
 # IDEs and editors
 .idea/
