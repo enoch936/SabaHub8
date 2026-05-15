@@ -90,6 +90,12 @@ services:
       - "49160-49200:49160-49200/udp"
     networks:
       - streaming_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "turnadmin -l || ping -c1 127.0.0.1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   janus:
     image: canyan/janus-gateway:latest
@@ -104,6 +110,12 @@ services:
       - "10000-10100:10000-10100/udp"
     networks:
       - streaming_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sSf http://localhost:8088 || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
 
   mediamtx:
     image: bluenviron/mediamtx:1.8.4
@@ -120,6 +132,12 @@ services:
       STREAM_INGEST_CALLBACK_SECRET: ${STREAM_INGEST_CALLBACK_SECRET:-}
     networks:
       - streaming_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sSf http://localhost:9997 || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
 
   hls-origin:
     image: nginx:1.27-alpine
@@ -131,6 +149,12 @@ services:
       - hls_data:/var/www/hls
     networks:
       - streaming_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sSf http://localhost:80/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
 
   ffmpeg-worker:
     image: jrottenberg/ffmpeg:6.1-alpine
@@ -145,6 +169,12 @@ services:
       - hls-origin
     networks:
       - streaming_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'ok' || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
 
   api:
     image: eclipse-temurin:21-jre

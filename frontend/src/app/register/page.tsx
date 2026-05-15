@@ -104,33 +104,33 @@ export default function RegisterPage() {
       description="Pick the setup that fits you."
       steps={steps}
       hero={
-        <div className="space-y-5">
+        <div className="space-y-2">
           <div className={authFlowStyles.metricGrid}>
             {metrics.map((metric) => (
               <div key={metric.label} className={authFlowStyles.metricCard}>
-                <div className="text-3xl font-bold tracking-[-0.04em] text-slate-950">{metric.value}</div>
-                <div className="mt-2 text-sm text-slate-500">{metric.label}</div>
+                <div className="text-lg font-bold text-slate-950">{metric.value}</div>
+                <div className="mt-0.5 text-[0.62rem] font-medium leading-4 text-slate-500">{metric.label}</div>
               </div>
             ))}
           </div>
 
-          <div className="space-y-3">
+          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             {highlights.map((item) => (
               <div key={item.title} className={authFlowStyles.featureCard}>
                 <div className={authFlowStyles.featureIcon}>
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <div className="text-base font-semibold text-slate-950">{item.title}</div>
-                  <div className="mt-1 text-sm leading-7 text-slate-500">{item.detail}</div>
+                  <div className="text-[0.7rem] font-semibold text-slate-950">{item.title}</div>
+                  <div className="mt-0.5 text-[0.62rem] leading-4 text-slate-500">{item.detail}</div>
                 </div>
               </div>
             ))}
           </div>
 
           <div className={authFlowStyles.quoteCard}>
-            <div className="text-sm uppercase tracking-[0.22em] text-slate-500">Why it helps</div>
-            <div className="mt-3 text-lg font-semibold leading-8 text-slate-950">
+            <div className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-slate-500">Why it helps</div>
+            <div className="mt-1 text-xs font-semibold leading-5 text-slate-950">
               Pick the right path before adding details.
             </div>
           </div>
@@ -142,15 +142,15 @@ export default function RegisterPage() {
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700">
             Step 1 of 4
           </div>
-          <h2 className={clsx(authFlowStyles.displayHeading, "mt-5 text-3xl font-bold tracking-[-0.04em] text-slate-950 md:text-4xl")}>
+          <h2 className={clsx(authFlowStyles.displayHeading, "mt-5 text-2xl font-bold tracking-[-0.04em] text-slate-950 md:text-3xl")}>
             Choose your SabaHub path
           </h2>
-          <p className="mt-3 text-base leading-8 text-slate-600">
+          <p className="mt-3 text-sm leading-7 text-slate-600">
             Pick the workspace you want to open first.
           </p>
         </div>
 
-        <div className="mt-8 grid gap-4">
+        <div className="mt-5 grid gap-2.5">
           {roleCards.map((item) => (
             <button
               key={item.role}
@@ -158,26 +158,27 @@ export default function RegisterPage() {
               className={clsx(
                 authFlowStyles.choiceCard,
                 role === item.role && authFlowStyles.choiceCardSelected,
+                "cursor-pointer transition hover:border-gray-300 hover:bg-gray-50",
               )}
               onClick={() => setRole(item.role)}
             >
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-3">
                 <div className={authFlowStyles.featureIcon}>
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="h-4 w-4" />
                 </div>
                 <div className="flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-lg font-semibold text-slate-950">{item.title}</div>
-                    <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm font-semibold text-slate-950">{item.title}</div>
+                    <div className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-slate-600">
                       {item.role.toLowerCase()}
                     </div>
                   </div>
-                  <div className="mt-2 text-sm leading-7 text-slate-500">{item.detail}</div>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-1.5 text-xs leading-5 text-slate-500">{item.detail}</div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
                     {item.bullets.map((bullet) => (
                       <span
                         key={bullet}
-                        className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600"
+                        className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[0.62rem] font-medium text-slate-600"
                       >
                         {bullet}
                       </span>
@@ -189,10 +190,10 @@ export default function RegisterPage() {
           ))}
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
-            className={clsx(authFlowStyles.buttonBase, authFlowStyles.primaryButton)}
+            className={clsx(authFlowStyles.buttonBase, authFlowStyles.primaryButton, "cursor-pointer hover:bg-gray-800")}
             onClick={() => {
               const draft = readRegisterDraft();
               saveRegisterDraft({ ...draft, role });

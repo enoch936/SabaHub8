@@ -20,6 +20,9 @@ export default function AdminRootPage() {
             <Link href="/admin/users" className="rounded-full border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700">
               User operations
             </Link>
+            <Link href="/admin/identity" className="rounded-full border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700">
+              Identity operations
+            </Link>
           </div>
         </div>
       </section>

@@ -11,6 +11,7 @@ import {
   ChevronRight,
   ChevronUp,
   FileText,
+  Heart,
   MapPin,
   MessageSquare,
   Mic,
@@ -180,59 +181,220 @@ export const SmartJobCard = memo(function SmartJobCard({
   };
 
   const actionButtons = (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-1.5 w-full">
       <button
         type="button"
         onClick={() => onApply(job)}
-        className="inline-flex items-center gap-1.5 rounded-xl bg-gray-950 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+        className="w-full inline-flex items-center justify-center gap-0.5 rounded-lg bg-gray-950 px-2 py-2 text-xs font-semibold text-white transition hover:bg-gray-800"
       >
-        <Send className="h-3.5 w-3.5" />
-        Apply
+        <Send className="h-3 w-3" />
+        Apply Now
       </button>
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-white px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+        className="w-full inline-flex items-center justify-center gap-0.5 rounded-lg border border-[var(--border)] bg-white px-2 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
       >
-        {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-        View
+        {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        {expanded ? "Less" : "Details"}
       </button>
       <button
         type="button"
         onClick={() => onMessage?.(job)}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-white px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+        className="w-full inline-flex items-center justify-center gap-0.5 rounded-lg border border-[var(--border)] bg-white px-2 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
       >
-        <MessageSquare className="h-3.5 w-3.5" />
+        <MessageSquare className="h-3 w-3" />
         Contact
       </button>
       {onDelete ? (
         <button
           type="button"
           onClick={() => onDelete(job.id)}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+          className="w-full inline-flex items-center justify-center gap-0.5 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100"
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 className="h-3 w-3" />
           Delete
         </button>
       ) : null}
     </div>
   );
 
+  if (viewMode === "list") {
+    return (
+      <div className="group flex overflow-hidden rounded-lg bg-white shadow-sm transition hover:shadow-md">
+        <div className="flex w-full">
+          <div className="h-32 w-32 flex-shrink-0">
+            {activeMedia ? (
+              <div className="relative h-full w-full overflow-hidden bg-[var(--accent)]">
+                {activeMedia.kind === "image" ? (
+                  <img
+                    src={activeMedia.url}
+                    alt={`${job.title} media`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <video
+                    src={activeMedia.url}
+                    poster={activeVideoPoster}
+                    preload="metadata"
+                    className="h-full w-full object-cover bg-black"
+                  />
+                )}
+
+                {totalMedia > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setMediaIndex((prev) => (prev - 1 + totalMedia) % totalMedia)}
+                      className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-0.5 text-gray-700 hover:bg-white"
+                      aria-label="Previous media"
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMediaIndex((prev) => (prev + 1) % totalMedia)}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-0.5 text-gray-700 hover:bg-white"
+                      aria-label="Next media"
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                <PlayCircle className="h-6 w-6 text-gray-300" />
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1 p-3">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="text-[10px] text-gray-600">
+                Posted {new Date(job.postedAt).toLocaleDateString()} • {job.applicantCount} applied
+              </div>
+              <button
+                type="button"
+                onClick={() => onSave(job.id)}
+                className={`p-0.5 transition flex-shrink-0 ${
+                  job.isSaved
+                    ? "text-red-500 hover:text-red-600"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+                aria-label={job.isSaved ? "Unsave job" : "Save job"}
+              >
+                <Heart className={`h-4 w-4 ${job.isSaved ? "fill-current" : ""}`} />
+              </button>
+            </div>
+
+            <h3 className="mb-0.5 line-clamp-2 cursor-pointer text-sm font-bold text-green-600 hover:underline">
+              {job.title}
+            </h3>
+
+            <div className="mb-1.5 text-[10px] text-gray-600">
+              {job.budget.type === "FIXED" ? "Fixed-price" : "Hourly"} • {job.experienceLevel || "Intermediate"} • Est. Budget: {job.budget.type === "FIXED"
+                ? `$${(job.budget.min / 1000).toFixed(0)}k - $${(job.budget.max / 1000).toFixed(0)}k`
+                : `$${job.budget.min}-$${job.budget.max}/hr`}
+            </div>
+
+            <p className="text-xs leading-snug text-gray-700">
+              {job.description.length > 150 && !expanded
+                ? `${job.description.substring(0, 150)}...`
+                : job.description}
+              {job.description.length > 150 && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((value) => !value)}
+                  className="ml-1 font-semibold text-blue-600 hover:underline"
+                >
+                  {expanded ? "less" : "more"}
+                </button>
+              )}
+            </p>
+
+            {expanded ? (
+              <>
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  {job.skills.slice(0, 4).map((skill) => (
+                    <span key={skill} className="inline-block rounded bg-gray-200 px-2 py-0.5 text-[9px] font-medium text-gray-700">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => onApply(job)}
+                    className="inline-flex items-center gap-1 rounded-full bg-gray-950 px-2.5 py-1 text-[10px] font-semibold text-white transition hover:bg-gray-800"
+                  >
+                    <Send className="h-3 w-3" />
+                    Apply
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onMessage?.(job)}
+                    className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[10px] font-medium text-gray-700 transition hover:bg-gray-50"
+                  >
+                    <MessageSquare className="h-3 w-3" />
+                    Contact
+                  </button>
+                  {onDelete ? (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(job.id)}
+                      className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] font-medium text-red-700 transition hover:bg-red-100"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Delete
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="mt-2 flex items-center gap-1.5 border-t border-gray-200 pt-1.5 text-[9px] text-gray-600">
+                  {job.employerVerified && (
+                    <div className="flex items-center gap-0.5">
+                      <CheckCircle className="h-3 w-3 text-blue-500" />
+                      <span className="font-medium">Verified</span>
+                    </div>
+                  )}
+                  {job.workLocation && (
+                    <div className="flex items-center gap-0.5">
+                      <MapPin className="h-3 w-3" />
+                      <span>{job.workLocation}</span>
+                    </div>
+                  )}
+                  {job.isRemote && <span className="font-medium">Remote</span>}
+                </div>
+              </>
+            ) : null}
+
+            {expanded ? null : (
+              <div className="mt-2 text-[9px] text-gray-500">
+                Tap Details to reveal the full brief, skills, and action row.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`group rounded-[28px] bg-transparent transition ${
-        viewMode === "list" ? "p-5" : "p-4"
-      }`}
+      className={`group rounded-[12px] bg-white overflow-hidden shadow-sm hover:shadow-lg transition`}
     >
-      <div className={`gap-5 ${viewMode === "list" ? "flex flex-col xl:flex-row" : "flex flex-col"}`}>
-        <div className={viewMode === "list" ? "xl:w-[320px] xl:flex-shrink-0" : ""}>
+      <div className={`flex flex-col`}>
+        <div>
           {activeMedia ? (
-            <div className="relative overflow-hidden rounded-[22px] bg-[var(--accent)] shadow-[0_12px_32px_rgba(15,23,42,0.06)] transition duration-200 group-hover:shadow-[0_24px_56px_rgba(15,23,42,0.14)]">
+            <div className="relative overflow-hidden bg-[var(--accent)] transition duration-200 group-hover:shadow-md">
               {activeMedia.kind === "image" ? (
                 <img
                   src={activeMedia.url}
                   alt={`${job.title} media ${mediaIndex + 1}`}
-                  className={`w-full object-cover transition duration-200 group-hover:scale-[1.01] ${viewMode === "list" ? "h-52" : "h-44"}`}
+                  className={`w-full h-32 object-cover transition duration-200 group-hover:scale-105`}
                   loading="lazy"
                 />
               ) : (
@@ -241,7 +403,7 @@ export const SmartJobCard = memo(function SmartJobCard({
                   poster={activeVideoPoster}
                   controls
                   preload="metadata"
-                  className={`w-full object-cover bg-black ${viewMode === "list" ? "h-52" : "h-44"}`}
+                  className={`w-full h-32 object-cover bg-black`}
                 />
               )}
 
@@ -250,184 +412,70 @@ export const SmartJobCard = memo(function SmartJobCard({
                   <button
                     type="button"
                     onClick={() => setMediaIndex((prev) => (prev - 1 + totalMedia) % totalMedia)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow-sm"
+                    className="absolute left-1.5 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-gray-700 shadow-sm hover:bg-white"
                     aria-label="Previous media"
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-3.5 w-3.5" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setMediaIndex((prev) => (prev + 1) % totalMedia)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow-sm"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-gray-700 shadow-sm hover:bg-white"
                     aria-label="Next media"
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-3.5 w-3.5" />
                   </button>
                 </>
               ) : null}
-            </div>
-          ) : (
-            <div
-              className={`rounded-[22px] bg-gray-50/90 ${
-                viewMode === "list" ? "h-52" : "h-44"
-              } flex items-center justify-center`}
-            >
-              <div className="text-center">
-                <PlayCircle className="mx-auto h-6 w-6 text-gray-300" />
-                <p className="mt-2 text-sm text-gray-400">No media</p>
-              </div>
-            </div>
-          )}
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-            {(job.sampleImageUrls?.length ?? 0) > 0 ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-[0_8px_20px_rgba(15,23,42,0.05)]">
-                <PlayCircle className="h-3.5 w-3.5" />
-                {(job.sampleImageUrls ?? []).length} images
-              </span>
-            ) : null}
-            {(job.sampleVideoUrls?.length ?? 0) > 0 ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-[0_8px_20px_rgba(15,23,42,0.05)]">
-                <Video className="h-3.5 w-3.5" />
-                {(job.sampleVideoUrls ?? []).length} videos
-              </span>
-            ) : null}
-            {(job.sampleDocumentUrls?.length ?? 0) > 0 ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-[0_8px_20px_rgba(15,23,42,0.05)]">
-                <FileText className="h-3.5 w-3.5" />
-                {(job.sampleDocumentUrls ?? []).length} files
-              </span>
-            ) : null}
-            {(job.sampleAudioUrls?.length ?? 0) > 0 ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-[0_8px_20px_rgba(15,23,42,0.05)]">
-                <Waves className="h-3.5 w-3.5" />
-                {(job.sampleAudioUrls ?? []).length} audio
-              </span>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                {job.aiMatchScore !== undefined ? <AIMatchBadge score={job.aiMatchScore} /> : null}
-                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.05)]">
-                  {job.budget.type}
-                </span>
-                <span className={`rounded-full px-2.5 py-1 text-xs font-medium shadow-[0_8px_20px_rgba(15,23,42,0.05)] ${locationSignal.tone}`}>
-                  {locationSignal.label}
-                </span>
-              </div>
-              <h3 className="text-lg font-semibold leading-snug text-gray-900 transition group-hover:underline group-hover:decoration-slate-300 group-hover:underline-offset-4">
-                {job.title}
-              </h3>
-              <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                {employerProfileHref ? (
-                  <Link
-                    href={employerProfileHref}
-                    className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-[0_8px_20px_rgba(15,23,42,0.05)] transition hover:bg-gray-50"
-                  >
-                    <Building2 className="h-3.5 w-3.5" />
-                    {job.employerName}
-                    {job.employerVerified ? <CheckCircle className="h-4 w-4 text-blue-500" /> : null}
-                  </Link>
-                ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-[0_8px_20px_rgba(15,23,42,0.05)]">
-                    <Building2 className="h-3.5 w-3.5" />
-                    {job.employerName}
-                    {job.employerVerified ? <CheckCircle className="h-4 w-4 text-blue-500" /> : null}
-                  </span>
-                )}
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  {job.workLocation ?? job.locationLabel ?? "Remote"}
-                </span>
-                <span>{new Date(job.postedAt).toLocaleDateString()}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleVoiceSave}
-                className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${
-                  isListening
-                    ? "border-gray-900 bg-gray-900 text-white"
-                    : "border-[var(--border)] bg-white text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <Mic className="h-3.5 w-3.5" />
-                  {isListening ? "Listening..." : "Voice save"}
-                </span>
-              </button>
               <button
                 type="button"
                 onClick={() => onSave(job.id)}
-                className={`rounded-xl border p-2.5 transition ${
-                  job.isSaved
-                    ? "border-gray-900 bg-gray-900 text-white"
-                    : "border-[var(--border)] bg-white text-gray-500 hover:bg-gray-50"
-                }`}
+                className="absolute right-2 top-2 rounded-full p-1.5 transition"
                 aria-label={job.isSaved ? "Unsave job" : "Save job"}
               >
-                <Bookmark className={`h-4 w-4 ${job.isSaved ? "fill-current" : ""}`} />
+                <Bookmark className={`h-4 w-4 ${job.isSaved ? "fill-red-500 text-red-500" : "fill-white text-white drop-shadow"}`} />
               </button>
             </div>
-          </div>
+          ) : (
+            <div
+              className={`bg-gray-50/90 h-32 flex items-center justify-center`}
+            >
+              <div className="text-center">
+                <PlayCircle className="mx-auto h-5 w-5 text-gray-300" />
+              </div>
+            </div>
+          )}
+        </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl bg-white px-3 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-gray-400">Budget</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">
-                {job.budget.type === "FIXED"
-                  ? `$${job.budget.min.toLocaleString()} - $${job.budget.max.toLocaleString()}`
-                  : `$${job.budget.min.toLocaleString()} - $${job.budget.max.toLocaleString()}/hr`}
-              </p>
+        <div className="p-3">
+          <div>
+            <div className="flex items-start justify-between gap-1.5">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold leading-tight text-gray-900 line-clamp-2 text-xs">
+                  {job.title}
+                </h3>
+                <div className="mt-1 flex flex-wrap items-center gap-1">
+                  <span className="text-[8px] text-slate-700 bg-white border border-gray-200 inline-flex items-center gap-0.5 rounded-full bg-gray-100 px-2 py-0.5 font-medium">
+                    {job.budget.type === "FIXED"
+                      ? `$${(job.budget.min / 1000).toFixed(0)}k - $${(job.budget.max / 1000).toFixed(0)}k`
+                      : `$${job.budget.min}/hr`}
+                  </span>
+                  {job.employerVerified && <CheckCircle className="h-3.5 w-3.5 text-blue-500" />}
+                </div>
+                <p className="mt-1 font-semibold text-gray-700 text-[11px]">
+                  {job.employerName}
+                </p>
+                <div className="mt-1 flex items-center gap-1 text-gray-500 text-[10px]">
+                  <Users className="h-3.5 w-3.5" />
+                  {job.applicantCount} applied
+                </div>
+              </div>
             </div>
-            <div className="rounded-2xl bg-white px-3 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-gray-400">Duration</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{job.duration}</p>
-            </div>
-            <div className="rounded-2xl bg-white px-3 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-gray-400">Applicants</p>
-              <p className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-gray-900">
-                <Users className="h-4 w-4 text-gray-500" />
-                {job.applicantCount}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-white px-3 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-gray-400">Timezone</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{job.timezone ?? "Flexible"}</p>
-            </div>
-          </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {job.skills.slice(0, expanded ? job.skills.length : 6).map((skill) => (
-              <span key={skill} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                {skill}
-              </span>
-            ))}
-          </div>
-
-          <div className="mt-4">
-            <p className={`text-sm leading-6 text-gray-600 ${expanded ? "" : "line-clamp-3"}`}>{job.description}</p>
-          </div>
-
-          <div className="mt-4">
-            <div className="mb-1 flex items-center justify-between text-xs text-gray-500">
-              <span>Proposal load</span>
-              <span>{applicantPct}% of queue target</span>
+            <div className="mt-2 flex flex-col gap-1.5">
+              {actionButtons}
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-gray-100">
-              <div className="h-full rounded-full bg-gray-900" style={{ width: `${applicantPct}%` }} />
-            </div>
-          </div>
-
-          <div className="mt-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            {actionButtons}
-            <div className="text-xs text-gray-400">Saved in your workspace.</div>
           </div>
         </div>
       </div>

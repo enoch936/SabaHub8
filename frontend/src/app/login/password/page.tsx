@@ -199,20 +199,20 @@ export default function LoginPasswordPage() {
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700">
             Step 2 of 3
           </div>
-          <h2 className={clsx(authFlowStyles.displayHeading, "mt-5 text-3xl font-bold tracking-[-0.04em] text-slate-950 md:text-4xl")}>
+          <h2 className={clsx(authFlowStyles.displayHeading, "mt-5 text-2xl font-bold tracking-[-0.04em] text-slate-950 md:text-3xl")}>
             Enter your password
           </h2>
-          <p className="mt-3 text-base leading-8 text-slate-600">
+          <p className="mt-3 text-sm leading-7 text-slate-600">
             Your account is selected. Enter the password to continue.
           </p>
         </div>
 
         {!ready ? (
-          <div className="mt-8">
+          <div className="mt-6">
             <AuthStatusBanner tone="info" message="Loading your sign-in details..." />
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
+          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
             <div className={authFlowStyles.summaryCard}>
               <div className="flex items-center justify-between gap-3">
                 <div>

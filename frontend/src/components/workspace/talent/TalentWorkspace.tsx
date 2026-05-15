@@ -890,40 +890,40 @@ export default function TalentWorkspace() {
   ];
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[32px] border border-gray-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,247,250,0.94))] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+    <div className="space-y-3">
+      <section className="rounded-[24px] border border-gray-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,247,250,0.94))] p-4 shadow-[0_12px_28px_rgba(15,23,42,0.03)]">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl space-y-3">
             <span className="inline-flex w-fit items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
               <Sparkles className="h-3.5 w-3.5" />
               AI talent discovery
             </span>
             <div>
-              <h1 className="text-3xl font-semibold tracking-[-0.03em] text-gray-900">Marketplace command board</h1>
-              <p className="mt-2 text-sm leading-6 text-gray-500">
+              <h1 className="text-2xl font-semibold tracking-[-0.02em] text-gray-900">Marketplace command board</h1>
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-gray-500">
                 Search real marketplace inventory across talents, published projects, gigs, and portfolio stories without breaking the existing backend or workspace performance model.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href={workspaceRoutes.home}
-              className="inline-flex h-11 items-center rounded-full border border-gray-200 bg-white px-5 text-sm font-semibold text-gray-900 transition hover:bg-gray-50"
+              className="inline-flex h-10 items-center rounded-full border border-gray-200 bg-white px-4 text-xs font-semibold text-gray-900 transition hover:bg-gray-50"
             >
               Open jobs board
             </Link>
             <Link
               href={isEmployer ? workspaceRoutes.createJob : workspaceRoutes.wallet}
-              className="inline-flex h-11 items-center rounded-full bg-gray-950 px-5 text-sm font-semibold text-white transition hover:bg-gray-800"
+              className="inline-flex h-10 items-center rounded-full bg-gray-950 px-4 text-xs font-semibold text-white transition hover:bg-gray-800"
             >
               {isEmployer ? "Create enterprise brief" : "Review earnings"}
             </Link>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.9fr)]">
-          <div className="rounded-[28px] border border-gray-100 bg-white p-4">
+        <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.9fr)]">
+          <div className="rounded-[20px] border border-gray-100 bg-white p-3.5">
             <label htmlFor="marketplace-search" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">
               Search the directory
             </label>
@@ -935,10 +935,10 @@ export default function TalentWorkspace() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search by freelancer name, skill, project post, or gig"
-                className="h-14 w-full rounded-[22px] border border-gray-200 bg-gray-50 pl-11 pr-4 text-sm text-gray-700 outline-none transition focus:border-gray-300 focus:bg-white"
+                className="h-12 w-full rounded-[22px] border border-gray-200 bg-gray-50 pl-11 pr-4 text-sm text-gray-700 outline-none transition focus:border-gray-300 focus:bg-white"
               />
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               {featuredSkills.map((skill) => (
                 <button
                   key={skill}
@@ -960,13 +960,13 @@ export default function TalentWorkspace() {
               ) : null}
             </div>
 
-            <div className="mt-5 rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
+            <div className="mt-4 rounded-2xl border border-gray-100 bg-gray-50/70 p-3.5">
               <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">
                 <SlidersHorizontal className="h-3.5 w-3.5" />
                 Filters like Jobs
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                 <label className="text-xs text-gray-500">
                   Project category
                   <input
@@ -1122,23 +1122,23 @@ export default function TalentWorkspace() {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[28px] border border-gray-100 bg-white p-4">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-[20px] border border-gray-100 bg-white p-3.5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">Talents</p>
               <p className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-gray-900">{counts.talents}</p>
               <p className="mt-1 text-xs text-gray-500">Qualified profiles surfaced for this search</p>
             </div>
-            <div className="rounded-[28px] border border-gray-100 bg-white p-4">
+            <div className="rounded-[20px] border border-gray-100 bg-white p-3.5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">Projects</p>
               <p className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-gray-900">{counts.projectPosts}</p>
               <p className="mt-1 text-xs text-gray-500">Published project posts currently visible</p>
             </div>
-            <div className="rounded-[28px] border border-gray-100 bg-white p-4">
+            <div className="rounded-[20px] border border-gray-100 bg-white p-3.5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">Gigs</p>
               <p className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-gray-900">{counts.gigs}</p>
               <p className="mt-1 text-xs text-gray-500">Packaged service offers with live commercial terms</p>
             </div>
-            <div className="rounded-[28px] border border-gray-100 bg-white p-4">
+            <div className="rounded-[20px] border border-gray-100 bg-white p-3.5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">Stories</p>
               <p className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-gray-900">{counts.stories}</p>
               <p className="mt-1 text-xs text-gray-500">Published portfolio stories and proof-of-work entries</p>
@@ -1147,15 +1147,15 @@ export default function TalentWorkspace() {
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-gray-200/80 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.04)]">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+      <section className="rounded-[20px] border border-gray-200/80 bg-white p-3 shadow-[0_12px_28px_rgba(15,23,42,0.03)]">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap gap-2">
             {boards.map((board) => (
               <button
                 key={board.id}
                 type="button"
                 onClick={() => setActiveBoard(board.id)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                   activeBoard === board.id
                     ? "bg-gray-950 text-white"
                     : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
@@ -1180,14 +1180,14 @@ export default function TalentWorkspace() {
                 setMinPrice("");
                 setMaxPrice("");
               }}
-              className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+              className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
             >
               Clear all filters
             </button>
             <button
               type="button"
               onClick={() => setActiveSkill("")}
-              className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+              className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
             >
               {activeSkill ? `Clear ${activeSkill}` : "Clear skill filter"}
             </button>
@@ -1195,7 +1195,7 @@ export default function TalentWorkspace() {
               <button
                 type="button"
                 onClick={() => setViewMode("grid")}
-                className={`rounded-xl p-2 transition ${viewMode === "grid" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
+                className={`rounded-xl p-1.5 transition ${viewMode === "grid" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
                 aria-label="Grid view"
               >
                 <Grid3X3 className="h-4 w-4" />
@@ -1203,7 +1203,7 @@ export default function TalentWorkspace() {
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
-                className={`rounded-xl p-2 transition ${viewMode === "list" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
+                className={`rounded-xl p-1.5 transition ${viewMode === "list" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
                 aria-label="List view"
               >
                 <LayoutList className="h-4 w-4" />
@@ -1236,7 +1236,7 @@ export default function TalentWorkspace() {
       ) : null}
 
       {!isLoading && totalVisible > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {(activeBoard === "all" || activeBoard === "talents") && counts.talents > 0 ? (
             <section className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -1248,7 +1248,7 @@ export default function TalentWorkspace() {
                   {counts.talents} profiles surfaced{activeSkill ? ` for ${activeSkill}` : ""}.
                 </p>
               </div>
-              <div className={viewMode === "grid" ? "grid gap-4 xl:grid-cols-2" : "space-y-4"}>
+              <div className={viewMode === "grid" ? "grid gap-3 xl:grid-cols-2" : "space-y-3"}>
                 {filteredResults.talents.map((talent) => (
                   <TalentCard
                     key={`${talent.freelancerId ?? "talent"}-${talent.userId ?? talent.name ?? "profile"}`}
@@ -1275,7 +1275,7 @@ export default function TalentWorkspace() {
                   {counts.projectPosts} appraisable project opportunities in this search window.
                 </p>
               </div>
-              <div className={viewMode === "grid" ? "grid gap-4 xl:grid-cols-2" : "space-y-4"}>
+              <div className={viewMode === "grid" ? "grid gap-3 xl:grid-cols-2" : "space-y-3"}>
                 {filteredResults.projectPosts.map((post) => (
                   <ProjectPostCard
                     key={post.projectPostId ?? `${post.title ?? "project"}-${post.freelancerId ?? "owner"}`}
@@ -1298,7 +1298,7 @@ export default function TalentWorkspace() {
                   {counts.gigs} delivery-ready offers with pricing and timeline context.
                 </p>
               </div>
-              <div className={viewMode === "grid" ? "grid gap-4 xl:grid-cols-2" : "space-y-4"}>
+              <div className={viewMode === "grid" ? "grid gap-3 xl:grid-cols-2" : "space-y-3"}>
                 {filteredResults.gigs.map((gig) => (
                   <GigCard
                     key={gig.gigId ?? `${gig.title ?? "gig"}-${gig.freelancerId ?? "owner"}`}
@@ -1321,7 +1321,7 @@ export default function TalentWorkspace() {
                   {counts.stories} portfolio stories connected to real freelancer profiles.
                 </p>
               </div>
-              <div className={viewMode === "grid" ? "grid gap-4 xl:grid-cols-2" : "space-y-4"}>
+              <div className={viewMode === "grid" ? "grid gap-3 xl:grid-cols-2" : "space-y-3"}>
                 {filteredResults.stories.map((story) => (
                   <StoryCard
                     key={story.storyId ?? `${story.title ?? "story"}-${story.freelancerId ?? "owner"}`}
