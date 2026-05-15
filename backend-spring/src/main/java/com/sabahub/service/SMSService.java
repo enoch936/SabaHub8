@@ -1,11 +1,14 @@
 package com.sabahub.service;
 
 import com.twilio.Twilio;
+import com.twilio.exception.ApiException;
 import com.twilio.rest.verify.v2.service.Verification;
 import com.twilio.rest.verify.v2.service.VerificationCheck;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.Locale;
 
 /**
  * SMS Service using Twilio Verify API
@@ -15,6 +18,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class SMSService {
+
+    private static final String SMS_CONFIG_MESSAGE =
+            "SMS verification is not configured correctly. Check TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID.";
 
     @Value("${twilio.account-sid:}")
     private String twilioAccountSid;
@@ -34,9 +40,9 @@ public class SMSService {
      * Check if SMS service is properly configured
      */
     public boolean isConfigured() {
-         return twilioAccountSid != null && !twilioAccountSid.isEmpty() && 
-             twilioAuthToken != null && !twilioAuthToken.isEmpty() &&
-             twilioVerifyServiceSid != null && !twilioVerifyServiceSid.isEmpty();
+         return isTwilioSid(twilioAccountSid, "AC") &&
+             hasRealValue(twilioAuthToken) &&
+             isTwilioSid(twilioVerifyServiceSid, "VA");
     }
 
     /**
@@ -57,11 +63,7 @@ public class SMSService {
     public void sendOTPSMS(String phoneNumber, String otpCode) {
         log.info("Sending OTP SMS via Verify API to: {}", phoneNumber);
 
-        if (!isConfigured()) {
-            String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
-            log.warn(errorMsg);
-            throw new RuntimeException(errorMsg);
-        }
+        requireConfigured();
 
         if (!isInitialized) {
             initializeTwilio();
@@ -79,9 +81,13 @@ public class SMSService {
             log.info("SMS OTP sent successfully via Verify API. Status: {}, Phone: {}", 
                     verification.getStatus(), phoneNumber);
 
+        } catch (ApiException e) {
+            log.error("Twilio rejected SMS OTP request for {}. Status: {}, Code: {}, Message: {}",
+                    phoneNumber, e.getStatusCode(), e.getCode(), e.getMessage());
+            throw toDeliveryException("send SMS OTP", e);
         } catch (Exception e) {
             log.error("Failed to send SMS OTP to: {} - Error: {}", phoneNumber, e.getMessage(), e);
-            throw new RuntimeException("Failed to send SMS OTP: " + e.getMessage(), e);
+            throw new VerificationDeliveryException("Unable to send SMS verification code right now. Please try again.", e);
         }
     }
 
@@ -90,11 +96,7 @@ public class SMSService {
      */
     public void sendVerificationCode(String phoneNumber) {
         log.info("Sending verification code via Verify API to: {}", phoneNumber);
-        if (!isConfigured()) {
-            String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
-            log.warn(errorMsg);
-            throw new RuntimeException(errorMsg);
-        }
+        requireConfigured();
 
         if (!isInitialized) {
             initializeTwilio();
@@ -108,9 +110,13 @@ public class SMSService {
             ).create();
 
             log.info("Verification SMS sent via Verify API. Status: {}, Phone: {}", verification.getStatus(), phoneNumber);
+        } catch (ApiException e) {
+            log.error("Twilio rejected verification SMS request for {}. Status: {}, Code: {}, Message: {}",
+                    phoneNumber, e.getStatusCode(), e.getCode(), e.getMessage());
+            throw toDeliveryException("send verification SMS", e);
         } catch (Exception e) {
             log.error("Failed to send verification SMS to: {} - Error: {}", phoneNumber, e.getMessage(), e);
-            throw new RuntimeException("Failed to send verification SMS: " + e.getMessage(), e);
+            throw new VerificationDeliveryException("Unable to send SMS verification code right now. Please try again.", e);
         }
     }
 
@@ -119,11 +125,7 @@ public class SMSService {
      */
     public boolean verifyCode(String phoneNumber, String code) {
         log.info("Verifying SMS code via Verify API for: {}", phoneNumber);
-        if (!isConfigured()) {
-            String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
-            log.warn(errorMsg);
-            throw new RuntimeException(errorMsg);
-        }
+        requireConfigured();
 
         if (!isInitialized) {
             initializeTwilio();
@@ -138,9 +140,13 @@ public class SMSService {
             String status = verificationCheck.getStatus();
             log.info("Verification check status: {} for {}", status, phoneNumber);
             return "approved".equalsIgnoreCase(status);
+        } catch (ApiException e) {
+            log.error("Twilio rejected SMS verification check for {}. Status: {}, Code: {}, Message: {}",
+                    phoneNumber, e.getStatusCode(), e.getCode(), e.getMessage());
+            throw toDeliveryException("verify SMS code", e);
         } catch (Exception e) {
             log.error("Failed to verify SMS code for: {} - Error: {}", phoneNumber, e.getMessage(), e);
-            throw new RuntimeException("Failed to verify SMS code: " + e.getMessage(), e);
+            throw new VerificationDeliveryException("Unable to verify SMS code right now. Please try again.", e);
         }
     }
 
@@ -149,11 +155,7 @@ public class SMSService {
      */
     public void sendPasswordResetSMS(String phoneNumber, String otpCode) {
         log.info("Sending password reset SMS via Verify API to: {}", phoneNumber);
-        if (!isConfigured()) {
-            String errorMsg = "SMS service not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID environment variables.";
-            log.warn(errorMsg);
-            throw new RuntimeException(errorMsg);
-        }
+        requireConfigured();
 
         if (!isInitialized) {
             initializeTwilio();
@@ -170,9 +172,13 @@ public class SMSService {
             log.info("Password reset SMS OTP sent via Verify API. Status: {}, Phone: {}", 
                     verification.getStatus(), phoneNumber);
 
+        } catch (ApiException e) {
+            log.error("Twilio rejected password reset SMS request for {}. Status: {}, Code: {}, Message: {}",
+                    phoneNumber, e.getStatusCode(), e.getCode(), e.getMessage());
+            throw toDeliveryException("send password reset SMS", e);
         } catch (Exception e) {
             log.error("Failed to send password reset SMS to: {} - Error: {}", phoneNumber, e.getMessage(), e);
-            throw new RuntimeException("Failed to send password reset SMS: " + e.getMessage(), e);
+            throw new VerificationDeliveryException("Unable to send SMS verification code right now. Please try again.", e);
         }
     }
 
@@ -201,5 +207,41 @@ public class SMSService {
         }
 
         return "+" + digits;
+    }
+
+    private void requireConfigured() {
+        if (!isConfigured()) {
+            log.warn(SMS_CONFIG_MESSAGE);
+            throw new VerificationDeliveryException(SMS_CONFIG_MESSAGE);
+        }
+    }
+
+    private VerificationDeliveryException toDeliveryException(String action, ApiException e) {
+        Integer statusCode = e.getStatusCode();
+        String message = e.getMessage() == null ? "" : e.getMessage();
+        boolean authFailure = (statusCode != null && (statusCode == 401 || statusCode == 403))
+                || message.toLowerCase(Locale.ROOT).contains("authenticate");
+        if (authFailure) {
+            return new VerificationDeliveryException(
+                    "SMS provider rejected the configured Twilio credentials. Check TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID.",
+                    e
+            );
+        }
+        return new VerificationDeliveryException("Unable to " + action + " right now. Please try again.", e);
+    }
+
+    private boolean isTwilioSid(String value, String prefix) {
+        return hasRealValue(value) && value.matches("^" + prefix + "[0-9a-fA-F]{32}$");
+    }
+
+    private boolean hasRealValue(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        return !normalized.contains("placeholder")
+                && !normalized.contains("changeme")
+                && !normalized.contains("your_")
+                && !normalized.contains("example");
     }
 }

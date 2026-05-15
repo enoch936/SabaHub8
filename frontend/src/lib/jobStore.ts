@@ -150,6 +150,7 @@ interface JobStore {
   hasNextPage: boolean;
   hasPreviousPage: boolean;
   savedPresets: FilterPreset[];
+  loadSavedJobs: () => Promise<void>;
   fetchJobs: (filters?: JobFilters) => Promise<void>;
   toggleSave: (jobId: string) => void;
   removeJob: (jobId: string) => Promise<void>;
@@ -170,6 +171,18 @@ export const useJobStore = create<JobStore>((set, get) => ({
   hasNextPage: false,
   hasPreviousPage: false,
   savedPresets: [],
+
+  loadSavedJobs: async () => {
+    try {
+      const response = await fetch('/api/jobs/saved', { method: 'GET' });
+      if (response.ok) {
+        const data: { jobIds: string[] } = await response.json();
+        set({ savedJobs: new Set(data.jobIds ?? []) });
+      }
+    } catch (error) {
+      console.error('Failed to load saved jobs from database:', error);
+    }
+  },
 
   fetchJobs: async (filters) => {
     const existing = get().filters;

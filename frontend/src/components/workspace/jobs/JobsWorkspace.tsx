@@ -8,8 +8,11 @@ import {
   BriefcaseBusiness,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  EyeOff,
   Grid3X3,
   LayoutList,
+  Bookmark,
   SearchCheck,
   ShieldCheck,
   SlidersHorizontal,
@@ -44,6 +47,7 @@ export default function JobsWorkspace() {
   const savedJobs = useJobStore((s) => s.savedJobs);
   const savedPresets = useJobStore((s) => s.savedPresets);
   const fetchJobs = useJobStore((s) => s.fetchJobs);
+  const loadSavedJobs = useJobStore((s) => s.loadSavedJobs);
   const toggleSave = useJobStore((s) => s.toggleSave);
   const removeJob = useJobStore((s) => s.removeJob);
   const setFilters = useJobStore((s) => s.setFilters);
@@ -54,6 +58,10 @@ export default function JobsWorkspace() {
   const [applyJob, setApplyJob] = useState<Job | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [queryHydrated, setQueryHydrated] = useState(false);
+
+  useEffect(() => {
+    void loadSavedJobs();
+  }, [loadSavedJobs]);
 
   useEffect(() => {
     if (queryHydrated) {
@@ -172,63 +180,53 @@ export default function JobsWorkspace() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="space-y-3">
-            <span className="inline-flex w-fit items-center rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500 shadow-[0_10px_26px_rgba(15,23,42,0.05)]">
-              Workspace
+    <div className="space-y-3">
+      <div className="rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] p-4 shadow-[0_12px_28px_rgba(15,23,42,0.03)]">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="space-y-2">
+            <span className="inline-flex w-fit items-center rounded-full bg-white px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-500 shadow-[0_8px_20px_rgba(15,23,42,0.03)]">
+              Jobs
             </span>
             <div>
-              <h1 className="text-3xl font-semibold tracking-[-0.03em] text-gray-900">Jobs</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
-                Browse, filter, save, and review jobs.
+              <h1 className="text-2xl font-semibold tracking-[-0.02em] text-gray-900">Browse & apply</h1>
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-gray-500">
+                Filter, save, and apply to jobs.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={toggleFilters}
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-gray-900 shadow-[0_10px_26px_rgba(15,23,42,0.05)] transition hover:shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-900 shadow-[0_6px_16px_rgba(15,23,42,0.03)] transition hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
+              aria-label={filtersOpen ? "Hide filters" : "Show filters"}
+              title={filtersOpen ? "Hide filters" : "Show filters"}
             >
-              <SlidersHorizontal className="h-4 w-4" />
-              {filtersOpen ? "Hide filters" : "Show filters"}
+              {filtersOpen ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
-            <Link
-              href={workspaceRoutes.talent}
-              className="inline-flex h-11 items-center rounded-full bg-white px-5 text-sm font-semibold text-gray-900 shadow-[0_10px_26px_rgba(15,23,42,0.05)] transition hover:shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
-            >
-              Browse talent
-            </Link>
-            {isEmployer ? (
-              <Link
-                href={workspaceRoutes.createJob}
-                className="inline-flex h-11 items-center rounded-full bg-gray-950 px-5 text-sm font-semibold text-white transition hover:bg-gray-800"
-              >
-                Create job
-              </Link>
-            ) : (
+            {!isEmployer && (
               <button
                 type="button"
                 onClick={() => runJobQuery({ savedOnly: filters.savedOnly ? undefined : true, page: 1 })}
-                className="inline-flex h-11 items-center rounded-full bg-gray-950 px-5 text-sm font-semibold text-white transition hover:bg-gray-800"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-950 text-white transition hover:bg-gray-800"
+                aria-label={filters.savedOnly ? "Show all jobs" : "Show saved jobs"}
+                title={filters.savedOnly ? "Show all jobs" : "Show saved jobs"}
               >
-                {filters.savedOnly ? "Show all jobs" : "Open saved board"}
+                <Bookmark className="h-4 w-4" />
               </button>
             )}
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 2xl:grid-cols-3">
           {summaryCards.map((card) => (
-            <div key={card.label} className="rounded-[24px] bg-white px-4 py-4 shadow-[0_14px_36px_rgba(15,23,42,0.05)]">
+            <div key={card.label} className="rounded-[16px] bg-white px-3 py-2.5 shadow-[0_8px_20px_rgba(15,23,42,0.03)]">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">{card.label}</p>
+                <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-gray-400">{card.label}</p>
                 {card.icon}
               </div>
-              <p className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-gray-900">{card.value}</p>
+              <p className="mt-1.5 text-lg font-semibold tracking-[-0.02em] text-gray-900">{card.value}</p>
             </div>
           ))}
         </div>
@@ -254,7 +252,7 @@ export default function JobsWorkspace() {
         ) : null}
       </div>
 
-      <div className={`grid gap-6 ${filtersOpen ? "xl:grid-cols-[320px_minmax(0,1fr)]" : "grid-cols-1"}`}>
+      <div className={`grid gap-3 ${filtersOpen ? "xl:grid-cols-[280px_minmax(0,1fr)]" : "grid-cols-1"}`}>
         {filtersOpen ? (
           <aside>
             <JobFilterSidebar
@@ -270,117 +268,104 @@ export default function JobsWorkspace() {
           </aside>
         ) : null}
 
-        <section className="space-y-4">
-          <div className="rounded-[28px] bg-white/88 p-4 shadow-[0_18px_44px_rgba(15,23,42,0.04)]">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">View</p>
-                <p className="mt-1 text-sm text-gray-500">
-                  Page {currentPage} of {Math.max(totalPages, 1)}. {jobs.length} jobs shown.
-                </p>
-              </div>
+        <section className={viewMode === "list" ? "space-y-2 xl:grid xl:grid-cols-[minmax(0,0.68fr)_minmax(320px,0.32fr)] xl:gap-0" : "space-y-2"}>
+          <div className={viewMode === "list" ? "xl:pr-3" : ""}>
+            <div className="rounded-[20px] bg-white/88 p-2 shadow-[0_12px_28px_rgba(15,23,42,0.02)]">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">View</p>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    Pg {currentPage}/{Math.max(totalPages, 1)} • {jobs.length} shown
+                  </p>
+                </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={toggleFilters}
-                  className="inline-flex items-center gap-1 rounded-2xl bg-white px-3 py-2.5 text-sm text-gray-700 shadow-[0_10px_26px_rgba(15,23,42,0.05)] transition hover:shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
-                >
-                  {filtersOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  {filtersOpen ? "Hide filters" : "Show filters"}
-                </button>
-                <select
-                  value={filters.sortBy ?? "relevance"}
-                  onChange={(event) => runJobQuery({ sortBy: event.target.value as JobFilters["sortBy"], page: 1 })}
-                  className="rounded-2xl bg-white px-3 py-2.5 text-sm text-gray-700 shadow-[0_10px_26px_rgba(15,23,42,0.05)] outline-none"
-                >
-                  <option value="relevance">Relevance</option>
-                  <option value="date">Newest</option>
-                  <option value="budget">Budget</option>
-                </select>
-                <select
-                  value={filters.pageSize ?? 12}
-                  onChange={(event) => runJobQuery({ pageSize: Number(event.target.value), page: 1 })}
-                  className="rounded-2xl bg-white px-3 py-2.5 text-sm text-gray-700 shadow-[0_10px_26px_rgba(15,23,42,0.05)] outline-none"
-                >
-                  <option value={6}>6 per page</option>
-                  <option value={12}>12 per page</option>
-                  <option value={24}>24 per page</option>
-                </select>
-                <div className="flex items-center gap-1 rounded-2xl bg-white p-1 shadow-[0_10px_26px_rgba(15,23,42,0.05)]">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <select
+                    value={filters.pageSize ?? 12}
+                    onChange={(event) => runJobQuery({ pageSize: Number(event.target.value), page: 1 })}
+                    className="rounded-lg bg-white px-2 py-1 text-xs text-gray-700 shadow-[0_6px_14px_rgba(15,23,42,0.02)] outline-none"
+                  >
+                    <option value={6}>6/page</option>
+                    <option value={12}>12/page</option>
+                    <option value={24}>24/page</option>
+                  </select>
+                  <div className="flex items-center gap-0.5 rounded-lg bg-white p-0.5 shadow-[0_6px_14px_rgba(15,23,42,0.02)]">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("grid")}
+                      className={`rounded-md p-1.5 transition ${viewMode === "grid" ? "bg-gray-100 text-gray-900" : "text-gray-400"}`}
+                      aria-label="Grid view"
+                    >
+                      <Grid3X3 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("list")}
+                      className={`rounded-md p-1.5 transition ${viewMode === "list" ? "bg-gray-100 text-gray-900" : "text-gray-400"}`}
+                      aria-label="List view"
+                    >
+                      <LayoutList className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {isLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((row) => (
+                  <div key={row} className="rounded-[20px] border border-gray-200/80 bg-white p-2">
+                    <LoadingSkeleton rows={2} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <JobCardGrid
+                jobs={jobs}
+                viewMode={viewMode}
+                onApply={setApplyJob}
+                onSave={toggleSave}
+                onDelete={isEmployer ? removeJob : undefined}
+                onMessage={(job) => {
+                  void handleContactFromJob(job);
+                }}
+              />
+            )}
+
+            <div className="rounded-[20px] border border-gray-200/80 bg-white p-2 shadow-[0_10px_24px_rgba(15,23,42,0.02)]">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">Pagination</p>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {currentPage} / {Math.max(totalPages, 1)} • {totalCount} results
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={() => setViewMode("grid")}
-                    className={`rounded-xl p-2 transition ${viewMode === "grid" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
-                    aria-label="Grid view"
+                    onClick={() => runJobQuery({ page: Math.max(1, currentPage - 1) })}
+                    disabled={!hasPreviousPage}
+                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <Grid3X3 className="h-4 w-4" />
+                    ←
                   </button>
+                  <span className="rounded-lg bg-gray-950 px-2.5 py-1 text-xs font-semibold text-white">
+                    {currentPage}
+                  </span>
                   <button
                     type="button"
-                    onClick={() => setViewMode("list")}
-                    className={`rounded-xl p-2 transition ${viewMode === "list" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
-                    aria-label="List view"
+                    onClick={() => runJobQuery({ page: currentPage + 1 })}
+                    disabled={!hasNextPage}
+                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <LayoutList className="h-4 w-4" />
+                    →
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((row) => (
-                <div key={row} className="rounded-[28px] border border-gray-200/80 bg-white p-5">
-                  <LoadingSkeleton rows={4} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <JobCardGrid
-              jobs={jobs}
-              viewMode={viewMode}
-              onApply={setApplyJob}
-              onSave={toggleSave}
-              onDelete={isEmployer ? removeJob : undefined}
-              onMessage={(job) => {
-                void handleContactFromJob(job);
-              }}
-            />
-          )}
-
-          <div className="rounded-[28px] border border-gray-200/80 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.04)]">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">Pagination</p>
-                <p className="mt-1 text-sm text-gray-500">
-                  Current {currentPage} / Total {Math.max(totalPages, 1)} / Results {totalCount}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => runJobQuery({ page: Math.max(1, currentPage - 1) })}
-                  disabled={!hasPreviousPage}
-                  className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <span className="rounded-full bg-gray-950 px-4 py-2 text-sm font-semibold text-white">
-                  Current {currentPage}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => runJobQuery({ page: currentPage + 1 })}
-                  disabled={!hasNextPage}
-                  className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
+          {viewMode === "list" ? <div className="hidden xl:block min-h-full bg-white" aria-hidden="true" /> : null}
         </section>
       </div>
 

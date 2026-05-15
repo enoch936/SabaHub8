@@ -115,6 +115,7 @@ export function LiveViewerWorkspace({ streamId }: { streamId: string }) {
   const [chatMessages, setChatMessages] = useState<StreamEvent[]>([]);
   const [viewerCount, setViewerCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [webrtcState, setWebrtcState] = useState<WebRtcState>("idle");
   const [webrtcNote, setWebrtcNote] = useState("");
   const [connectedPeers, setConnectedPeers] = useState(0);
@@ -150,7 +151,7 @@ export function LiveViewerWorkspace({ streamId }: { streamId: string }) {
   );
 
   const isOwner = Boolean(stream?.permissions?.canManage && currentUserId && stream?.ownerUserId === currentUserId);
-  const canUseWebRtc = stream?.status === "LIVE" && joinInfo?.preferredProtocol === "WEBRTC";
+  const canUseWebRtc = stream?.status === "LIVE" && !isOwner && Boolean(stream?.ownerUserId);
   const iceServers = useMemo(() => parseIceServers(joinInfo?.turnServers), [joinInfo?.turnServers]);
   const watchHref = useMemo(() => buildStreamWatchHref(streamId), [streamId]);
 
@@ -346,6 +347,7 @@ export function LiveViewerWorkspace({ streamId }: { streamId: string }) {
 
     const load = async () => {
       try {
+        setError(null);
         const [streamData, joinData, meData] = await Promise.all([
           getStream(streamId),
           joinStream(streamId),
@@ -381,13 +383,7 @@ export function LiveViewerWorkspace({ streamId }: { streamId: string }) {
 
         sendStreamPresenceJoin(streamId);
 
-        if (
-          streamData.status === "LIVE" &&
-          joinData.preferredProtocol === "WEBRTC" &&
-          !streamData.permissions.canManage &&
-          myUserId &&
-          streamData.ownerUserId
-        ) {
+        if (streamData.status === "LIVE" && !streamData.permissions.canManage && myUserId && streamData.ownerUserId) {
           sendStreamSignal(streamId, {
             signalType: "CONTROL",
             targetPeerId: streamData.ownerUserId,
@@ -396,7 +392,18 @@ export function LiveViewerWorkspace({ streamId }: { streamId: string }) {
           setWebrtcState("connecting");
         }
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Unable to load the stream.");
+        let errorMessage = "Unable to load the stream.";
+        
+        if (error instanceof Error) {
+          errorMessage = error.message;
+          // Check if it's a 403 Forbidden error
+          if (error.message.includes("403") || error.message.includes("Forbidden")) {
+            errorMessage = "The stream could not be found or you don't have permission to view it.";
+          }
+        }
+        
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         if (active) {
           setLoading(false);
@@ -481,6 +488,23 @@ export function LiveViewerWorkspace({ streamId }: { streamId: string }) {
 
   if (loading) {
     return <div className="rounded-[28px] border border-gray-200 bg-white p-6 text-sm text-gray-500">Loading live stream...</div>;
+  }
+
+  if (error || !stream) {
+    return (
+      <div className="rounded-[28px] border border-red-200 bg-red-50 p-6">
+        <h2 className="text-lg font-semibold text-red-900">Unable to load stream</h2>
+        <p className="mt-2 text-sm text-red-700">
+          {error || "The stream could not be found or you don't have permission to view it."}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+        >
+          Try again
+        </button>
+      </div>
+    );
   }
 
   return (

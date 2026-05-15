@@ -138,6 +138,8 @@ public class User {
         private String privilegeNote;
         private Instant elevatedUntil;
         private String roleVersion;
+        private Instant bootstrappedAt;
+        private Boolean isBootstrappedAdmin;
     }
 
     @Data
@@ -161,6 +163,8 @@ public class User {
         private Instant lastWarningAt;
         private List<String> blacklistedIps;
         private List<String> blacklistedDevices;
+        private Boolean bootstrapInitialization;
+        private Instant bootstrappedAt;
     }
 
     @Data

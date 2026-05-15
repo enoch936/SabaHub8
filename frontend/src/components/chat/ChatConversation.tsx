@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ArrowLeft, Info, Maximize2, Mic, MicOff, Minimize2, Phone, PhoneOff, Pin, Radio, Search, Video, VideoOff } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Info, Maximize2, Mic, MicOff, Minimize2, Phone, PhoneOff, Pin, Radio, Search, Video, VideoOff } from "lucide-react";
 import type { Asset, ChatMessage } from "@/lib/api";
 import { connectWs, sendThreadTyping, subscribeThreadTyping, type Subscription } from "@/lib/ws";
 import {
@@ -177,7 +177,9 @@ export function ChatConversation({
   onOpenDetails,
 }: ChatConversationProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const conversationScrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const isNearBottomRef = useRef(true);
   const [draftText, setDraftText] = useState("");
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -213,11 +215,22 @@ export function ChatConversation({
   const remotePeerId = remotePeerIds[0] ?? null;
   const canCall = (threadType === "DIRECT" || threadType === "GROUP") && Boolean(currentUserId && remotePeerIds.length > 0);
 
+  const scrollConversationToBottom = (behavior: ScrollBehavior = "smooth") => {
+    bottomRef.current?.scrollIntoView({ behavior, block: "end" });
+  };
+
+  const scrollConversationToTop = () => {
+    conversationScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   useEffect(() => {
     if (hasSearchQuery) {
       return;
     }
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+
+    if (messages.length <= 1 || isNearBottomRef.current) {
+      scrollConversationToBottom(messages.length <= 1 ? "auto" : "smooth");
+    }
   }, [hasSearchQuery, messages, typingUsers]);
 
   const pinnedMessage = useMemo(
@@ -253,6 +266,16 @@ export function ChatConversation({
       ? `Replying to: ${replyTarget.text || "attachment"}`
       : null;
   const secondaryStatus = typingLabel || headerMeta || subtitle;
+
+  const handleConversationScroll = () => {
+    const container = conversationScrollRef.current;
+    if (!container) {
+      return;
+    }
+
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    isNearBottomRef.current = distanceFromBottom < 120;
+  };
 
   const handleSend = (content: string) => {
     if (editingMessageId && onEditMessage) {
@@ -822,6 +845,16 @@ export function ChatConversation({
               onClick={onOpenDetails}
               icon={<Info className="h-4.5 w-4.5" />}
             />
+            <HeaderActionButton
+              label="Scroll to top"
+              onClick={scrollConversationToTop}
+              icon={<ArrowUp className="h-4.5 w-4.5" />}
+            />
+            <HeaderActionButton
+              label="Scroll to bottom"
+              onClick={() => scrollConversationToBottom()}
+              icon={<ArrowDown className="h-4.5 w-4.5" />}
+            />
           </div>
         </div>
 
@@ -944,7 +977,12 @@ export function ChatConversation({
         </div>
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-y-auto scroll-smooth px-3 py-3 sm:px-4 lg:px-6" style={conversationCanvasStyle}>
+      <div
+        ref={conversationScrollRef}
+        onScroll={handleConversationScroll}
+        className="min-h-0 flex-1 overflow-y-auto scroll-smooth px-3 py-3 sm:px-4 lg:px-6"
+        style={conversationCanvasStyle}
+      >
         {isLoading && messages.length === 0 ? (
           <div className="mx-auto max-w-4xl space-y-4">
             <MessageSkeleton />

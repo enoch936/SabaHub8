@@ -24,6 +24,7 @@ import StorageRoundedIcon from "@mui/icons-material/StorageRounded";
 import ManageAccountsRoundedIcon from "@mui/icons-material/ManageAccountsRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
+import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
 
 const primaryIconSx = { fontSize: 18 };
 const secondaryIconSx = { fontSize: 16 };
@@ -192,6 +193,12 @@ export const adminNavigationGroups: AdminNavigationGroup[] = [
         icon: <GroupsRoundedIcon sx={primaryIconSx} />,
         description: "User directory, access control, verification, and role administration.",
         children: [
+          {
+            key: "identity-operations",
+            label: "Identity Operations",
+            href: "/admin/identity",
+            icon: <VerifiedUserRoundedIcon sx={secondaryIconSx} />,
+          },
           {
             key: "role-governance",
             label: "Role Governance",

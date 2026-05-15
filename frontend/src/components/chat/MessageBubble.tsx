@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   Pencil,
   Pin,
+  Play,
   SmilePlus,
   Trash2,
   Video,
@@ -130,6 +131,17 @@ export function MessageBubble({
     ? "border-slate-700 bg-slate-800 text-slate-100"
     : "border-slate-200 bg-slate-50 text-slate-700";
 
+  const openAssetUrl = (url?: string | null) => {
+    const targetUrl = url?.trim();
+    if (!targetUrl) {
+      return;
+    }
+    if (typeof window !== "undefined") {
+      window.open(targetUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+  };
+
   const renderAsset = () => {
     const assetLabel = formatAssetLabel(asset, message.assetId);
     const detailLine =
@@ -141,10 +153,44 @@ export function MessageBubble({
     if (assetKind === "image" && asset?.url) {
       return (
         <div className={`overflow-hidden rounded-[24px] border ${containerTone}`}>
-          <img src={asset.url} alt={assetLabel} className="max-h-[340px] w-full object-cover" />
+          <button
+            type="button"
+            onClick={() => openAssetUrl(accessUrl || asset.url)}
+            className="block w-full cursor-zoom-in"
+            aria-label={`Open ${assetLabel}`}
+          >
+            <img src={asset.url} alt={assetLabel} className="max-h-[340px] w-full object-cover" />
+          </button>
           <div className="space-y-2 px-4 py-3">
             <p className="text-sm font-semibold">{highlightText(assetLabel, highlightQuery)}</p>
             <p className={`text-xs ${subtleTone}`}>{detailLine}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              {accessUrl ? (
+                <Link
+                  href={accessUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                    isMe ? "bg-white text-slate-900" : "bg-slate-900 text-white"
+                  }`}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Open
+                </Link>
+              ) : null}
+              {asset?.downloadUrl ? (
+                <Link
+                  href={asset.downloadUrl}
+                  target="_blank"
+                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                    isMe ? "border-slate-500 text-slate-200" : "border-slate-300 text-slate-600"
+                  }`}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </Link>
+              ) : null}
+            </div>
           </div>
         </div>
       );
@@ -153,12 +199,46 @@ export function MessageBubble({
     if (assetKind === "video" && asset?.url) {
       return (
         <div className={`overflow-hidden rounded-[24px] border ${containerTone}`}>
-          <video controls className="max-h-[340px] w-full bg-black object-cover">
-            <source src={asset.url} />
-          </video>
+          <button
+            type="button"
+            onClick={() => openAssetUrl(accessUrl || asset.url)}
+            className="block w-full cursor-pointer"
+            aria-label={`Open ${assetLabel}`}
+          >
+            <video controls className="max-h-[340px] w-full bg-black object-cover">
+              <source src={asset.url} />
+            </video>
+          </button>
           <div className="space-y-2 px-4 py-3">
             <p className="text-sm font-semibold">{highlightText(assetLabel, highlightQuery)}</p>
             <p className={`text-xs ${subtleTone}`}>{detailLine}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              {accessUrl ? (
+                <Link
+                  href={accessUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                    isMe ? "bg-white text-slate-900" : "bg-slate-900 text-white"
+                  }`}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Open
+                </Link>
+              ) : null}
+              {asset?.downloadUrl ? (
+                <Link
+                  href={asset.downloadUrl}
+                  target="_blank"
+                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                    isMe ? "border-slate-500 text-slate-200" : "border-slate-300 text-slate-600"
+                  }`}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </Link>
+              ) : null}
+            </div>
           </div>
         </div>
       );
@@ -171,6 +251,33 @@ export function MessageBubble({
           <div className={`mt-3 text-xs ${subtleTone}`}>
             {assetLabel}
             {detailLine ? ` • ${detailLine}` : ""}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {accessUrl ? (
+              <button
+                type="button"
+                onClick={() => openAssetUrl(accessUrl)}
+                className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                  isMe ? "bg-white text-slate-900" : "bg-slate-900 text-white"
+                }`}
+              >
+                <Play className="h-3.5 w-3.5" />
+                Play
+              </button>
+            ) : null}
+            {asset?.downloadUrl ? (
+              <Link
+                href={asset.downloadUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                  isMe ? "border-slate-500 text-slate-200" : "border-slate-300 text-slate-600"
+                }`}
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download
+              </Link>
+            ) : null}
           </div>
         </div>
       );
@@ -195,6 +302,7 @@ export function MessageBubble({
                 <Link
                   href={accessUrl}
                   target="_blank"
+                  rel="noreferrer"
                   className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${
                     isMe ? "bg-white text-slate-900" : "bg-slate-900 text-white"
                   }`}
