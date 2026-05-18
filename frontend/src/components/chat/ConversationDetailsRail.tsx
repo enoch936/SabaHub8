@@ -31,7 +31,6 @@ import {
   getThreadBadgeLabel,
   isReadableAsset,
 } from "./chat-helpers";
-import { ChatPrimaryButton, ChatSecondaryButton, ChatSectionCard, ChatSearchInput, chatUi } from "./chat-ui";
 
 type MemberEntry = {
   id: string;
@@ -81,13 +80,13 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <ChatSectionCard>
+    <section className="rounded-[28px] border border-[#d8e0d6] bg-white px-4 py-4 shadow-[0_18px_28px_rgba(38,67,56,0.05)]">
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-[#1f312a]">{title}</h3>
         {subtitle ? <p className="mt-1 text-xs text-[#7d8c84]">{subtitle}</p> : null}
       </div>
       {children}
-    </ChatSectionCard>
+    </section>
   );
 }
 
@@ -125,11 +124,11 @@ export function ConversationDetailsRail({
   if (!activeConversation) {
     return (
       <div className="flex h-full flex-col items-center justify-center px-6 py-10 text-center">
-        <div className="grid h-16 w-16 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm">
+        <div className="grid h-16 w-16 place-items-center rounded-[24px] border border-white/70 bg-white/80 text-[#708078] shadow-[0_20px_36px_rgba(38,67,56,0.06)]">
           <Settings2 className="h-5 w-5" />
         </div>
-        <h3 className="mt-4 text-sm font-semibold text-slate-900">Conversation details</h3>
-        <p className="mt-2 max-w-[240px] text-sm text-slate-500">
+        <h3 className="mt-4 text-sm font-semibold text-[#20332d]">Conversation details</h3>
+        <p className="mt-2 max-w-[240px] text-sm text-[#63716a]">
           Open a conversation to view participants, shared media, and real governance controls.
         </p>
       </div>
@@ -158,33 +157,33 @@ export function ConversationDetailsRail({
     <div className="space-y-4 p-4">
       <SectionCard title="Thread overview" subtitle="Live details from the current workspace thread.">
         <div className="flex items-start gap-3">
-          <div className="flex h-[60px] w-[60px] flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-base font-bold text-white shadow-sm">
+          <div className="flex h-[60px] w-[60px] flex-shrink-0 items-center justify-center rounded-[24px] bg-[linear-gradient(135deg,#8eb6a0,#6f95d2)] text-base font-bold text-white shadow-[0_18px_30px_rgba(78,108,145,0.18)]">
             {getConversationInitial(title)}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="truncate text-base font-semibold text-slate-900">{title}</p>
-              <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+              <p className="truncate text-base font-semibold text-[#1f312a]">{title}</p>
+              <span className="rounded-full border border-[#d8e0d6] bg-[#f5f8f3] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6b7b73]">
                 {getThreadBadgeLabel(activeConversation.threadType)}
               </span>
             </div>
-            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
-            <p className="mt-3 text-xs font-medium text-slate-400">
+            <p className="mt-1 text-sm text-[#63716a]">{subtitle}</p>
+            <p className="mt-3 text-xs font-medium text-[#8f9c95]">
               Last active {formatRelativeActivity(activeConversation.lastMessageAt)}
             </p>
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Participants</p>
-            <p className="mt-2 text-sm font-semibold text-slate-900">
+          <div className="rounded-[20px] border border-[#d8e0d6] bg-[#f6f8f3] px-3 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a9890]">Participants</p>
+            <p className="mt-2 text-sm font-semibold text-[#1f312a]">
               {activeConversation.participantIds?.length ?? 0}
             </p>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Posting</p>
-            <p className="mt-2 text-sm font-semibold text-slate-900">
+          <div className="rounded-[20px] border border-[#d8e0d6] bg-[#f6f8f3] px-3 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a9890]">Posting</p>
+            <p className="mt-2 text-sm font-semibold text-[#1f312a]">
               {(activeConversation.threadType ?? "DIRECT") === "CHANNEL"
                 ? activeConversation.memberMessagingEnabled
                   ? "Open"
@@ -199,9 +198,9 @@ export function ConversationDetailsRail({
             </p>
             <p className="mt-2 text-sm font-semibold text-[#1f312a]">{liveMemberCount}</p>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Messages</p>
-            <p className="mt-2 text-sm font-semibold text-slate-900">{messages.length}</p>
+          <div className="rounded-[20px] border border-[#d8e0d6] bg-[#f6f8f3] px-3 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a9890]">Messages</p>
+            <p className="mt-2 text-sm font-semibold text-[#1f312a]">{messages.length}</p>
           </div>
         </div>
       </SectionCard>
@@ -221,7 +220,7 @@ export function ConversationDetailsRail({
               onChange={(event) => onGroupNameChange(event.target.value)}
               disabled={!canManageConversation}
               placeholder="Conversation name"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-[20px] border border-[#d8e0d6] bg-[#f6f8f3] px-4 py-3 text-sm text-[#1f312a] outline-none transition focus:border-[#c6d6c6] disabled:cursor-not-allowed disabled:opacity-60"
             />
 
             {(activeConversation.threadType ?? "DIRECT") === "CHANNEL" ? (
@@ -232,9 +231,9 @@ export function ConversationDetailsRail({
                   disabled={!canManageConversation}
                   rows={3}
                   placeholder="Describe the channel purpose and moderation expectations"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-[20px] border border-[#d8e0d6] bg-[#f6f8f3] px-4 py-3 text-sm text-[#1f312a] outline-none transition focus:border-[#c6d6c6] disabled:cursor-not-allowed disabled:opacity-60"
                 />
-                <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <label className="flex items-center gap-2 rounded-[20px] border border-[#d8e0d6] bg-[#f6f8f3] px-4 py-3 text-sm text-[#42554c]">
                   <input
                     type="checkbox"
                     checked={memberMessagingEnabled}
@@ -247,10 +246,15 @@ export function ConversationDetailsRail({
             ) : null}
 
             {canManageConversation ? (
-              <ChatPrimaryButton onClick={onSaveSettings} disabled={savingSettings} className="w-full rounded-xl">
+              <button
+                type="button"
+                onClick={onSaveSettings}
+                disabled={savingSettings}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-[20px] bg-[#27463b] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_30px_rgba(39,70,59,0.18)] transition hover:bg-[#315447] disabled:opacity-60"
+              >
                 <Settings2 className="h-4 w-4" />
                 {savingSettings ? "Saving…" : "Save settings"}
-              </ChatPrimaryButton>
+              </button>
             ) : null}
           </div>
         </SectionCard>
@@ -281,7 +285,7 @@ export function ConversationDetailsRail({
                   <button
                     type="button"
                     onClick={() => onRemoveParticipant(member.id)}
-                  className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                    className="inline-flex items-center gap-1 rounded-full border border-[#f1cbc1] bg-white px-3 py-1.5 text-xs font-semibold text-[#b45a4b] transition hover:bg-[#fff5f2]"
                   >
                     <UserMinus className="h-3.5 w-3.5" />
                     Remove
@@ -297,13 +301,13 @@ export function ConversationDetailsRail({
 
           {(activeConversation.threadType ?? "DIRECT") !== "DIRECT" && canManageConversation ? (
             <div className="rounded-[22px] border border-[#d8e0d6] bg-[#f6f8f3] p-3">
-              <ChatSearchInput>
+              <div className="flex items-center gap-2 rounded-[18px] border border-[#d8e0d6] bg-white px-3 py-2">
                 <Users className="h-4 w-4 text-[#7d8c84]" />
                 <input
                   value={manageQuery}
                   onChange={(event) => onManageQueryChange(event.target.value)}
                   placeholder="Find users by name, username, email, or ID"
-                  className={chatUi.input}
+                  className="w-full bg-transparent text-sm text-[#1f312a] outline-none placeholder:text-[#94a198]"
                 />
                 <button
                   type="button"
@@ -312,7 +316,7 @@ export function ConversationDetailsRail({
                 >
                   {manageLoading ? "..." : "Find"}
                 </button>
-              </ChatSearchInput>
+              </div>
 
               {manageResults.length > 0 ? (
                 <div className="mt-3 space-y-2">
@@ -346,7 +350,7 @@ export function ConversationDetailsRail({
             <button
               type="button"
               onClick={() => onRemoveParticipant(currentUserId)}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[20px] border border-[#f1cbc1] bg-white px-4 py-3 text-sm font-semibold text-[#b45a4b] transition hover:bg-[#fff5f2]"
             >
               <UserMinus className="h-4 w-4" />
               Leave conversation
@@ -480,22 +484,38 @@ export function ConversationDetailsRail({
 
       <SectionCard title="Conversation controls" subtitle="These actions use the existing live thread API.">
         <div className="grid grid-cols-2 gap-2">
-          <ChatSecondaryButton onClick={onTogglePinned} className="bg-[#f6f8f3] text-[#42554c]">
+          <button
+            type="button"
+            onClick={onTogglePinned}
+            className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#d8e0d6] bg-[#f6f8f3] px-3 py-3 text-sm font-semibold text-[#42554c] transition hover:bg-white"
+          >
             <Pin className="h-4 w-4" />
             {activeConversation.pinned ? "Unpin chat" : "Pin chat"}
-          </ChatSecondaryButton>
-          <ChatSecondaryButton onClick={onToggleMuted} className="bg-[#f6f8f3] text-[#42554c]">
+          </button>
+          <button
+            type="button"
+            onClick={onToggleMuted}
+            className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#d8e0d6] bg-[#f6f8f3] px-3 py-3 text-sm font-semibold text-[#42554c] transition hover:bg-white"
+          >
             {activeConversation.muted ? <BellRing className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
             {activeConversation.muted ? "Unmute" : "Mute"}
-          </ChatSecondaryButton>
-          <ChatSecondaryButton onClick={activeConversation.archived ? onRestore : onArchive} className="bg-[#f6f8f3] text-[#42554c]">
+          </button>
+          <button
+            type="button"
+            onClick={activeConversation.archived ? onRestore : onArchive}
+            className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#d8e0d6] bg-[#f6f8f3] px-3 py-3 text-sm font-semibold text-[#42554c] transition hover:bg-white"
+          >
             <Archive className="h-4 w-4" />
             {activeConversation.archived ? "Restore" : "Archive"}
-          </ChatSecondaryButton>
-          <ChatSecondaryButton onClick={onClearPin} className="bg-[#f6f8f3] text-[#42554c]">
+          </button>
+          <button
+            type="button"
+            onClick={onClearPin}
+            className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#d8e0d6] bg-[#f6f8f3] px-3 py-3 text-sm font-semibold text-[#42554c] transition hover:bg-white"
+          >
             <Pin className="h-4 w-4" />
             Clear pin
-          </ChatSecondaryButton>
+          </button>
         </div>
 
         <div className="mt-4 rounded-[20px] border border-[#d8e0d6] bg-[#f6f8f3] p-3">

@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Box, Container, Grid, Paper, IconButton, Tooltip, Badge, Chip, Avatar, AvatarGroup } from '@mui/material';
 import { 
-  Mic, MicOff, Videocam, VideocamOff, ScreenShare, ScreenShareOff,
-  Settings, MoreVert, Eye, TrendingUp, Radio, Circle
+  Mic, MicOff, Videocam, VideocamOff, ScreenShare, StopScreenShare,
+  Settings, MoreVert, Visibility, TrendingUp, Radio, Circle
 } from '@mui/icons-material';
 import { colors, glassEffect, glassEffectHover, transitions, shadows, spacing } from './theme';
 import LiveVideoPlayer from './components/LiveVideoPlayer';
@@ -194,7 +194,7 @@ const StreamingDashboard: React.FC = () => {
       <Container maxWidth={false} disableGutters sx={{ height: 'calc(100vh - 80px)', position: 'relative' }}>
         <Grid container spacing={0} sx={{ height: '100%' }}>
           {/* Main Content Area - Center */}
-          <Grid item xs={12} sm={12} md={state.chatOpen && state.analyticsOpen ? 7 : state.chatOpen || state.analyticsOpen ? 8 : 12} sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <Grid size={{ xs: 12, sm: 12, md: state.chatOpen && state.analyticsOpen ? 7 : state.chatOpen || state.analyticsOpen ? 8 : 12 }} sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
             {/* Video Player */}
             <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative', minHeight: 0 }}>
               <LiveVideoPlayer isStreaming={state.isStreaming} />
@@ -219,7 +219,7 @@ const StreamingDashboard: React.FC = () => {
           </Grid>
 
           {/* Right Sidebar - Chat & Analytics */}
-          <Grid item xs={12} sm={12} md={state.chatOpen && state.analyticsOpen ? 5 : state.chatOpen || state.analyticsOpen ? 4 : 0} sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderLeft: `1px solid rgba(203, 213, 225, 0.1)` }}>
+          <Grid size={{ xs: 12, sm: 12, md: state.chatOpen && state.analyticsOpen ? 5 : state.chatOpen || state.analyticsOpen ? 4 : 0 }} sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderLeft: `1px solid rgba(203, 213, 225, 0.1)` }}>
             {/* Chat Section */}
             {state.chatOpen && (
               <Box sx={{ flex: 1, minHeight: 0, borderBottom: `1px solid rgba(203, 213, 225, 0.1)` }}>
