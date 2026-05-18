@@ -753,7 +753,8 @@ export default function ChatPage() {
           style={inboxPanelStyle}
           className={`${mobileView === "conversation" ? "hidden lg:flex" : "flex"} ${leftPanelOpen ? "lg:flex" : "lg:hidden"} min-h-0 w-full max-w-full flex-col overflow-hidden border-r border-slate-200 bg-white lg:w-[var(--chat-inbox-width)] lg:flex-shrink-0`}
         >
-          <div className="border-b border-slate-200 px-4 py-3">
+          {/* Fixed header: title + search + filters */}
+          <div className="shrink-0 border-b border-slate-200 px-4 py-3">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#718279]">Focused inbox</p>
@@ -835,19 +836,19 @@ export default function ChatPage() {
           </div>
 
           {showComposerPanel ? (
-            <div className="space-y-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
-              <ChatSectionCard className="rounded-xl">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8a9890]">Composer</p>
-                    <h3 className="mt-2 text-sm font-semibold text-[#1f312a]">Direct message, group, or channel</h3>
-                    <p className="mt-1 text-sm text-[#5e6d65]">Every action below creates a live thread from your current workspace.</p>
-                  </div>
+            <div className="flex shrink-0 flex-col overflow-hidden border-b border-slate-200 bg-[#f6f8f5]" style={{ maxHeight: "55%" }}>
+              {/* Composer header */}
+              <div className="flex items-center justify-between border-b border-[#e2e8df] bg-white px-4 py-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8a9890]">New conversation</p>
+                  <h3 className="mt-0.5 text-sm font-semibold text-[#1f312a]">
+                    {composeMode === "DIRECT" ? "Direct message" : composeMode === "GROUP" ? "Create group" : "Create channel"}
+                  </h3>
                 </div>
-
-                <div className="mt-4 flex gap-2 rounded-[20px] bg-[#f4f7f2] p-1.5">
+                {/* Mode tabs */}
+                <div className="flex gap-1 rounded-[14px] bg-[#eef2ec] p-1">
                   {([
-                    { key: "DIRECT", label: "Direct" },
+                    { key: "DIRECT", label: "DM" },
                     { key: "GROUP", label: "Group" },
                     { key: "CHANNEL", label: "Channel" },
                   ] as const).map((item) => (
@@ -855,117 +856,168 @@ export default function ChatPage() {
                       key={item.key}
                       type="button"
                       onClick={() => setComposeMode(item.key)}
-                      className={`flex-1 rounded-[16px] px-3 py-2.5 text-xs font-semibold transition ${
-                        composeMode === item.key ? "bg-white text-[#21352d] shadow-sm" : "text-[#6d7a73]"
+                      className={`rounded-[10px] px-2.5 py-1.5 text-[11px] font-semibold transition ${
+                        composeMode === item.key ? "bg-white text-[#21352d] shadow-sm" : "text-[#6d7a73] hover:text-[#21352d]"
                       }`}
                     >
                       {item.label}
                     </button>
                   ))}
                 </div>
+              </div>
 
-                <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <ChatSearchInput>
-                    <Search className="h-4 w-4 text-[#7d8c84]" />
+              {/* Scrollable body */}
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin">
+
+                {/* User search */}
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7d8c84]">
+                    {composeMode === "DIRECT" ? "Find person" : "Add members"}
+                  </p>
+                  <div className="flex items-center gap-2 rounded-[14px] border border-[#d8e0d6] bg-white px-3 py-2.5 shadow-sm">
+                    <Search className="h-4 w-4 shrink-0 text-[#7d8c84]" />
                     <input
                       value={lookupQuery}
                       onChange={(event) => setLookupQuery(event.target.value)}
-                      placeholder="Search by name, username, email, or ID"
-                      className={chatUi.input}
+                      onKeyDown={(e) => { if (e.key === "Enter") void runLookup(); }}
+                      placeholder="Name, username, email, or ID"
+                      className="min-w-0 flex-1 bg-transparent text-sm text-[#1f312a] outline-none placeholder:text-[#94a198]"
                     />
-                    <ChatPrimaryButton onClick={() => void runLookup()} className="rounded-full px-3 py-1.5 text-[11px] tracking-[0.12em]">
-                      {lookupLoading ? "..." : "Find"}
-                    </ChatPrimaryButton>
-                  </ChatSearchInput>
+                    <button
+                      type="button"
+                      onClick={() => void runLookup()}
+                      className="shrink-0 rounded-full bg-[#27463b] px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-[#315447]"
+                    >
+                      {lookupLoading ? "…" : "Find"}
+                    </button>
+                  </div>
 
+                  {/* Search results */}
                   {lookupResults.length > 0 ? (
-                    <div className="mt-3 space-y-2">
+                    <div className="mt-2 space-y-1.5 rounded-[14px] border border-[#d8e0d6] bg-white p-2">
                       {lookupResults.map((user) => (
                         <div
                           key={user.id}
-                          className="flex items-center justify-between gap-3 rounded-[18px] border border-[#d8e0d6] bg-white px-3 py-3"
+                          className="flex items-center justify-between gap-2 rounded-[10px] px-3 py-2.5 transition hover:bg-[#f4f7f2]"
                         >
                           <button type="button" onClick={() => addSelectedUser(user)} className="min-w-0 flex-1 text-left">
                             <p className="truncate text-sm font-semibold text-[#1f312a]">{normalizeDisplayName(user)}</p>
                             <p className="truncate text-xs text-[#7d8c84]">{user.username || user.email || user.id}</p>
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => void handleStartDirectFromUser(user)}
-                            className="rounded-full border border-[#d5ded4] bg-[#f4f7f2] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#315447]"
-                          >
-                            Open
-                          </button>
+                          <div className="flex shrink-0 gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => addSelectedUser(user)}
+                              className="rounded-full bg-[#eef4ee] px-2.5 py-1 text-[11px] font-semibold text-[#315447] transition hover:bg-[#d8edd8]"
+                            >
+                              + Add
+                            </button>
+                            {composeMode === "DIRECT" ? (
+                              <button
+                                type="button"
+                                onClick={() => void handleStartDirectFromUser(user)}
+                                className="rounded-full border border-[#d5ded4] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#315447] transition hover:bg-[#f4f7f2]"
+                              >
+                                Open
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                       ))}
                     </div>
                   ) : null}
                 </div>
 
+                {/* Selected users */}
                 {selectedUsers.length > 0 ? (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {selectedUsers.map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center gap-2 rounded-full border border-[#d5ddd3] bg-[#eef4ee] px-3 py-1.5 text-xs font-medium text-[#315447]"
-                      >
-                        <span>{normalizeDisplayName(user)}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeSelectedUser(user.id)}
-                          className="text-[#6e7d75] transition hover:text-[#1f312a]"
+                  <div>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7d8c84]">
+                      Selected ({selectedUsers.length})
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedUsers.map((user) => (
+                        <div
+                          key={user.id}
+                          className="flex items-center gap-1.5 rounded-full border border-[#c8d8c6] bg-[#eef4ee] py-1.5 pl-3 pr-2 text-xs font-medium text-[#315447]"
                         >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
+                          <span className="max-w-[100px] truncate">{normalizeDisplayName(user)}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeSelectedUser(user.id)}
+                            className="flex h-4 w-4 items-center justify-center rounded-full bg-[#c8d8c6] text-[#315447] transition hover:bg-[#b0c8ae]"
+                            aria-label={`Remove ${normalizeDisplayName(user)}`}
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : null}
 
+                {/* Group / Channel fields */}
                 {composeMode !== "DIRECT" ? (
-                  <div className="mt-4 space-y-3">
-                    <input
-                      value={groupName}
-                      onChange={(event) => setGroupName(event.target.value)}
-                      placeholder={composeMode === "CHANNEL" ? "Channel name" : "Group name"}
-                      className="w-full rounded-[18px] border border-[#d8e0d6] bg-[#f6f8f3] px-4 py-3 text-sm text-[#1f312a] outline-none placeholder:text-[#94a198]"
-                    />
+                  <div className="space-y-3">
+                    <div>
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7d8c84]">
+                        {composeMode === "CHANNEL" ? "Channel name" : "Group name"}
+                      </p>
+                      <input
+                        value={groupName}
+                        onChange={(event) => setGroupName(event.target.value)}
+                        placeholder={composeMode === "CHANNEL" ? "e.g. design-feedback" : "e.g. Project Alpha"}
+                        className="w-full rounded-[14px] border border-[#d8e0d6] bg-white px-4 py-3 text-sm text-[#1f312a] outline-none placeholder:text-[#94a198] focus:border-[#27463b] transition"
+                      />
+                    </div>
+
                     {composeMode === "CHANNEL" ? (
                       <>
-                        <textarea
-                          value={channelDescription}
-                          onChange={(event) => setChannelDescription(event.target.value)}
-                          rows={3}
-                          placeholder="Describe the purpose of this channel"
-                          className="w-full rounded-[18px] border border-[#d8e0d6] bg-[#f6f8f3] px-4 py-3 text-sm text-[#1f312a] outline-none placeholder:text-[#94a198]"
-                        />
-                        <label className="flex items-center gap-2 rounded-[18px] border border-[#d8e0d6] bg-[#f6f8f3] px-4 py-3 text-sm text-[#42554c]">
+                        <div>
+                          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7d8c84]">Description</p>
+                          <textarea
+                            value={channelDescription}
+                            onChange={(event) => setChannelDescription(event.target.value)}
+                            rows={3}
+                            placeholder="What is this channel for?"
+                            className="w-full resize-none rounded-[14px] border border-[#d8e0d6] bg-white px-4 py-3 text-sm text-[#1f312a] outline-none placeholder:text-[#94a198] focus:border-[#27463b] transition"
+                          />
+                        </div>
+                        <label className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-[#d8e0d6] bg-white px-4 py-3 transition hover:bg-[#f6f8f3]">
                           <input
                             type="checkbox"
                             checked={memberMessagingEnabled}
                             onChange={(event) => setMemberMessagingEnabled(event.target.checked)}
+                            className="h-4 w-4 accent-[#27463b]"
                           />
-                          Allow members to post in this channel
+                          <div>
+                            <p className="text-sm font-medium text-[#1f312a]">Allow members to post</p>
+                            <p className="text-xs text-[#7d8c84]">Members can send messages in this channel</p>
+                          </div>
                         </label>
                       </>
                     ) : null}
                   </div>
                 ) : null}
+              </div>
 
-                <div className="mt-4 flex gap-2">
-                  <ChatPrimaryButton onClick={() => void handleStartConversation()} className="flex-1">
-                    <Plus className="h-4 w-4" />
-                    {composeMode === "DIRECT"
-                      ? "Open direct"
-                      : composeMode === "GROUP"
-                        ? "Create group"
-                        : "Create channel"}
-                  </ChatPrimaryButton>
-                  <ChatSecondaryButton onClick={resetComposer} className="bg-[#f6f8f3] text-[#5e6d65]">
-                    Clear
-                  </ChatSecondaryButton>
-                </div>
-              </ChatSectionCard>
+              {/* Sticky action bar */}
+              <div className="border-t border-[#e2e8df] bg-white px-4 py-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleStartConversation()}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-[14px] bg-[#27463b] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#315447] disabled:opacity-50"
+                >
+                  <Plus className="h-4 w-4" />
+                  {composeMode === "DIRECT" ? "Open direct" : composeMode === "GROUP" ? "Create group" : "Create channel"}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetComposer}
+                  className="rounded-[14px] border border-[#d8e0d6] bg-[#f6f8f3] px-4 py-3 text-sm font-semibold text-[#5e6d65] transition hover:bg-[#eef2ec]"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
           ) : null}
 
