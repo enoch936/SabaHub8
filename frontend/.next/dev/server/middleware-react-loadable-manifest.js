@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{\"app/admin-bootstrap/page.tsx -> @/components/admin/AdminBootstrapSetup\":{\"id\":\"app/admin-bootstrap/page.tsx -> @/components/admin/AdminBootstrapSetup\",\"files\":[\"static/chunks/_app-pages-browser_src_components_admin_AdminBootstrapSetup_tsx.js\"]},\"lib/jobStore.ts -> @/lib/api\":{\"id\":\"lib/jobStore.ts -> @/lib/api\",\"files\":[]}}"
+self.__REACT_LOADABLE_MANIFEST="{}"
