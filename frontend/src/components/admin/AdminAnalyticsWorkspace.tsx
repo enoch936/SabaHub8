@@ -317,7 +317,26 @@ export default function AdminAnalyticsWorkspace() {
   };
 
   return (
-    <Stack spacing={2.2}>
+    <Box
+      sx={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden",
+        px: { xs: 1.5, md: 2.2 },
+        py: { xs: 1.5, md: 2.2 },
+        background:
+          "radial-gradient(circle at 18% 8%, rgba(34,211,238,0.16) 0, transparent 26%), radial-gradient(circle at 84% 14%, rgba(168,85,247,0.14) 0, transparent 24%), linear-gradient(180deg, #050816 0%, #09101f 42%, #0c1224 100%)",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(120deg, rgba(255,255,255,0.04) 0%, transparent 18%, transparent 82%, rgba(255,255,255,0.03) 100%)",
+          pointerEvents: "none",
+        },
+      }}
+    >
+      <Stack spacing={2.2} sx={{ position: "relative", zIndex: 1 }}>
       <SoftCard
         sx={{
           border: "1px solid",
@@ -822,6 +841,7 @@ export default function AdminAnalyticsWorkspace() {
           <BreakdownList title="Proposal Status Breakdown" items={workspace?.proposalStatusBreakdown ?? []} />
         </Grid>
       </Grid>
-    </Stack>
+      </Stack>
+    </Box>
   );
 }

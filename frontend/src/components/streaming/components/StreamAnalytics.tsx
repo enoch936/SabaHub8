@@ -1,11 +1,79 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Grid, LinearProgress, Chip, IconButton, Tooltip } from '@mui/material';
-import { TrendingUp, Eye, Zap, Clock, DollarSign, Favorite, Share2, X, MoreVert } from '@mui/icons-material';
+import { TrendingUp, Visibility, Bolt, AccessTime, AttachMoney, Favorite, Share, X, MoreVert } from '@mui/icons-material';
 import { colors, glassEffect, transitions, spacing, shadows } from '../theme';
 import { StreamAnalytics } from '../types';
 
 interface StreamAnalyticsComponentProps {
   toggleAnalytics: () => void;
+}
+
+type StatCardProps = {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  unit?: string;
+  trend?: number | null;
+  color?: string;
+};
+
+function StatCard({
+  icon,
+  label,
+  value,
+  unit = '',
+  trend = null,
+  color = colors.accent,
+}: StatCardProps) {
+  return (
+    <Box
+      sx={{
+        ...glassEffect,
+        padding: spacing.lg,
+        borderRadius: spacing.lg,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: spacing.md,
+        cursor: 'pointer',
+        '&:hover': {
+          ...glassEffect,
+          transform: 'translateY(-2px)',
+          boxShadow: shadows.lg,
+        },
+        transition: transitions.fast,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ fontSize: '20px', opacity: 0.7, color }}>
+          {icon}
+        </Box>
+        {trend && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2px',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: trend > 0 ? colors.neonGreen : colors.error,
+            }}
+          >
+            <TrendingUp fontSize="small" />
+            {trend > 0 ? '+' : ''}{trend}%
+          </Box>
+        )}
+      </Box>
+      <Box>
+        <Box sx={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', mb: spacing.xs }}>
+          {label}
+        </Box>
+        <Box sx={{ fontSize: '24px', fontWeight: 700, color: colors.textPrimary }}>
+          {typeof value === 'number' ? Math.round(value).toLocaleString() : value}
+          {unit && <Box sx={{ fontSize: '14px', color: colors.textMuted, display: 'inline', ml: '4px' }}>{unit}</Box>}
+        </Box>
+      </Box>
+    </Box>
+  );
 }
 
 const StreamAnalyticsComponent: React.FC<StreamAnalyticsComponentProps> = ({ toggleAnalytics }) => {
@@ -42,70 +110,6 @@ const StreamAnalyticsComponent: React.FC<StreamAnalyticsComponentProps> = ({ tog
 
     return () => clearInterval(interval);
   }, []);
-
-  const StatCard = ({ 
-    icon: Icon, 
-    label, 
-    value, 
-    unit = '', 
-    trend = null,
-    color = colors.accent 
-  }: { 
-    icon: React.ReactNode, 
-    label: string, 
-    value: string | number, 
-    unit?: string,
-    trend?: number | null,
-    color?: string
-  }) => (
-    <Box
-      sx={{
-        ...glassEffect,
-        padding: spacing.lg,
-        borderRadius: spacing.lg,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: spacing.md,
-        cursor: 'pointer',
-        '&:hover': {
-          ...glassEffect,
-          transform: 'translateY(-2px)',
-          boxShadow: shadows.lg,
-        },
-        transition: transitions.fast,
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ fontSize: '20px', opacity: 0.7 }}>
-          {Icon}
-        </Box>
-        {trend && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '2px',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: trend > 0 ? colors.neonGreen : colors.error,
-            }}
-          >
-            <TrendingUp fontSize="small" />
-            {trend > 0 ? '+' : ''}{trend}%
-          </Box>
-        )}
-      </Box>
-      <Box>
-        <Box sx={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', mb: spacing.xs }}>
-          {label}
-        </Box>
-        <Box sx={{ fontSize: '24px', fontWeight: 700, color: colors.textPrimary }}>
-          {typeof value === 'number' ? Math.round(value).toLocaleString() : value}
-          {unit && <Box sx={{ fontSize: '14px', color: colors.textMuted, display: 'inline', ml: '4px' }}>{unit}</Box>}
-        </Box>
-      </Box>
-    </Box>
-  );
 
   return (
     <Box
@@ -187,15 +191,15 @@ const StreamAnalyticsComponent: React.FC<StreamAnalyticsComponentProps> = ({ tog
             Viewers
           </Box>
           <Grid container spacing={spacing.md}>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <StatCard
-                icon={<Eye />}
+                icon={<Visibility />}
                 label="Current"
                 value={analytics.viewers}
                 trend={8}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <StatCard
                 icon={<TrendingUp />}
                 label="Peak"
@@ -212,16 +216,16 @@ const StreamAnalyticsComponent: React.FC<StreamAnalyticsComponentProps> = ({ tog
             Performance
           </Box>
           <Grid container spacing={spacing.md}>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <StatCard
-                icon={<Zap />}
+                icon={<Bolt />}
                 label="Bitrate"
                 value={analytics.bitrate}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <StatCard
-                icon={<Clock />}
+                icon={<AccessTime />}
                 label="Latency"
                 value={analytics.latency.toFixed(1)}
                 unit="s"
@@ -257,7 +261,7 @@ const StreamAnalyticsComponent: React.FC<StreamAnalyticsComponentProps> = ({ tog
             Engagement
           </Box>
           <Grid container spacing={spacing.md}>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <StatCard
                 icon={<Favorite />}
                 label="Likes"
@@ -265,9 +269,9 @@ const StreamAnalyticsComponent: React.FC<StreamAnalyticsComponentProps> = ({ tog
                 color={colors.neonPink}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <StatCard
-                icon={<Share2 />}
+                icon={<Share />}
                 label="Shares"
                 value={analytics.shares}
                 color={colors.neonCyan}
@@ -313,7 +317,7 @@ const StreamAnalyticsComponent: React.FC<StreamAnalyticsComponentProps> = ({ tog
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: spacing.md, mb: spacing.md }}>
-              <DollarSign sx={{ color: colors.neonGreen, fontSize: '24px' }} />
+              <AttachMoney sx={{ color: colors.neonGreen, fontSize: '24px' }} />
             </Box>
             <Box sx={{ fontSize: '28px', fontWeight: 700, color: colors.neonGreen, mb: spacing.sm }}>
               ${analytics.donations}

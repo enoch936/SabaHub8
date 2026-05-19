@@ -1,12 +1,54 @@
 import React, { useState } from 'react';
 import { Box, IconButton, Tooltip, Select, MenuItem, FormControl, Chip, Badge } from '@mui/material';
 import {
-  Mic, MicOff, Videocam, VideocamOff, ScreenShare, ScreenShareOff,
+  Mic, MicOff, Videocam, VideocamOff, ScreenShare, StopScreenShare,
   Settings, MoreVert, Hd, Palette, PictureInPictureAlt, RecordVoiceOver,
   MoreHoriz, Edit, Save
 } from '@mui/icons-material';
 import { colors, glassEffect, transitions, spacing, shadows, gradients } from '../theme';
 import type { StreamSettings } from '../types';
+
+type ControlButtonProps = {
+  icon: React.ReactNode;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+  color?: string;
+  badge?: React.ReactNode;
+};
+
+function ControlButton({
+  icon,
+  label,
+  isActive,
+  onClick,
+  color = colors.accent,
+  badge = null,
+}: ControlButtonProps) {
+  return (
+    <Tooltip title={label}>
+      <Badge badgeContent={badge}>
+        <IconButton
+          onClick={onClick}
+          sx={{
+            color: isActive ? color : colors.textMuted,
+            background: isActive ? `rgba(139, 92, 246, 0.15)` : 'transparent',
+            border: `1px solid ${isActive ? `rgba(139, 92, 246, 0.3)` : 'rgba(203, 213, 225, 0.1)'}`,
+            transition: transitions.fast,
+            '&:hover': {
+              color: color,
+              background: `rgba(139, 92, 246, 0.2)`,
+              borderColor: `rgba(139, 92, 246, 0.3)`,
+              boxShadow: isActive ? `0 0 12px rgba(139, 92, 246, 0.3)` : 'none',
+            },
+          }}
+        >
+          {icon}
+        </IconButton>
+      </Badge>
+    </Tooltip>
+  );
+}
 
 interface CreatorControlsProps {
   state: any;
@@ -32,44 +74,6 @@ const CreatorControls: React.FC<CreatorControlsProps> = ({
   const [quality, setQuality] = useState<StreamSettings['quality']>('1080p60');
   const [showMore, setShowMore] = useState(false);
   const [recordingMode, setRecordingMode] = useState('cloud');
-
-  const ControlButton = ({
-    icon: Icon,
-    label,
-    isActive,
-    onClick,
-    color = colors.accent,
-    badge = null,
-  }: {
-    icon: React.ReactNode;
-    label: string;
-    isActive: boolean;
-    onClick: () => void;
-    color?: string;
-    badge?: React.ReactNode;
-  }) => (
-    <Tooltip title={label}>
-      <Badge badgeContent={badge}>
-        <IconButton
-          onClick={onClick}
-          sx={{
-            color: isActive ? color : colors.textMuted,
-            background: isActive ? `rgba(139, 92, 246, 0.15)` : 'transparent',
-            border: `1px solid ${isActive ? `rgba(139, 92, 246, 0.3)` : 'rgba(203, 213, 225, 0.1)'}`,
-            transition: transitions.fast,
-            '&:hover': {
-              color: color,
-              background: `rgba(139, 92, 246, 0.2)`,
-              borderColor: `rgba(139, 92, 246, 0.3)`,
-              boxShadow: isActive ? `0 0 12px rgba(139, 92, 246, 0.3)` : 'none',
-            },
-          }}
-        >
-          {Icon}
-        </IconButton>
-      </Badge>
-    </Tooltip>
-  );
 
   return (
     <Box
@@ -143,7 +147,7 @@ const CreatorControls: React.FC<CreatorControlsProps> = ({
 
         {/* Screen Share */}
         <ControlButton
-          icon={state.isScreenSharing ? <ScreenShareOff /> : <ScreenShare />}
+          icon={state.isScreenSharing ? <StopScreenShare /> : <ScreenShare />}
           label={state.isScreenSharing ? 'Stop Screen Share' : 'Start Screen Share'}
           isActive={state.isScreenSharing}
           onClick={onToggleScreenShare}

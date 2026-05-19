@@ -25,7 +25,7 @@ export default function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={client}>
       <ThemeProvider>
         <MuiAppProvider>
-          <MotionConfig reducedMotion="always" transition={{ duration: 0 }}>
+          <MotionConfig reducedMotion="user" transition={{ type: "spring", stiffness: 320, damping: 32 }}>
             <PageTransition>{children}</PageTransition>
           </MotionConfig>
           <Toaster position="top-right" richColors />

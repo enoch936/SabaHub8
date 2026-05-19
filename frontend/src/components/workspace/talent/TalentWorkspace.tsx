@@ -180,7 +180,7 @@ function TalentCard({
   onExploreSkill: (skill: string) => void;
 }) {
   const displayName = talent.name?.trim() || "Freelancer";
-  const primarySkill = talent.skills?.[0];
+        const primarySkill = talent.skills?.[0];
   const chatHref = talent.userId ? `/chat?user=${encodeURIComponent(talent.userId)}` : "/chat";
   const profileHref = talent.freelancerId
     ? workspaceRoutes.publicProfile("freelancer", talent.freelancerId)
@@ -190,13 +190,21 @@ function TalentCard({
 
   return (
     <article
-      className={`rounded-[28px] border border-gray-200/80 bg-white p-5 shadow-[0_18px_44px_rgba(15,23,42,0.04)] ${
-        viewMode === "list" ? "lg:flex lg:items-center lg:justify-between lg:gap-6" : ""
+      className={`group relative rounded-[22px] border border-gray-200/80 bg-white p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition-all duration-300 hover:shadow-[0_12px_32px_rgba(15,23,42,0.1)] hover:border-gray-300/80 ${
+        viewMode === "list" ? "lg:flex lg:items-center lg:justify-between lg:gap-5" : ""
       }`}
     >
+      {/* Premium Badge/Case Indicator */}
+      {talent.rating && talent.rating >= 4.5 ? (
+        <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-200/50">
+          <Star className="h-3 w-3 fill-current" />
+          Premium
+        </div>
+      ) : null}
+
       <div className={viewMode === "list" ? "flex-1" : ""}>
-        <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gray-950 text-sm font-semibold uppercase tracking-[0.14em] text-white">
+        <div className="flex items-start gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-gray-900 to-gray-800 text-xs font-bold uppercase tracking-[0.12em] text-white ring-2 ring-gray-100 group-hover:ring-blue-200 transition-all duration-300">
             {previewUrl ? (
               <img src={previewUrl} alt={displayName} className="h-full w-full object-cover" loading="lazy" />
             ) : (
@@ -204,34 +212,30 @@ function TalentCard({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-base font-semibold tracking-[-0.02em] text-gray-900">{displayName}</h3>
-              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
-                <ShieldCheck className="h-3 w-3" />
-                Talent
+            <div className="flex flex-wrap items-center gap-1.5">
+              <h3 className="text-sm font-semibold tracking-[-0.01em] text-gray-900 truncate">{displayName}</h3>
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-blue-700 border border-blue-200/50 whitespace-nowrap">
+                <ShieldCheck className="h-2.5 w-2.5" />
+                Verified
               </span>
             </div>
-            <p className="mt-1 text-sm text-gray-500">{talent.professionalTitle || "Professional freelancer"}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-              <span className="inline-flex items-center gap-1">
-                <Star className="h-3.5 w-3.5 fill-current text-amber-500" />
-                {typeof talent.rating === "number" ? talent.rating.toFixed(1) : "New profile"}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <UserRound className="h-3.5 w-3.5" />
-                AI-ranked marketplace match
+            <p className="mt-1 text-xs text-gray-500 truncate">{talent.professionalTitle || "Freelancer"}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-600">
+              <span className="inline-flex items-center gap-0.5 whitespace-nowrap">
+                <Star className="h-3 w-3 fill-current text-amber-500" />
+                {typeof talent.rating === "number" ? talent.rating.toFixed(1) : "New"}
               </span>
               {(talent.portfolioImageUrls?.length ?? 0) > 0 ? (
-                <span className="inline-flex items-center gap-1">
-                  <ImageIcon className="h-3.5 w-3.5" />
-                  {talent.portfolioImageUrls?.length} portfolio images
+                <span className="inline-flex items-center gap-0.5 whitespace-nowrap">
+                  <ImageIcon className="h-3 w-3" />
+                  {talent.portfolioImageUrls?.length} works
                 </span>
               ) : null}
             </div>
           </div>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-3">
           <MarketplaceMediaPreview
             title={displayName}
             thumbnailUrl={talentMediaPreview}
@@ -239,52 +243,34 @@ function TalentCard({
           />
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {(talent.skills ?? []).slice(0, 6).map((skill) => (
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {(talent.skills ?? []).slice(0, 4).map((skill) => (
             <button
               key={skill}
               type="button"
               onClick={() => onExploreSkill(skill)}
-              className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:border-gray-300 hover:bg-white"
+              className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600 transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900"
             >
               {skill}
             </button>
           ))}
-          {(talent.skills?.length ?? 0) === 0 ? (
-            <span className="rounded-full border border-dashed border-gray-200 px-3 py-1.5 text-xs text-gray-400">
-              Skills pending
-            </span>
-          ) : null}
-          {(talent.portfolioImageUrls?.length ?? 0) > 0 ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-2.5 py-1 text-xs text-gray-500">
-              <ImageIcon className="h-3.5 w-3.5" />
-              {talent.portfolioImageUrls?.length} portfolio images
-            </span>
-          ) : null}
         </div>
       </div>
 
-      <div className={`mt-5 flex flex-wrap gap-2 ${viewMode === "list" ? "lg:mt-0 lg:shrink-0 lg:justify-end" : ""}`}>
-        <button
-          type="button"
-          onClick={() => onExploreSkill(primarySkill || displayName)}
-          className="inline-flex h-11 items-center rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-        >
-          Similar work
-        </button>
+      <div className={`mt-3.5 flex flex-wrap gap-2 ${viewMode === "list" ? "lg:mt-0 lg:shrink-0 lg:justify-end" : ""}`}>
         {profileHref ? (
           <Link
             href={profileHref}
-            className="inline-flex h-11 items-center rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            className="inline-flex h-9 items-center rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 hover:border-gray-300"
           >
-            Open profile
+            Profile
           </Link>
         ) : null}
         <Link
           href={chatHref}
-          className="inline-flex h-11 items-center gap-2 rounded-full bg-gray-950 px-4 text-sm font-semibold text-white transition hover:bg-gray-800"
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-gray-950 px-3 text-xs font-semibold text-white transition hover:bg-gray-800"
         >
-          <MessageSquare className="h-4 w-4" />
+          <MessageSquare className="h-3.5 w-3.5" />
           Message
         </Link>
       </div>
@@ -306,12 +292,12 @@ function ProjectPostCard({
 
   return (
     <article
-      className={`rounded-[28px] border border-gray-200/80 bg-white p-5 shadow-[0_18px_44px_rgba(15,23,42,0.04)] ${
-        viewMode === "list" ? "lg:flex lg:items-start lg:justify-between lg:gap-6" : ""
+      className={`group relative rounded-[20px] border border-gray-200/80 bg-white p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition-all duration-300 hover:shadow-[0_12px_32px_rgba(15,23,42,0.1)] hover:border-gray-300/80 ${
+        viewMode === "list" ? "lg:flex lg:items-start lg:justify-between lg:gap-5" : ""
       }`}
     >
       <div className={viewMode === "list" ? "flex-1" : ""}>
-        <div className="mb-4">
+        <div className="mb-3">
           <MarketplaceMediaPreview
             title={post.title || "Project post"}
             thumbnailUrl={post.thumbnailUrl}
@@ -319,63 +305,58 @@ function ProjectPostCard({
             videoUrls={post.sampleVideoUrls}
           />
         </div>
-        <div className="flex items-center justify-between gap-4">
-          <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
-            Project post
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">
+          <span className="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-purple-700 border border-purple-200/50">
+            Project
           </span>
-          <span className="text-xs font-medium text-gray-400">{post.category || "Open category"}</span>
+          <span className="text-gray-400">{post.category || "Uncategorized"}</span>
         </div>
-        <h3 className="mt-4 text-lg font-semibold tracking-[-0.02em] text-gray-900">
-          {post.title || "Untitled project post"}
+        <h3 className="mt-2.5 text-base font-semibold tracking-[-0.01em] text-gray-900 line-clamp-2">
+          {post.title || "Untitled project"}
         </h3>
-        <p className="mt-2 text-sm text-gray-500">by {post.freelancerName || "Freelancer"}</p>
-        <p className="mt-4 line-clamp-3 text-sm leading-6 text-gray-600">
-          {post.description || "No description has been published for this project post yet."}
+        <p className="mt-1 text-xs text-gray-500">by {post.freelancerName || "Freelancer"}</p>
+        <p className="mt-2 line-clamp-2 text-xs leading-5 text-gray-600">
+          {post.description || "No description published."}
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {(post.skills ?? []).slice(0, 5).map((skill) => (
-            <span key={skill} className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600">
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {(post.skills ?? []).slice(0, 3).map((skill) => (
+            <span key={skill} className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
               {skill}
             </span>
           ))}
-          <MediaChips
-            imageUrls={post.sampleImageUrls}
-            videoUrls={post.sampleVideoUrls}
-            documentUrls={post.sampleDocumentUrls}
-          />
         </div>
       </div>
 
-      <div className={`mt-5 space-y-3 ${viewMode === "list" ? "lg:mt-0 lg:w-64 lg:shrink-0" : ""}`}>
-        <div className="rounded-3xl border border-gray-100 bg-gray-50 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">Budget band</p>
-          <p className="mt-2 text-sm font-semibold text-gray-900">
+      <div className={`mt-3.5 flex flex-col gap-2 ${viewMode === "list" ? "lg:mt-0 lg:w-56 lg:shrink-0" : "w-full"}`}>
+        <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-500">Budget</p>
+          <p className="mt-1.5 text-sm font-semibold text-gray-900">
             {formatCurrencyRange(post.budgetMin, post.budgetMax, post.currency)}
           </p>
-          <p className="mt-1 text-xs text-gray-500">
-            {typeof post.deliveryDays === "number" ? `${post.deliveryDays} day target` : "Timeline on discussion"}
+          <p className="mt-0.5 text-xs text-gray-500">
+            {typeof post.deliveryDays === "number" ? `${post.deliveryDays}d delivery` : "Flexible timeline"}
           </p>
         </div>
         <Link
           href={chatHref}
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gray-950 px-4 text-sm font-semibold text-white transition hover:bg-gray-800"
+          className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full bg-gray-950 px-3 text-xs font-semibold text-white transition hover:bg-gray-800"
         >
-          Open conversation
-          <ArrowRight className="h-4 w-4" />
+          Message
+          <ArrowRight className="h-3.5 w-3.5" />
         </Link>
         {profileHref ? (
           <Link
             href={profileHref}
-            className="inline-flex h-11 w-full items-center justify-center rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            className="inline-flex h-9 w-full items-center justify-center rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 hover:border-gray-300"
           >
-            Open freelancer profile
+            Freelancer
           </Link>
         ) : null}
       </div>
     </article>
   );
 }
-
+          className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 hover:border-gray-300"
 function GigCard({
   gig,
   viewMode,
@@ -383,19 +364,19 @@ function GigCard({
   gig: MarketplaceSearchGig;
   viewMode: ViewMode;
 }) {
-  const chatHref = gig.freelancerUserId ? `/chat?user=${encodeURIComponent(gig.freelancerUserId)}` : "/chat";
+            className="inline-flex h-9 w-full items-center justify-center rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 hover:border-gray-300"
   const profileHref = gig.freelancerId
     ? workspaceRoutes.publicProfile("freelancer", gig.freelancerId)
     : null;
 
   return (
     <article
-      className={`rounded-[28px] border border-gray-200/80 bg-white p-5 shadow-[0_18px_44px_rgba(15,23,42,0.04)] ${
-        viewMode === "list" ? "lg:flex lg:items-start lg:justify-between lg:gap-6" : ""
+      className={`group relative rounded-[20px] border border-gray-200/80 bg-white p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition-all duration-300 hover:shadow-[0_12px_32px_rgba(15,23,42,0.1)] hover:border-gray-300/80 ${
+        viewMode === "list" ? "lg:flex lg:items-start lg:justify-between lg:gap-5" : ""
       }`}
     >
       <div className={viewMode === "list" ? "flex-1" : ""}>
-        <div className="mb-4">
+        <div className="mb-3">
           <MarketplaceMediaPreview
             title={gig.title || "Gig"}
             thumbnailUrl={gig.thumbnailUrl}
@@ -403,49 +384,46 @@ function GigCard({
             videoUrls={gig.sampleVideoUrls}
           />
         </div>
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
-          <BriefcaseBusiness className="h-4 w-4" />
-          Service package
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">
+          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-green-700 border border-green-200/50">
+            <BriefcaseBusiness className="h-2.5 w-2.5 mr-1" />
+            Service
+          </span>
         </div>
-        <h3 className="mt-4 text-lg font-semibold tracking-[-0.02em] text-gray-900">{gig.title || "Untitled gig"}</h3>
-        <p className="mt-2 text-sm text-gray-500">by {gig.freelancerName || "Freelancer"}</p>
-        <p className="mt-4 line-clamp-3 text-sm leading-6 text-gray-600">
-          {gig.description || "No service summary has been published yet."}
+        <h3 className="mt-2.5 text-base font-semibold tracking-[-0.01em] text-gray-900 line-clamp-2">{gig.title || "Untitled gig"}</h3>
+        <p className="mt-1 text-xs text-gray-500">by {gig.freelancerName || "Freelancer"}</p>
+        <p className="mt-2 line-clamp-2 text-xs leading-5 text-gray-600">
+          {gig.description || "No service summary published."}
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {(gig.skills ?? []).slice(0, 5).map((skill) => (
-            <span key={skill} className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600">
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {(gig.skills ?? []).slice(0, 3).map((skill) => (
+            <span key={skill} className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
               {skill}
             </span>
           ))}
-          <MediaChips
-            imageUrls={gig.sampleImageUrls}
-            videoUrls={gig.sampleVideoUrls}
-            documentUrls={gig.sampleDocumentUrls}
-          />
         </div>
       </div>
 
-      <div className={`mt-5 space-y-3 ${viewMode === "list" ? "lg:mt-0 lg:w-64 lg:shrink-0" : ""}`}>
-        <div className="rounded-3xl border border-gray-100 bg-gray-50 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">Commercial terms</p>
-          <p className="mt-2 text-sm font-semibold text-gray-900">{formatPrice(gig.price, gig.currency)}</p>
-          <p className="mt-1 text-xs text-gray-500">
-            {typeof gig.deliveryDays === "number" ? `${gig.deliveryDays} day delivery` : "Flexible delivery"}
+      <div className={`mt-3.5 flex flex-col gap-2 ${viewMode === "list" ? "lg:mt-0 lg:w-56 lg:shrink-0" : "w-full"}`}>
+        <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-500">Price</p>
+          <p className="mt-1.5 text-sm font-semibold text-gray-900">{formatPrice(gig.price, gig.currency)}</p>
+          <p className="mt-0.5 text-xs text-gray-500">
+            {typeof gig.deliveryDays === "number" ? `${gig.deliveryDays}d delivery` : "Flexible delivery"}
           </p>
         </div>
         <Link
           href={chatHref}
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+          className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 hover:border-gray-300"
         >
-          Message seller
+          Message
         </Link>
         {profileHref ? (
           <Link
             href={profileHref}
-            className="inline-flex h-11 w-full items-center justify-center rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            className="inline-flex h-9 w-full items-center justify-center rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 hover:border-gray-300"
           >
-            Open seller profile
+            Seller
           </Link>
         ) : null}
       </div>
@@ -524,7 +502,7 @@ function StoryCard({
             href={story.projectUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
           >
             <FileText className="h-4 w-4" />
             Open story link
@@ -532,14 +510,14 @@ function StoryCard({
         ) : null}
         <Link
           href={chatHref}
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
         >
           Message creator
         </Link>
         {profileHref ? (
           <Link
             href={profileHref}
-            className="inline-flex h-11 w-full items-center justify-center rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            className="inline-flex h-11 w-full items-center justify-center rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
           >
             Open creator profile
           </Link>
@@ -909,7 +887,7 @@ export default function TalentWorkspace() {
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href={workspaceRoutes.home}
-              className="inline-flex h-10 items-center rounded-full border border-gray-200 bg-white px-4 text-xs font-semibold text-gray-900 transition hover:bg-gray-50"
+              className="inline-flex h-10 items-center rounded-full border border-gray-200 bg-white px-4 text-xs font-semibold text-gray-900 transition hover:bg-gray-100"
             >
               Open jobs board
             </Link>
@@ -947,7 +925,7 @@ export default function TalentWorkspace() {
                   className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                     activeSkill === skill
                       ? "bg-gray-950 text-white"
-                      : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                        : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   {skill}
@@ -1065,7 +1043,7 @@ export default function TalentWorkspace() {
                         key={preset.id}
                         type="button"
                         onClick={() => applyPreset(preset)}
-                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-left text-xs font-medium text-gray-600 transition hover:bg-gray-50"
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-left text-xs font-medium text-gray-600 transition hover:bg-gray-100"
                       >
                         <FolderOpen className="h-3.5 w-3.5" />
                         <span className="truncate">{preset.name}</span>
@@ -1092,7 +1070,7 @@ export default function TalentWorkspace() {
                       <button
                         type="button"
                         onClick={handleSavePreset}
-                        className="inline-flex h-10 items-center rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                        className="inline-flex h-10 items-center rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
                       >
                         Save
                       </button>
@@ -1102,7 +1080,7 @@ export default function TalentWorkspace() {
                           setShowPresetInput(false);
                           setPresetName("");
                         }}
-                        className="inline-flex h-10 items-center rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                        className="inline-flex h-10 items-center rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
                       >
                         Cancel
                       </button>
@@ -1112,7 +1090,7 @@ export default function TalentWorkspace() {
                   <button
                     type="button"
                     onClick={() => setShowPresetInput(true)}
-                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-dashed border-gray-300 bg-white px-3 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-dashed border-gray-300 bg-white px-3 text-sm font-medium text-gray-600 transition hover:bg-gray-100"
                   >
                     <Save className="h-3.5 w-3.5" />
                     Save current filters
@@ -1158,7 +1136,7 @@ export default function TalentWorkspace() {
                 className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                   activeBoard === board.id
                     ? "bg-gray-950 text-white"
-                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
                 }`}
               >
                 {board.label} ({board.count})
@@ -1180,14 +1158,14 @@ export default function TalentWorkspace() {
                 setMinPrice("");
                 setMaxPrice("");
               }}
-              className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
+              className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-100"
             >
               Clear all filters
             </button>
             <button
               type="button"
               onClick={() => setActiveSkill("")}
-              className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
+              className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-100"
             >
               {activeSkill ? `Clear ${activeSkill}` : "Clear skill filter"}
             </button>

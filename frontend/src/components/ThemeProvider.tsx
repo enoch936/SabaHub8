@@ -25,8 +25,7 @@ function readStoredTheme(): ThemeMode | null {
 }
 
 function resolveSystemTheme(): ThemeMode {
-  if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "dark";
 }
 
 function applyThemeToDOM(theme: ThemeMode) {
@@ -39,7 +38,7 @@ function applyThemeToDOM(theme: ThemeMode) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>("light");
+  const [theme, setThemeState] = useState<ThemeMode>("dark");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

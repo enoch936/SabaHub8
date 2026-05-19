@@ -48,7 +48,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", py: 8, background: "#ffffff" }}>
+    <Box sx={{ minHeight: "100vh", py: 8, background: "transparent" }}>
       <Container maxWidth="sm">
         <Card sx={{ borderRadius: 4 }}>
           <CardContent>

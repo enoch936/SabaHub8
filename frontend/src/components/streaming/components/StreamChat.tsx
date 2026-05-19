@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Box, InputBase, IconButton, Tooltip, Avatar, Popover, Grid } from '@mui/material';
-import { SendRounded, EmojiEmotions, Pin, X, SmileOutlined } from '@mui/icons-material';
+import { SendRounded, Pin, X, EmojiEmotions } from '@mui/icons-material';
 import { colors, glassEffect, glassEffectHover, transitions, shadows, spacing, floatUp } from '../theme';
 import { ChatMessage, ChatReaction, StreamUser } from '../types';
 
@@ -9,41 +9,13 @@ interface StreamChatProps {
 }
 
 const StreamChat: React.FC<StreamChatProps> = ({ toggleChat }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      userId: 'user1',
-      userName: 'Alex',
-      avatar: '👨‍💻',
-      content: 'Amazing stream quality today! 🔥',
-      timestamp: Date.now() - 120000,
-      reactions: [{ type: 'fire', emoji: '🔥', count: 12 }, { type: 'like', emoji: '👍', count: 5 }],
-    },
-    {
-      id: '2',
-      userId: 'user2',
-      userName: 'Maya',
-      avatar: '👩‍🎨',
-      content: 'Love the new intro music',
-      timestamp: Date.now() - 60000,
-      reactions: [{ type: 'heart', emoji: '❤️', count: 8 }],
-    },
-    {
-      id: '3',
-      userId: 'user3',
-      userName: 'Jordan',
-      avatar: '🎮',
-      content: 'Can you show us the rendering process?',
-      timestamp: Date.now() - 30000,
-      reactions: [],
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<string[]>(['Sarah', 'Chris']);
   const [emojiAnchor, setEmojiAnchor] = useState<null | HTMLElement>(null);
-  const [pinnedMessage, setPinnedMessage] = useState<ChatMessage | null>(messages[0]);
+  const [pinnedMessage, setPinnedMessage] = useState<ChatMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -54,6 +26,41 @@ const StreamChat: React.FC<StreamChatProps> = ({ toggleChat }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    const now = Date.now();
+    const initialMessages: ChatMessage[] = [
+      {
+        id: '1',
+        userId: 'user1',
+        userName: 'Alex',
+        avatar: '👨‍💻',
+        content: 'Amazing stream quality today! 🔥',
+        timestamp: now - 120000,
+        reactions: [{ type: 'fire', emoji: '🔥', count: 12 }, { type: 'like', emoji: '👍', count: 5 }],
+      },
+      {
+        id: '2',
+        userId: 'user2',
+        userName: 'Maya',
+        avatar: '👩‍🎨',
+        content: 'Love the new intro music',
+        timestamp: now - 60000,
+        reactions: [{ type: 'heart', emoji: '❤️', count: 8 }],
+      },
+      {
+        id: '3',
+        userId: 'user3',
+        userName: 'Jordan',
+        avatar: '🎮',
+        content: 'Can you show us the rendering process?',
+        timestamp: now - 30000,
+        reactions: [],
+      },
+    ];
+    setMessages(initialMessages);
+    setPinnedMessage(initialMessages[0] ?? null);
+  }, []);
 
   const handleSendMessage = () => {
     if (inputValue.trim()) {
@@ -345,7 +352,7 @@ const StreamChat: React.FC<StreamChatProps> = ({ toggleChat }) => {
                 transition: transitions.fast,
               }}
             >
-              <SmileOutlined fontSize="small" />
+              <EmojiEmotions fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>
@@ -383,9 +390,9 @@ const StreamChat: React.FC<StreamChatProps> = ({ toggleChat }) => {
           },
         }}
       >
-        <Grid container spacing={1} sx={{ padding: spacing.md, width: '240px' }}>
-          {emojis.map((emoji) => (
-            <Grid item xs={3} key={emoji}>
+            <Grid container spacing={1} sx={{ padding: spacing.md, width: '240px' }}>
+              {emojis.map((emoji) => (
+            <Grid size={3} key={emoji}>
               <Box
                 onClick={() => handleEmojiClick(emoji)}
                 sx={{

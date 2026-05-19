@@ -197,8 +197,10 @@ export default function AdminSidebar({
   return (
     <Box
       sx={{
-        height: "100%",
+        flex: 1,
+        minHeight: 0,
         overflowY: "auto",
+        overflowX: "hidden",
         bgcolor: theme.palette.background.paper,
         borderRight: `1px solid ${alpha(theme.palette.divider, 0.9)}`,
       }}
@@ -208,7 +210,7 @@ export default function AdminSidebar({
           <AdminSidebarItem
             badgeValue={0}
             href={adminOverviewItem.href}
-            icon={adminOverviewItem.icon}
+            icon={<adminOverviewItem.icon size={18} />}
             label={adminOverviewItem.label}
             selected={overviewSelected}
           />
@@ -223,7 +225,7 @@ export default function AdminSidebar({
                   key={item.key}
                   badgeValue={getItemBadgeValue(item.key, moderationBadges)}
                   href={item.href}
-                  icon={item.icon}
+                  icon={<item.icon size={18} />}
                   label={item.label}
                   onClick={() => onFocusGroup(group.key)}
                   selected={itemMatches(pathname, sectionQuery, item)}

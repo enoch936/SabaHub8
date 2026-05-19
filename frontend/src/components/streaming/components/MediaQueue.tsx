@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, IconButton, Tooltip, Chip, Divider } from '@mui/material';
-import { PlayArrow, Delete, Edit, ChevronDown, Volume2, MusicNote, FavoriteBorder } from '@mui/icons-material';
+import { PlayArrow, Delete } from '@mui/icons-material';
 import { colors, glassEffect, glassEffectHover, transitions, spacing, shadows } from '../theme';
 import { MediaQueueItem } from '../types';
 

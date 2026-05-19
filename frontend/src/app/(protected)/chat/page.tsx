@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   useDeferredValue,
   useEffect,
@@ -14,6 +15,8 @@ import {
 import { useSearchParams } from "next/navigation";
 import {
   Archive,
+  Activity,
+  Bot,
   ChevronRight,
   GripVertical,
   Hash,
@@ -28,6 +31,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ChatConversation } from "@/components/chat/ChatConversation";
 import { ConversationDetailsRail } from "@/components/chat/ConversationDetailsRail";
@@ -74,6 +78,253 @@ const DETAILS_WIDTH_MAX = 500;
 
 function clampNumber(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+function buildSparklinePath(values: number[], width: number, height: number) {
+  if (values.length === 0) {
+    return "";
+  }
+
+  const maxValue = Math.max(...values, 1);
+  const stepX = values.length > 1 ? width / (values.length - 1) : width;
+
+  return values
+    .map((value, index) => {
+      const x = index * stepX;
+      const normalized = value / maxValue;
+      const y = height - normalized * (height - 8) - 4;
+      return `${index === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(" ");
+}
+
+function DashboardMetricCard({
+  label,
+  value,
+  detail,
+  tone = "cyan",
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone?: "cyan" | "violet" | "emerald" | "amber";
+}) {
+  const glowClass =
+    tone === "violet"
+      ? "from-violet-500/25 to-fuchsia-500/10"
+      : tone === "emerald"
+        ? "from-emerald-500/20 to-cyan-500/10"
+        : tone === "amber"
+          ? "from-amber-500/25 to-orange-500/10"
+          : "from-cyan-500/25 to-blue-500/10";
+
+  return (
+    <motion.div
+      whileHover={{ y: -4, scale: 1.01 }}
+      transition={{ type: "spring", stiffness: 280, damping: 24 }}
+      className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-2xl"
+    >
+      <div className={`absolute inset-0 bg-gradient-to-br ${glowClass} opacity-70`} />
+      <div className="relative">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">{label}</p>
+        <div className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-white">{value}</div>
+        <p className="mt-2 text-sm leading-6 text-slate-300">{detail}</p>
+      </div>
+    </motion.div>
+  );
+}
+
+function AIOperatingSystemDashboard({
+  profileName,
+  profileEmail,
+  totalConversations,
+  unreadCount,
+  activeLiveCount,
+  onlineCount,
+  activeConversationTitle,
+  activeTyping,
+  mailboxView,
+  filteredCount,
+  conversations,
+}: {
+  profileName: string;
+  profileEmail?: string | null;
+  totalConversations: number;
+  unreadCount: number;
+  activeLiveCount: number;
+  onlineCount: number;
+  activeConversationTitle: string;
+  activeTyping: string[];
+  mailboxView: MailboxView;
+  filteredCount: number;
+  conversations: ChatThread[];
+}) {
+  const sparkValues = useMemo(() => {
+    const baseSeries = conversations.slice(0, 8).map((conversation, index) => {
+      const unread = Number(conversation.unreadCount ?? 0);
+      const pinnedBoost = conversation.pinned ? 3 : 0;
+      const archivedPenalty = conversation.archived ? 0 : 1;
+      const liveBoost = conversation.participantIds?.length ? Math.min(4, conversation.participantIds.length) : 0;
+      return unread + pinnedBoost + archivedPenalty + liveBoost + (8 - index);
+    });
+
+    while (baseSeries.length < 8) {
+      baseSeries.push(2 + baseSeries.length);
+    }
+
+    return baseSeries;
+  }, [conversations]);
+
+  const chartPath = useMemo(() => buildSparklinePath(sparkValues, 240, 86), [sparkValues]);
+  const latestPulse = sparkValues[sparkValues.length - 1] ?? 0;
+  const responseHealth = Math.min(100, Math.round((activeLiveCount + onlineCount + unreadCount) * 6 + 18));
+  const productivity = Math.min(100, Math.round(filteredCount * 8 + totalConversations * 3 + (mailboxView === "PINNED" ? 18 : 0)));
+  const systemLoad = Math.min(100, Math.round((activeTyping.length * 18) + (unreadCount * 2) + 12));
+
+  const updates = [
+    activeTyping.length > 0
+      ? `${activeTyping.join(", ")} typing now`
+      : activeConversationTitle
+        ? `Tracking ${activeConversationTitle}`
+        : "No active typing signals",
+    unreadCount > 0 ? `${unreadCount} unread signal${unreadCount === 1 ? "" : "s"} queued` : "Inbox synced in real time",
+    mailboxView === "PINNED" ? "Pinned command lane in focus" : `${filteredCount} conversations visible`,
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+      className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(8,11,23,0.9),rgba(7,12,28,0.78))] p-4 shadow-[0_32px_120px_rgba(0,0,0,0.45)] backdrop-blur-2xl lg:p-5"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.16),transparent_30%),radial-gradient(circle_at_80%_10%,rgba(139,92,246,0.12),transparent_28%),radial-gradient(circle_at_50%_100%,rgba(34,197,94,0.08),transparent_32%)]" />
+      <div className="relative grid gap-4 xl:grid-cols-[1.2fr_1fr_0.95fr]">
+        <div className="space-y-4 rounded-[1.8rem] border border-white/10 bg-white/6 p-4 backdrop-blur-xl lg:p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-300/80">AI chat home</p>
+              <h2 className="mt-2 font-[family:var(--font-display)] text-2xl font-semibold tracking-[-0.04em] text-white lg:text-[2rem]">
+                Command center for {profileName}
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-7 text-slate-300/90">
+                {profileEmail ? `${profileEmail} · ` : ""}Realtime operations, smart widgets, and live collaboration signals in a single glass shell.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-200">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_18px_rgba(74,222,128,0.9)]" />
+              Live
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <DashboardMetricCard label="Threads" value={String(totalConversations)} detail="Active conversations in orbit" tone="cyan" />
+            <DashboardMetricCard label="Unread" value={String(unreadCount)} detail="Signals waiting in the queue" tone="violet" />
+            <DashboardMetricCard label="Live peers" value={String(onlineCount)} detail="Contacts currently online" tone="emerald" />
+            <DashboardMetricCard label="Focus lane" value={mailboxView} detail={activeConversationTitle || "No thread pinned"} tone="amber" />
+          </div>
+        </div>
+
+        <div className="rounded-[1.8rem] border border-white/10 bg-white/6 p-4 backdrop-blur-xl lg:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Realtime pulse</p>
+              <h3 className="mt-2 text-lg font-semibold tracking-[-0.03em] text-white">Neon activity chart</h3>
+            </div>
+            <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+              {latestPulse} signal level
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-[1.4rem] border border-white/10 bg-black/20 p-3">
+            <svg viewBox="0 0 240 86" className="h-24 w-full overflow-visible">
+              <defs>
+                <linearGradient id="chat-os-line" x1="0%" x2="100%" y1="0%" y2="0%">
+                  <stop offset="0%" stopColor="#22d3ee" />
+                  <stop offset="48%" stopColor="#38bdf8" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+                <linearGradient id="chat-os-fill" x1="0%" x2="0%" y1="0%" y2="100%">
+                  <stop offset="0%" stopColor="rgba(34,211,238,0.45)" />
+                  <stop offset="100%" stopColor="rgba(34,211,238,0)" />
+                </linearGradient>
+                <filter id="chat-os-glow">
+                  <feGaussianBlur stdDeviation="3.5" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              {chartPath ? (
+                <>
+                  <path d={`${chartPath} L 240 86 L 0 86 Z`} fill="url(#chat-os-fill)" opacity="0.55" />
+                  <path d={chartPath} fill="none" stroke="url(#chat-os-line)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" filter="url(#chat-os-glow)" />
+                </>
+              ) : null}
+            </svg>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Response health</p>
+              <div className="mt-2 h-2 rounded-full bg-white/10">
+                <div className="h-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${responseHealth}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-slate-300">{responseHealth}% AI routing strength</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Productivity</p>
+              <div className="mt-2 h-2 rounded-full bg-white/10">
+                <div className="h-2 rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-500" style={{ width: `${productivity}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-slate-300">{productivity}% workspace momentum</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">System load</p>
+              <div className="mt-2 h-2 rounded-full bg-white/10">
+                <div className="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400" style={{ width: `${systemLoad}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-slate-300">{systemLoad}% realtime monitoring</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[1.8rem] border border-white/10 bg-white/6 p-4 backdrop-blur-xl lg:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Smart widgets</p>
+              <h3 className="mt-2 text-lg font-semibold tracking-[-0.03em] text-white">Live AI monitoring</h3>
+            </div>
+            <Bot className="h-5 w-5 text-cyan-300" />
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {updates.map((update, index) => (
+              <div key={update} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-3">
+                <div className={`mt-0.5 h-2.5 w-2.5 rounded-full ${index === 0 ? "bg-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.9)]" : index === 1 ? "bg-violet-400 shadow-[0_0_18px_rgba(168,85,247,0.8)]" : "bg-emerald-400 shadow-[0_0_18px_rgba(74,222,128,0.8)]"}`} />
+                <p className="text-sm leading-6 text-slate-300">{update}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-500/15 to-blue-500/5 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">Depth layer</p>
+              <div className="mt-2 text-xl font-semibold text-white">Glass</div>
+              <p className="mt-1 text-xs text-slate-300">Multi-layer command center</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-fuchsia-500/15 to-violet-500/5 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-fuchsia-200/80">Realtime</p>
+              <div className="mt-2 text-xl font-semibold text-white">{activeTyping.length ? `${activeTyping.length} typing` : "Synced"}</div>
+              <p className="mt-1 text-xs text-slate-300">Interactive monitoring system</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
 function normalizeDisplayName(user: AppUser) {
@@ -383,6 +634,10 @@ export default function ChatPage() {
       ? `${activeParticipantIds.length} people can post`
       : "Owner-only posting is enabled";
   }, [activeConversation, activeParticipantIds.length, memberDirectory]);
+
+  const totalConversations = conversations.length;
+  const unreadCount = conversations.reduce((sum, conversation) => sum + Number(conversation.unreadCount ?? 0), 0);
+  const onlineCount = Object.values(directory).filter((user) => user.online).length;
 
   const isChannelReadOnly = Boolean(
     activeConversation
@@ -722,46 +977,66 @@ export default function ChatPage() {
     };
 
   return (
-    <div className="relative h-[calc(100dvh-6rem)] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">SabaHub</p>
-          <h1 className="text-lg font-semibold text-slate-900">Chat</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setLeftPanelOpen((current) => !current)}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            {leftPanelOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
-            Advanced UI
-          </button>
-          <Link
-            href={workspaceRoutes.settings}
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            <Settings2 className="h-4 w-4" />
-            Settings
-          </Link>
-        </div>
-      </header>
+    <div className="relative h-[calc(100dvh-6rem)] overflow-hidden rounded-[2rem] border border-white/10 bg-[#030712] text-slate-100 shadow-[0_30px_120px_rgba(0,0,0,0.55)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(56,189,248,0.18),transparent_30%),radial-gradient(circle_at_85%_12%,rgba(139,92,246,0.12),transparent_28%),radial-gradient(circle_at_50%_100%,rgba(34,197,94,0.08),transparent_32%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_22%,transparent_78%,rgba(255,255,255,0.02))]" />
+      <div className="relative z-10 flex h-full flex-col gap-4 p-3 lg:p-4">
+        <header className="flex items-center justify-between rounded-[1.6rem] border border-white/10 bg-white/6 px-4 py-3 backdrop-blur-2xl lg:px-5">
+          <div className="flex items-center gap-3">
+            <Image src="/logo.png" alt="SabaHub" width={44} height={44} className="rounded-2xl object-cover shadow-[0_0_30px_rgba(34,211,238,0.15)]" style={{ width: "auto", height: "auto" }} priority />
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/70">SabaHub AI OS</p>
+              <h1 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-white">Chat command center</h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setLeftPanelOpen((current) => !current)}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
+            >
+              {leftPanelOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+              Workspace rail
+            </button>
+            <Link
+              href={workspaceRoutes.settings}
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-3 py-2 text-sm font-semibold text-white transition hover:scale-[1.01]"
+            >
+              <Settings2 className="h-4 w-4" />
+              Settings
+            </Link>
+          </div>
+        </header>
 
-      <div className="relative flex h-[calc(100%-65px)] min-h-0">
+        <AIOperatingSystemDashboard
+          profileName={profileName}
+          profileEmail={profileEmail}
+          totalConversations={totalConversations}
+          unreadCount={unreadCount}
+          activeLiveCount={activeLiveCount}
+          onlineCount={onlineCount}
+          activeConversationTitle={activeConversationTitle}
+          activeTyping={activeTyping}
+          mailboxView={mailboxView}
+          filteredCount={filteredConversations.length}
+          conversations={conversations}
+        />
+
+        <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-2xl">
 
         <section
           style={inboxPanelStyle}
-          className={`${mobileView === "conversation" ? "hidden lg:flex" : "flex"} ${leftPanelOpen ? "lg:flex" : "lg:hidden"} min-h-0 w-full max-w-full flex-col overflow-hidden border-r border-slate-200 bg-white lg:w-[var(--chat-inbox-width)] lg:flex-shrink-0`}
+          className={`${mobileView === "conversation" ? "hidden lg:flex" : "flex"} ${leftPanelOpen ? "lg:flex" : "lg:hidden"} min-h-0 w-full max-w-full flex-col overflow-hidden border-r border-white/10 bg-[rgba(8,12,24,0.72)] lg:w-[var(--chat-inbox-width)] lg:flex-shrink-0`}
         >
           {/* Fixed header: title + search + filters */}
-          <div className="shrink-0 border-b border-slate-200 px-4 py-3">
+          <div className="shrink-0 border-b border-white/10 px-4 py-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#718279]">Focused inbox</p>
-                <h2 className="mt-2 font-[family:var(--font-display)] text-[1.45rem] font-semibold leading-none text-[#20332d]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/70">Focused inbox</p>
+                <h2 className="mt-2 font-[family:var(--font-display)] text-[1.45rem] font-semibold leading-none text-white">
                   Messages
                 </h2>
-                <p className="mt-2 text-sm text-[#5e6d65]">
+                <p className="mt-2 text-sm text-slate-300">
                   Calm, fast chat for direct work, groups, and live channels.
                 </p>
               </div>
@@ -771,8 +1046,8 @@ export default function ChatPage() {
                 onClick={() => setShowComposerPanel((current) => !current)}
                 className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl border transition ${
                   showComposerPanel
-                    ? "border-[#d2dbd0] bg-white text-[#264338] shadow-[0_16px_30px_rgba(40,63,53,0.08)]"
-                    : "border-transparent bg-[#27463b] text-white shadow-[0_16px_30px_rgba(39,70,59,0.22)]"
+                    ? "border-white/10 bg-white/8 text-white shadow-[0_16px_30px_rgba(40,63,53,0.08)]"
+                    : "border-transparent bg-cyan-500 text-white shadow-[0_16px_30px_rgba(34,211,238,0.2)]"
                 }`}
                 aria-label={showComposerPanel ? "Hide composer panel" : "Show composer panel"}
               >
@@ -780,8 +1055,8 @@ export default function ChatPage() {
               </button>
             </div>
 
-            <ChatSearchInput className="mt-3 rounded-xl px-3 py-2.5">
-              <Search className="h-4.5 w-4.5 text-[#718279]" />
+            <ChatSearchInput className="mt-3 rounded-xl border-white/10 bg-black/20 px-3 py-2.5">
+              <Search className="h-4.5 w-4.5 text-slate-400" />
               <input
                 value={inboxQuery}
                 onChange={(event) => setInboxQuery(event.target.value)}
@@ -801,8 +1076,8 @@ export default function ChatPage() {
                   }}
                   className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold transition ${
                     filter === item.key && mailboxView === "INBOX"
-                      ? "bg-[#27463b] text-white shadow-[0_14px_24px_rgba(39,70,59,0.2)]"
-                      : "bg-white text-[#5e6d65] hover:bg-[#eef4ee]"
+                      ? "bg-cyan-500 text-white shadow-[0_14px_24px_rgba(34,211,238,0.2)]"
+                      : "bg-white/5 text-slate-300 hover:bg-white/10"
                   }`}
                 >
                   {item.icon}
@@ -824,8 +1099,8 @@ export default function ChatPage() {
                   }}
                   className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
                     mailboxView === item.key
-                      ? "bg-[#e6efe6] text-[#27463b]"
-                      : "bg-white text-[#7d8c84] hover:bg-[#f1f5f0]"
+                      ? "bg-white/12 text-white"
+                      : "bg-white/5 text-slate-400 hover:bg-white/10"
                   }`}
                 >
                   {item.label}
@@ -836,17 +1111,17 @@ export default function ChatPage() {
           </div>
 
           {showComposerPanel ? (
-            <div className="flex shrink-0 flex-col overflow-hidden border-b border-slate-200 bg-[#f6f8f5]" style={{ maxHeight: "55%" }}>
+            <div className="flex shrink-0 flex-col overflow-hidden border-b border-white/10 bg-[rgba(8,12,24,0.62)]" style={{ maxHeight: "55%" }}>
               {/* Composer header */}
-              <div className="flex items-center justify-between border-b border-[#e2e8df] bg-white px-4 py-3">
+              <div className="flex items-center justify-between border-b border-white/10 bg-black/25 px-4 py-3">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8a9890]">New conversation</p>
-                  <h3 className="mt-0.5 text-sm font-semibold text-[#1f312a]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">New conversation</p>
+                  <h3 className="mt-0.5 text-sm font-semibold text-white">
                     {composeMode === "DIRECT" ? "Direct message" : composeMode === "GROUP" ? "Create group" : "Create channel"}
                   </h3>
                 </div>
                 {/* Mode tabs */}
-                <div className="flex gap-1 rounded-[14px] bg-[#eef2ec] p-1">
+                <div className="flex gap-1 rounded-[14px] bg-white/5 p-1">
                   {([
                     { key: "DIRECT", label: "DM" },
                     { key: "GROUP", label: "Group" },
@@ -857,7 +1132,7 @@ export default function ChatPage() {
                       type="button"
                       onClick={() => setComposeMode(item.key)}
                       className={`rounded-[10px] px-2.5 py-1.5 text-[11px] font-semibold transition ${
-                        composeMode === item.key ? "bg-white text-[#21352d] shadow-sm" : "text-[#6d7a73] hover:text-[#21352d]"
+                        composeMode === item.key ? "bg-cyan-400 text-slate-950 shadow-sm" : "text-slate-400 hover:text-white"
                       }`}
                     >
                       {item.label}
@@ -871,22 +1146,22 @@ export default function ChatPage() {
 
                 {/* User search */}
                 <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7d8c84]">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                     {composeMode === "DIRECT" ? "Find person" : "Add members"}
                   </p>
-                  <div className="flex items-center gap-2 rounded-[14px] border border-[#d8e0d6] bg-white px-3 py-2.5 shadow-sm">
-                    <Search className="h-4 w-4 shrink-0 text-[#7d8c84]" />
+                  <div className="flex items-center gap-2 rounded-[14px] border border-white/10 bg-black/25 px-3 py-2.5 shadow-sm">
+                    <Search className="h-4 w-4 shrink-0 text-slate-400" />
                     <input
                       value={lookupQuery}
                       onChange={(event) => setLookupQuery(event.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") void runLookup(); }}
                       placeholder="Name, username, email, or ID"
-                      className="min-w-0 flex-1 bg-transparent text-sm text-[#1f312a] outline-none placeholder:text-[#94a198]"
+                      className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
                     />
                     <button
                       type="button"
                       onClick={() => void runLookup()}
-                      className="shrink-0 rounded-full bg-[#27463b] px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-[#315447]"
+                      className="shrink-0 rounded-full bg-cyan-500 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-cyan-400"
                     >
                       {lookupLoading ? "…" : "Find"}
                     </button>
@@ -894,21 +1169,21 @@ export default function ChatPage() {
 
                   {/* Search results */}
                   {lookupResults.length > 0 ? (
-                    <div className="mt-2 space-y-1.5 rounded-[14px] border border-[#d8e0d6] bg-white p-2">
+                    <div className="mt-2 space-y-1.5 rounded-[14px] border border-white/10 bg-black/25 p-2">
                       {lookupResults.map((user) => (
                         <div
                           key={user.id}
-                          className="flex items-center justify-between gap-2 rounded-[10px] px-3 py-2.5 transition hover:bg-[#f4f7f2]"
+                          className="flex items-center justify-between gap-2 rounded-[10px] px-3 py-2.5 transition hover:bg-white/5"
                         >
                           <button type="button" onClick={() => addSelectedUser(user)} className="min-w-0 flex-1 text-left">
-                            <p className="truncate text-sm font-semibold text-[#1f312a]">{normalizeDisplayName(user)}</p>
-                            <p className="truncate text-xs text-[#7d8c84]">{user.username || user.email || user.id}</p>
+                            <p className="truncate text-sm font-semibold text-white">{normalizeDisplayName(user)}</p>
+                            <p className="truncate text-xs text-slate-400">{user.username || user.email || user.id}</p>
                           </button>
                           <div className="flex shrink-0 gap-1.5">
                             <button
                               type="button"
                               onClick={() => addSelectedUser(user)}
-                              className="rounded-full bg-[#eef4ee] px-2.5 py-1 text-[11px] font-semibold text-[#315447] transition hover:bg-[#d8edd8]"
+                              className="rounded-full bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200 transition hover:bg-white/10"
                             >
                               + Add
                             </button>
@@ -916,7 +1191,7 @@ export default function ChatPage() {
                               <button
                                 type="button"
                                 onClick={() => void handleStartDirectFromUser(user)}
-                                className="rounded-full border border-[#d5ded4] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#315447] transition hover:bg-[#f4f7f2]"
+                                className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200 transition hover:bg-white/10"
                               >
                                 Open
                               </button>
@@ -931,20 +1206,20 @@ export default function ChatPage() {
                 {/* Selected users */}
                 {selectedUsers.length > 0 ? (
                   <div>
-                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7d8c84]">
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                       Selected ({selectedUsers.length})
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {selectedUsers.map((user) => (
                         <div
                           key={user.id}
-                          className="flex items-center gap-1.5 rounded-full border border-[#c8d8c6] bg-[#eef4ee] py-1.5 pl-3 pr-2 text-xs font-medium text-[#315447]"
+                          className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 py-1.5 pl-3 pr-2 text-xs font-medium text-slate-200"
                         >
                           <span className="max-w-[100px] truncate">{normalizeDisplayName(user)}</span>
                           <button
                             type="button"
                             onClick={() => removeSelectedUser(user.id)}
-                            className="flex h-4 w-4 items-center justify-center rounded-full bg-[#c8d8c6] text-[#315447] transition hover:bg-[#b0c8ae]"
+                            className="flex h-4 w-4 items-center justify-center rounded-full bg-white/10 text-slate-200 transition hover:bg-white/20"
                             aria-label={`Remove ${normalizeDisplayName(user)}`}
                           >
                             <X className="h-2.5 w-2.5" />
@@ -959,39 +1234,39 @@ export default function ChatPage() {
                 {composeMode !== "DIRECT" ? (
                   <div className="space-y-3">
                     <div>
-                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7d8c84]">
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                         {composeMode === "CHANNEL" ? "Channel name" : "Group name"}
                       </p>
                       <input
                         value={groupName}
                         onChange={(event) => setGroupName(event.target.value)}
                         placeholder={composeMode === "CHANNEL" ? "e.g. design-feedback" : "e.g. Project Alpha"}
-                        className="w-full rounded-[14px] border border-[#d8e0d6] bg-white px-4 py-3 text-sm text-[#1f312a] outline-none placeholder:text-[#94a198] focus:border-[#27463b] transition"
+                        className="w-full rounded-[14px] border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400 transition"
                       />
                     </div>
 
                     {composeMode === "CHANNEL" ? (
                       <>
                         <div>
-                          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7d8c84]">Description</p>
+                          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Description</p>
                           <textarea
                             value={channelDescription}
                             onChange={(event) => setChannelDescription(event.target.value)}
                             rows={3}
                             placeholder="What is this channel for?"
-                            className="w-full resize-none rounded-[14px] border border-[#d8e0d6] bg-white px-4 py-3 text-sm text-[#1f312a] outline-none placeholder:text-[#94a198] focus:border-[#27463b] transition"
+                            className="w-full resize-none rounded-[14px] border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400 transition"
                           />
                         </div>
-                        <label className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-[#d8e0d6] bg-white px-4 py-3 transition hover:bg-[#f6f8f3]">
+                        <label className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-white/10 bg-white/5 px-4 py-3 transition hover:bg-white/10">
                           <input
                             type="checkbox"
                             checked={memberMessagingEnabled}
                             onChange={(event) => setMemberMessagingEnabled(event.target.checked)}
-                            className="h-4 w-4 accent-[#27463b]"
+                            className="h-4 w-4 accent-cyan-400"
                           />
                           <div>
-                            <p className="text-sm font-medium text-[#1f312a]">Allow members to post</p>
-                            <p className="text-xs text-[#7d8c84]">Members can send messages in this channel</p>
+                            <p className="text-sm font-medium text-white">Allow members to post</p>
+                            <p className="text-xs text-slate-400">Members can send messages in this channel</p>
                           </div>
                         </label>
                       </>
@@ -1001,11 +1276,11 @@ export default function ChatPage() {
               </div>
 
               {/* Sticky action bar */}
-              <div className="border-t border-[#e2e8df] bg-white px-4 py-3 flex gap-2">
+              <div className="border-t border-white/10 bg-black/25 px-4 py-3 flex gap-2">
                 <button
                   type="button"
                   onClick={() => void handleStartConversation()}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-[14px] bg-[#27463b] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#315447] disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 disabled:opacity-50"
                 >
                   <Plus className="h-4 w-4" />
                   {composeMode === "DIRECT" ? "Open direct" : composeMode === "GROUP" ? "Create group" : "Create channel"}
@@ -1013,7 +1288,7 @@ export default function ChatPage() {
                 <button
                   type="button"
                   onClick={resetComposer}
-                  className="rounded-[14px] border border-[#d8e0d6] bg-[#f6f8f3] px-4 py-3 text-sm font-semibold text-[#5e6d65] transition hover:bg-[#eef2ec]"
+                  className="rounded-[14px] border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/10"
                 >
                   Clear
                 </button>
@@ -1043,15 +1318,15 @@ export default function ChatPage() {
             aria-orientation="vertical"
             aria-label="Resize conversation sidebar"
             onPointerDown={startPaneResize("inbox")}
-            className={`hidden w-2 cursor-col-resize items-center justify-center border-r border-[#dfe5dc] bg-white/80 text-[#9aa69f] transition hover:bg-[#eef4ee] hover:text-[#315447] lg:flex ${
-              draggingPane === "inbox" ? "bg-[#e6efe6] text-[#315447]" : ""
+            className={`hidden w-2 cursor-col-resize items-center justify-center border-r border-white/10 bg-white/5 text-slate-400 transition hover:bg-white/10 hover:text-white lg:flex ${
+                draggingPane === "inbox" ? "bg-white/10 text-white" : ""
             }`}
           >
             <GripVertical className="h-4 w-4" />
           </div>
         ) : null}
 
-        <section className={`${mobileView === "conversation" ? "flex" : "hidden lg:flex"} h-full min-h-0 min-w-0 flex-1 overflow-hidden bg-slate-100`}>
+          <section className={`${mobileView === "conversation" ? "flex" : "hidden lg:flex"} h-full min-h-0 min-w-0 flex-1 overflow-hidden bg-[rgba(6,10,20,0.72)]`}>
           {activeConversationId ? (
             <ChatConversation
               conversationId={activeConversationId}
@@ -1122,19 +1397,19 @@ export default function ChatPage() {
             />
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-              <div className="grid h-24 w-24 place-items-center rounded-[30px] border border-white/70 bg-white/80 text-[#315447] shadow-[0_24px_48px_rgba(38,67,56,0.08)]">
+              <div className="grid h-24 w-24 place-items-center rounded-[30px] border border-white/10 bg-white/5 text-cyan-200 shadow-[0_24px_48px_rgba(38,67,56,0.08)]">
                 <MessageSquare className="h-9 w-9" />
               </div>
-              <h2 className="mt-6 font-[family:var(--font-display)] text-3xl font-semibold text-[#1f312a]">
+              <h2 className="mt-6 font-[family:var(--font-display)] text-3xl font-semibold text-white">
                 Open a real conversation
               </h2>
-              <p className="mt-3 max-w-[460px] text-sm leading-6 text-[#5e6d65]">
+              <p className="mt-3 max-w-[460px] text-sm leading-6 text-slate-300">
                 Choose an existing direct chat, group, or channel from the inbox, or create a new one from the composer panel.
               </p>
               <button
                 type="button"
                 onClick={handleOpenComposer}
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#27463b] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_30px_rgba(39,70,59,0.18)] transition hover:bg-[#315447]"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_30px_rgba(39,70,59,0.18)] transition hover:brightness-110"
               >
                 <Plus className="h-4 w-4" />
                 Start a conversation
@@ -1150,25 +1425,25 @@ export default function ChatPage() {
               aria-orientation="vertical"
               aria-label="Resize conversation details"
               onPointerDown={startPaneResize("details")}
-              className={`hidden w-2 cursor-col-resize items-center justify-center border-l border-[#dfe5dc] bg-white/80 text-[#9aa69f] transition hover:bg-[#eef4ee] hover:text-[#315447] xl:flex ${
-                draggingPane === "details" ? "bg-[#e6efe6] text-[#315447]" : ""
+              className={`hidden w-2 cursor-col-resize items-center justify-center border-l border-white/10 bg-white/5 text-slate-400 transition hover:bg-white/10 hover:text-white xl:flex ${
+                draggingPane === "details" ? "bg-white/10 text-white" : ""
               }`}
             >
               <GripVertical className="h-4 w-4" />
             </div>
             <aside
               style={detailsRailStyle}
-              className="hidden flex-shrink-0 overflow-y-auto border-l border-[#dfe5dc] bg-[rgba(248,246,240,0.96)] xl:block xl:w-[var(--chat-details-width)]"
+              className="hidden flex-shrink-0 overflow-y-auto border-l border-white/10 bg-[rgba(8,12,24,0.86)] xl:block xl:w-[var(--chat-details-width)]"
             >
-            <div className="flex items-center justify-between border-b border-[#dfe5dc] px-4 py-4">
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8c84]">Context</p>
-                <h2 className="mt-2 text-base font-semibold text-[#1f312a]">Conversation details</h2>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Context</p>
+                <h2 className="mt-2 text-base font-semibold text-white">Conversation details</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setRightRailOpen(false)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#d8e0d6] bg-white text-[#315447] transition hover:bg-[#f7faf7]"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
                 aria-label="Close conversation details"
               >
                 <ChevronRight className="h-4.5 w-4.5" />
@@ -1211,17 +1486,17 @@ export default function ChatPage() {
       </div>
 
       {rightRailOpen && activeConversation ? (
-        <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-[1px] xl:hidden">
-          <div className="ml-auto h-full w-full max-w-[420px] overflow-y-auto bg-[rgba(248,246,240,0.98)] shadow-[0_28px_60px_rgba(15,23,42,0.18)]">
-            <div className="flex items-center justify-between border-b border-[#dfe5dc] bg-white px-4 py-4">
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-[1px] xl:hidden">
+          <div className="ml-auto h-full w-full max-w-[420px] overflow-y-auto bg-[rgba(8,12,24,0.98)] shadow-[0_28px_60px_rgba(15,23,42,0.38)]">
+            <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8c84]">Context</p>
-                <h2 className="mt-2 text-base font-semibold text-[#1f312a]">Conversation details</h2>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Context</p>
+                <h2 className="mt-2 text-base font-semibold text-white">Conversation details</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setRightRailOpen(false)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#d8e0d6] bg-[#f6f8f3] text-[#315447]"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-200"
                 aria-label="Close conversation details"
               >
                 <X className="h-4.5 w-4.5" />
@@ -1261,6 +1536,7 @@ export default function ChatPage() {
           </div>
         </div>
       ) : null}
+    </div>
     </div>
   );
 }

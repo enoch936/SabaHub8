@@ -182,7 +182,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
           minHeight: "100vh",
           display: "grid",
           placeItems: "center",
-          background: "#ffffff",
+          background: "var(--background)",
         }}
       >
         <CircularProgress size={28} />
@@ -191,7 +191,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <Box sx={{ minHeight: "100vh" }}>
+    <Box sx={{ minHeight: "100vh", position: "relative" }}>
       <WorkspaceTopbar
         isDesktop={isDesktop}
         isSidebarOpen={sidebarOpen}
@@ -229,11 +229,13 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
               height: 36,
               borderRadius: "12px",
               bgcolor: "rgba(255,255,255,0.94)",
-              border: "1px solid rgba(15,23,42,0.08)",
-              boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
+              border: "1px solid var(--glass-border)",
+              background: "linear-gradient(145deg, var(--glass-strong), var(--glass-subtle))",
+              backdropFilter: "blur(20px) saturate(1.3)",
+              boxShadow: "var(--shadow-soft)",
               transition: "right 220ms ease",
               "&:hover": {
-                bgcolor: "#ffffff",
+                bgcolor: "var(--surface-elevated)",
               },
             }}
           >
@@ -255,10 +257,10 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
             xl: `calc(100% - ${desktopSidebarWidth}px - ${desktopRightRailWidth}px)`,
           },
           transition: "margin-left 220ms ease, margin-right 220ms ease, width 220ms ease",
-          background: "#ffffff",
+          background: "transparent",
         }}
       >
-        <Box sx={{ p: { xs: 2, md: 3 } }}>{children}</Box>
+        <Box sx={{ p: { xs: 2, md: 3 }, position: "relative", zIndex: 1 }}>{children}</Box>
       </Box>
       <BottomNavigation />
     </Box>

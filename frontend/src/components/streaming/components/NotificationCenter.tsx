@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Badge, IconButton, Popover, Chip, Divider } from '@mui/material';
-import { Notifications, Close, CheckCircle, Info, Warning, AlertCircle } from '@mui/icons-material';
+import { Notifications, Close, CheckCircle, Info, Warning, ErrorOutline } from '@mui/icons-material';
 import { colors, glassEffect, transitions, spacing, shadows } from '../theme';
 
 interface Notification {
@@ -16,14 +16,14 @@ interface Notification {
   };
 }
 
-const NotificationCenter: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([
+function createInitialNotifications(now: number): Notification[] {
+  return [
     {
       id: '1',
       type: 'success',
       title: 'Stream Quality Optimized',
       message: 'Your bitrate has been automatically optimized for current network conditions.',
-      timestamp: Date.now() - 60000,
+      timestamp: now - 60000,
       read: false,
     },
     {
@@ -31,7 +31,7 @@ const NotificationCenter: React.FC = () => {
       type: 'info',
       title: 'New Collaborator Request',
       message: 'Sarah requested to join your stream',
-      timestamp: Date.now() - 300000,
+      timestamp: now - 300000,
       read: false,
       action: { label: 'Review', onClick: () => {} },
     },
@@ -40,7 +40,7 @@ const NotificationCenter: React.FC = () => {
       type: 'warning',
       title: 'Low Bandwidth Detected',
       message: 'Your connection speed has dropped. Consider lowering stream quality.',
-      timestamp: Date.now() - 600000,
+      timestamp: now - 600000,
       read: true,
     },
     {
@@ -48,12 +48,25 @@ const NotificationCenter: React.FC = () => {
       type: 'success',
       title: 'Cloud Recording Started',
       message: 'Your stream is now being recorded to the cloud.',
-      timestamp: Date.now() - 900000,
+      timestamp: now - 900000,
       read: true,
     },
-  ]);
+  ];
+}
 
+const NotificationCenter: React.FC = () => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [now, setNow] = useState(0);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  React.useEffect(() => {
+    const currentTime = Date.now();
+    setNow(currentTime);
+    setNotifications(createInitialNotifications(currentTime));
+
+    const interval = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -76,14 +89,14 @@ const NotificationCenter: React.FC = () => {
       case 'warning':
         return <Warning sx={{ fontSize: '16px', color: colors.warning }} />;
       case 'error':
-        return <AlertCircle sx={{ fontSize: '16px', color: colors.error }} />;
+        return <ErrorOutline sx={{ fontSize: '16px', color: colors.error }} />;
       default:
         return null;
     }
   };
 
   const formatTime = (timestamp: number) => {
-    const diff = Date.now() - timestamp;
+    const diff = Math.max(0, (now || timestamp) - timestamp);
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
