@@ -1,4 +1,4 @@
-import { keyframes } from '@mui/system';
+import { keyframes } from '@mui/material/styles';
 
 // Animations
 export const floatUp = keyframes`

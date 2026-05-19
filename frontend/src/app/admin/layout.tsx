@@ -264,7 +264,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         minHeight: "100vh",
         position: "relative",
         overflow: "hidden",
-        bgcolor: (t) => (t.palette.mode === "light" ? "#f8f8f6" : t.palette.background.default),
+        bgcolor: "transparent",
       }}
     >
       <AppBar
@@ -272,8 +272,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         color="inherit"
         elevation={0}
         sx={{
-          bgcolor: theme.palette.background.paper,
-          boxShadow: `0 10px 30px ${alpha("#07101d", isDarkMode ? 0.22 : 0.05)}`,
+          bgcolor: "transparent",
+          background: "linear-gradient(135deg, var(--glass-strong), var(--glass-subtle))",
+          backdropFilter: "blur(28px) saturate(1.45)",
+          borderBottom: "1px solid var(--glass-border)",
+          boxShadow: `0 18px 48px ${alpha("#07101d", isDarkMode ? 0.34 : 0.08)}`,
         }}
       >
         <Toolbar
@@ -292,8 +295,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               width: 38,
               height: 38,
               borderRadius: 2,
-              bgcolor: alpha(activeAccent, isDarkMode ? 0.16 : 0.05),
-              boxShadow: "0 10px 24px rgba(15,23,42,0.05)",
+              bgcolor: alpha(activeAccent, isDarkMode ? 0.16 : 0.08),
+              border: "1px solid var(--glass-border)",
+              boxShadow: "var(--shadow-soft)",
             }}
           >
             <MenuRoundedIcon sx={{ fontSize: 18 }} />
@@ -389,9 +393,15 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               boxSizing: "border-box",
               top: { xs: 64, sm: 60 },
               height: { xs: "calc(100vh - 64px)", sm: "calc(100vh - 60px)" },
-              bgcolor: theme.palette.background.paper,
-              boxShadow: "none",
+              bgcolor: "transparent",
+              background: "linear-gradient(145deg, var(--glass-strong), var(--glass-subtle))",
+              backdropFilter: "blur(28px) saturate(1.35)",
+              borderRight: "1px solid var(--glass-border)",
+              boxShadow: "var(--shadow-soft)",
               overflowX: "hidden",
+              overflowY: "hidden",
+              display: "flex",
+              flexDirection: "column",
             },
           }}
         >
@@ -429,6 +439,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               minHeight: { xs: "calc(100vh - 64px)", sm: "calc(100vh - 60px)" },
               overflowX: "hidden",
               position: "relative",
+              background: "transparent",
             }}
           >
             <Box sx={{ position: "relative", zIndex: 1, px: { xs: 1.5, md: 2.5 }, py: { xs: 1.25, md: 2 } }}>

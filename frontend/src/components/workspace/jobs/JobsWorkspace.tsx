@@ -199,7 +199,7 @@ export default function JobsWorkspace() {
             <button
               type="button"
               onClick={toggleFilters}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-900 shadow-[0_6px_16px_rgba(15,23,42,0.03)] transition hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-900 shadow-[0_6px_16px_rgba(15,23,42,0.03)] transition hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)] hover:bg-gray-100 active:scale-95"
               aria-label={filtersOpen ? "Hide filters" : "Show filters"}
               title={filtersOpen ? "Hide filters" : "Show filters"}
             >
@@ -244,7 +244,7 @@ export default function JobsWorkspace() {
             <button
               type="button"
               onClick={() => runJobQuery({ categories: [], page: 1 })}
-              className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+              className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 active:scale-95"
             >
               Clear category
             </button>
@@ -293,7 +293,7 @@ export default function JobsWorkspace() {
                     <button
                       type="button"
                       onClick={() => setViewMode("grid")}
-                      className={`rounded-md p-1.5 transition ${viewMode === "grid" ? "bg-gray-100 text-gray-900" : "text-gray-400"}`}
+                      className={`rounded-md p-1.5 transition active:scale-95 ${viewMode === "grid" ? "bg-gray-100 text-gray-900" : "text-gray-400 hover:bg-gray-100"}`}
                       aria-label="Grid view"
                     >
                       <Grid3X3 className="h-3.5 w-3.5" />
@@ -301,7 +301,7 @@ export default function JobsWorkspace() {
                     <button
                       type="button"
                       onClick={() => setViewMode("list")}
-                      className={`rounded-md p-1.5 transition ${viewMode === "list" ? "bg-gray-100 text-gray-900" : "text-gray-400"}`}
+                      className={`rounded-md p-1.5 transition active:scale-95 ${viewMode === "list" ? "bg-gray-100 text-gray-900" : "text-gray-400 hover:bg-gray-100"}`}
                       aria-label="List view"
                     >
                       <LayoutList className="h-3.5 w-3.5" />
@@ -345,7 +345,7 @@ export default function JobsWorkspace() {
                     type="button"
                     onClick={() => runJobQuery({ page: Math.max(1, currentPage - 1) })}
                     disabled={!hasPreviousPage}
-                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     ←
                   </button>
@@ -356,7 +356,7 @@ export default function JobsWorkspace() {
                     type="button"
                     onClick={() => runJobQuery({ page: currentPage + 1 })}
                     disabled={!hasNextPage}
-                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     →
                   </button>

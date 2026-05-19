@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
@@ -8,7 +8,9 @@ import { ArrowRight, CheckCircle2, Menu, Play, Quote, Sparkles, Star, TrendingUp
 import { BrandLogo } from "./BrandLogo";
 import LandingMegaMenu, { LandingMegaMenuMobile } from "./LandingMegaMenu";
 import { ThemeIconButton } from "@/components/mui/ThemeToggle";
+import { isAuthenticated } from "@/lib/auth";
 import styles from "./LandingPage.module.css";
+import { useLandingData } from "./useLandingData";
 import {
   ENTERPRISE_BENEFITS,
   ENTERPRISE_IMAGES,
@@ -27,6 +29,17 @@ import {
   USER_PATHS,
   VIDEO_STORIES,
 } from "./landing-data";
+
+function formatNumberCount(n: number | string | undefined) {
+  if (typeof n === "string") return n;
+  if (!n && n !== 0) return "0";
+  const num = Number(n || 0);
+  if (Number.isNaN(num)) return String(n);
+  if (num >= 1_000_000_000) return `$${Math.round(num / 1_000_000_000)}B+`;
+  if (num >= 1_000_000) return `${Math.round(num / 1_000_000)}M+`;
+  if (num >= 1_000) return `${Math.round(num / 1_000)}K+`;
+  return String(num);
+}
 
 const revealUp = (delay = 0) => ({
   initial: { opacity: 0, y: 32 },
@@ -111,16 +124,66 @@ function ActionLink({
 }
 
 export default function LandingPage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [heroVideoOpen, setHeroVideoOpen] = useState(false);
   const [playingVideo, setPlayingVideo] = useState<number | null>(null);
   const [audience, setAudience] = useState<keyof typeof HERO_AUDIENCES>("employer");
+  const [videoStoriesState, setVideoStoriesState] = useState<typeof VIDEO_STORIES>(VIDEO_STORIES);
+  const [heroStatsState, setHeroStatsState] = useState(HERO_STATS);
 
   const currentAudience = HERO_AUDIENCES[audience];
   const navigationItems = NAV_ITEMS.filter((item) => item.href !== "#categories");
   const audienceEntries = Object.entries(HERO_AUDIENCES) as Array<
     [keyof typeof HERO_AUDIENCES, (typeof HERO_AUDIENCES)[keyof typeof HERO_AUDIENCES]]
   >;
+
+  const { jobs: liveJobs, freelancers: liveFreelancers, loading: liveLoading } = useLandingData();
+
+  // Use real data when loaded, fall back to static data
+  const displayJobs = liveJobs.length > 0 ? liveJobs : MARKETPLACE_JOBS;
+  const displayFreelancers = liveFreelancers.length > 0 ? liveFreelancers : MARKETPLACE_TALENT;
+
+  useEffect(() => {
+    setIsLoggedIn(isAuthenticated());
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadLiveData() {
+      try {
+        const [storiesRes, statsRes] = await Promise.allSettled([fetch("/api/stories"), fetch("/api/stats")]);
+
+        if (storiesRes.status === "fulfilled") {
+          const r = storiesRes.value;
+          if (r.ok) {
+            const data = await r.json();
+            if (mounted && Array.isArray(data) && data.length > 0) setVideoStoriesState(data as any);
+          }
+        }
+
+        if (statsRes.status === "fulfilled") {
+          const r = statsRes.value;
+          if (r.ok) {
+            const d = await r.json();
+            if (mounted && d) {
+              setHeroStatsState([
+                { label: "Active Freelancers", value: formatNumberCount((d.activeFreelancers ?? d.active_freelancers ?? d.active) || HERO_STATS[0].value) },
+                { label: "Jobs Posted", value: formatNumberCount((d.jobsPosted ?? d.jobs_posted ?? d.jobs) || HERO_STATS[1].value) },
+                { label: "Paid to Freelancers", value: formatNumberCount((d.paidToFreelancers ?? d.paid_to_freelancers ?? d.paid) || HERO_STATS[2].value) },
+              ]);
+            }
+          }
+        }
+      } catch (e) {
+        // silent fallback to static data
+      }
+    }
+    void loadLiveData();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className={styles.page}>
@@ -195,7 +258,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <AnimatePresence>
+            <AnimatePresence>
             {mobileMenuOpen ? (
               <motion.div
                 className="mt-4 space-y-3 rounded-[1.4rem] border border-slate-200 bg-white p-4 md:hidden"
@@ -313,7 +376,7 @@ export default function LandingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
-                {HERO_STATS.map((stat) => (
+                {heroStatsState.map((stat) => (
                   <div key={stat.label}>
                     <div className="text-3xl font-bold tracking-[-0.04em] text-white drop-shadow md:text-4xl">{stat.value}</div>
                     <div className="mt-1 text-sm text-white/60">{stat.label}</div>
@@ -353,8 +416,8 @@ export default function LandingPage() {
             <div className="relative overflow-hidden rounded-[2rem]">
               {/* Two images side by side as one seamless background */}
               <div className="absolute inset-0 flex">
-                <img src="/foot3/Untitled2.jpeg" alt="" className={clsx("h-full w-1/2 object-cover", styles.kenBurns)} aria-hidden="true" />
-                <img src="/foot3/images.jpeg" alt="" className={clsx("h-full w-1/2 object-cover", styles.kenBurnsAlt)} aria-hidden="true" />
+                <img src="/images/photos/team-collab.jpg" alt="" className={clsx("h-full w-1/2 object-cover", styles.kenBurns)} aria-hidden="true" />
+                <img src="/images/photos/workspace-product.jpg" alt="" className={clsx("h-full w-1/2 object-cover", styles.kenBurnsAlt)} aria-hidden="true" />
               </div>
               {/* Single unified dark overlay */}
               <div className="absolute inset-0 bg-black/55" />
@@ -438,7 +501,7 @@ export default function LandingPage() {
         <section id="marketplace" className="relative overflow-hidden py-24">
           {/* Ken Burns background image */}
           <img
-            src="/foot3/Untitled.jpeg"
+            src="/images/photos/dashboard-snapshot.jpg"
             alt=""
             className={clsx("absolute inset-0 h-full w-full object-cover", styles.kenBurns)}
             aria-hidden="true"
@@ -459,7 +522,9 @@ export default function LandingPage() {
                 <div className="mb-6 flex items-center justify-between gap-4">
                   <div>
                     <div className="text-sm font-semibold uppercase tracking-[0.16em] text-white/60">Jobs</div>
-                    <h3 className="mt-2 text-2xl font-semibold text-white">Open roles</h3>
+                    <h3 className="mt-2 text-2xl font-semibold text-white">
+                      {liveLoading ? "Loading live jobs…" : "Open roles"}
+                    </h3>
                   </div>
                   <ActionLink href="/jobs" variant="white" className="hidden md:inline-flex">
                     View all jobs
@@ -467,9 +532,9 @@ export default function LandingPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {MARKETPLACE_JOBS.map((job) => (
+                  {displayJobs.map((job) => (
                     <Link
-                      key={job.title}
+                      key={job.id ?? job.title}
                       href="/jobs"
                       className="block rounded-[1.45rem] border border-white/15 bg-white/10 p-5 transition-all hover:-translate-y-1 hover:bg-white/20"
                     >
@@ -509,9 +574,9 @@ export default function LandingPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {MARKETPLACE_TALENT.map((person) => (
+                  {displayFreelancers.map((person) => (
                     <Link
-                      key={person.name}
+                      key={person.id ?? person.name}
                       href="/register"
                       className="block rounded-[1.45rem] border border-white/15 bg-white/10 p-5 transition-all hover:-translate-y-1 hover:bg-white/20"
                     >
@@ -553,7 +618,7 @@ export default function LandingPage() {
               description="Preview how teams and freelancers move through the platform."
             />
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {VIDEO_STORIES.map((video, index) => (
+              {videoStoriesState.map((video, index) => (
                 <motion.article
                   key={video.title}
                   className={clsx(styles.softPanel, "group overflow-hidden rounded-[1.75rem]")}
@@ -872,7 +937,7 @@ export default function LandingPage() {
           <div className="mb-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
             <div className="sm:col-span-2 lg:col-span-1">
               <BrandLogo variant="gradient" />
-              <p className="mt-4 text-sm leading-7 text-slate-600">Hiring, freelance work, contracts, and payments in one place.</p>
+              <p className="mt-4 text-sm font-bold leading-7 text-slate-300">Hiring, freelance work, contracts, and payments in one place.</p>
               <div className="mt-5 flex gap-3">
                 {SOCIAL_LINKS.map((social) => (
                   <a key={social.label} href={social.href} className={styles.socialPill} target="_blank" rel="noreferrer" aria-label={social.label}>
@@ -884,11 +949,11 @@ export default function LandingPage() {
 
             {FOOTER_LINK_GROUPS.map((group, index) => (
               <motion.div key={group.title} {...revealUp(index * 0.06)}>
-                <h3 className="font-semibold text-slate-950">{group.title}</h3>
+                <h3 className="font-bold text-white">{group.title}</h3>
                 <ul className="mt-4 space-y-3">
                   {group.links.map((link) => (
                     <li key={link}>
-                      <Link href="/register" className="text-sm text-slate-600 transition-colors hover:text-slate-950">
+                      <Link href="/register" className="text-sm font-bold text-slate-300 transition-colors hover:text-white">
                         {link}
                       </Link>
                     </li>
@@ -899,13 +964,13 @@ export default function LandingPage() {
           </div>
 
           <motion.div
-            className="flex flex-col gap-4 border-t border-slate-200 pt-8 text-sm text-slate-500 md:flex-row md:items-center md:justify-between"
+            className="flex flex-col gap-4 border-t border-slate-700 pt-8 text-sm font-bold text-slate-300 md:flex-row md:items-center md:justify-between"
             {...revealUp(0.1)}
           >
             <p>© 2026 SabaHub Inc. All rights reserved.</p>
             <div className="flex flex-wrap gap-6">
               {["Terms of Service", "Privacy Policy", "Cookie Policy"].map((item) => (
-                <Link key={item} href="/register" className="transition-colors hover:text-slate-900">
+                <Link key={item} href="/register" className="transition-colors hover:text-white">
                   {item}
                 </Link>
               ))}

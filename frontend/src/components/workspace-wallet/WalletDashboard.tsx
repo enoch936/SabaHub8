@@ -10,7 +10,7 @@ import {
   QrCode,
   Send,
 } from "lucide-react";
-import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { Area, AreaChart } from "recharts";
 import {
   buildAnalyticsChartData,
   computePeriodOverPeriodChange,
@@ -144,19 +144,17 @@ export function WalletDashboard({
           </p>
         </div>
 
-        <div className="pointer-events-none absolute bottom-0 right-0 h-24 w-48 opacity-30">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={miniChartData}>
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke="#fff"
-                fill="rgba(255,255,255,0.22)"
-                strokeWidth={2}
-                dot={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+        <div className="pointer-events-none absolute bottom-0 right-0 opacity-30">
+          <AreaChart width={192} height={96} data={miniChartData}>
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke="#fff"
+              fill="rgba(255,255,255,0.22)"
+              strokeWidth={2}
+              dot={false}
+            />
+          </AreaChart>
         </div>
       </motion.div>
 

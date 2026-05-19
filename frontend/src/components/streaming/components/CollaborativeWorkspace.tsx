@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Button, Dialog, Avatar, AvatarGroup, Chip, Badge, IconButton } from '@mui/material';
-import { Close, Videocam, Hand, Mic, Settings } from '@mui/icons-material';
+import { Close, Mic, Settings } from '@mui/icons-material';
 import { colors, glassEffect, transitions, spacing, shadows } from '../theme';
 
 const CollaborativeWorkspace: React.FC = () => {

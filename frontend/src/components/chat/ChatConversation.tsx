@@ -31,6 +31,9 @@ interface ChatConversationProps {
   isMuted?: boolean;
   isArchived?: boolean;
   liveCount?: number;
+  unreadCountAtOpen?: number;
+  threadType?: "DIRECT" | "GROUP" | "CHANNEL";
+  participantIds?: string[];
   onSend: (content: string, options?: { replyToMessageId?: string | null }) => void;
   onSendAsset?: (assetId: string) => void;
   onEditMessage?: (messageId: string, text: string) => void;
@@ -45,6 +48,7 @@ interface ChatConversationProps {
   onTogglePinned?: () => void;
   onToggleMuted?: () => void;
   onToggleArchived?: () => void;
+  onMissedCall?: (conversationId: string) => void;
 }
 
 const conversationCanvasStyle = {
@@ -142,6 +146,9 @@ export function ChatConversation({
   isMuted = false,
   isArchived = false,
   liveCount = 0,
+  unreadCountAtOpen = 0,
+  threadType = "DIRECT",
+  participantIds = [],
   onSend,
   onSendAsset,
   onEditMessage,
@@ -156,6 +163,7 @@ export function ChatConversation({
   onTogglePinned,
   onToggleMuted,
   onToggleArchived,
+  onMissedCall,
 }: ChatConversationProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [draftText, setDraftText] = useState("");
@@ -197,6 +205,10 @@ export function ChatConversation({
       ? `Replying to: ${replyTarget.text || "attachment"}`
       : null;
   const secondaryStatus = typingLabel || headerMeta || subtitle;
+  void unreadCountAtOpen;
+  void threadType;
+  void participantIds;
+  void onMissedCall;
 
   const handleSend = (content: string) => {
     if (editingMessageId && onEditMessage) {

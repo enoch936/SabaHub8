@@ -2525,10 +2525,12 @@ export async function getWallet() {
 }
 
 export async function getWalletForecast(options: WalletForecastOptions) {
+  const defaultHorizon =
+    options.horizon ?? (options.range === "1Y" ? 6 : options.range === "90D" ? 14 : options.range === "14D" ? 7 : 10);
   const params = {
     range: options.range,
     currency: options.currency,
-    horizon: options.horizon,
+    horizon: defaultHorizon,
   };
 
   // Canonical backend contract: GET /wallet/forecast -> { source, model, generatedAt, points[] }

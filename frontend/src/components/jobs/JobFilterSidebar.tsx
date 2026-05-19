@@ -131,10 +131,10 @@ export function JobFilterSidebar({
 						<button
 							key={item.value}
 							onClick={() => onChange({ mediaFilter: item.value as JobFilters["mediaFilter"] })}
-							className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium ${
+							className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition active:scale-95 ${
 								(filters.mediaFilter ?? "ALL") === item.value
 									? "border-[var(--border)] bg-[var(--accent)] text-foreground"
-									: "border-[var(--border)] text-muted-foreground"
+									: "border-[var(--border)] text-muted-foreground hover:bg-gray-100"
 							}`}
 						>
 							{item.icon}
@@ -175,10 +175,10 @@ export function JobFilterSidebar({
 						<button
 							key={type}
 							onClick={() => onChange({ jobType: filters.jobType === type ? undefined : type })}
-							className={`flex-1 py-1.5 rounded-lg text-sm border ${
+							className={`flex-1 py-1.5 rounded-lg text-sm border transition active:scale-95 ${
 								filters.jobType === type
 									? "bg-[var(--accent)] text-foreground border-[var(--border)]"
-									: "border-[var(--border)]"
+									: "border-[var(--border)] hover:bg-gray-100"
 							}`}
 						>
 							{type}
@@ -280,10 +280,10 @@ export function JobFilterSidebar({
 						<button
 							key={skill}
 							onClick={() => toggleSkill(skill)}
-							className={`text-xs px-2 py-1 rounded-md border ${
+							className={`text-xs px-2 py-1 rounded-md border transition active:scale-95 ${
 								filters.skills?.includes(skill)
 									? "bg-[var(--accent)] text-foreground border-[var(--border)]"
-									: "border-[var(--border)]"
+									: "border-[var(--border)] hover:bg-gray-100"
 							}`}
 						>
 							{skill}
@@ -301,7 +301,7 @@ export function JobFilterSidebar({
 							<button
 								key={preset.id}
 								onClick={() => onLoadPreset(preset)}
-								className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)] text-sm text-left"
+								className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)] text-sm text-left transition hover:bg-gray-100 active:scale-95"
 							>
 								<FolderOpen className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
 								<span className="truncate">{preset.name}</span>

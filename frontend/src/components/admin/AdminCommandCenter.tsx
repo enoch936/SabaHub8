@@ -81,13 +81,13 @@ const chartPalette = [
 ];
 
 const statusTone: Record<string, { color: string; border: string; bg: string; score: number }> = {
-  operational: { color: "#166534", border: "rgba(34,197,94,0.32)", bg: "rgba(240,253,244,0.92)", score: 96 },
-  success: { color: "#166534", border: "rgba(34,197,94,0.32)", bg: "rgba(240,253,244,0.92)", score: 96 },
-  info: { color: "#1d4ed8", border: "rgba(59,130,246,0.28)", bg: "rgba(239,246,255,0.92)", score: 78 },
-  attention: { color: "#92400e", border: "rgba(245,158,11,0.32)", bg: "rgba(255,251,235,0.94)", score: 68 },
-  warning: { color: "#92400e", border: "rgba(245,158,11,0.32)", bg: "rgba(255,251,235,0.94)", score: 68 },
-  degraded: { color: "#991b1b", border: "rgba(239,68,68,0.3)", bg: "rgba(254,242,242,0.94)", score: 38 },
-  critical: { color: "#991b1b", border: "rgba(239,68,68,0.3)", bg: "rgba(254,242,242,0.94)", score: 38 },
+  operational: { color: "#86efac", border: "rgba(34,197,94,0.28)", bg: "rgba(6,15,24,0.82)", score: 96 },
+  success: { color: "#86efac", border: "rgba(34,197,94,0.28)", bg: "rgba(6,15,24,0.82)", score: 96 },
+  info: { color: "#7dd3fc", border: "rgba(59,130,246,0.24)", bg: "rgba(8,15,28,0.82)", score: 78 },
+  attention: { color: "#fdba74", border: "rgba(245,158,11,0.28)", bg: "rgba(22,15,5,0.82)", score: 68 },
+  warning: { color: "#fdba74", border: "rgba(245,158,11,0.28)", bg: "rgba(22,15,5,0.82)", score: 68 },
+  degraded: { color: "#fda4af", border: "rgba(239,68,68,0.26)", bg: "rgba(24,8,11,0.82)", score: 38 },
+  critical: { color: "#fda4af", border: "rgba(239,68,68,0.26)", bg: "rgba(24,8,11,0.82)", score: 38 },
 };
 
 const adminSourceCatalog = [
@@ -112,14 +112,15 @@ const heroSignalColor: Record<string, string> = {
 
 const paperCardSx = {
   border: "1px solid",
-  borderColor: "divider",
-  bgcolor: "background.paper",
-  boxShadow: "0 1px 3px rgba(15,23,42,0.06)",
+  borderColor: "rgba(125,211,252,0.16)",
+  bgcolor: "rgba(8,14,28,0.78)",
+  color: "common.white",
+  boxShadow: "0 24px 60px rgba(3,7,18,0.38), inset 0 1px 0 rgba(255,255,255,0.04)",
   transition: "box-shadow 160ms ease, transform 160ms ease, border-color 160ms ease",
   "&:hover": {
     transform: "translateY(-1px)",
-    boxShadow: "0 6px 18px rgba(15,23,42,0.08)",
-    borderColor: "rgba(148,163,184,0.6)",
+    boxShadow: "0 30px 70px rgba(3,7,18,0.45)",
+    borderColor: "rgba(125,211,252,0.3)",
   },
 } as const;
 
@@ -1016,24 +1017,68 @@ export default function AdminCommandCenter() {
   }, [exportStamp, state.overview, state.pendingTopups]);
 
   return (
-    <Stack spacing={2.2}>
+    <Box
+      sx={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden",
+        px: { xs: 1.5, md: 2.2 },
+        py: { xs: 1.5, md: 2.2 },
+        background:
+          "radial-gradient(circle at 15% 10%, rgba(34,211,238,0.18) 0, transparent 28%), radial-gradient(circle at 85% 12%, rgba(168,85,247,0.16) 0, transparent 24%), linear-gradient(180deg, #050816 0%, #090f1f 42%, #0b1120 100%)",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(120deg, rgba(255,255,255,0.04) 0%, transparent 18%, transparent 82%, rgba(255,255,255,0.03) 100%)",
+          pointerEvents: "none",
+        },
+        "&::after": {
+          content: '""',
+          position: "absolute",
+          inset: 0,
+          background: "radial-gradient(circle at 50% 100%, rgba(14,165,233,0.12) 0%, transparent 34%)",
+          pointerEvents: "none",
+        },
+      }}
+    >
+      <Stack spacing={2.2} sx={{ position: "relative", zIndex: 1 }}>
       <SoftCard
         sx={{
           ...paperCardSx,
           overflow: "hidden",
+          position: "relative",
+          borderColor: "rgba(125,211,252,0.18)",
+          bgcolor: "rgba(6,11,24,0.82)",
+          color: "common.white",
+          boxShadow: "0 28px 80px rgba(3,7,18,0.55), inset 0 1px 0 rgba(255,255,255,0.06)",
         }}
       >
-        <CardContent sx={{ py: { xs: 2.4, md: 2.9 } }}>
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(circle at 12% 20%, rgba(34,211,238,0.16) 0%, transparent 28%), radial-gradient(circle at 88% 0%, rgba(168,85,247,0.14) 0%, transparent 24%), linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%)",
+            pointerEvents: "none",
+          }}
+        />
+        <CardContent sx={{ py: { xs: 2.4, md: 2.9 }, position: "relative", zIndex: 1 }}>
           <Stack spacing={1.8}>
             <Stack direction={{ xs: "column", lg: "row" }} justifyContent="space-between" gap={1.5}>
               <Box>
-                <Typography variant="overline" sx={{ opacity: 0.92 }} fontWeight={900}>
+                <Typography variant="overline" sx={{ opacity: 0.82, color: "rgba(125,211,252,0.95)" }} fontWeight={900}>
                   LIVE ADMIN INTEGRATION
                 </Typography>
-                <Typography variant={isSmallScreen ? "h4" : "h3"} fontWeight={900} sx={{ letterSpacing: "-0.03em", maxWidth: 760 }}>
+                <Typography
+                  variant={isSmallScreen ? "h4" : "h3"}
+                  fontWeight={900}
+                  sx={{ letterSpacing: "-0.03em", maxWidth: 760, color: "common.white" }}
+                >
                   Enterprise Operations Command Deck
                 </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mt: 0.6, maxWidth: 840 }}>
+                <Typography variant="body1" sx={{ mt: 0.6, maxWidth: 840, color: "rgba(226,232,240,0.78)" }}>
                   Real-time control surface for marketplace growth, financial review, governance alerts, identity trust, and domain readiness.
                 </Typography>
               </Box>
@@ -1060,10 +1105,30 @@ export default function AdminCommandCenter() {
             </Stack>
 
             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-              <Chip icon={<HubRoundedIcon />} label={`${liveFeedCount}/7 live data feeds`} variant="outlined" />
-              <Chip icon={<InsightsRoundedIcon />} label={`Last sync ${generatedAtLabel}`} variant="outlined" />
-              <Chip icon={<PendingActionsRoundedIcon />} label={`${state.totalPendingTopups} payments awaiting review`} variant="outlined" />
-              <Chip icon={<ShieldRoundedIcon />} label={`${criticalAlerts} critical governance alerts`} variant="outlined" />
+              <Chip
+                icon={<HubRoundedIcon />}
+                label={`${liveFeedCount}/7 live data feeds`}
+                variant="outlined"
+                sx={{ borderColor: "rgba(125,211,252,0.28)", color: "rgba(226,232,240,0.92)" }}
+              />
+              <Chip
+                icon={<InsightsRoundedIcon />}
+                label={`Last sync ${generatedAtLabel}`}
+                variant="outlined"
+                sx={{ borderColor: "rgba(125,211,252,0.28)", color: "rgba(226,232,240,0.92)" }}
+              />
+              <Chip
+                icon={<PendingActionsRoundedIcon />}
+                label={`${state.totalPendingTopups} payments awaiting review`}
+                variant="outlined"
+                sx={{ borderColor: "rgba(125,211,252,0.28)", color: "rgba(226,232,240,0.92)" }}
+              />
+              <Chip
+                icon={<ShieldRoundedIcon />}
+                label={`${criticalAlerts} critical governance alerts`}
+                variant="outlined"
+                sx={{ borderColor: "rgba(248,113,113,0.32)", color: "rgba(248,250,252,0.92)" }}
+              />
             </Stack>
 
             <Grid container spacing={1.15}>
@@ -1076,8 +1141,9 @@ export default function AdminCommandCenter() {
                           height: "100%",
                           borderRadius: 2.4,
                           border: "1px solid",
-                          borderColor: "divider",
-                          bgcolor: "background.paper",
+                          borderColor: "rgba(125,211,252,0.16)",
+                          bgcolor: "rgba(12,18,35,0.74)",
+                          backdropFilter: "blur(16px)",
                         }}
                       >
                         <Stack spacing={0.8}>
@@ -1098,8 +1164,9 @@ export default function AdminCommandCenter() {
                             height: "100%",
                             borderRadius: 2.4,
                             border: "1px solid",
-                            borderColor: "divider",
-                            bgcolor: "background.paper",
+                            borderColor: "rgba(125,211,252,0.16)",
+                            bgcolor: "rgba(12,18,35,0.74)",
+                            backdropFilter: "blur(16px)",
                           }}
                         >
                           <Stack spacing={0.5}>
@@ -1381,7 +1448,16 @@ export default function AdminCommandCenter() {
               </Box>
               <Grid container spacing={1} sx={{ mt: 0.4 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box sx={{ p: 1, borderRadius: 2, bgcolor: "rgba(239,246,255,0.9)" }}>
+                  <Box
+                    sx={{
+                      p: 1,
+                      borderRadius: 2,
+                      border: "1px solid",
+                      borderColor: "rgba(125,211,252,0.16)",
+                      bgcolor: "rgba(12,18,35,0.72)",
+                      backdropFilter: "blur(16px)",
+                    }}
+                  >
                     <Typography variant="caption" color="text.secondary">
                       New users in 30d
                     </Typography>
@@ -1391,7 +1467,16 @@ export default function AdminCommandCenter() {
                   </Box>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box sx={{ p: 1, borderRadius: 2, bgcolor: "rgba(240,253,250,0.92)" }}>
+                  <Box
+                    sx={{
+                      p: 1,
+                      borderRadius: 2,
+                      border: "1px solid",
+                      borderColor: "rgba(34,197,94,0.18)",
+                      bgcolor: "rgba(6,15,24,0.82)",
+                      backdropFilter: "blur(16px)",
+                    }}
+                  >
                     <Typography variant="caption" color="text.secondary">
                       Jobs created in 30d
                     </Typography>
@@ -1641,7 +1726,8 @@ export default function AdminCommandCenter() {
                           p: 1.25,
                           borderRadius: 2,
                           border: `1px solid ${domain.border}`,
-                          bgcolor: domain.bg,
+                          bgcolor: "rgba(12,18,35,0.72)",
+                          backdropFilter: "blur(16px)",
                           height: "100%",
                         }}
                       >
@@ -1732,7 +1818,17 @@ export default function AdminCommandCenter() {
               <Stack spacing={1}>
                 {pendingTopupPreview.length > 0 ? (
                   pendingTopupPreview.map((topup) => (
-                    <Box key={topup.id} sx={{ p: 1.05, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+                    <Box
+                      key={topup.id}
+                      sx={{
+                        p: 1.05,
+                        borderRadius: 2,
+                        border: "1px solid",
+                        borderColor: "rgba(125,211,252,0.16)",
+                        bgcolor: "rgba(12,18,35,0.72)",
+                        backdropFilter: "blur(16px)",
+                      }}
+                    >
                       <Stack direction="row" justifyContent="space-between" spacing={1}>
                         <Box sx={{ minWidth: 0 }}>
                           <Typography variant="subtitle2" fontWeight={800}>
@@ -1787,8 +1883,9 @@ export default function AdminCommandCenter() {
                           p: 1.1,
                           borderRadius: 2,
                           border: "1px solid",
-                          borderColor: "divider",
-                          bgcolor: flag.enabled ? "rgba(239,246,255,0.9)" : "background.paper",
+                          borderColor: flag.enabled ? "rgba(34,197,94,0.28)" : "rgba(125,211,252,0.16)",
+                          bgcolor: flag.enabled ? "rgba(6,15,24,0.82)" : "rgba(12,18,35,0.72)",
+                          backdropFilter: "blur(16px)",
                         }}
                       >
                         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
@@ -1860,7 +1957,17 @@ export default function AdminCommandCenter() {
                 {(state.overview?.alerts ?? []).length > 0 ? <Divider sx={{ my: 0.4 }} /> : null}
                 {recentJobs.length > 0 ? (
                   recentJobs.map((job) => (
-                    <Box key={job.id} sx={{ p: 1.05, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+                    <Box
+                      key={job.id}
+                      sx={{
+                        p: 1.05,
+                        borderRadius: 2,
+                        border: "1px solid",
+                        borderColor: "rgba(125,211,252,0.16)",
+                        bgcolor: "rgba(12,18,35,0.72)",
+                        backdropFilter: "blur(16px)",
+                      }}
+                    >
                       <Typography variant="subtitle2" fontWeight={800}>
                         {job.title || "Untitled job"}
                       </Typography>
@@ -1914,8 +2021,9 @@ export default function AdminCommandCenter() {
                       p: 1.2,
                       borderRadius: 2,
                       border: "1px solid",
-                      borderColor: "divider",
-                      bgcolor: "background.paper",
+                      borderColor: "rgba(125,211,252,0.16)",
+                      bgcolor: "rgba(12,18,35,0.74)",
+                      backdropFilter: "blur(16px)",
                     }}
                   >
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -1942,6 +2050,7 @@ export default function AdminCommandCenter() {
           )}
         </CardContent>
       </SoftCard>
-    </Stack>
+      </Stack>
+    </Box>
   );
 }

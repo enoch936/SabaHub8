@@ -193,7 +193,7 @@ export const SmartJobCard = memo(function SmartJobCard({
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="w-full inline-flex items-center justify-center gap-0.5 rounded-lg border border-[var(--border)] bg-white px-2 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+        className="w-full inline-flex items-center justify-center gap-0.5 rounded-lg border border-[var(--border)] bg-white px-2 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100"
       >
         {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         {expanded ? "Less" : "Details"}
@@ -201,7 +201,7 @@ export const SmartJobCard = memo(function SmartJobCard({
       <button
         type="button"
         onClick={() => onMessage?.(job)}
-        className="w-full inline-flex items-center justify-center gap-0.5 rounded-lg border border-[var(--border)] bg-white px-2 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+        className="w-full inline-flex items-center justify-center gap-0.5 rounded-lg border border-[var(--border)] bg-white px-2 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100"
       >
         <MessageSquare className="h-3 w-3" />
         Contact
@@ -221,7 +221,7 @@ export const SmartJobCard = memo(function SmartJobCard({
 
   if (viewMode === "list") {
     return (
-      <div className="group flex overflow-hidden rounded-lg bg-white shadow-sm transition hover:shadow-md">
+      <div className="group flex overflow-hidden rounded-lg bg-white shadow-sm transition hover:shadow-md hover:bg-gray-100 cursor-pointer" onClick={() => setExpanded(true)} onTouchStart={() => setExpanded(true)}>
         <div className="flex w-full">
           <div className="h-32 w-32 flex-shrink-0">
             {activeMedia ? (
@@ -247,7 +247,7 @@ export const SmartJobCard = memo(function SmartJobCard({
                     <button
                       type="button"
                       onClick={() => setMediaIndex((prev) => (prev - 1 + totalMedia) % totalMedia)}
-                      className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-0.5 text-gray-700 hover:bg-white"
+                      className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-0.5 text-gray-700 hover:bg-gray-100"
                       aria-label="Previous media"
                     >
                       <ChevronLeft className="h-3 w-3" />
@@ -255,7 +255,7 @@ export const SmartJobCard = memo(function SmartJobCard({
                     <button
                       type="button"
                       onClick={() => setMediaIndex((prev) => (prev + 1) % totalMedia)}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-0.5 text-gray-700 hover:bg-white"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-0.5 text-gray-700 hover:bg-gray-100"
                       aria-label="Next media"
                     >
                       <ChevronRight className="h-3 w-3" />
@@ -278,10 +278,10 @@ export const SmartJobCard = memo(function SmartJobCard({
               <button
                 type="button"
                 onClick={() => onSave(job.id)}
-                className={`p-0.5 transition flex-shrink-0 ${
+                className={`p-0.5 rounded-full transition flex-shrink-0 hover:bg-gray-100 ${
                   job.isSaved
                     ? "text-red-500 hover:text-red-600"
-                    : "text-gray-400 hover:text-gray-600"
+                    : "text-gray-400 hover:text-gray-700"
                 }`}
                 aria-label={job.isSaved ? "Unsave job" : "Save job"}
               >
@@ -289,7 +289,7 @@ export const SmartJobCard = memo(function SmartJobCard({
               </button>
             </div>
 
-            <h3 className="mb-0.5 line-clamp-2 cursor-pointer text-sm font-bold text-green-600 hover:underline">
+            <h3 className="mb-0.5 line-clamp-2 cursor-pointer text-sm font-bold text-green-600">
               {job.title}
             </h3>
 
@@ -307,7 +307,7 @@ export const SmartJobCard = memo(function SmartJobCard({
                 <button
                   type="button"
                   onClick={() => setExpanded((value) => !value)}
-                  className="ml-1 font-semibold text-blue-600 hover:underline"
+                  className="ml-1 rounded px-1 font-semibold text-gray-700 hover:bg-gray-100"
                 >
                   {expanded ? "less" : "more"}
                 </button>
@@ -336,7 +336,7 @@ export const SmartJobCard = memo(function SmartJobCard({
                   <button
                     type="button"
                     onClick={() => onMessage?.(job)}
-                    className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[10px] font-medium text-gray-700 transition hover:bg-gray-50"
+                    className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[10px] font-medium text-gray-700 transition hover:bg-gray-100"
                   >
                     <MessageSquare className="h-3 w-3" />
                     Contact
@@ -384,7 +384,9 @@ export const SmartJobCard = memo(function SmartJobCard({
 
   return (
     <div
-      className={`group rounded-[12px] bg-white overflow-hidden shadow-sm hover:shadow-lg transition`}
+      className={`group rounded-[12px] bg-white overflow-hidden shadow-sm hover:shadow-lg hover:bg-gray-100 transition cursor-pointer`}
+      onClick={() => setExpanded(true)}
+      onTouchStart={() => setExpanded(true)}
     >
       <div className={`flex flex-col`}>
         <div>
@@ -394,7 +396,7 @@ export const SmartJobCard = memo(function SmartJobCard({
                 <img
                   src={activeMedia.url}
                   alt={`${job.title} media ${mediaIndex + 1}`}
-                  className={`w-full h-32 object-cover transition duration-200 group-hover:scale-105`}
+                  className={`w-full h-32 object-cover transition duration-200`}
                   loading="lazy"
                 />
               ) : (
@@ -412,7 +414,7 @@ export const SmartJobCard = memo(function SmartJobCard({
                   <button
                     type="button"
                     onClick={() => setMediaIndex((prev) => (prev - 1 + totalMedia) % totalMedia)}
-                    className="absolute left-1.5 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-gray-700 shadow-sm hover:bg-white"
+                    className="absolute left-1.5 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-gray-700 shadow-sm hover:bg-gray-100"
                     aria-label="Previous media"
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
@@ -420,7 +422,7 @@ export const SmartJobCard = memo(function SmartJobCard({
                   <button
                     type="button"
                     onClick={() => setMediaIndex((prev) => (prev + 1) % totalMedia)}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-gray-700 shadow-sm hover:bg-white"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-gray-700 shadow-sm hover:bg-gray-100"
                     aria-label="Next media"
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
