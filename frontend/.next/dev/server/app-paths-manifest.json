@@ -1,14 +1,9 @@
 {
-  "/api/[...path]/route": "app/api/[...path]/route.js",
-  "/api/auth/[...path]/route": "app/api/auth/[...path]/route.js",
   "/api/stories/route": "app/api/stories/route.js",
   "/api/stats/route": "app/api/stats/route.js",
+  "/api/[...path]/route": "app/api/[...path]/route.js",
+  "/api/auth/[...path]/route": "app/api/auth/[...path]/route.js",
   "/page": "app/page.js",
-  "/login/password/page": "app/login/password/page.js",
-  "/admin/(executive)/platform-control/page": "app/admin/(executive)/platform-control/page.js",
-  "/admin/(operations)/content-moderation/page": "app/admin/(operations)/content-moderation/page.js",
-  "/admin/(operations)/jobs/page": "app/admin/(operations)/jobs/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/admin/(operations)/users/page": "app/admin/(operations)/users/page.js",
-  "/(protected)/jobs/page": "app/(protected)/jobs/page.js"
+  "/login/page": "app/login/page.js",
+  "/admin/page": "app/admin/page.js"
 }
