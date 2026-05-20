@@ -1,9 +1,7 @@
 {
-  "/api/[...path]/route": "app/api/[...path]/route.js",
-  "/api/auth/[...path]/route": "app/api/auth/[...path]/route.js",
-  "/(protected)/chat/page": "app/(protected)/chat/page.js",
-  "/(protected)/jobs/profile/page": "app/(protected)/jobs/profile/page.js",
+  "/(protected)/jobs/page": "app/(protected)/jobs/page.js",
   "/(protected)/jobs/talent/page": "app/(protected)/jobs/talent/page.js",
   "/(protected)/jobs/contracts/page": "app/(protected)/jobs/contracts/page.js",
-  "/(protected)/jobs/page": "app/(protected)/jobs/page.js"
+  "/(protected)/chat/page": "app/(protected)/chat/page.js",
+  "/(protected)/jobs/profile/page": "app/(protected)/jobs/profile/page.js"
 }
