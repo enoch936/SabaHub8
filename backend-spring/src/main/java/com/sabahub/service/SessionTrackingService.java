@@ -204,6 +204,16 @@ public class SessionTrackingService {
         }
     }
 
+    public long getActiveSessionCount() {
+        cleanupExpiredEntries();
+        return inMemorySessions.size();
+    }
+
+    public long getActiveUserCount() {
+        cleanupExpiredEntries();
+        return inMemoryUserSessions.size();
+    }
+
     public Date readSessionExpiry(String jti) {
         if (jti == null || jti.isBlank()) {
             return null;

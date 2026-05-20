@@ -2,6 +2,7 @@ package com.sabahub.web.dto;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 public record ChatThreadSummaryDTO(
         String id,
@@ -18,6 +19,7 @@ public record ChatThreadSummaryDTO(
         String pinnedMessageId,
         boolean pinned,
         boolean muted,
-        boolean archived
+        boolean archived,
+        Map<String, Instant> lastReadAtByUser
 ) {
 }

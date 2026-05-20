@@ -22,3 +22,18 @@ export async function adminTerminateStream(streamId: string, reason: string) {
   const response = await api.post(`/admin/streams/${encodeURIComponent(streamId)}/terminate`, { reason });
   return unwrapResponse(response, "Unable to terminate stream");
 }
+
+export async function adminAnalyticsSummary() {
+  const response = await api.get("/admin/analytics/summary");
+  return unwrapResponse(response, "Unable to load analytics summary") as {
+    users: number;
+    jobs: number;
+    revenue: number;
+    disputesOpen: number;
+  };
+}
+
+export async function adminAnalyticsWorkspace(days = 30) {
+  const response = await api.get("/admin/analytics/workspace", { params: { days } });
+  return unwrapResponse(response, "Unable to load analytics workspace");
+}

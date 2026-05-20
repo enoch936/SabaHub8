@@ -1,5 +1,5 @@
-import AdminCommandCenter from "@/components/admin/AdminCommandCenter";
+import { ModernAdminDashboard } from "@/components/admin/ModernAdminDashboard";
 
 export default function AdminRootPage() {
-  return <AdminCommandCenter />;
+  return <ModernAdminDashboard />;
 }

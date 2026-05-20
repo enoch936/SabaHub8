@@ -1,1 +1,6 @@
-{}
+{
+  "lib/jobStore.ts -> @/lib/api": {
+    "id": "lib/jobStore.ts -> @/lib/api",
+    "files": []
+  }
+}

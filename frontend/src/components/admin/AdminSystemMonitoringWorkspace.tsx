@@ -35,6 +35,7 @@ import {
   YAxis,
 } from "recharts";
 import AdminSectionFocus from "@/components/admin/AdminSectionFocus";
+import { RealtimeMonitoringPanel } from "./RealtimeMonitoringPanel";
 import NoSsrResponsiveContainer from "@/components/charts/NoSsrResponsiveContainer";
 import SoftButton from "@/components/mui/SoftButton";
 import SoftCard from "@/components/mui/SoftCard";
@@ -521,6 +522,8 @@ export default function AdminSystemMonitoringWorkspace({ focusSection }: AdminSy
           </Stack>
         </CardContent>
       </SoftCard>
+
+      <RealtimeMonitoringPanel />
 
       {error ? <Alert severity="error">{error}</Alert> : null}
       {actionStatus ? <Alert severity="info">{actionStatus}</Alert> : null}
