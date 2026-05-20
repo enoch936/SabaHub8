@@ -191,7 +191,15 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", position: "relative" }}>
+    <Box
+      sx={{
+        height: "100vh",
+        position: "relative",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <WorkspaceTopbar
         isDesktop={isDesktop}
         isSidebarOpen={sidebarOpen}
@@ -247,9 +255,12 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
       <Box
         component="main"
         sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          boxSizing: "border-box",
           pt: `${WORKSPACE_HEADER_HEIGHT}px`,
           pb: { xs: "72px", lg: 0 },
-          minHeight: "100vh",
           ml: { lg: `${desktopSidebarWidth}px` },
           mr: { xl: `${desktopRightRailWidth}px` },
           width: {

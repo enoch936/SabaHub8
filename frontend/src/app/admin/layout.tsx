@@ -186,9 +186,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <Box sx={{ 
       display: "flex", 
-      minHeight: "100vh", 
+      height: "100vh", 
       bgcolor: "var(--background)",
-      overflowY: "auto"
+      overflow: "hidden"
     }}>
       <CommandPalette />
       <Box
@@ -235,7 +235,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         width: { xs: "100%", lg: `calc(100% - ${currentSidebarWidth}px)` },
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh"
+        minHeight: 0,
+        overflow: "hidden"
       }}>
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, bgcolor: "var(--background)" }}>
           <AdminNavbar
@@ -259,7 +260,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         <Box 
           component="main" 
           sx={{ 
-            flexGrow: 1, 
+            flexGrow: 1,
+            minHeight: 0,
             p: { xs: 2, sm: 3, md: 5, xl: 6 },
             overflowY: "auto"
           }}
