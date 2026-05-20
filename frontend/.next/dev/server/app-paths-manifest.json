@@ -1,9 +1,10 @@
 {
-  "/api/stories/route": "app/api/stories/route.js",
-  "/api/stats/route": "app/api/stats/route.js",
   "/api/[...path]/route": "app/api/[...path]/route.js",
   "/api/auth/[...path]/route": "app/api/auth/[...path]/route.js",
-  "/page": "app/page.js",
   "/login/page": "app/login/page.js",
-  "/admin/page": "app/admin/page.js"
+  "/login/password/page": "app/login/password/page.js",
+  "/admin/(operations)/chat/page": "app/admin/(operations)/chat/page.js",
+  "/admin/(operations)/disputes/page": "app/admin/(operations)/disputes/page.js",
+  "/admin/(systems)/ai-models/page": "app/admin/(systems)/ai-models/page.js",
+  "/(protected)/jobs/page": "app/(protected)/jobs/page.js"
 }

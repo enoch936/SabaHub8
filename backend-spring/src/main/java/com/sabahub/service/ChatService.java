@@ -477,7 +477,8 @@ public class ChatService {
                 thread.getPinnedMessageId(),
                 containsUserId(thread.getPinnedByUserIds(), currentUserId),
                 containsUserId(thread.getMutedByUserIds(), currentUserId),
-                containsUserId(thread.getArchivedByUserIds(), currentUserId)
+                containsUserId(thread.getArchivedByUserIds(), currentUserId),
+                thread.getLastReadAtByUser()
         );
     }
 

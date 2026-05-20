@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
+import { JetBrains_Mono, Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 
-const sans = Manrope({
+const sans = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
