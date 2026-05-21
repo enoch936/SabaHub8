@@ -1,0 +1,7 @@
+ADATASETES
+models
+__pycache__
+*.pyc
+.git
+.idea
+.vscode

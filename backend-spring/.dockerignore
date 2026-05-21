@@ -1,0 +1,6 @@
+target
+*.log
+*.pid
+.git
+.idea
+.vscode
