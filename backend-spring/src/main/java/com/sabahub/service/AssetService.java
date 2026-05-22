@@ -18,11 +18,13 @@ public class AssetService {
     private final AssetRepository repository;
     private final Cloudinary cloudinary;
     private final AuditService auditService;
+    private final LiveActivityService liveActivityService;
 
-    public AssetService(AssetRepository repository, Cloudinary cloudinary, AuditService auditService) {
+    public AssetService(AssetRepository repository, Cloudinary cloudinary, AuditService auditService, LiveActivityService liveActivityService) {
         this.repository = repository;
         this.cloudinary = cloudinary;
         this.auditService = auditService;
+        this.liveActivityService = liveActivityService;
     }
 
     public List<Asset> list() {
@@ -49,6 +51,18 @@ public class AssetService {
                 "size", saved.getSize() == null ? 0L : saved.getSize(),
                 "publicId", saved.getPublicId()
         ));
+
+        // Live Activity: asset upload
+        liveActivityService.broadcast(
+                "UPLOAD",
+                "New file uploaded: " + (title != null && !title.isBlank() ? title : saved.getPublicId()),
+                ownerId,
+                null,
+                null,
+                "info",
+                Map.of("scope", scope, "mimeType", saved.getMimeType())
+        );
+
         return withDownloadUrl(saved);
     }
 
@@ -82,6 +96,18 @@ public class AssetService {
             "publicId", publicId,
             "signed", true
         ));
+
+        // Live Activity: asset upload
+        liveActivityService.broadcast(
+                "UPLOAD",
+                "New file uploaded: " + (title != null && !title.isBlank() ? title : publicId),
+                ownerId,
+                null,
+                null,
+                "info",
+                Map.of("scope", scope, "mimeType", mimeType, "signed", true)
+        );
+
         return withDownloadUrl(saved);
     }
 

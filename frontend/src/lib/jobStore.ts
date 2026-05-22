@@ -5,6 +5,35 @@ import { toast } from 'sonner';
 import { deleteJob as deleteJobApi, listOpenJobsPage, submitProposal as submitJobProposal, type Job as ApiJob } from './api';
 import type { Job, JobFilters, FreelancerProfile, ProposalPayload, FilterPreset } from './types';
 
+const SAVED_JOBS_STORAGE_KEY = 'sabahub-saved-jobs';
+
+function readSavedJobIds(): string[] {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(SAVED_JOBS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === 'string') : [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+function writeSavedJobIds(jobIds: Set<string>) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(SAVED_JOBS_STORAGE_KEY, JSON.stringify([...jobIds]));
+  } catch (_error) {
+    // Ignore storage failures and keep the in-memory state.
+  }
+}
+
 function normalizeEmployerName(value?: string | null): string | undefined {
   const trimmed = value?.trim();
   return trimmed ? trimmed : undefined;
@@ -150,6 +179,7 @@ interface JobStore {
   hasNextPage: boolean;
   hasPreviousPage: boolean;
   savedPresets: FilterPreset[];
+  loadSavedJobs: () => Promise<void>;
   fetchJobs: (filters?: JobFilters) => Promise<void>;
   toggleSave: (jobId: string) => void;
   removeJob: (jobId: string) => Promise<void>;
@@ -170,6 +200,14 @@ export const useJobStore = create<JobStore>((set, get) => ({
   hasNextPage: false,
   hasPreviousPage: false,
   savedPresets: [],
+
+  loadSavedJobs: async () => {
+    try {
+      set({ savedJobs: new Set(readSavedJobIds()) });
+    } catch (error) {
+      console.error('Failed to load saved jobs from database:', error);
+    }
+  },
 
   fetchJobs: async (filters) => {
     const existing = get().filters;
@@ -267,6 +305,7 @@ export const useJobStore = create<JobStore>((set, get) => ({
       if (next.has(jobId)) next.delete(jobId);
       else next.add(jobId);
       const jobs = state.jobs.map((j) => j.id === jobId ? { ...j, isSaved: next.has(jobId) } : j);
+      writeSavedJobIds(next);
       return { savedJobs: next, jobs };
     });
     // Fire-and-forget API sync

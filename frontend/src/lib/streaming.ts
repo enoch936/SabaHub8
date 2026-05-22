@@ -25,10 +25,32 @@ export function formatViewerCount(count?: number | null) {
 }
 
 export function resolvePreferredPlaybackUrl(stream: Pick<StreamDetail, "liveHlsUrl" | "playbackHlsUrl" | "status">) {
-  if (stream.status === "LIVE" && stream.liveHlsUrl) {
-    return stream.liveHlsUrl;
+  const rawUrl = stream.status === "LIVE" && stream.liveHlsUrl
+    ? stream.liveHlsUrl
+    : stream.playbackHlsUrl ?? stream.liveHlsUrl ?? "";
+
+  return proxyHlsPlaybackUrl(rawUrl);
+}
+
+export function proxyHlsPlaybackUrl(url?: string | null) {
+  if (!url) {
+    return "";
   }
-  return stream.playbackHlsUrl ?? stream.liveHlsUrl ?? "";
+
+  try {
+    const parsed = new URL(url, typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+    if (parsed.pathname.startsWith("/hls/")) {
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+
+    if (parsed.origin.includes("localhost:8081") && parsed.pathname.startsWith("/hls/")) {
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+  } catch {
+    // Fall through to a best-effort rewrite below.
+  }
+
+  return url.replace(/^https?:\/\/localhost:8081\/hls\//, "/hls/").replace(/^https?:\/\/127\.0\.0\.1:8081\/hls\//, "/hls/");
 }
 
 export function resolveStreamPlaybackSource(stream: {

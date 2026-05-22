@@ -2,12 +2,13 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { AppBar, Box, Chip, CircularProgress, Drawer, IconButton, Stack, Toolbar, Typography, useMediaQuery } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
-import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import { Box, CircularProgress, useMediaQuery, Breadcrumbs, Link as MuiLink, Typography, Stack } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import AdminSidebar from "@/components/admin/AdminSidebar";
-import SoftButton from "@/components/mui/SoftButton";
-import { ThemeIconButton } from "@/components/mui/ThemeToggle";
+import { AdminNavbar } from "@/components/admin/AdminNavbar";
+import { CommandPalette } from "@/components/admin/CommandPalette";
+import BottomNavigation from "@/components/BottomNavigation";
 import {
   adminListContent,
   adminListJobs,
@@ -29,7 +30,8 @@ import { isTokenUsable, logout } from "@/lib/auth";
 import { normalizeRoleList } from "@/lib/role-mode";
 import { bootstrapSession, useSession } from "@/lib/session";
 
-const DRAWER_WIDTH = 320;
+const SIDEBAR_WIDTH = 280;
+const SIDEBAR_COLLAPSED_WIDTH = 80;
 
 type ModerationSidebarBadges = {
   platformControlAlerts: number;
@@ -67,6 +69,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const sectionQuery = searchParams.get("section");
+  const sessionUser = useSession((s) => s.user);
   const role = useSession((s) => s.role);
   const clearSession = useSession((s) => s.clear);
   const hydrateFromUser = useSession((s) => s.hydrateFromUser);
@@ -75,24 +78,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const isDarkMode = theme.palette.mode === "dark";
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [expandedParents, setExpandedParents] = useState<Record<string, boolean>>(createInitialExpandedParents);
   const [focusedGroupKey, setFocusedGroupKey] = useState<string | null>(null);
   const [moderationBadges, setModerationBadges] = useState<ModerationSidebarBadges>(emptyModerationBadges);
 
   const activeContext = useMemo(() => resolveActiveAdminContext(pathname, sectionQuery), [pathname, sectionQuery]);
-  const activeAccent = activeContext.group?.accent ?? "#18283b";
-  const activeLabel = activeContext.child?.label ?? activeContext.item?.label ?? "Admin";
-  const activeDescription = activeContext.child
-    ? activeContext.item?.description ?? "Admin tools."
-    : activeContext.item?.description ?? "Operations and controls";
-  const liveStatusLabel = moderationBadges.total > 0 ? `${moderationBadges.total} live alerts` : "Nominal";
-  const focusedGroup = useMemo(
-    () => adminNavigationGroups.find((group) => group.key === focusedGroupKey) ?? activeContext.group ?? adminNavigationGroups[0],
-    [activeContext.group, focusedGroupKey],
-  );
-  const activeGroupLabel = pathname === "/admin" ? "Overview" : activeContext.group?.label ?? focusedGroup.label;
+  
+  const breadcrumbs = useMemo(() => {
+    const crumbs = [{ label: "Admin", href: "/admin" }];
+    if (activeContext.group) crumbs.push({ label: activeContext.group.label, href: "#" });
+    if (activeContext.item) crumbs.push({ label: activeContext.item.label, href: activeContext.item.href });
+    if (activeContext.child) crumbs.push({ label: activeContext.child.label, href: activeContext.child.href });
+    return crumbs;
+  }, [activeContext]);
 
   useEffect(() => {
     const currentParent = adminHierarchy.find((item) => itemMatches(pathname, sectionQuery, item));
@@ -108,36 +108,25 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   }, [activeContext.group?.key]);
 
   useEffect(() => {
-    setSidebarOpen(isDesktop);
-  }, [isDesktop]);
-
-  useEffect(() => {
     let cancelled = false;
-
     const initialize = async () => {
       bootstrapSession();
       const token = localStorage.getItem("auth_token");
-
       if (!isTokenUsable(token)) {
         clearSession();
         localStorage.removeItem("auth_token");
         router.replace("/login");
         return;
       }
-
       try {
         const currentUser = await me();
         const normalizedRoles = normalizeRoleList(currentUser.roles);
         hydrateFromUser(currentUser);
-
         if (!normalizedRoles.includes("ADMIN")) {
           router.replace("/forbidden");
           return;
         }
-
-        if (!cancelled) {
-          setAuthReady(true);
-        }
+        if (!cancelled) setAuthReady(true);
       } catch {
         if (!cancelled) {
           clearSession();
@@ -146,94 +135,36 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         }
       }
     };
-
     void initialize();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [clearSession, hydrateFromUser, router]);
 
   useEffect(() => {
-    if (!authReady || !role) {
-      return;
-    }
-
-    if (role !== "ADMIN") {
-      router.replace("/forbidden");
-    }
-  }, [authReady, role, router]);
-
-  useEffect(() => {
-    if (!isDesktop) {
-      setSidebarOpen(false);
-    }
-  }, [isDesktop, pathname]);
-
-  useEffect(() => {
     let cancelled = false;
-
     const loadModerationBadges = async () => {
-      if (!authReady) {
-        return;
-      }
-
-      const [
-        platformControlResult,
-        securityGovernanceResult,
-        jobsResult,
-        proposalsResult,
-        disputesResult,
-        contentResult,
-        threadsResult,
-      ] = await Promise.allSettled([
-        adminPlatformControl(),
-        adminSecurityGovernance(),
-        adminListJobs(),
-        adminListProposals(),
-        listDisputes(),
-        adminListContent(),
-        listThreads(),
+      if (!authReady) return;
+      const results = await Promise.allSettled([
+        adminPlatformControl(), adminSecurityGovernance(), adminListJobs(),
+        adminListProposals(), listDisputes(), adminListContent(), listThreads()
       ]);
-
-      if (cancelled) {
-        return;
-      }
-
-      const jobs = jobsResult.status === "fulfilled" ? jobsResult.value : [];
-      const disputes = disputesResult.status === "fulfilled" ? disputesResult.value : [];
-      const content = contentResult.status === "fulfilled" ? contentResult.value : [];
-      const proposals = proposalsResult.status === "fulfilled" ? proposalsResult.value : [];
-      const threads = threadsResult.status === "fulfilled" ? threadsResult.value : [];
-      const platformControlAlerts = platformControlResult.status === "fulfilled" ? platformControlResult.value.alerts.length : 0;
-      const securityAlerts = securityGovernanceResult.status === "fulfilled" ? securityGovernanceResult.value.alerts.length : 0;
-
-      const flaggedJobs = jobs.filter((job) => isLikelyFlaggedJob(job)).length;
-      const openDisputes = disputes.filter((dispute) => {
-        const status = (dispute.status ?? "").toUpperCase();
-        return status === "OPEN" || status === "INVESTIGATING";
-      }).length;
-      const unpublishedPolicyUpdates = content.filter((item) => (item.status ?? "").toUpperCase() === "DRAFT").length;
-      const unreadMessages = threads.reduce((total, thread) => total + Math.max(0, Number(thread.unreadCount ?? 0)), 0);
-
+      if (cancelled) return;
+      
+      const [platform, security, jobs, proposals, disputes, content, threads] = results.map(r => r.status === "fulfilled" ? r.value : []);
+      
       setModerationBadges({
-        platformControlAlerts,
-        securityAlerts,
-        flaggedJobs,
-        openDisputes,
-        unpublishedPolicyUpdates,
-        jobs: jobs.length,
-        proposals: proposals.length,
-        unreadMessages,
-        total: platformControlAlerts + securityAlerts + flaggedJobs + openDisputes + unpublishedPolicyUpdates + unreadMessages,
+        platformControlAlerts: platform?.alerts?.length || 0,
+        securityAlerts: security?.alerts?.length || 0,
+        flaggedJobs: jobs?.filter(isLikelyFlaggedJob).length || 0,
+        openDisputes: disputes?.filter((d: any) => ["OPEN", "INVESTIGATING"].includes(d.status?.toUpperCase())).length || 0,
+        unpublishedPolicyUpdates: content?.filter((c: any) => c.status?.toUpperCase() === "DRAFT").length || 0,
+        jobs: jobs?.length || 0,
+        proposals: proposals?.length || 0,
+        unreadMessages: threads?.reduce((t: number, th: any) => t + (th.unreadCount || 0), 0) || 0,
+        total: 0
       });
     };
-
     void loadModerationBadges();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [authReady]);
 
   const onLogout = () => {
@@ -244,198 +175,156 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   if (!authReady) {
     return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "grid",
-          placeItems: "center",
-          background: (themeValue) => themeValue.palette.background.default,
-        }}
-      >
-        <CircularProgress size={28} />
+      <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center", bgcolor: "#0B1120" }}>
+        <CircularProgress size={32} thickness={5} sx={{ color: "#6366F1" }} />
       </Box>
     );
   }
 
+  const currentSidebarWidth = sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH;
+
   return (
-    <Box
-      className="sheet-shell"
-      sx={{
-        minHeight: "100vh",
-        position: "relative",
-        overflow: "hidden",
-        bgcolor: (t) => (t.palette.mode === "light" ? "#f8f8f6" : t.palette.background.default),
-      }}
-    >
-      <AppBar
-        position="fixed"
-        color="inherit"
-        elevation={0}
+    <Box sx={{ 
+      display: "flex", 
+      height: "100vh", 
+      bgcolor: "var(--background)",
+      overflow: "hidden"
+    }}>
+      <CommandPalette />
+      <Box
+        component="aside"
         sx={{
-          bgcolor: theme.palette.background.paper,
-          boxShadow: `0 10px 30px ${alpha("#07101d", isDarkMode ? 0.22 : 0.05)}`,
+          width: currentSidebarWidth,
+          flexShrink: 0,
+          position: "sticky",
+          top: 0,
+          height: "100vh",
+          zIndex: (themeValue) => themeValue.zIndex.drawer + 2,
+          bgcolor: "var(--surface)",
+          backdropFilter: "blur(var(--glass-blur))",
+          borderRight: `1px solid var(--border)`,
+          transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          overflowY: "auto",
+          display: { xs: "none", lg: "block" }
         }}
       >
-        <Toolbar
-          sx={{
-            gap: 1,
-            px: { xs: 1, sm: 1.25 },
-            py: { xs: 0.5, sm: 0 },
-            minHeight: { xs: "64px !important", sm: "60px !important" },
+        <AdminSidebar
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          moderationBadges={moderationBadges}
+          pathname={pathname}
+          sectionQuery={sectionQuery}
+          activeContext={activeContext}
+          expandedParents={expandedParents}
+          focusedGroup={activeContext.group ?? adminNavigationGroups[0]}
+          isDarkMode={isDarkMode}
+          role={role}
+          onFocusGroup={setFocusedGroupKey}
+          onNavigate={(href) => router.push(href)}
+          onToggleParent={(key) => setExpandedParents(p => ({ ...p, [key]: !p[key] }))}
+          user={{ 
+            name: sessionUser?.firstName ? `${sessionUser.firstName} ${sessionUser.lastName}` : "Admin",
+            email: sessionUser?.email || "admin@sabahub.com",
+            avatar: sessionUser?.avatarUrl
           }}
-        >
-          <IconButton
-            onClick={() => setSidebarOpen((prev) => !prev)}
-            edge="start"
-            aria-label={sidebarOpen ? "Hide menu" : "Show menu"}
-            sx={{
-              width: 38,
-              height: 38,
-              borderRadius: 2,
-              bgcolor: alpha(activeAccent, isDarkMode ? 0.16 : 0.05),
-              boxShadow: "0 10px 24px rgba(15,23,42,0.05)",
-            }}
-          >
-            <MenuRoundedIcon sx={{ fontSize: 18 }} />
-          </IconButton>
+        />
+      </Box>
 
-          <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" alignItems="center" sx={{ mb: 0.25 }}>
-              <Chip
-                label={activeGroupLabel}
-                size="small"
-                sx={{
-                  height: 20,
-                  borderRadius: 999,
-                  bgcolor: alpha(activeAccent, isDarkMode ? 0.2 : 0.08),
-                  color: activeAccent,
-                  border: "1px solid",
-                  borderColor: alpha(activeAccent, isDarkMode ? 0.34 : 0.14),
-                  ".MuiChip-label": { px: 0.9, fontSize: 9.8, fontWeight: 800, letterSpacing: "0.04em" },
-                }}
-              />
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10.4 }}>
-                {activeLabel}
-              </Typography>
-            </Stack>
-            <Typography variant="subtitle2" fontWeight={900} sx={{ fontSize: 13.8, lineHeight: 1.08 }}>
-              Admin
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10.2 }}>
-              {activeDescription}
-            </Typography>
-          </Stack>
-
-          <Stack direction="row" spacing={0.75} alignItems="center" sx={{ display: { xs: "none", md: "flex" } }}>
-            <Chip
-              label={liveStatusLabel}
-              size="small"
-              color={moderationBadges.total > 0 ? "warning" : "success"}
-              variant={moderationBadges.total > 0 ? "filled" : "outlined"}
-              sx={{ height: 22, ".MuiChip-label": { px: 1, fontSize: 10.2, fontWeight: 800 } }}
-            />
-            <Chip
-              label={role ?? "ADMIN"}
-              size="small"
-              variant="outlined"
-              sx={{
-                height: 22,
-                borderColor: alpha(activeAccent, isDarkMode ? 0.32 : 0.16),
-                ".MuiChip-label": { px: 1, fontSize: 10.2, fontWeight: 700 },
-              }}
-            />
-          </Stack>
-
-          <ThemeIconButton
-            size="small"
-            sx={{
-              width: 38,
-              height: 38,
-              borderRadius: 2,
-              bgcolor: alpha(activeAccent, isDarkMode ? 0.16 : 0.05),
-              border: "1px solid",
-              borderColor: alpha(activeAccent, isDarkMode ? 0.34 : 0.14),
-              "&:hover": { bgcolor: alpha(activeAccent, isDarkMode ? 0.22 : 0.08) },
-            }}
-          />
-
-          <SoftButton
-            onClick={onLogout}
-            variant="outlined"
-            color="error"
-            size="small"
-            sx={{
-              px: { xs: 1.15, sm: 1.6 },
-              minWidth: { xs: "auto", sm: 94 },
-              borderRadius: 2.6,
-            }}
-          >
-            Logout
-          </SoftButton>
-        </Toolbar>
-      </AppBar>
-
-      <Box>
-        <Drawer
-          variant={isDesktop ? "persistent" : "temporary"}
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            width: DRAWER_WIDTH,
-            flexShrink: 0,
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH,
-              boxSizing: "border-box",
-              top: { xs: 64, sm: 60 },
-              height: { xs: "calc(100vh - 64px)", sm: "calc(100vh - 60px)" },
-              bgcolor: theme.palette.background.paper,
-              boxShadow: "none",
-              overflowX: "hidden",
-            },
-          }}
-        >
-          <AdminSidebar
-            activeContext={activeContext}
-            expandedParents={expandedParents}
-            focusedGroup={focusedGroup}
+      <Box sx={{ 
+        flexGrow: 1, 
+        width: { xs: "100%", lg: `calc(100% - ${currentSidebarWidth}px)` },
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 0,
+        overflow: "hidden"
+      }}>
+        <Box sx={{ position: "sticky", top: 0, zIndex: 10, bgcolor: "var(--background)" }}>
+          <AdminNavbar
             isDarkMode={isDarkMode}
-            moderationBadges={moderationBadges}
-            pathname={pathname}
-            role={role}
-            sectionQuery={sectionQuery}
-            onFocusGroup={setFocusedGroupKey}
-            onNavigate={(href) => router.push(href)}
-            onToggleParent={(itemKey) => {
-              setExpandedParents((prev) => ({ ...prev, [itemKey]: !prev[itemKey] }));
+            notificationCount={moderationBadges.unreadMessages}
+            user={{ 
+              name: sessionUser?.firstName || "Admin",
+              avatar: sessionUser?.avatarUrl
             }}
+            onThemeToggle={() => {
+              const currentTheme = document.documentElement.getAttribute('data-theme');
+              const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+              document.documentElement.setAttribute('data-theme', nextTheme);
+              document.documentElement.classList.toggle('dark');
+              localStorage.setItem('sabahub-theme', nextTheme);
+            }}
+            onLogout={onLogout}
           />
-        </Drawer>
+        </Box>
 
-        <Box
-          component="main"
-          sx={{
+        <Box 
+          component="main" 
+          sx={{ 
             flexGrow: 1,
-            ml: isDesktop && sidebarOpen ? `${DRAWER_WIDTH}px` : 0,
-            width: `calc(100% - ${isDesktop && sidebarOpen ? DRAWER_WIDTH : 0}px)`,
-            p: 0,
-            maxWidth: "100%",
-            transition: "margin-left 220ms ease, width 220ms ease",
+            minHeight: 0,
+            p: { xs: 2, sm: 3, md: 5, xl: 6 },
+            overflowY: "auto"
           }}
         >
-          <Toolbar sx={{ minHeight: { xs: 64, sm: 60 } }} />
-          <Box
-            sx={{
-              minHeight: { xs: "calc(100vh - 64px)", sm: "calc(100vh - 60px)" },
-              overflowX: "hidden",
-              position: "relative",
-            }}
-          >
-            <Box sx={{ position: "relative", zIndex: 1, px: { xs: 1.5, md: 2.5 }, py: { xs: 1.25, md: 2 } }}>
-              {children}
-            </Box>
+          <Box sx={{ mb: 5 }}>
+            <Breadcrumbs 
+              separator={<NavigateNextIcon sx={{ fontSize: 14, opacity: 0.4 }} />} 
+              sx={{ 
+                mb: 1.5, 
+                "& .MuiBreadcrumbs-li": { 
+                  fontSize: 11, 
+                  fontWeight: 800, 
+                  opacity: 0.5, 
+                  textTransform: "uppercase", 
+                  letterSpacing: "0.1em" 
+                } 
+              }}
+            >
+              {breadcrumbs.map((crumb, idx) => (
+                <MuiLink 
+                  key={idx} 
+                  underline="hover" 
+                  color="inherit" 
+                  href={crumb.href}
+                  sx={{ 
+                    display: "flex", 
+                    alignItems: "center",
+                    cursor: crumb.href === "#" ? "default" : "pointer"
+                  }}
+                >
+                  {crumb.label}
+                </MuiLink>
+              ))}
+            </Breadcrumbs>
+            
+            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+              <Box>
+                <Typography variant="h4" className="section-title" sx={{ 
+                  fontSize: { xs: 28, md: 36 }, 
+                  letterSpacing: "-0.03em",
+                  color: "text.primary" 
+                }}>
+                  {activeContext.child?.label || activeContext.item?.label || "Command Center"}
+                </Typography>
+                <Typography variant="body1" className="body-text" sx={{ 
+                  mt: 0.75, 
+                  opacity: 0.6, 
+                  fontSize: { xs: 14, md: 16 },
+                  maxWidth: 600
+                }}>
+                  {activeContext.item?.description || "Manage and monitor your enterprise operations."}
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
+
+          <Box sx={{ flexGrow: 1 }}>
+            {children}
           </Box>
         </Box>
+      </Box>
+      <Box sx={{ display: { lg: 'none' } }}>
+        <BottomNavigation />
       </Box>
     </Box>
   );

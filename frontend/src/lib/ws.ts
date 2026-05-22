@@ -87,6 +87,10 @@ export function subscribeStreamSignals(streamId: string, onMessage: (body: Recor
   return registerSubscription(`/topic/streams/${streamId}/signal`, onMessage);
 }
 
+export function subscribeLiveActivities(onMessage: (body: Record<string, unknown>) => void): Subscription | null {
+  return registerSubscription(`/topic/live-activities`, onMessage);
+}
+
 export function sendStreamChat(streamId: string, payload: Record<string, unknown>) {
   if (!client || !connected) return;
   client.publish({ destination: `/app/streams/${streamId}/chat.send`, body: JSON.stringify(payload) });

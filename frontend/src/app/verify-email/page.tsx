@@ -39,7 +39,7 @@ export default function VerifyEmailPage() {
   }, [token]);
 
   return (
-    <Box sx={{ minHeight: "100vh", py: 8, bgcolor: "#ffffff" }}>
+    <Box sx={{ minHeight: "100vh", py: 8, bgcolor: "transparent" }}>
       <Container maxWidth="sm">
         <Card sx={{ borderRadius: 4 }}>
           <CardContent>

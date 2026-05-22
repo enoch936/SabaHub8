@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
-import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { JetBrains_Mono, Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 
-const sans = Manrope({
+const sans = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
@@ -21,9 +21,24 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata: Metadata = {
   title: "SabaHub | Clean Hiring Workspace",
   description: "SabaHub keeps hiring, freelance work, contracts, payments, and team operations in one clean workspace.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -41,13 +56,17 @@ export default function RootLayout({
   try {
     var root = document.documentElement;
     var stored = localStorage.getItem('sabahub-theme');
-    var theme = (stored === 'dark' || stored === 'light')
-      ? stored
-      : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var theme = (stored === 'dark' || stored === 'light') ? stored : 'dark';
     root.classList.remove('dark', 'light');
     root.classList.add(theme);
     root.setAttribute('data-theme', theme);
     root.style.colorScheme = theme;
+    
+    // Reset zoom to 100%
+    if (typeof window !== 'undefined' && window.visualViewport) {
+      document.body.style.zoom = '100%';
+      document.documentElement.style.zoom = '100%';
+    }
   } catch (_e) {}
 })();
             `.trim(),

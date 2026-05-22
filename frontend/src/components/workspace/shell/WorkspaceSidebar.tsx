@@ -54,7 +54,10 @@ export default function WorkspaceSidebar({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        bgcolor: "#ffffff",
+        background: "linear-gradient(145deg, var(--glass-strong), var(--glass-subtle))",
+        borderRight: "1px solid var(--glass-border)",
+        boxShadow: "var(--shadow-soft)",
+        backdropFilter: "blur(28px) saturate(1.35)",
         transition: "width 220ms ease",
       }}
     >
@@ -69,9 +72,10 @@ export default function WorkspaceSidebar({
             borderRadius: "22px",
             px: 1.25,
             py: 1.15,
-            border: "1px solid rgba(15, 23, 42, 0.08)",
-            background: "#ffffff",
-            boxShadow: "0 14px 28px rgba(15,23,42,0.04)",
+            border: "1px solid var(--glass-border)",
+            background: "linear-gradient(145deg, var(--glass-strong), var(--glass-subtle))",
+            boxShadow: "var(--shadow-soft)",
+            backdropFilter: "blur(18px)",
           }}
         >
           <Box
@@ -79,7 +83,7 @@ export default function WorkspaceSidebar({
               width: 40,
               height: 40,
               borderRadius: "15px",
-              bgcolor: "#111827",
+              background: "linear-gradient(135deg, var(--neon-blue), var(--neon-violet))",
               color: "#ffffff",
               display: "grid",
               placeItems: "center",
@@ -107,8 +111,9 @@ export default function WorkspaceSidebar({
                 width: 36,
                 height: 36,
                 borderRadius: "12px",
-                bgcolor: "#ffffff",
-                boxShadow: "0 10px 24px rgba(15,23,42,0.05)",
+                bgcolor: "var(--glass)",
+                border: "1px solid var(--glass-border)",
+                boxShadow: "var(--shadow-soft)",
               }}
             >
               {toggleIcon}
@@ -155,8 +160,8 @@ export default function WorkspaceSidebar({
                       aria-label={item.label}
                       className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition ${
                         active
-                          ? "bg-gray-900 text-white shadow-[0_14px_28px_rgba(15,23,42,0.16)]"
-                          : "text-gray-700 hover:bg-white hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
+                          ? "bg-[linear-gradient(135deg,rgba(56,189,248,0.35),rgba(139,92,246,0.28))] text-white shadow-[0_18px_44px_rgba(56,189,248,0.2)] ring-1 ring-white/20"
+                          : "text-gray-600 hover:bg-white/10 hover:text-gray-900 hover:shadow-md"
                       }`}
                     >
                       {icon}
@@ -174,9 +179,11 @@ export default function WorkspaceSidebar({
             mt: 2,
             borderRadius: "22px",
             p: 2,
-            border: "1px solid rgba(15, 23, 42, 0.08)",
-            background: "#ffffff",
-            color: "#0f172a",
+            border: "1px solid var(--glass-border)",
+            background: "linear-gradient(145deg, var(--glass-strong), var(--glass-subtle))",
+            color: "var(--foreground)",
+            boxShadow: "var(--shadow-soft)",
+            backdropFilter: "blur(18px)",
           }}
         >
           <p className="text-sm font-semibold">Live</p>
@@ -235,8 +242,10 @@ export default function WorkspaceSidebar({
           top: WORKSPACE_HEADER_HEIGHT,
           height: `calc(100% - ${WORKSPACE_HEADER_HEIGHT}px)`,
           border: "none",
-          boxShadow: "0 18px 50px rgba(15, 23, 42, 0.14)",
-          bgcolor: "#ffffff",
+          boxShadow: "var(--shadow-soft-lg)",
+          bgcolor: "transparent",
+          background: "linear-gradient(145deg, var(--glass-strong), var(--glass-subtle))",
+          backdropFilter: "blur(28px) saturate(1.35)",
         },
       }}
     >

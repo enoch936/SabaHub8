@@ -130,27 +130,27 @@ export default function WorkspaceRightRail({ isOpen = true }: { isOpen?: boolean
       }}
     >
       <div className="space-y-4">
-        <div className="rounded-[28px] border border-gray-200/80 bg-white p-5 shadow-[0_18px_44px_rgba(15,23,42,0.04)]">
+        <div className="glass-card rounded-[28px] p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
             <Sparkles className="h-4 w-4 text-gray-700" />
             Collaboration Pulse
           </div>
           <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-3 py-3">
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/10 px-3 py-3 backdrop-blur-md">
               <div className="flex items-center gap-2 text-sm text-gray-700">
                 <MessageSquareMore className="h-4 w-4 text-gray-500" />
                 Unread messages
               </div>
               <span className="text-sm font-semibold text-gray-900">{unreadMessages}</span>
             </div>
-            <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-3 py-3">
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/10 px-3 py-3 backdrop-blur-md">
               <div className="flex items-center gap-2 text-sm text-gray-700">
                 <BellDot className="h-4 w-4 text-gray-500" />
                 Active alerts
               </div>
               <span className="text-sm font-semibold text-gray-900">{unreadNotifications}</span>
             </div>
-            <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-3 py-3">
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/10 px-3 py-3 backdrop-blur-md">
               <div className="flex items-center gap-2 text-sm text-gray-700">
                 <ShieldCheck className="h-4 w-4 text-gray-500" />
                 Saved items
@@ -164,7 +164,7 @@ export default function WorkspaceRightRail({ isOpen = true }: { isOpen?: boolean
         </div>
 
         {mode === "jobs" ? (
-          <div className="rounded-[28px] border border-gray-200/80 bg-white p-5 shadow-[0_18px_44px_rgba(15,23,42,0.04)]">
+          <div className="glass-card rounded-[28px] p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <BriefcaseBusiness className="h-4 w-4 text-gray-700" />
               Live Market Radar
@@ -172,7 +172,7 @@ export default function WorkspaceRightRail({ isOpen = true }: { isOpen?: boolean
             <p className="mt-2 text-sm text-gray-500">{totalCount} live opportunities indexed from the backend.</p>
             <div className="mt-4 space-y-3">
               {marketItems.map((job) => (
-                <div key={job.id} className="rounded-2xl border border-gray-100 bg-gray-50 p-3">
+                <div key={job.id} className="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-md">
                   <p className="text-sm font-semibold text-gray-900 line-clamp-2">{job.title}</p>
                   <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
                     <span>{resolveEmployerDisplayName(job as ApiJob | UiJob)}</span>
@@ -187,7 +187,7 @@ export default function WorkspaceRightRail({ isOpen = true }: { isOpen?: boolean
               ))}
             </div>
             {skillRadar.length ? (
-              <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-gray-900">
+              <div className="mt-4 rounded-2xl border border-white/10 bg-white/10 p-4 text-gray-900 backdrop-blur-md">
                 <p className="text-xs uppercase tracking-[0.18em] text-gray-400">Skill velocity</p>
                 <div className="mt-3 space-y-2">
                   {skillRadar.map(([skill, count]) => (
@@ -203,14 +203,14 @@ export default function WorkspaceRightRail({ isOpen = true }: { isOpen?: boolean
         ) : null}
 
         {mode === "talent" ? (
-          <div className="rounded-[28px] border border-gray-200/80 bg-white p-5 shadow-[0_18px_44px_rgba(15,23,42,0.04)]">
+          <div className="glass-card rounded-[28px] p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <UsersRound className="h-4 w-4 text-gray-700" />
               Talent Signals
             </div>
             <div className="mt-4 space-y-3">
               {featuredTalent.map((person) => (
-                <div key={person.id} className="rounded-2xl border border-gray-100 bg-gray-50 p-3">
+                <div key={person.id} className="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-md">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-gray-900">{person.name}</p>
@@ -231,23 +231,23 @@ export default function WorkspaceRightRail({ isOpen = true }: { isOpen?: boolean
         ) : null}
 
         {mode === "wallet" ? (
-          <div className="rounded-[28px] border border-gray-200/80 bg-white p-5 shadow-[0_18px_44px_rgba(15,23,42,0.04)]">
+          <div className="glass-card rounded-[28px] p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <WalletCards className="h-4 w-4 text-gray-700" />
               Escrow Watch
             </div>
             <div className="mt-4 grid gap-3">
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-gray-900">
+              <div className="rounded-2xl border border-white/10 bg-white/10 p-4 text-gray-900 backdrop-blur-md">
                 <p className="text-xs uppercase tracking-[0.18em] text-gray-400">Available</p>
                 <p className="mt-2 text-2xl font-semibold">
                   {wallet?.currency ?? "ETB"} {(wallet?.availableBalance ?? wallet?.balance ?? 0).toLocaleString()}
                 </p>
               </div>
-              <div className="rounded-2xl bg-gray-50 px-4 py-3">
+              <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-md">
                 <p className="text-xs uppercase tracking-[0.16em] text-gray-400">Escrow held</p>
                 <p className="mt-1 text-sm font-semibold text-gray-900">{wallet?.escrowHeld ?? 0}</p>
               </div>
-              <div className="rounded-2xl bg-gray-50 px-4 py-3">
+              <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-md">
                 <p className="text-xs uppercase tracking-[0.16em] text-gray-400">Pending payouts</p>
                 <p className="mt-1 text-sm font-semibold text-gray-900">{wallet?.pendingPayouts ?? 0}</p>
               </div>
@@ -255,16 +255,16 @@ export default function WorkspaceRightRail({ isOpen = true }: { isOpen?: boolean
           </div>
         ) : null}
 
-        <div className="rounded-[28px] border border-gray-200/80 bg-white p-5 shadow-[0_18px_44px_rgba(15,23,42,0.04)]">
+        <div className="glass-card rounded-[28px] p-5">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-gray-900">Operations Guide</p>
             <ChevronRight className="h-4 w-4 text-gray-400" />
           </div>
           <div className="mt-4 space-y-3 text-sm text-gray-600">
-            <p className="rounded-2xl bg-gray-50 px-3 py-3">
+            <p className="rounded-2xl border border-white/10 bg-white/10 px-3 py-3 backdrop-blur-md">
               Keep job, talent, escrow, and trust activities inside the same workspace loop.
             </p>
-            <p className="rounded-2xl bg-gray-50 px-3 py-3">
+            <p className="rounded-2xl border border-white/10 bg-white/10 px-3 py-3 backdrop-blur-md">
               The layout stays connected to the current backend routes and data.
             </p>
           </div>

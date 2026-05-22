@@ -9,15 +9,17 @@ export function useMessageAssets(messages: ChatMessage[]) {
   const [assetsById, setAssetsById] = useState<AssetMap>({});
   const [loadingAssetIds, setLoadingAssetIds] = useState<string[]>([]);
 
+  const safeMessages = Array.isArray(messages) ? messages : [];
+
   const assetIds = useMemo(() => {
     const next = new Set<string>();
-    messages.forEach((message) => {
+    safeMessages.forEach((message) => {
       if (message.type === "ASSET" && message.assetId?.trim()) {
         next.add(message.assetId.trim());
       }
     });
     return Array.from(next);
-  }, [messages]);
+  }, [safeMessages]);
 
   useEffect(() => {
     const missingIds = assetIds.filter((assetId) => !(assetId in assetsById) && !loadingAssetIds.includes(assetId));

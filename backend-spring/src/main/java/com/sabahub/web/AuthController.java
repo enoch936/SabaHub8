@@ -5,12 +5,17 @@ import com.sabahub.repository.UserRepository;
 import com.sabahub.service.AuditService;
 import com.sabahub.service.AuthService;
 import com.sabahub.service.SessionTrackingService;
+import com.sabahub.service.VerificationDeliveryException;
 import com.sabahub.web.dto.AuthRequest;
 import com.sabahub.web.dto.RegisterRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +31,8 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final AuthService authService;
     private final JwtService jwtService;
@@ -62,8 +69,19 @@ public class AuthController {
             var response = authService.login(request);
             trackSession(response.token(), response.email(), httpRequest);
             return ResponseEntity.ok(response);
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
+        } catch (DataAccessException e) {
+            log.warn("Login failed because the data store is unavailable: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", "Service unavailable. Please try again."));
+        } catch (VerificationDeliveryException e) {
+            log.warn("Login verification delivery failed: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            log.warn("Login failed while completing verification or token setup: {}", e.getMessage(), e);
+            return ResponseEntity.status(503).body(Map.of("error", "Unable to complete login right now. Please try again."));
         }
     }
 
@@ -96,6 +114,15 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
+        } catch (DataAccessException e) {
+            log.warn("2FA verification failed because the data store is unavailable: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", "Service unavailable. Please try again."));
+        } catch (VerificationDeliveryException e) {
+            log.warn("2FA verification delivery failed: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            log.warn("2FA verification failed while completing login: {}", e.getMessage(), e);
+            return ResponseEntity.status(503).body(Map.of("error", "Unable to complete verification right now. Please try again."));
         }
     }
 
@@ -107,6 +134,15 @@ public class AuthController {
             return ResponseEntity.ok(Map.of("success", true, "message", "Verification code sent"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
+        } catch (DataAccessException e) {
+            log.warn("2FA resend failed because the data store is unavailable: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", "Service unavailable. Please try again."));
+        } catch (VerificationDeliveryException e) {
+            log.warn("2FA resend delivery failed: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            log.warn("2FA resend failed while sending verification code: {}", e.getMessage(), e);
+            return ResponseEntity.status(503).body(Map.of("error", "Unable to send verification code right now. Please try again."));
         }
     }
 

@@ -32,19 +32,22 @@ public class DisputeService {
     private final AuditService auditService;
     private final EscrowService escrowService;
     private final NotificationService notificationService;
+    private final LiveActivityService liveActivityService;
 
     public DisputeService(DisputeRepository disputeRepository,
                           ContractRepository contractRepository,
                           CurrentUserService currentUserService,
                           AuditService auditService,
                           EscrowService escrowService,
-                          NotificationService notificationService) {
+                          NotificationService notificationService,
+                          LiveActivityService liveActivityService) {
         this.disputeRepository = disputeRepository;
         this.contractRepository = contractRepository;
         this.currentUserService = currentUserService;
         this.auditService = auditService;
         this.escrowService = escrowService;
         this.notificationService = notificationService;
+        this.liveActivityService = liveActivityService;
     }
 
     public Dispute openDispute(String contractId, String reason, String details, List<String> evidenceAssetIds) {
@@ -97,6 +100,17 @@ public class DisputeService {
                 "opened_by_role", saved.getOpenedByRole().name(),
                 "reason", safeText(reason)
         ));
+
+        // Live Activity: dispute opened
+        liveActivityService.broadcast(
+                "REPORT",
+                "New dispute opened for contract: " + saved.getContractTitle(),
+                me.getId(),
+                me.getUsername(),
+                null,
+                "warning",
+                Map.of("contractId", contractId, "reason", safeText(reason))
+        );
 
         return saved;
     }

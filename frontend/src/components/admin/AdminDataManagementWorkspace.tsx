@@ -16,6 +16,7 @@ import {
   Switch,
   Typography,
 } from "@mui/material";
+import { MediaManager } from "./MediaManager";
 import BackupRoundedIcon from "@mui/icons-material/BackupRounded";
 import DataObjectRoundedIcon from "@mui/icons-material/DataObjectRounded";
 import PlayCircleRoundedIcon from "@mui/icons-material/PlayCircleRounded";
@@ -532,6 +533,11 @@ export default function AdminDataManagementWorkspace({ focusSection }: AdminData
           </Stack>
         </CardContent>
       </SoftCard>
+
+      <MediaManager 
+        files={[]}
+        onUpload={(f) => console.log(f)}
+      />
 
       {error ? <Alert severity="error">{error}</Alert> : null}
       {actionStatus ? <Alert severity="info">{actionStatus}</Alert> : null}

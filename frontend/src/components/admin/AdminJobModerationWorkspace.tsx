@@ -203,7 +203,14 @@ export default function AdminJobModerationWorkspace() {
         });
       }
     } catch (err) {
-      const message = err instanceof Error && err.message ? err.message : "Failed to load admin jobs.";
+      let message = err instanceof Error && err.message ? err.message : "Failed to load admin jobs.";
+      
+      // Check if it's a 403 Forbidden error (user not admin)
+      if (message.includes("403") || message.toLowerCase().includes("forbidden")) {
+        message = "Admin access required. You do not have the ADMIN role. " +
+                 "Please complete admin setup first by visiting /admin-bootstrap";
+      }
+      
       setError(message);
       setJobs([]);
       setOperations([]);
@@ -395,7 +402,24 @@ export default function AdminJobModerationWorkspace() {
         </CardContent>
       </SoftCard>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? (
+        <Alert 
+          severity="error"
+          action={
+            error.includes("/admin-bootstrap") && (
+              <SoftButton
+                size="small"
+                href="/admin-bootstrap"
+                sx={{ color: "error.main" }}
+              >
+                Setup Admin
+              </SoftButton>
+            )
+          }
+        >
+          {error}
+        </Alert>
+      ) : null}
       {actionStatus ? <Alert severity="info">{actionStatus}</Alert> : null}
 
       <Grid container spacing={2}>

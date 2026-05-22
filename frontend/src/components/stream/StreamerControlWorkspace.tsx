@@ -5,15 +5,20 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Mic2, Play, Radio, Shield, Video } from "lucide-react";
 import { toast } from "sonner";
 import {
+  addThreadParticipants,
   createStream,
+  createThread,
   getStreamIngestInfo,
   joinStream,
   kickStreamViewer,
   me,
   muteStreamViewer,
+  searchUsersByName,
   startStreamRecord,
   stopStreamRecord,
   updateStreamRecord,
+  type AppUser,
+  type ChatThread,
   type StreamDetail,
   type StreamIngestInfo,
   type StreamMediaKind,
@@ -145,6 +150,11 @@ export function StreamerControlWorkspace() {
   const [browserRunnerNote, setBrowserRunnerNote] = useState("");
   const [connectedPeers, setConnectedPeers] = useState(0);
   const [workspaceTab, setWorkspaceTab] = useState<"START" | "JOIN" | "MANAGE">("START");
+  const [collaborationThread, setCollaborationThread] = useState<ChatThread | null>(null);
+  const [collaboratorQuery, setCollaboratorQuery] = useState("");
+  const [collaboratorResults, setCollaboratorResults] = useState<AppUser[]>([]);
+  const [selectedCollaborators, setSelectedCollaborators] = useState<AppUser[]>([]);
+  const [collaborationLoading, setCollaborationLoading] = useState(false);
   const localMediaRef = useRef<MediaStream | null>(null);
   const signalSubscriptionRef = useRef<Subscription | null>(null);
   const peerConnectionsRef = useRef<Map<string, BroadcastPeerState>>(new Map());
@@ -180,6 +190,35 @@ export function StreamerControlWorkspace() {
   );
 
   const watchHref = stream ? buildStreamWatchHref(stream.id) : null;
+  const collaborationChatHref = collaborationThread ? `/chat?thread=${encodeURIComponent(collaborationThread.id)}` : null;
+
+  useEffect(() => {
+    const trimmed = collaboratorQuery.trim();
+    if (trimmed.length < 2) {
+      setCollaboratorResults([]);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void searchUsersByName(trimmed)
+        .then((response) => {
+          if (!cancelled) {
+            setCollaboratorResults(response.results.slice(0, 6));
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setCollaboratorResults([]);
+          }
+        });
+    }, 220);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [collaboratorQuery]);
 
   const buildStreamPayload = () => ({
     title: draft.title,
@@ -554,6 +593,48 @@ export function StreamerControlWorkspace() {
     await copyValue("Watch link", `${window.location.origin}${watchHref}`);
   };
 
+  const toggleCollaborator = (user: AppUser) => {
+    setSelectedCollaborators((current) => {
+      if (current.some((selected) => selected.id === user.id)) {
+        return current.filter((selected) => selected.id !== user.id);
+      }
+      return [...current, user];
+    });
+  };
+
+  const createCollaborationRoom = async () => {
+    setCollaborationLoading(true);
+    try {
+      const currentUser = await me();
+      const participantIds = Array.from(new Set([currentUser.id, ...selectedCollaborators.map((user) => user.id)].filter(Boolean)));
+
+      if (participantIds.length < 2) {
+        toast.error("Pick at least one collaborator to create a real collaboration room.");
+        return;
+      }
+
+      if (collaborationThread) {
+        await addThreadParticipants(collaborationThread.id, participantIds.filter((userId) => userId !== currentUser.id));
+        toast.success("Collaborators added to the live room.");
+        return;
+      }
+
+      const created = await createThread({
+        participantIds,
+        threadType: "CHANNEL",
+        groupName: `${draft.title} live collaboration`,
+        channelDescription: "Backstage coordination for the live stream.",
+        memberMessagingEnabled: true,
+      });
+      setCollaborationThread(created);
+      toast.success("Collaboration room ready.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to create collaboration room.");
+    } finally {
+      setCollaborationLoading(false);
+    }
+  };
+
   const toggleEncoderSetup = async () => {
     if (!stream) {
       return;
@@ -573,6 +654,54 @@ export function StreamerControlWorkspace() {
           Live studio
         </div>
         <p className="mt-2 text-sm text-gray-500">Build the stream, preview real video, then go live with a viewer page that feels closer to TikTok and YouTube instead of raw encoder settings.</p>
+
+        <div className="mt-6 rounded-[28px] border border-gray-200 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 p-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.2)]">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
+                <Play className="h-3.5 w-3.5" />
+                One-tap live start
+              </div>
+              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">Tap once to go live, then co-create in real time.</h2>
+              <p className="mt-3 text-sm leading-7 text-white/72">
+                This keeps the creator flow simple like YouTube or TikTok, while the collaboration room, chat, and viewer presence stay fully real.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => void goLiveNow()}
+                disabled={saving}
+                className="inline-flex items-center rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(16,185,129,0.28)] transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Radio className="mr-2 h-4 w-4" />
+                {stream?.status === "LIVE" ? "Restart live" : stream ? "Go live now" : "Create and go live"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setWorkspaceTab("JOIN")}
+                className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"
+              >
+                Invite collaborators
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-white/6 px-4 py-3 text-sm text-white/75">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Status</div>
+              <div className="mt-1 text-base font-semibold text-white">{stream ? formatStreamStatus(stream.status) : "Ready"}</div>
+            </div>
+            <div className="rounded-2xl bg-white/6 px-4 py-3 text-sm text-white/75">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Audience</div>
+              <div className="mt-1 text-base font-semibold text-white">{formatViewerCount(stream?.maxParticipants ?? draft.maxParticipants)}</div>
+            </div>
+            <div className="rounded-2xl bg-white/6 px-4 py-3 text-sm text-white/75">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Collaboration</div>
+              <div className="mt-1 text-base font-semibold text-white">{collaborationThread ? "Room ready" : "Not started"}</div>
+            </div>
+          </div>
+        </div>
 
         <div className="mt-6 space-y-4">
           <StreamVideoStage
@@ -777,6 +906,89 @@ export function StreamerControlWorkspace() {
             ) : null}
           </div>
         </form>
+
+        <div className="mt-6 rounded-[28px] border border-gray-200 bg-gray-50 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold uppercase tracking-[0.14em] text-gray-500">Real collaboration</div>
+              <h3 className="mt-2 text-xl font-semibold text-gray-950">Bring collaborators into the live room</h3>
+              <p className="mt-1 text-sm leading-6 text-gray-600">Search teammates, add them to a shared chat room, and open the live conversation directly from this page.</p>
+            </div>
+            {collaborationChatHref ? (
+              <Link href={collaborationChatHref} className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700">
+                Open collaboration chat
+              </Link>
+            ) : null}
+          </div>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="grid gap-3">
+              <input
+                value={collaboratorQuery}
+                onChange={(event) => setCollaboratorQuery(event.target.value)}
+                placeholder="Search teammates by name"
+                className="w-full rounded-[24px] border border-gray-200 px-4 py-3 text-sm outline-none"
+              />
+              <div className="flex flex-wrap gap-2">
+                {selectedCollaborators.map((user) => (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => toggleCollaborator(user)}
+                    className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700"
+                  >
+                    {user.fullName || user.username || user.email || user.id} ×
+                  </button>
+                ))}
+              </div>
+              <div className="grid gap-2">
+                {collaboratorResults.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">
+                    Search results will appear here. Pick teammates, then create a real collaboration room.
+                  </div>
+                ) : (
+                  collaboratorResults.map((user) => {
+                    const isSelected = selectedCollaborators.some((selected) => selected.id === user.id);
+                    return (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => toggleCollaborator(user)}
+                        className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition ${
+                          isSelected ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-gray-200 bg-white text-gray-700"
+                        }`}
+                      >
+                        <span>
+                          <span className="block font-semibold text-gray-950">{user.fullName || user.username || user.email || user.id}</span>
+                          <span className="block text-xs text-gray-500">{user.email || user.username || user.id}</span>
+                        </span>
+                        <span className="text-xs font-semibold uppercase tracking-[0.14em]">{isSelected ? "Added" : "Add"}</span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col justify-between gap-3 rounded-[24px] border border-gray-200 bg-white p-4 lg:w-72">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Room status</div>
+                <div className="mt-2 text-lg font-semibold text-gray-950">{collaborationThread ? collaborationThread.groupName || collaborationThread.id : "Not created yet"}</div>
+                <p className="mt-1 text-sm leading-6 text-gray-600">
+                  {collaborationThread ? "Collaboration room is active and can be opened in chat." : "Create a shared space for live notes, guests, and backstage coordination."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void createCollaborationRoom()}
+                disabled={collaborationLoading}
+                className="rounded-full bg-gray-950 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {collaborationLoading ? "Creating..." : collaborationThread ? "Add selected collaborators" : "Create collaboration room"}
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <aside className="space-y-6">
