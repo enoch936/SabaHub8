@@ -100,22 +100,21 @@ export const SmartJobCard = memo(function SmartJobCard({
 
   const prevMedia = (e: React.MouseEvent) => {
     e.stopPropagation();
-<<<<<<< HEAD
-    setMediaIndex(prev => (prev - 1 + totalMedia) % totalMedia);
+    setMediaIndex(prev => (prev - 1 + allMedia.length) % allMedia.length);
   };
 
   if (viewMode === "list") {
     return (
       <div
-        className="group relative rounded-[24px] backdrop-blur-md bg-white/40 border border-white/20 shadow-sm transition-all duration-300 hover:bg-gray-100/50 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] hover:border-white/40 p-5 cursor-pointer flex items-start justify-between gap-6"
-        onClick={() => {}}
+        className={`group relative rounded-[24px] ${glassStyles.base} ${glassStyles.hover} p-5 cursor-pointer flex items-start justify-between gap-6`}
+        onClick={() => setShowDetail(true)}
       >
         <div className="flex items-start gap-5 flex-1 min-w-0">
           <div className="h-20 w-20 rounded-2xl bg-gray-950 flex items-center justify-center text-white shrink-0 shadow-xl overflow-hidden border border-white/20">
-            {activeMedia && activeMedia.kind === 'image' ? (
+            {activeMedia && activeMedia.type === 'image' ? (
               <img src={activeMedia.url} className="w-full h-full object-cover" alt="Job" />
             ) : (
-              <Building2 className="h-8 w-8 text-gray-500/50" />
+              <Briefcase className="h-8 w-8 text-gray-500/50" />
             )}
           </div>
           <div className="flex-1 min-w-0 py-1">
@@ -130,7 +129,7 @@ export const SmartJobCard = memo(function SmartJobCard({
             
             <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
               <div className="flex items-center gap-1.5 text-gray-900">
-                <Building2 className="h-3.5 w-3.5" />
+                <Zap className="h-3.5 w-3.5 text-amber-500" />
                 {job.budget.type === "FIXED" ? `$${(job.budget.min / 1000).toFixed(0)}k+` : `$${job.budget.min}/hr`}
               </div>
               <div className="flex items-center gap-1.5">
@@ -144,6 +143,10 @@ export const SmartJobCard = memo(function SmartJobCard({
               <div className="flex items-center gap-1.5">
                 <Users className="h-3.5 w-3.5" />
                 <span>{job.applicantCount} Applicants</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                <span>{new Date(job.postedAt).toLocaleDateString()}</span>
               </div>
             </div>
 
@@ -171,60 +174,14 @@ export const SmartJobCard = memo(function SmartJobCard({
             onClick={(e) => { e.stopPropagation(); onApply(job); }}
             className="h-11 px-6 rounded-2xl bg-gray-950 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-gray-800 transition-all active:scale-95 flex items-center justify-center gap-2"
           >
-            Apply
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
-            className="h-11 px-6 rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 hover:bg-white/30 text-gray-800 transition-all active:scale-95 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-2"
-          >
-            Detailed
-          </button>
-        </div>
-      </div>
-    );
-  }
-=======
-    setMediaIndex(prev => (prev - 1 + allMedia.length) % allMedia.length);
-  };
->>>>>>> fix/vercel-build-lockfile
-
-  if (viewMode === "list") {
-    return (
-      <div
-        className={`group relative rounded-2xl ${glassStyles.base} ${glassStyles.hover} p-3 cursor-pointer flex items-center justify-between gap-4`}
-        onClick={() => setShowDetail(true)}
-      >
-        <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="h-10 w-10 rounded-xl bg-gray-950 flex items-center justify-center text-white shrink-0 shadow-lg overflow-hidden">
-            {assets.images[0] ? (
-              <img src={assets.images[0]} className="w-full h-full object-cover" alt="Job" />
-            ) : (
-              <Briefcase className="h-5 w-5" />
-            )}
-          </div>
-          <div className="min-w-0">
-            <h3 className="font-bold text-gray-950 text-sm truncate tracking-tight">{job.title}</h3>
-            <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-              <span className="text-gray-900">
-                {job.budget.type === "FIXED" ? `$${(job.budget.min / 1000).toFixed(0)}k+` : `$${job.budget.min}/hr`}
-              </span>
-              <span>•</span>
-              <span className="truncate opacity-60">{job.employerName}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={(e) => { e.stopPropagation(); onApply(job); }}
-            className="h-8 px-4 rounded-xl bg-gray-950 text-white text-[9px] font-black uppercase tracking-widest shadow-lg"
-          >
+            <Target className="h-4 w-4" />
             Apply
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); setShowDetail(true); }}
-            className={`h-8 px-4 rounded-xl ${glassStyles.action} text-[9px] font-black uppercase tracking-widest shadow-lg`}
+            className={`h-11 px-6 rounded-2xl ${glassStyles.action} text-[10px] font-black uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-2`}
           >
+            <Eye className="h-4 w-4" />
             Detailed
           </button>
         </div>
