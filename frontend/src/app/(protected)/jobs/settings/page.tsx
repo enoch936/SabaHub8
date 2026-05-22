@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   BadgeCheck,
@@ -113,15 +113,15 @@ function isSettingsSectionId(value: string | null): value is SettingsSectionId {
 function toEditableProfile(incoming: Partial<UserProfile> | null | undefined): Partial<UserProfile> {
   const next = incoming ?? {};
   const rawPhone = next.phoneNumber ?? "";
-  const matchedDialCode = [...COUNTRY_OPTIONS]
+  const matched dialCode = [...COUNTRY_OPTIONS]
     .sort((a, b) => b.dialCode.length - a.dialCode.length)
     .find((country) => rawPhone.startsWith(country.dialCode));
 
   return {
     ...next,
     timezone: next.timezone ?? detectTimeZoneFromBrowser(),
-    phoneCountryCode: next.phoneCountryCode ?? matchedDialCode?.dialCode ?? "+251",
-    phoneNumber: matchedDialCode ? rawPhone.slice(matchedDialCode.dialCode.length) : rawPhone.replace(/[^\d]/g, ""),
+    phoneCountryCode: next.phoneCountryCode ?? matched dialCode?.dialCode ?? "+251",
+    phoneNumber: matched dialCode ? rawPhone.slice(matched dialCode.dialCode.length) : rawPhone.replace(/[^\d]/g, ""),
   };
 }
 
@@ -148,7 +148,7 @@ function formatSessionMeta(session: ActiveSession) {
   return parts.length > 0 ? parts.join(" • ") : session.device;
 }
 
-export default function WorkspaceSettingsPage() {
+function WorkspaceSettingsContent() {
   const searchParams = useSearchParams();
   const setProfilePictureUrl = useSession((state) => state.setProfilePictureUrl);
 
@@ -1180,5 +1180,17 @@ export default function WorkspaceSettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function WorkspaceSettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="rounded-[28px] border border-gray-200/80 bg-white p-6 shadow-[0_18px_44px_rgba(15,23,42,0.04)]">
+        <p className="text-sm text-gray-500">Loading workspace settings...</p>
+      </div>
+    }>
+      <WorkspaceSettingsContent />
+    </Suspense>
   );
 }

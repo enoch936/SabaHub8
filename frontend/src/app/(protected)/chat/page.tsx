@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  Suspense,
   useDeferredValue,
   useEffect,
   useMemo,
@@ -123,7 +124,7 @@ async function resolveUsersFromQuery(query: string) {
   return results;
 }
 
-export default function ChatPage() {
+function ChatContent() {
   const searchParams = useSearchParams();
   const typingResetRef = useRef<number | null>(null);
 
@@ -1210,5 +1211,20 @@ export default function ChatPage() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-full items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-slate-900" />
+          <p className="text-sm font-medium text-slate-600">Initializing workspace chat...</p>
+        </div>
+      </div>
+    }>
+      <ChatContent />
+    </Suspense>
   );
 }

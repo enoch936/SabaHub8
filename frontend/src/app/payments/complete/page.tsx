@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { finalizeChapaFunding, finalizeStripeFunding } from "@/lib/api";
 import {
@@ -17,7 +17,7 @@ function buildMessage(payload: WalletProviderMessage) {
   } catch {}
 }
 
-export default function PaymentCompletePage() {
+function PaymentCompleteContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"processing" | "success" | "error">("processing");
   const [message, setMessage] = useState("Finalizing your payment and syncing your wallet...");
@@ -112,5 +112,21 @@ export default function PaymentCompletePage() {
         </button>
       </div>
     </main>
+  );
+}
+
+export default function PaymentCompletePage() {
+  return (
+    <Suspense fallback={
+      <main className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#f8fafc_0%,#eef2ff_100%)] px-6">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/70">
+          <div className="mb-4 h-3 w-3 animate-pulse rounded-full bg-slate-200" />
+          <h1 className="text-2xl font-semibold text-slate-900">Loading payment details...</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-600">Please wait while we initialize the secure session.</p>
+        </div>
+      </main>
+    }>
+      <PaymentCompleteContent />
+    </Suspense>
   );
 }

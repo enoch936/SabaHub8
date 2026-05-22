@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function VerificationSettingsRedirectPage() {
+function VerificationSettingsRedirectContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -14,4 +14,12 @@ export default function VerificationSettingsRedirectPage() {
   }, [router, searchParams]);
 
   return <div className="text-sm text-gray-500">Opening verification settings...</div>;
+}
+
+export default function VerificationSettingsRedirectPage() {
+  return (
+    <Suspense fallback={<div className="text-sm text-gray-500">Loading redirect...</div>}>
+      <VerificationSettingsRedirectContent />
+    </Suspense>
+  );
 }
