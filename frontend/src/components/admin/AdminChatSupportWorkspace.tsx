@@ -25,17 +25,42 @@ export function AdminChatSupportWorkspace() {
     }}>
       {/* Left Panel: Conversations */}
       <Box sx={{ width: 320, borderRight: `1px solid ${alpha(theme.palette.divider, 0.1)}` }}>
-        <ConversationList />
+        {/* <ConversationList 
+          conversations={[]} 
+          activeId={null} 
+          onSelect={() => {}} 
+          resolveTitle={() => ""} 
+          resolveSubtitle={() => ""} 
+        /> */}
+        <Box sx={{ p: 2 }}>Conversation List Placeholder</Box>
       </Box>
 
       {/* Center Panel: Stream */}
       <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", bgcolor: alpha(theme.palette.background.default, 0.2) }}>
-        <ChatConversation />
+        {/* <ChatConversation 
+          conversationId="" 
+          title="" 
+          subtitle="" 
+          currentUserId={null} 
+          messages={[]} 
+          onSend={() => {}} 
+        /> */}
+        <Box sx={{ p: 2 }}>Chat Conversation Placeholder</Box>
       </Box>
 
       {/* Right Panel: Details/Moderation */}
       <Box sx={{ width: 300, borderLeft: `1px solid ${alpha(theme.palette.divider, 0.1)}` }}>
-        <ConversationDetailsRail />
+        {/* <ConversationDetailsRail 
+          activeConversation={null} 
+          currentUserId={null} 
+          memberDirectory={[]} 
+          messages={[]} 
+          assetsById={{}} 
+          title="" 
+          subtitle="" 
+          canManageConversation={false} 
+        /> */}
+        <Box sx={{ p: 2 }}>Details Rail Placeholder</Box>
       </Box>
     </Box>
   );

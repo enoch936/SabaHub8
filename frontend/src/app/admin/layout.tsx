@@ -69,10 +69,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const sectionQuery = searchParams.get("section");
-  const sessionUser = useSession((s) => s.user);
+  const fullName = useSession((s) => s.fullName);
+  const email = useSession((s) => s.email);
+  const avatarUrl = useSession((s) => s.profilePictureUrl);
   const role = useSession((s) => s.role);
   const clearSession = useSession((s) => s.clear);
   const hydrateFromUser = useSession((s) => s.hydrateFromUser);
+
+  const sessionUser = useMemo(() => ({
+    firstName: fullName?.split(" ")[0] || "",
+    lastName: fullName?.split(" ").slice(1).join(" ") || "",
+    email: email,
+    avatarUrl: avatarUrl,
+  }), [fullName, email, avatarUrl]);
 
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
@@ -149,7 +158,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       ]);
       if (cancelled) return;
       
-      const [platform, security, jobs, proposals, disputes, content, threads] = results.map(r => r.status === "fulfilled" ? r.value : []);
+      const platform = results[0].status === "fulfilled" ? (results[0].value as any) : null;
+      const security = results[1].status === "fulfilled" ? (results[1].value as any) : null;
+      const jobs = results[2].status === "fulfilled" ? (results[2].value as any) : [];
+      const proposals = results[3].status === "fulfilled" ? (results[3].value as any) : [];
+      const disputes = results[4].status === "fulfilled" ? (results[4].value as any) : [];
+      const content = results[5].status === "fulfilled" ? (results[5].value as any) : [];
+      const threads = results[6].status === "fulfilled" ? (results[6].value as any) : [];
       
       setModerationBadges({
         platformControlAlerts: platform?.alerts?.length || 0,

@@ -14,7 +14,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as ChartTooltip,
   Legend,
   ResponsiveContainer,
   ScatterChart,
@@ -22,7 +22,8 @@ import {
   ZAxis,
 } from "recharts";
 import { alpha, useTheme } from "@mui/material/styles";
-import { Box, Card, Grid, Typography, Stack, Tab, Tabs } from "@mui/material";
+import { Box, Card, Grid as MuiGrid, Typography, Stack, Tab, Tabs, Tooltip } from "@mui/material";
+const Grid = MuiGrid as any;
 import { useState } from "react";
 
 // Mock Data
@@ -215,7 +216,7 @@ export const AdvancedChartsSection = () => {
 
       {activeTab === 0 && (
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={8}>
+          <Grid xs={12} lg={8}>
             <ChartWrapper title="User Activity & Growth">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={userActivityData}>
@@ -228,7 +229,7 @@ export const AdvancedChartsSection = () => {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} />
                   <YAxis axisLine={false} tickLine={false} />
-                  <Tooltip
+                  <ChartTooltip
                     contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }}
                   />
                   <Area
@@ -245,7 +246,7 @@ export const AdvancedChartsSection = () => {
             </ChartWrapper>
           </Grid>
 
-          <Grid item xs={12} lg={4}>
+          <Grid xs={12} lg={4}>
             <ChartWrapper title="Category Distribution">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -260,20 +261,20 @@ export const AdvancedChartsSection = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <ChartTooltip />
                   <Legend verticalAlign="bottom" height={36} />
                 </PieChart>
               </ResponsiveContainer>
             </ChartWrapper>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <ChartWrapper title="Activity Intensity (Heatmap)">
               <Heatmap />
             </ChartWrapper>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <ChartWrapper title="Global Traffic (Geo)">
               <GeoVisualization />
             </ChartWrapper>
@@ -283,35 +284,35 @@ export const AdvancedChartsSection = () => {
 
       {activeTab === 1 && (
         <Grid container spacing={3}>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <ChartWrapper title="Live API Traffic & WebSocket Load">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={userActivityData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip />
+                  <ChartTooltip />
                   <Line type="stepAfter" dataKey="active" stroke="#8B5CF6" strokeWidth={2} dot={false} />
                   <Line type="stepAfter" dataKey="new" stroke="#EC4899" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartWrapper>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
              <Card sx={{ p: 3, borderRadius: '24px', bgcolor: alpha('#10B981', 0.05), border: '1px solid', borderColor: alpha('#10B981', 0.2) }}>
                 <Typography variant="overline" color="success.main" fontWeight={900}>SYSTEM HEALTH</Typography>
                 <Typography variant="h3" fontWeight={900}>99.98%</Typography>
                 <Typography variant="body2" color="text.secondary">All systems operational across 12 clusters.</Typography>
              </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
              <Card sx={{ p: 3, borderRadius: '24px', bgcolor: alpha('#6366F1', 0.05), border: '1px solid', borderColor: alpha('#6366F1', 0.2) }}>
                 <Typography variant="overline" color="primary.main" fontWeight={900}>LATENCY (P99)</Typography>
                 <Typography variant="h3" fontWeight={900}>142ms</Typography>
                 <Typography variant="body2" color="text.secondary">Global edge response time average.</Typography>
              </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
              <Card sx={{ p: 3, borderRadius: '24px', bgcolor: alpha('#F59E0B', 0.05), border: '1px solid', borderColor: alpha('#F59E0B', 0.2) }}>
                 <Typography variant="overline" color="warning.main" fontWeight={900}>ACTIVE SOCKETS</Typography>
                 <Typography variant="h3" fontWeight={900}>8,421</Typography>
@@ -323,20 +324,20 @@ export const AdvancedChartsSection = () => {
 
       {activeTab === 2 && (
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={6}>
+          <Grid xs={12} lg={6}>
             <ChartWrapper title="AI Token Usage & Efficiency">
                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={categoryPerformanceData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip />
+                    <ChartTooltip />
                     <Bar dataKey="value" fill="#8B5CF6" radius={[10, 10, 0, 0]} />
                   </BarChart>
                </ResponsiveContainer>
             </ChartWrapper>
           </Grid>
-          <Grid item xs={12} lg={6}>
+          <Grid xs={12} lg={6}>
             <ChartWrapper title="Model Latency Distribution">
                <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -344,7 +345,7 @@ export const AdvancedChartsSection = () => {
                     <XAxis type="number" dataKey="x" name="stature" unit="ms" />
                     <YAxis type="number" dataKey="y" name="weight" unit="tok" />
                     <ZAxis type="number" dataKey="z" range={[60, 400]} name="score" />
-                    <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                    <ChartTooltip cursor={{ strokeDasharray: '3 3' }} />
                     <Scatter name="GPT-4" data={[{x: 120, y: 400, z: 200}, {x: 150, y: 300, z: 260}, {x: 180, y: 500, z: 400}]} fill="#8B5CF6" />
                     <Scatter name="Llama-3" data={[{x: 40, y: 1000, z: 100}, {x: 60, y: 800, z: 150}, {x: 80, y: 900, z: 120}]} fill="#10B981" />
                   </ScatterChart>

@@ -16,7 +16,7 @@ export const TRANSITION_PRESETS = {
     stiffness: 300,
     damping: 30,
   },
-};
+} as const;
 
 export const MOTION_VARIANTS = {
   // Sidebar expansion / collapsing
@@ -39,4 +39,4 @@ export const MOTION_VARIANTS = {
     rest: { scale: 1 },
     hover: { scale: 1.02, transition: TRANSITION_PRESETS.snappy },
   },
-};
+} as const;

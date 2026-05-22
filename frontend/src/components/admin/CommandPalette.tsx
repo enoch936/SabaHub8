@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, TextField, List, ListItem, ListItemText, ListItemIcon, InputAdornment, Box } from "@mui/material";
+import { Dialog, TextField, List, ListItem, ListItemButton, ListItemText, ListItemIcon, InputAdornment, Box } from "@mui/material";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useRouter } from "next/navigation";
@@ -38,12 +38,12 @@ export function CommandPalette() {
         />
         <List>
           {filtered.map((cmd) => (
-            <ListItem 
-              key={cmd.href} 
-              button 
-              onClick={() => { router.push(cmd.href); setOpen(false); }}
-            >
-              <ListItemText primary={cmd.label} />
+            <ListItem key={cmd.href} disablePadding>
+              <ListItemButton 
+                onClick={() => { router.push(cmd.href); setOpen(false); }}
+              >
+                <ListItemText primary={cmd.label} />
+              </ListItemButton>
             </ListItem>
           ))}
         </List>

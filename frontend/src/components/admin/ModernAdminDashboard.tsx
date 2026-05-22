@@ -6,7 +6,8 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Box, Stack, Container, Typography, useTheme, alpha, Grid, Skeleton, Alert, Button } from "@mui/material";
+import { Box, Stack, Container, Typography, useTheme, alpha, Grid as MuiGrid, Skeleton, Alert, Button } from "@mui/material";
+const Grid = MuiGrid as any;
 import { motion } from "framer-motion";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
@@ -200,7 +201,7 @@ export function ModernAdminDashboard() {
         >
           <Grid container spacing={2} mb={4}>
             {data.headlineMetrics.map((metric) => (
-              <Grid item xs={12} sm={6} md={3} key={metric.id}>
+              <Grid xs={12} sm={6} md={3} key={metric.id}>
                 <MetricCard
                   icon={getMetricIcon(metric.id)}
                   label={metric.label}
@@ -218,7 +219,7 @@ export function ModernAdminDashboard() {
         {data.insights.length > 0 && (
           <Grid container spacing={3} mb={4}>
             {data.insights.map((insight, idx) => (
-              <Grid item xs={12} md={4} key={idx}>
+              <Grid xs={12} md={4} key={idx}>
                 <GlassCard sx={{ height: '100%', borderLeft: `4px solid ${insight.tone === 'positive' ? '#10B981' : insight.tone === 'negative' ? '#EF4444' : '#6366F1'}` }}>
                   <Box p={2.5}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>{insight.title}</Typography>
@@ -305,10 +306,10 @@ export function ModernAdminDashboard() {
           transition={{ duration: 0.3, delay: 0.4 }}
         >
           <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} md={5}>
+            <Grid xs={12} md={5}>
               <ActivityFeed maxItems={8} />
             </Grid>
-            <Grid item xs={12} md={7}>
+            <Grid xs={12} md={7}>
               <GlassCard>
                 <GlassCardHeader
                   title="Operational Metrics"
@@ -317,7 +318,7 @@ export function ModernAdminDashboard() {
                 <Box p={2}>
                    <Grid container spacing={2}>
                       {data.operationsMetrics.map(metric => (
-                        <Grid item xs={6} key={metric.id}>
+                        <Grid xs={6} key={metric.id}>
                            <Box sx={{ p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.03), border: `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
                               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>{metric.label}</Typography>
                               <Typography variant="h6" sx={{ fontWeight: 700 }}>{metric.value}</Typography>

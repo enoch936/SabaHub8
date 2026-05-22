@@ -7,7 +7,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { particleUtils } from "@/lib/motion-design";
 
 interface Particle {
   id: number;
@@ -117,24 +116,22 @@ export const FloatingParticles: React.FC<FloatingParticlesProps> = ({
         ctx.fill();
 
         // Draw connections
-        if (interactive && distance < 100) {
-          ctx.strokeStyle = particle.color || "#38bdf8";
-          ctx.globalAlpha = particle.opacity * 0.3;
-          ctx.lineWidth = 0.5;
-          ctx.beginPath();
-          ctx.moveTo(particle.x, particle.y);
+        ctx.strokeStyle = particle.color || "#38bdf8";
+        ctx.globalAlpha = particle.opacity * 0.3;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(particle.x, particle.y);
 
-          particlesRef.current.forEach((other) => {
-            const dx2 = other.x - particle.x;
-            const dy2 = other.y - particle.y;
-            const distance2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+        particlesRef.current.forEach((other) => {
+          const dx2 = other.x - particle.x;
+          const dy2 = other.y - particle.y;
+          const distance2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
 
-            if (distance2 < 100) {
-              ctx.lineTo(other.x, other.y);
-            }
-          });
-          ctx.stroke();
-        }
+          if (distance2 < 100) {
+            ctx.lineTo(other.x, other.y);
+          }
+        });
+        ctx.stroke();
       });
 
       ctx.globalAlpha = 1;

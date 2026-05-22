@@ -324,8 +324,8 @@ export const InteractiveHoverElement: React.FC<
     const rotationY = ((mouseX - centerX) / centerX) * -10;
 
     setTransform({
-      rotateX,
-      rotateY,
+      rotateX: rotationX,
+      rotateY: rotationY,
       scale: 1.05,
     });
   };

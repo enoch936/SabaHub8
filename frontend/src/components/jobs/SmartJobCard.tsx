@@ -396,7 +396,7 @@ export const SmartJobCard = memo(function SmartJobCard({
                     <span className="px-2 py-0.5 rounded-md bg-emerald-500 text-white text-[8px] font-black uppercase tracking-widest shadow-sm">
                       {job.status}
                     </span>
-                    <AIMatchBadge score={job.aiMatchScore} />
+                    <AIMatchBadge score={job.aiMatchScore ?? 0} />
                   </div>
                   <h2 className="text-xl md:text-2xl font-black text-gray-950 leading-tight line-clamp-2">
                     {job.title}

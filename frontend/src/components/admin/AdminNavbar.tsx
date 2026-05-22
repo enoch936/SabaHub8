@@ -61,7 +61,6 @@ export function AdminNavbar({
   const notifications = useNotifications((s) => s.items);
   const markRead = useNotifications((s) => s.markRead);
   const markAllRead = useNotifications((s) => s.markAllRead);
-  const dismiss = useNotifications((s) => s.dismiss);
 
   return (
     <Box sx={{ width: "100%", height: 68 }}>
@@ -166,7 +165,6 @@ export function AdminNavbar({
                 notifications={notifications as any[]}
                 onMarkAsRead={markRead}
                 onClearAll={markAllRead}
-                onDismiss={dismiss}
               />
             </Popover>
 

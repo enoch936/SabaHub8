@@ -32,6 +32,8 @@ import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import { GlassCard } from "./GlassCard";
 import { motion } from "framer-motion";
 
+const MotionTableRow = motion(TableRow);
+
 export interface TableColumn<T> {
   key: keyof T;
   label: string;
@@ -271,12 +273,11 @@ export function DataTable<T extends Record<string, any>>({
             </TableHead>
             <TableBody>
               {paginatedData.map((row, idx) => (
-                <motion.tr
+                <MotionTableRow
                   key={String(row[rowKey])}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: idx * 0.02 }}
-                  as={TableRow}
                   onClick={() => onRowClick?.(row)}
                   sx={{
                     backgroundColor: striped && idx % 2 === 1
@@ -316,7 +317,7 @@ export function DataTable<T extends Record<string, any>>({
                         : String(row[col.key])}
                     </TableCell>
                   ))}
-                </motion.tr>
+                </MotionTableRow>
               ))}
             </TableBody>
           </Table>

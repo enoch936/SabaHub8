@@ -130,7 +130,7 @@ export default function LandingPage() {
   const [playingVideo, setPlayingVideo] = useState<number | null>(null);
   const [audience, setAudience] = useState<keyof typeof HERO_AUDIENCES>("employer");
   const [videoStoriesState, setVideoStoriesState] = useState<typeof VIDEO_STORIES>(VIDEO_STORIES);
-  const [heroStatsState, setHeroStatsState] = useState(HERO_STATS);
+  const [heroStatsState, setHeroStatsState] = useState<Array<{ label: string; value: string }>>([...HERO_STATS]);
 
   const currentAudience = HERO_AUDIENCES[audience];
   const navigationItems = NAV_ITEMS.filter((item) => item.href !== "#categories");
@@ -534,9 +534,8 @@ export default function LandingPage() {
                 <div className="space-y-4">
                   {displayJobs.map((job) => (
                     <Link
-                      key={job.id ?? job.title}
-                      href="/jobs"
-                      className="block rounded-[1.45rem] border border-white/15 bg-white/10 p-5 transition-all hover:-translate-y-1 hover:bg-white/20"
+                      key={job.title}
+                      href="/jobs"                      className="block rounded-[1.45rem] border border-white/15 bg-white/10 p-5 transition-all hover:-translate-y-1 hover:bg-white/20"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -576,7 +575,7 @@ export default function LandingPage() {
                 <div className="space-y-4">
                   {displayFreelancers.map((person) => (
                     <Link
-                      key={person.id ?? person.name}
+                      key={person.name}
                       href="/register"
                       className="block rounded-[1.45rem] border border-white/15 bg-white/10 p-5 transition-all hover:-translate-y-1 hover:bg-white/20"
                     >

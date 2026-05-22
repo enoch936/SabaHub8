@@ -81,7 +81,7 @@ export function GlassCard({
     ...sx,
   };
 
-  const Component = animated ? motion(Card) : Card;
+  const Component = (animated ? motion(Card) : Card) as any;
   const animationProps = animated ? {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
@@ -92,7 +92,7 @@ export function GlassCard({
     <Component
       {...(animated ? animationProps : {})}
       className={combinedClassName}
-      sx={cardSx}
+      sx={cardSx as any}
       {...props}
     >
       {children}

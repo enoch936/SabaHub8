@@ -1,6 +1,7 @@
 "use client";
 
-import { Box, Grid, Typography, useTheme, alpha } from "@mui/material";
+import { Box, Grid as MuiGrid, Typography, useTheme, alpha } from "@mui/material";
+const Grid = MuiGrid as any;
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { GlassCard, GlassCardHeader } from "./GlassCard";
 
@@ -27,16 +28,16 @@ export function RealtimeMonitoringPanel() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Grid container spacing={3}>
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <GlassCard><MetricGauge label="CPU Usage" value={42} unit="%" color="#06B6D4" /></GlassCard>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <GlassCard><MetricGauge label="RAM Usage" value={68} unit="%" color="#8B5CF6" /></GlassCard>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <GlassCard><MetricGauge label="API Latency" value={124} unit="ms" color="#F59E0B" /></GlassCard>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid xs={12} md={3}>
           <GlassCard><MetricGauge label="Containers" value={12} unit="" color="#10B981" /></GlassCard>
         </Grid>
       </Grid>

@@ -36,7 +36,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/lib/session";
 import { workspaceRoutes } from "@/lib/workspace-routes";
-import { MarketplaceMediaPreview } from "./MarketplaceMediaPreview";
 import { formatCurrencyRange, formatPrice } from "@/lib/utils";
 import type { 
   MarketplaceSearchResponse, 

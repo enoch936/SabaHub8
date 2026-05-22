@@ -20,7 +20,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { alpha, useTheme } from "@mui/material/styles";
-import { Box, Card, Stack, Typography, Grid } from "@mui/material";
+import { Box, Card, Stack, Typography, Grid as MuiGrid } from "@mui/material";
+const Grid = MuiGrid as any;
 
 interface SparklineData {
   value: number;
@@ -314,7 +315,7 @@ export const HeroAnalyticsSection = () => {
 
       <Grid container spacing={3}>
         {kpis.map((kpi, index) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={kpi.label}>
+          <Grid xs={12} sm={6} md={4} lg={3} key={kpi.label}>
             <KPICard {...kpi} index={index} />
           </Grid>
         ))}
