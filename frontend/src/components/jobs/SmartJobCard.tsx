@@ -179,44 +179,90 @@ export const SmartJobCard = memo(function SmartJobCard({
     };
   };
 
-  const actionButtons = (
-    <div className="flex flex-wrap items-center gap-2">
-      <button
-        type="button"
-        onClick={() => onApply(job)}
-        className="inline-flex items-center gap-1.5 rounded-xl bg-gray-950 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+  const prevMedia = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMediaIndex(prev => (prev - 1 + totalMedia) % totalMedia);
+  };
+
+  if (viewMode === "list") {
+    return (
+      <div
+        className="group relative rounded-[24px] backdrop-blur-md bg-white/40 border border-white/20 shadow-sm transition-all duration-300 hover:bg-gray-100/50 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] hover:border-white/40 p-5 cursor-pointer flex items-start justify-between gap-6"
+        onClick={() => {}}
       >
-        <Send className="h-3.5 w-3.5" />
-        Apply
-      </button>
-      <button
-        type="button"
-        onClick={() => setExpanded((value) => !value)}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-white px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-      >
-        {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-        View
-      </button>
-      <button
-        type="button"
-        onClick={() => onMessage?.(job)}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-white px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-      >
-        <MessageSquare className="h-3.5 w-3.5" />
-        Contact
-      </button>
-      {onDelete ? (
-        <button
-          type="button"
-          onClick={() => onDelete(job.id)}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          Delete
-        </button>
-      ) : null}
-    </div>
-  );
+        <div className="flex items-start gap-5 flex-1 min-w-0">
+          <div className="h-20 w-20 rounded-2xl bg-gray-950 flex items-center justify-center text-white shrink-0 shadow-xl overflow-hidden border border-white/20">
+            {activeMedia && activeMedia.kind === 'image' ? (
+              <img src={activeMedia.url} className="w-full h-full object-cover" alt="Job" />
+            ) : (
+              <Building2 className="h-8 w-8 text-gray-500/50" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0 py-1">
+            <div className="flex items-center gap-3 mb-1.5">
+              <h3 className="font-black text-gray-950 text-lg truncate tracking-tight group-hover:text-indigo-600 transition-colors">
+                {job.title}
+              </h3>
+              <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 text-[8px] font-black uppercase tracking-widest border border-emerald-500/20">
+                {job.status}
+              </span>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
+              <div className="flex items-center gap-1.5 text-gray-900">
+                <Building2 className="h-3.5 w-3.5" />
+                {job.budget.type === "FIXED" ? `$${(job.budget.min / 1000).toFixed(0)}k+` : `$${job.budget.min}/hr`}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" />
+                <span className="truncate">{job.employerName}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5" />
+                <span>{job.isRemote ? "Remote" : job.workLocation ?? "On-site"}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                <span>{job.applicantCount} Applicants</span>
+              </div>
+            </div>
+
+            <p className="text-[13px] text-gray-600 font-medium line-clamp-2 leading-relaxed mb-4 max-w-4xl">
+              {job.description}
+            </p>
+
+            <div className="flex flex-wrap gap-1.5">
+              {job.skills.slice(0, 6).map(skill => (
+                <span key={skill} className="text-[9px] font-black px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 uppercase tracking-tight">
+                  {skill}
+                </span>
+              ))}
+              {job.skills.length > 6 && (
+                <span className="text-[9px] font-black px-3 py-1 rounded-lg bg-gray-50 border border-gray-100 text-gray-400 uppercase tracking-tight">
+                  +{job.skills.length - 6}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 self-center opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); onApply(job); }}
+            className="h-11 px-6 rounded-2xl bg-gray-950 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-gray-800 transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            Apply
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
+            className="h-11 px-6 rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 hover:bg-white/30 text-gray-800 transition-all active:scale-95 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-2"
+          >
+            Detailed
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
