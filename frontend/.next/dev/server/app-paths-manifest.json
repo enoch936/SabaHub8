@@ -1,6 +1,0 @@
-{
-  "/api/[...path]/route": "app/api/[...path]/route.js",
-  "/api/auth/[...path]/route": "app/api/auth/[...path]/route.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/(protected)/jobs/page": "app/(protected)/jobs/page.js"
-}

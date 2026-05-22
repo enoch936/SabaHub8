@@ -1,0 +1,154 @@
+/**
+ * Modern Premium Glass Card Component
+ * Strictly follows enterprise styling: 18px blur, scale(1.02) hover
+ */
+
+"use client";
+
+import { ReactNode } from "react";
+import { Box, Card, CardProps, useTheme } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { motion } from "framer-motion";
+
+interface GlassCardProps extends Omit<CardProps, "ref"> {
+  children: ReactNode;
+  hover?: boolean;
+  accentColor?: string;
+  glass?: boolean;
+  animated?: boolean;
+  premium?: boolean;
+  gradient?: boolean;
+  depth?: boolean;
+}
+
+export function GlassCard({
+  children,
+  hover = true,
+  accentColor,
+  glass = true,
+  animated = false,
+  premium = true,
+  gradient = false,
+  depth = true,
+  sx,
+  className = "",
+  ...props
+}: GlassCardProps) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
+  const baseColor = accentColor || "#6366F1";
+  
+  const combinedClassName = [
+    premium ? "glass-card-premium" : "glass-card",
+    gradient ? "gradient-highlight" : "",
+    depth ? "layered-depth" : "",
+    className
+  ].filter(Boolean).join(" ");
+
+  const cardSx = {
+    position: "relative",
+    overflow: "hidden",
+    borderRadius: "24px",
+    border: `1px solid var(--border)`,
+    background: "var(--surface)",
+    backdropFilter: glass ? "blur(var(--glass-blur))" : "none",
+    boxShadow: "var(--glass-shadow)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+
+    ...(hover && {
+      "&:hover": {
+        transform: "scale(1.02)",
+        borderColor: baseColor,
+        boxShadow: `0 0 20px ${alpha(baseColor, 0.2)}`,
+        "&::after": {
+          borderColor: alpha(baseColor, 0.4),
+          boxShadow: `inset 0 0 10px ${alpha(baseColor, 0.1)}`,
+        }
+      },
+    }),
+    
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      inset: 0,
+      pointerEvents: "none",
+      borderRadius: "inherit",
+      border: "1px solid transparent",
+      transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+    },
+
+    ...sx,
+  };
+
+  const Component = animated ? motion(Card) : Card;
+  const animationProps = animated ? {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  } : {};
+
+  return (
+    <Component
+      {...(animated ? animationProps : {})}
+      className={combinedClassName}
+      sx={cardSx}
+      {...props}
+    >
+      {children}
+    </Component>
+  );
+}
+
+export function GlassCardHeader({
+  title,
+  subtitle,
+  action,
+  sx,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: ReactNode;
+  sx?: Record<string, any>;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        mb: 2.5,
+        ...sx,
+      }}
+    >
+      <Box flex={1}>
+        <Box
+          className="section-title"
+          sx={{
+            fontSize: "18px",
+            color: theme.palette.text.primary,
+            letterSpacing: "-0.02em",
+            mb: 0.5,
+          }}
+        >
+          {title}
+        </Box>
+        {subtitle && (
+          <Box
+            className="body-text"
+            sx={{
+              fontSize: "13px",
+              color: theme.palette.text.secondary,
+              opacity: 0.8,
+            }}
+          >
+            {subtitle}
+          </Box>
+        )}
+      </Box>
+      {action && <Box>{action}</Box>}
+    </Box>
+  );
+}

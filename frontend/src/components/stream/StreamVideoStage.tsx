@@ -34,6 +34,7 @@ export function StreamVideoStage({
   const [statusNote, setStatusNote] = useState("");
   const hasDeviceStream = Boolean(mediaStream);
   const hasRenderableSource = hasDeviceStream || Boolean(source);
+  const showUnavailableState = !hasRenderableSource;
 
   useEffect(() => {
     if (mediaStream) {
@@ -43,9 +44,47 @@ export function StreamVideoStage({
       return;
     }
 
-    setSource(primarySrc || "");
+    if (!primarySrc) {
+      setSource("");
+      setIsPlaying(false);
+      setStatusNote("");
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+
+    setSource("");
     setIsPlaying(false);
     setStatusNote("");
+
+    void fetch(primarySrc, {
+      method: "HEAD",
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!active) {
+          return;
+        }
+
+        if (response.ok) {
+          setSource(primarySrc);
+          return;
+        }
+
+        setStatusNote("Live media is not available yet. The broadcast may still be starting.");
+      })
+      .catch(() => {
+        if (active) {
+          setStatusNote("Live media is not available yet. The broadcast may still be starting.");
+        }
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [mediaStream, primarySrc]);
 
   useEffect(() => {
@@ -94,6 +133,8 @@ export function StreamVideoStage({
     setStatusNote("Real stream video is not available right now.");
   };
 
+  const emptyStateTone = statusNote || "Live media is not available yet. The creator may still be starting the broadcast.";
+
   return (
     <div className="space-y-3">
       <div className="overflow-hidden rounded-[28px] border border-gray-200/80 bg-black shadow-[0_22px_60px_rgba(15,23,42,0.16)]">
@@ -114,15 +155,36 @@ export function StreamVideoStage({
               onPlay={() => setIsPlaying(true)}
             />
           ) : (
-            <div className="flex h-full items-center justify-center bg-gray-950 px-6 text-center text-sm text-gray-300">
-              Video will appear here when the stream source is ready.
+            <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_40%),linear-gradient(180deg,#020617_0%,#0f172a_100%)] px-6 text-center text-white">
+              <div className="max-w-xl rounded-[28px] border border-white/10 bg-white/5 px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-sky-400/40 bg-sky-500/15 text-sky-200 shadow-[0_0_40px_rgba(56,189,248,0.25)]">
+                  <Radio className="h-7 w-7" />
+                </div>
+                <div className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-white">
+                  Live media unavailable
+                </div>
+                <p className="mt-3 text-sm leading-7 text-slate-200/90">
+                  {emptyStateTone}
+                </p>
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-200/90">
+                  <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 font-semibold text-white">
+                    Chat stays active
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 font-semibold text-white">
+                    Controls remain available
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 font-semibold text-white">
+                    Playback will attach automatically
+                  </span>
+                </div>
+              </div>
             </div>
           )}
 
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between gap-3 p-4">
             <div className="inline-flex items-center gap-2 rounded-full bg-black/65 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
               <Radio className="h-3.5 w-3.5" />
-              {statusLabel}
+              {showUnavailableState ? "Waiting for live media" : statusLabel}
             </div>
             {accentLabel ? (
               <div className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
@@ -158,7 +220,7 @@ export function StreamVideoStage({
 
       <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
         <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
-          {hasDeviceStream ? "Live device source" : "Real stream playback"}
+          {hasDeviceStream ? "Live device source" : showUnavailableState ? "Waiting for broadcast" : "Real stream playback"}
         </span>
         {statusNote ? <span>{statusNote}</span> : null}
       </div>

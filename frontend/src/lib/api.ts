@@ -565,6 +565,13 @@ export async function confirmPhoneVerification(otpCode: string) {
   return unwrapResponse(response, "Phone verification failed.") as UserProfile;
 }
 
+export async function verifyIdentity(method: string) {
+  const response = await api.post("/user/settings/verify-identity", null, {
+    params: { method },
+  });
+  return unwrapResponse(response, "Failed to start identity verification.") as string;
+}
+
 export async function requestEmailVerification() {
   const response = await api.post("/user/settings/verify-email/request");
   return unwrapResponse(response, "Failed to request email verification code.") as { message?: string; success?: boolean };
@@ -627,11 +634,6 @@ export async function regenerateRecoveryCodes(input: {
     recoveryCodes: string[];
     message?: string;
   };
-}
-
-export async function verifyIdentity(method: string) {
-  const { data } = await api.post("/user/settings/verify-identity", {}, { params: { method } });
-  return data;
 }
 
 export async function getPublicProfile(userId: string) {
@@ -2523,10 +2525,12 @@ export async function getWallet() {
 }
 
 export async function getWalletForecast(options: WalletForecastOptions) {
+  const defaultHorizon =
+    options.horizon ?? (options.range === "1Y" ? 6 : options.range === "90D" ? 14 : options.range === "14D" ? 7 : 10);
   const params = {
     range: options.range,
     currency: options.currency,
-    horizon: options.horizon,
+    horizon: defaultHorizon,
   };
 
   // Canonical backend contract: GET /wallet/forecast -> { source, model, generatedAt, points[] }
@@ -4692,3 +4696,64 @@ export async function terminateStreamRecord(streamId: string, reason: string) {
   const response = await api.post(`/admin/streams/${encodeURIComponent(streamId)}/terminate`, { reason });
   return unwrapResponse(response, "Unable to terminate stream") as StreamDetail;
 }
+
+// Admin Bootstrap - Enterprise Admin Initialization
+/**
+ * Initialize the first admin user in the system.
+ * Only callable when NO admin users exist.
+ * This is the secure way to set up admin access for a fresh system.
+ */
+export async function adminBootstrapInitialize(data: { email: string; fullName: string; password: string }) {
+  try {
+    const response = await api.post(`/admin/bootstrap/initialize`, data);
+    return unwrapResponse(
+      response,
+      "Failed to initialize admin user"
+    ) as AdminBootstrapInitializeResponse;
+  } catch (error) {
+    // 403 means admins already exist
+    if (error instanceof Error && error.message.includes("403")) {
+      throw new Error("Admin system already initialized. Cannot bootstrap again.");
+    }
+    throw error;
+  }
+}
+
+/**
+ * Check if the admin system is initialized.
+ * Public endpoint - no authentication required.
+ * Useful for UI to determine if setup wizard should be shown.
+ */
+export async function adminBootstrapGetStatus() {
+  const response = await api.get(`/admin/bootstrap/status`);
+  return unwrapResponse(response, "Unable to check admin system status") as AdminBootstrapStatus;
+}
+
+/**
+ * Promote an existing user to admin.
+ * Requires the caller to have admin privileges.
+ * Used for granting admin access to additional users after bootstrap.
+ */
+export async function adminBootstrapPromoteUser(data: { userId: string; reason: string }) {
+  const response = await api.post(`/admin/bootstrap/promote`, data);
+  return unwrapResponse(response, "Failed to promote user to admin") as unknown;
+}
+
+// Type definitions for Bootstrap API
+export type AdminBootstrapInitializeResponse = {
+  userId: string;
+  email: string;
+  fullName: string;
+  roles: string[];
+  createdAt: string;
+  message: string;
+  systemInitialized: boolean;
+};
+
+export type AdminBootstrapStatus = {
+  initialized: boolean;
+  totalAdmins: number;
+  systemStatus: "INITIALIZED" | "AWAITING_INITIALIZATION";
+  message: string;
+  lastUpdated: string;
+};

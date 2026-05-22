@@ -8,9 +8,10 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Next.js
-/.next/
-/.turbo/
-/.vercel/
+.next/
+.turbo/
+.vercel/
+out/
 next-env.d.ts
 
 # pnpm and dependencies
@@ -19,7 +20,7 @@ pnpm-lock.yaml
 .pnpm-store/
 
 # Build outputs
-/target/
+target/
 dist/
 build/
 

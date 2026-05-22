@@ -41,6 +41,7 @@ public class AuthService {
     private final SMSService smsService;
     private final VerificationChallengeService verificationChallengeService;
     private final TwoFactorAuthService twoFactorAuthService;
+    private final LiveActivityService liveActivityService;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
@@ -51,7 +52,8 @@ public class AuthService {
                        EmailService emailService,
                        SMSService smsService,
                        VerificationChallengeService verificationChallengeService,
-                       TwoFactorAuthService twoFactorAuthService) {
+                       TwoFactorAuthService twoFactorAuthService,
+                       LiveActivityService liveActivityService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -62,6 +64,7 @@ public class AuthService {
         this.smsService = smsService;
         this.verificationChallengeService = verificationChallengeService;
         this.twoFactorAuthService = twoFactorAuthService;
+        this.liveActivityService = liveActivityService;
     }
 
     @Transactional
@@ -124,6 +127,17 @@ public class AuthService {
             "role", userRole.name(),
             "status", "SUCCESS"
         ));
+
+        // Live Activity: user registration
+        liveActivityService.broadcast(
+                "USER_REGISTRATION",
+                "New user joined: " + user.getFullName() + " (@" + user.getUsername() + ") as " + userRole.name(),
+                user.getId(),
+                user.getUsername(),
+                null,
+                "success",
+                Map.of("role", userRole.name())
+        );
 
         return new AuthResponse(token, user.getEmail(), user.getUsername(), user.getFullName());
     }
@@ -197,6 +211,17 @@ public class AuthService {
             "verified", "true"
         ));
 
+        // Live Activity: user registration
+        liveActivityService.broadcast(
+                "USER_REGISTRATION",
+                "New verified user: " + user.getFullName() + " (@" + user.getUsername() + ")",
+                user.getId(),
+                user.getUsername(),
+                null,
+                "success",
+                Map.of("role", userRole.name(), "verified", true)
+        );
+
         return new AuthResponse(token, user.getEmail(), user.getUsername(), user.getFullName());
     }
 
@@ -260,6 +285,17 @@ public class AuthService {
             "role", roleString,
             "status", "SUCCESS"
         ));
+
+        // Live Activity: user login
+        liveActivityService.broadcast(
+                "LOGIN",
+                user.getFullName() + " logged in",
+                user.getId(),
+                user.getUsername(),
+                user.getProfile() != null ? user.getProfile().getProfilePictureUrl() : null,
+                "info",
+                Map.of("role", roleString)
+        );
 
         return new LoginResponse(
                 token,
@@ -365,6 +401,17 @@ public class AuthService {
                 "method", method,
                 "recoveryCodeUsed", usedRecoveryCode
         ));
+
+        // Live Activity: user login (2FA)
+        liveActivityService.broadcast(
+                "LOGIN",
+                user.getFullName() + " logged in (2FA verified)",
+                user.getId(),
+                user.getUsername(),
+                user.getProfile() != null ? user.getProfile().getProfilePictureUrl() : null,
+                "info",
+                Map.of("role", roleString, "twoFactor", true)
+        );
 
         return new AuthResponse(token, user.getEmail(), user.getUsername(), user.getFullName());
     }

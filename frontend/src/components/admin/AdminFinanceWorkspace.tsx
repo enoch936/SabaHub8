@@ -74,12 +74,30 @@ const defaultRunbookForm: FinanceRunbookForm = {
   lookbackDays: "30",
 };
 
+// Map of common invalid codes to valid ISO 4217 codes
+const currencyCodeMap: Record<string, string> = {
+  BIRR: "ETB", // Ethiopian Birr
+};
+
 function currencyFormatter(currency = "USD") {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  });
+  // Normalize currency code (handle old/invalid codes)
+  const validCurrency = currencyCodeMap[currency] || currency;
+  
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: validCurrency,
+      maximumFractionDigits: 2,
+    });
+  } catch (error) {
+    // Fallback to USD if currency code is invalid
+    console.warn(`Invalid currency code: ${currency}, falling back to USD`);
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    });
+  }
 }
 
 function formatMoney(amount: number, currency = "USD") {

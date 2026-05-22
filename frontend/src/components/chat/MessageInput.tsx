@@ -77,7 +77,6 @@ export function MessageInput({
   onClearContext,
 }: MessageInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
@@ -125,26 +124,6 @@ export function MessageInput({
       stopMediaStream();
     };
   }, []);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (emojiOpen) {
-          setEmojiOpen(false);
-          return;
-        }
-        if (contextLabel && onClearContext) {
-          onClearContext();
-        }
-      }
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "m") {
-        event.preventDefault();
-        textareaRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [contextLabel, emojiOpen, onClearContext]);
 
   const uploadFile = async (file: File) => {
     if (!onSendAsset || disabled) {
@@ -268,13 +247,13 @@ export function MessageInput({
   return (
     <div className="px-4 py-4">
       {contextLabel ? (
-        <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-3 rounded-[20px] border border-[#d6e4d3] bg-[#eef4ec] px-3 py-2 text-xs text-[#315447] shadow-[0_14px_24px_rgba(38,67,56,0.04)]">
           <span className="truncate font-medium">{contextLabel}</span>
           {onClearContext ? (
             <button
               type="button"
               onClick={onClearContext}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-700 transition hover:bg-white"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[#315447] transition hover:bg-white/70"
               aria-label="Clear message context"
             >
               <X className="h-3.5 w-3.5" />
@@ -284,27 +263,27 @@ export function MessageInput({
       ) : null}
 
       {uploadError ? (
-        <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+        <div className="mb-3 rounded-[20px] border border-[#f1cbc1] bg-[#fff5f2] px-3 py-2 text-xs font-medium text-[#b45a4b]">
           {uploadError}
         </div>
       ) : null}
 
       {uploadStatus ? (
-        <div className="mb-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600">
+        <div className="mb-3 rounded-[20px] border border-[#d8e0d6] bg-white/80 px-3 py-2 text-xs font-medium text-[#5f6d65]">
           {uploadStatus}
         </div>
       ) : null}
 
       {isRecording ? (
-        <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+        <div className="mb-3 flex items-center justify-between gap-3 rounded-[24px] border border-[#f4d3c7] bg-[#fff4f0] px-4 py-3">
           <VoiceMessageUI isRecording />
-          <div className="text-sm font-semibold text-rose-700">{formatRecordingSeconds(recordingSeconds)}</div>
+          <div className="text-sm font-semibold text-[#b45a4b]">{formatRecordingSeconds(recordingSeconds)}</div>
         </div>
       ) : null}
 
-      <div className="relative rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
+      <div className="relative rounded-[28px] border border-[#d8e0d6] bg-white/92 px-3 py-3 shadow-[0_20px_36px_rgba(38,67,56,0.07)] backdrop-blur-sm">
         {emojiOpen ? (
-          <div className="absolute bottom-[calc(100%+12px)] right-0 z-20 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="absolute bottom-[calc(100%+12px)] right-0 z-20 overflow-hidden rounded-[24px] border border-[#d8e0d6] bg-white shadow-[0_28px_60px_rgba(38,67,56,0.14)]">
             <EmojiPicker
               width={320}
               height={380}
@@ -332,7 +311,7 @@ export function MessageInput({
               <ChatSecondaryButton
                 onClick={() => fileInputRef.current?.click()}
                 disabled={disabled || isUploading || isRecording}
-                className="h-11 w-11 flex-shrink-0 rounded-xl border-slate-200 bg-white p-0 text-slate-600 hover:bg-slate-50"
+                className="h-11 w-11 flex-shrink-0 rounded-2xl border-0 bg-[#f4f7f2] p-0 text-[#5f6d65] hover:bg-[#ecf3eb]"
                 aria-label="Attach file"
               >
                 <Paperclip className="h-4.5 w-4.5" />
@@ -343,26 +322,20 @@ export function MessageInput({
           <ChatSecondaryButton
             onClick={() => setEmojiOpen((current) => !current)}
             disabled={disabled || isRecording}
-            className="h-11 w-11 flex-shrink-0 rounded-xl border-slate-200 bg-white p-0 text-slate-600 hover:bg-slate-50"
+            className="h-11 w-11 flex-shrink-0 rounded-2xl border-0 bg-[#f4f7f2] p-0 text-[#5f6d65] hover:bg-[#ecf3eb]"
             aria-label="Open emoji picker"
           >
             <Smile className="h-4.5 w-4.5" />
           </ChatSecondaryButton>
 
-          <div className="flex-1 rounded-xl bg-slate-50 px-2 py-1">
+          <div className="flex-1 rounded-[22px] bg-[#f7faf6] px-2 py-1">
             <textarea
-              ref={textareaRef}
               value={value}
               onChange={(event) => {
                 setValue(event.target.value);
                 onTyping?.();
               }}
               onKeyDown={(event) => {
-                if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-                  event.preventDefault();
-                  handleSubmit();
-                  return;
-                }
                 if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();
                   handleSubmit();
@@ -379,7 +352,7 @@ export function MessageInput({
                       ? "Recording voice note…"
                       : "Write a message"
               }
-              className="max-h-40 min-h-[48px] w-full resize-y bg-transparent px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed"
+              className="max-h-40 min-h-[48px] w-full resize-y bg-transparent px-3 py-2.5 text-sm text-[#20332d] outline-none placeholder:text-[#94a198] disabled:cursor-not-allowed"
             />
           </div>
 
@@ -396,8 +369,8 @@ export function MessageInput({
               disabled={disabled || isUploading}
               className={`inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl transition disabled:cursor-not-allowed disabled:opacity-40 ${
                 isRecording
-                  ? "bg-rose-600 text-white hover:bg-rose-700"
-                  : "bg-white text-slate-600 hover:bg-slate-900 hover:text-white"
+                  ? "bg-[#c96a57] text-white hover:bg-[#b45a4b]"
+                  : "bg-[#f4f7f2] text-[#5f6d65] hover:bg-[#27463b] hover:text-white"
               }`}
               aria-label={isRecording ? "Stop voice recording" : "Record voice note"}
             >
@@ -422,8 +395,8 @@ export function MessageInput({
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-3 px-1">
-          <p className="text-[11px] text-slate-500">Message composer</p>
-          <p className="text-[11px] font-medium text-slate-400">{value.trim().length > 0 ? `${value.trim().length} chars` : "Ready"}</p>
+          <p className="text-[11px] text-[#87958d]">Message composer</p>
+          <p className="text-[11px] font-medium text-[#9aa69f]">{value.trim().length > 0 ? `${value.trim().length} chars` : "Ready"}</p>
         </div>
       </div>
     </div>

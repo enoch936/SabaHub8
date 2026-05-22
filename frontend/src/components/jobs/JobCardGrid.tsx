@@ -25,7 +25,7 @@ export function JobCardGrid({ jobs, viewMode, onApply, onSave, onDelete, onMessa
   }
 
   return (
-    <div className={viewMode === "grid" ? "grid grid-cols-1 gap-4 2xl:grid-cols-2" : "space-y-4"}>
+    <div className={viewMode === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" : "space-y-2"}>
       {jobs.map((job) => (
         <div key={job.id}>
           <SmartJobCard

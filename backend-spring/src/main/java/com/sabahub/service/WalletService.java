@@ -39,6 +39,7 @@ public class WalletService {
     private final CurrentUserService currentUserService;
     private final AuditService auditService;
     private final WalletCurrencyService walletCurrencyService;
+    private final LiveActivityService liveActivityService;
     private final Map<String, ReentrantLock> walletLocks = new ConcurrentHashMap<>();
 
     public WalletService(WalletLedgerRepository walletLedgerRepository,
@@ -47,7 +48,8 @@ public class WalletService {
                          WithdrawalRepository withdrawalRepository,
                          CurrentUserService currentUserService,
                          AuditService auditService,
-                         WalletCurrencyService walletCurrencyService) {
+                         WalletCurrencyService walletCurrencyService,
+                         LiveActivityService liveActivityService) {
         this.walletLedgerRepository = walletLedgerRepository;
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
@@ -55,6 +57,7 @@ public class WalletService {
         this.currentUserService = currentUserService;
         this.auditService = auditService;
         this.walletCurrencyService = walletCurrencyService;
+        this.liveActivityService = liveActivityService;
     }
 
     @Transactional(readOnly = true)
@@ -410,6 +413,17 @@ public class WalletService {
                         auditPayload.put("note", note.trim());
                     }
                     auditService.log("INTERNAL_WALLET_TRANSFER", "TRANSACTION", senderTx.getId(), auditPayload);
+
+                    // Live Activity: transfer successful
+                    liveActivityService.broadcast(
+                            "PAYMENT",
+                            senderUser.getFullName() + " transferred " + normalizedAmount + " " + transferCurrency + " to " + recipient.getFullName(),
+                            senderId,
+                            senderUser.getUsername(),
+                            null,
+                            "success",
+                            Map.of("amount", normalizedAmount, "currency", transferCurrency, "type", "TRANSFER")
+                    );
 
                     Map<String, Object> response = new HashMap<>();
                     response.put("ok", true);
@@ -1234,6 +1248,18 @@ public class WalletService {
                     auditPayload.put("currency", credit.getCurrency());
                     auditPayload.putAll(extraAuditPayload);
                     auditService.log(auditEvent, "TRANSACTION", referenceId, auditPayload);
+
+                    // Live Activity: top-up successful
+                    User topupUser = userRepository.findById(userId).orElse(null);
+                    liveActivityService.broadcast(
+                            "PAYMENT",
+                            (topupUser != null ? topupUser.getFullName() : "User") + " topped up " + amount + " " + normalizedCurrency,
+                            userId,
+                            topupUser != null ? topupUser.getUsername() : null,
+                            null,
+                            "success",
+                            Map.of("amount", amount, "currency", normalizedCurrency, "type", "TOPUP", "provider", extraAuditPayload.getOrDefault("provider", "UNKNOWN"))
+                    );
 
                     return credit;
                 }

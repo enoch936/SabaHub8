@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   BadgeCheck,
@@ -113,15 +114,15 @@ function isSettingsSectionId(value: string | null): value is SettingsSectionId {
 function toEditableProfile(incoming: Partial<UserProfile> | null | undefined): Partial<UserProfile> {
   const next = incoming ?? {};
   const rawPhone = next.phoneNumber ?? "";
-  const matched dialCode = [...COUNTRY_OPTIONS]
+  const matchedDialCode = [...COUNTRY_OPTIONS]
     .sort((a, b) => b.dialCode.length - a.dialCode.length)
     .find((country) => rawPhone.startsWith(country.dialCode));
 
   return {
     ...next,
     timezone: next.timezone ?? detectTimeZoneFromBrowser(),
-    phoneCountryCode: next.phoneCountryCode ?? matched dialCode?.dialCode ?? "+251",
-    phoneNumber: matched dialCode ? rawPhone.slice(matched dialCode.dialCode.length) : rawPhone.replace(/[^\d]/g, ""),
+    phoneCountryCode: next.phoneCountryCode ?? matchedDialCode?.dialCode ?? "+251",
+    phoneNumber: matchedDialCode ? rawPhone.slice(matchedDialCode.dialCode.length) : rawPhone.replace(/[^\d]/g, ""),
   };
 }
 
@@ -905,14 +906,35 @@ function WorkspaceSettingsContent() {
               </div>
             </div>
 
-            <div className="mt-5 rounded-[24px] border border-amber-200 bg-amber-50 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
-                <ShieldCheck className="h-4 w-4" />
-                Identity verification
+            <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+              <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-emerald-900">
+                  <ShieldCheck className="h-4 w-4" />
+                  Identity verification center
+                </div>
+                <p className="mt-2 text-sm leading-6 text-emerald-800">
+                  Start the KYC intake on the dedicated page, choose a method, verify your channels, and send the finished record into the admin review queue.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Link href="/jobs/identity" className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">
+                    Open KYC center
+                  </Link>
+                  <span className="rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
+                    {profile.identityVerified ? "Verified profile detected" : "Awaiting KYC submission"}
+                  </span>
+                </div>
               </div>
-              <p className="mt-2 text-sm text-amber-800">
-                Coming soon. This page no longer marks identity verification as complete until a real workflow is implemented.
-              </p>
+              <div className="rounded-[24px] border border-gray-200 bg-gray-50 p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <Sparkles className="h-4 w-4 text-gray-700" />
+                  Linked signals
+                </div>
+                <ul className="mt-3 space-y-2 text-sm text-gray-600">
+                  <li>Email and phone remain the two fast trust anchors.</li>
+                  <li>Identity verification becomes active after a KYC method is submitted.</li>
+                  <li>Admins review the same identity state from the operational console.</li>
+                </ul>
+              </div>
             </div>
           </section>
 
