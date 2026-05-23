@@ -32,7 +32,8 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
 import TaskAltRoundedIcon from "@mui/icons-material/TaskAltRounded";
 import SoftButton from "@/components/mui/SoftButton";
-import SoftCard from "@/components/mui/SoftCard";
+import { GlassCard, GlassCardHeader } from "./GlassCard";
+import { DataTable, type TableColumn } from "./DataTable";
 import SoftTextField from "@/components/mui/SoftTextField";
 import { useDisputeStore } from "@/lib/disputeStore";
 import {
@@ -479,7 +480,7 @@ export default function AdminFinanceWorkspace() {
 
   return (
     <Stack spacing={2.2}>
-      <SoftCard
+      <GlassCard
         sx={{
           border: "1px solid",
           borderColor: "rgba(24,40,59,0.16)",
@@ -513,7 +514,7 @@ export default function AdminFinanceWorkspace() {
             </Stack>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
       {actionStatus ? <Alert severity="info">{actionStatus}</Alert> : null}
@@ -558,7 +559,7 @@ export default function AdminFinanceWorkspace() {
           },
         ].map((metric) => (
           <Grid key={metric.label} size={{ xs: 12, sm: 6, xl: 3 }}>
-            <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+            <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
               <CardContent>
                 <Stack spacing={0.8}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -575,13 +576,13 @@ export default function AdminFinanceWorkspace() {
                   </Typography>
                 </Stack>
               </CardContent>
-            </SoftCard>
+            </GlassCard>
           </Grid>
         ))}
       </Grid>
 
       {disputes.length > 0 ? (
-        <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+        <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
           <CardContent>
             <Typography variant="h6" fontWeight={800}>
               Dispute Fund Decisions
@@ -627,10 +628,10 @@ export default function AdminFinanceWorkspace() {
               ))}
             </Stack>
           </CardContent>
-        </SoftCard>
+        </GlassCard>
       ) : null}
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent>
           <Grid container spacing={1.2}>
             <Grid size={{ xs: 12, md: 7 }}>
@@ -663,9 +664,9 @@ export default function AdminFinanceWorkspace() {
             </Grid>
           </Grid>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent sx={{ p: 0 }}>
           <Box sx={{ p: 2, pb: 1 }}>
             <Typography variant="h6" fontWeight={800}>
@@ -675,88 +676,85 @@ export default function AdminFinanceWorkspace() {
               Every wallet transfer remains pending until a finance admin approves or rejects it.
             </Typography>
           </Box>
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Sender</TableCell>
-                  <TableCell>Recipient</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Reference</TableCell>
-                  <TableCell>Created</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredPendingInternalTransfers.map((item) => {
+          <DataTable
+            columns={[
+              {
+                key: "userId",
+                label: "Sender",
+                sortable: true,
+                render: (val, item) => (
+                  <Stack spacing={0.25}>
+                    <Typography variant="subtitle2" fontWeight={800}>
+                      {String(val)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Tx: {item.id}
+                    </Typography>
+                  </Stack>
+                ),
+              },
+              {
+                key: "id",
+                label: "Recipient",
+                render: (_, item) => (
+                  (item.metadata?.counterpartyEmail as string | undefined) ||
+                  (item.metadata?.counterpartyUserId as string | undefined) ||
+                  "Unknown"
+                ),
+              },
+              {
+                key: "amount",
+                label: "Amount",
+                sortable: true,
+                render: (val, item) => formatMoney(Number(val) ?? 0, item.currency || "USD"),
+              },
+              { key: "providerRef", label: "Reference", sortable: true },
+              {
+                key: "createdAt",
+                label: "Created",
+                sortable: true,
+                render: (val) => formatDateTime(val as string),
+              },
+              {
+                key: "id",
+                label: "Actions",
+                align: "right",
+                render: (_, item) => {
                   const busy = busyInternalTransferId === item.id;
-                  const recipientLabel =
-                    ((item.metadata?.counterpartyEmail as string | undefined) ||
-                      (item.metadata?.counterpartyUserId as string | undefined) ||
-                      "Unknown");
-
                   return (
-                    <TableRow key={item.id} hover>
-                      <TableCell sx={{ minWidth: 220 }}>
-                        <Stack spacing={0.25}>
-                          <Typography variant="subtitle2" fontWeight={800}>
-                            {item.userId}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Tx: {item.id}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>{recipientLabel}</TableCell>
-                      <TableCell>{formatMoney(item.amount ?? 0, item.currency || "USD")}</TableCell>
-                      <TableCell>{item.providerRef || "N/A"}</TableCell>
-                      <TableCell>{formatDateTime(item.createdAt)}</TableCell>
-                      <TableCell align="right" sx={{ minWidth: 220 }}>
-                        <Stack direction="row" spacing={0.8} justifyContent="flex-end">
-                          <SoftButton
-                            variant="outlined"
-                            size="small"
-                            color="error"
-                            onClick={() => void approveOrRejectInternalTransfer(item, false)}
-                            disabled={busy}
-                          >
-                            Reject
-                          </SoftButton>
-                          <SoftButton
-                            variant="contained"
-                            size="small"
-                            color="success"
-                            onClick={() => void approveOrRejectInternalTransfer(item, true)}
-                            disabled={busy}
-                          >
-                            Approve
-                          </SoftButton>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
+                    <Stack direction="row" spacing={0.8} justifyContent="flex-end">
+                      <SoftButton
+                        variant="outline"
+                        size="sm"
+                        color="danger"
+                        onClick={() => void approveOrRejectInternalTransfer(item, false)}
+                        disabled={busy}
+                      >
+                        Reject
+                      </SoftButton>
+                      <SoftButton
+                        variant="outline"
+                        size="sm"
+                        color="success"
+                        onClick={() => void approveOrRejectInternalTransfer(item, true)}
+                        disabled={busy}
+                      >
+                        Approve
+                      </SoftButton>
+                    </Stack>
                   );
-                })}
-                {!loading && filteredPendingInternalTransfers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                      No pending wallet transfers.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                      Loading wallet transfer queue...
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-              </TableBody>
-            </Table>
-          </Box>
+                },
+              },
+            ]}
+            data={filteredPendingInternalTransfers}
+            rowKey="id"
+            loading={loading}
+            searchable={false}
+          />
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent sx={{ p: 0 }}>
           <Box sx={{ p: 2, pb: 1 }}>
             <Typography variant="h6" fontWeight={800}>
@@ -766,72 +764,71 @@ export default function AdminFinanceWorkspace() {
               Full transaction visibility for finance admins across providers, directions, and statuses.
             </Typography>
           </Box>
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Transaction</TableCell>
-                  <TableCell>Sender</TableCell>
-                  <TableCell>Receiver</TableCell>
-                  <TableCell>Provider</TableCell>
-                  <TableCell>Direction</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Reference</TableCell>
-                  <TableCell>Created</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredPaymentTransactions.map((item) => (
-                  <TableRow key={item.id} hover>
-                    <TableCell sx={{ minWidth: 220 }}>
-                      <Stack spacing={0.25}>
-                        <Typography variant="subtitle2" fontWeight={800}>
-                          {item.id}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Updated: {formatDateTime(item.updatedAt)}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell sx={{ minWidth: 180 }}>{item.senderLabel || item.senderUserId || item.userId || "N/A"}</TableCell>
-                    <TableCell sx={{ minWidth: 180 }}>{item.receiverLabel || item.receiverUserId || "N/A"}</TableCell>
-                    <TableCell>{item.provider || "N/A"}</TableCell>
-                    <TableCell>{item.direction || "N/A"}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={(item.status || "UNKNOWN").toUpperCase()}
-                        size="small"
-                        color={toneForStatus(item.status)}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>{formatMoney(item.amount ?? 0, item.currency || "USD")}</TableCell>
-                    <TableCell>{item.providerRef || "N/A"}</TableCell>
-                    <TableCell>{formatDateTime(item.createdAt)}</TableCell>
-                  </TableRow>
-                ))}
-                {!loading && filteredPaymentTransactions.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                      No payment transactions found.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                      Loading payment transactions...
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-              </TableBody>
-            </Table>
-          </Box>
+          <DataTable
+            columns={[
+              {
+                key: "id",
+                label: "Transaction",
+                sortable: true,
+                render: (val, item) => (
+                  <Stack spacing={0.25}>
+                    <Typography variant="subtitle2" fontWeight={800}>
+                      {String(val)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Updated: {formatDateTime(item.updatedAt)}
+                    </Typography>
+                  </Stack>
+                ),
+              },
+              {
+                key: "senderUserId",
+                label: "Sender",
+                render: (_, item) => item.senderLabel || item.senderUserId || item.userId || "N/A",
+              },
+              {
+                key: "receiverUserId",
+                label: "Receiver",
+                render: (_, item) => item.receiverLabel || item.receiverUserId || "N/A",
+              },
+              { key: "provider", label: "Provider", sortable: true },
+              { key: "direction", label: "Direction", sortable: true },
+              {
+                key: "status",
+                label: "Status",
+                sortable: true,
+                render: (val) => (
+                  <Chip
+                    label={String(val).toUpperCase()}
+                    size="small"
+                    color={toneForStatus(String(val))}
+                    variant="outlined"
+                  />
+                ),
+              },
+              {
+                key: "amount",
+                label: "Amount",
+                sortable: true,
+                render: (val, item) => formatMoney(Number(val) ?? 0, item.currency || "USD"),
+              },
+              { key: "providerRef", label: "Reference" },
+              {
+                key: "createdAt",
+                label: "Created",
+                sortable: true,
+                render: (val) => formatDateTime(val as string),
+              },
+            ]}
+            data={filteredPaymentTransactions}
+            rowKey="id"
+            loading={loading}
+            searchable={false}
+          />
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent>
           <Stack spacing={1.2}>
             <Box>
@@ -927,9 +924,9 @@ export default function AdminFinanceWorkspace() {
             </Grid>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent>
           <Stack spacing={1.2}>
             <Box>
@@ -1058,11 +1055,11 @@ export default function AdminFinanceWorkspace() {
             </Grid>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, xl: 6 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent sx={{ p: 0 }}>
               <Box sx={{ p: 2, pb: 1 }}>
                 <Typography variant="h6" fontWeight={800}>
@@ -1072,83 +1069,78 @@ export default function AdminFinanceWorkspace() {
                   Approve or reject manual payment submissions waiting for admin confirmation.
                 </Typography>
               </Box>
-              <Box sx={{ overflowX: "auto" }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Transaction</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell>Reference</TableCell>
-                      <TableCell>Created</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredTopups.map((item) => (
-                      <TableRow key={item.id} hover>
-                        <TableCell sx={{ minWidth: 220 }}>
-                          <Stack spacing={0.25}>
-                            <Typography variant="subtitle2" fontWeight={800}>
-                              {item.id}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              User: {item.userId}
-                            </Typography>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>{formatMoney(item.amount || 0, item.currency || "USD")}</TableCell>
-                        <TableCell>{item.providerRef || "No reference"}</TableCell>
-                        <TableCell>{formatDateTime(item.createdAt)}</TableCell>
-                        <TableCell align="right" sx={{ minWidth: 220 }}>
-                          <Stack direction="row" spacing={0.8} justifyContent="flex-end">
-                            <SoftButton
-                              variant="outlined"
-                              size="small"
-                              onClick={() => {
-                                setSelectedTopup(item);
-                                setReviewNote("");
-                              }}
-                              disabled={busyTopupId === item.id}
-                            >
-                              Review
-                            </SoftButton>
-                            <SoftButton
-                              variant="outlined"
-                              size="small"
-                              color="success"
-                              startIcon={<CheckCircleRoundedIcon />}
-                              onClick={() => void approveOrRejectTopup(item, true)}
-                              disabled={busyTopupId === item.id}
-                            >
-                              Approve
-                            </SoftButton>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {!loading && filteredTopups.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                          No pending local payments match the current filters.
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                          Loading local payment queue...
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                  </TableBody>
-                </Table>
-              </Box>
+              <DataTable
+                columns={[
+                  {
+                    key: "id",
+                    label: "Transaction",
+                    sortable: true,
+                    render: (val, item) => (
+                      <Stack spacing={0.25}>
+                        <Typography variant="subtitle2" fontWeight={800}>
+                          {String(val)}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          User: {item.userId}
+                        </Typography>
+                      </Stack>
+                    ),
+                  },
+                  {
+                    key: "amount",
+                    label: "Amount",
+                    sortable: true,
+                    render: (val, item) => formatMoney(Number(val) || 0, item.currency || "USD"),
+                  },
+                  { key: "providerRef", label: "Reference", sortable: true },
+                  {
+                    key: "createdAt",
+                    label: "Created",
+                    sortable: true,
+                    render: (val) => formatDateTime(val as string),
+                  },
+                  {
+                    key: "id",
+                    label: "Actions",
+                    align: "right",
+                    render: (_, item) => (
+                      <Stack direction="row" spacing={0.8} justifyContent="flex-end">
+                        <SoftButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedTopup(item);
+                            setReviewNote("");
+                          }}
+                          disabled={busyTopupId === item.id}
+                        >
+                          Review
+                        </SoftButton>
+                        <SoftButton
+                          variant="outline"
+                          size="sm"
+                          color="success"
+                          leftIcon={<CheckCircleRoundedIcon sx={{ fontSize: 16 }} />}
+                          onClick={() => void approveOrRejectTopup(item, true)}
+                          disabled={busyTopupId === item.id}
+                        >
+                          Approve
+                        </SoftButton>
+                      </Stack>
+                    ),
+                  },
+                ]}
+                data={filteredTopups}
+                rowKey="id"
+                loading={loading}
+                searchable={false}
+              />
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, xl: 6 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent sx={{ p: 0 }}>
               <Box sx={{ p: 2, pb: 1 }}>
                 <Typography variant="h6" fontWeight={800}>
@@ -1158,86 +1150,81 @@ export default function AdminFinanceWorkspace() {
                   Move payout requests through pending, processing, completion, failure, or cancellation.
                 </Typography>
               </Box>
-              <Box sx={{ overflowX: "auto" }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Withdrawal</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell>Method</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredWithdrawals.map((item) => {
+              <DataTable
+                columns={[
+                  {
+                    key: "id",
+                    label: "Withdrawal",
+                    sortable: true,
+                    render: (val, item) => (
+                      <Stack spacing={0.25}>
+                        <Typography variant="subtitle2" fontWeight={800}>
+                          {String(val)}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          User: {item.userId || item.freelancerId || "Unknown"}
+                        </Typography>
+                      </Stack>
+                    ),
+                  },
+                  {
+                    key: "statusEnum",
+                    label: "Status",
+                    sortable: true,
+                    render: (_, item) => {
                       const status = (item.statusEnum || item.status || "PENDING").toUpperCase();
-                      const amount = item.amountDecimal ?? toNumber(item.amount);
+                      return <Chip label={status} size="small" color={toneForStatus(status)} variant="outlined" />;
+                    },
+                  },
+                  {
+                    key: "amount",
+                    label: "Amount",
+                    sortable: true,
+                    render: (_, item) => formatMoney(item.amountDecimal ?? toNumber(item.amount), item.currency || "USD"),
+                  },
+                  { key: "paymentMethod", label: "Method", sortable: true },
+                  {
+                    key: "id",
+                    label: "Actions",
+                    align: "right",
+                    render: (_, item) => {
+                      const status = (item.statusEnum || item.status || "PENDING").toUpperCase();
                       const busy = busyWithdrawalId === item.id;
                       return (
-                        <TableRow key={item.id} hover>
-                          <TableCell sx={{ minWidth: 220 }}>
-                            <Stack spacing={0.25}>
-                              <Typography variant="subtitle2" fontWeight={800}>
-                                {item.id}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                User: {item.userId || item.freelancerId || "Unknown"}
-                              </Typography>
-                            </Stack>
-                          </TableCell>
-                          <TableCell>
-                            <Chip label={status} size="small" color={toneForStatus(status)} variant="outlined" />
-                          </TableCell>
-                          <TableCell>{formatMoney(amount, item.currency || "USD")}</TableCell>
-                          <TableCell>{item.paymentMethod || "Not set"}</TableCell>
-                          <TableCell align="right" sx={{ minWidth: 210 }}>
-                            <Stack direction="row" spacing={0.8} justifyContent="flex-end">
-                              <SoftButton
-                                variant="outlined"
-                                size="small"
-                                onClick={() => {
-                                  setSelectedWithdrawal(item);
-                                  setWithdrawalNextStatus(status === "PENDING" ? "PROCESSING" : status);
-                                  setWithdrawalNote(item.notes || item.failureReason || "");
-                                }}
-                                disabled={busy}
-                              >
-                                Review
-                              </SoftButton>
-                              <SoftButton
-                                variant="outlined"
-                                size="small"
-                                color="info"
-                                onClick={() => void applyWithdrawalUpdate(item, "PROCESSING", item.notes || "")}
-                                disabled={busy || status === "PROCESSING"}
-                              >
-                                Process
-                              </SoftButton>
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
+                        <Stack direction="row" spacing={0.8} justifyContent="flex-end">
+                          <SoftButton
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedWithdrawal(item);
+                              setWithdrawalNextStatus(status === "PENDING" ? "PROCESSING" : status);
+                              setWithdrawalNote(item.notes || item.failureReason || "");
+                            }}
+                            disabled={busy}
+                          >
+                            Review
+                          </SoftButton>
+                          <SoftButton
+                            variant="outline"
+                            size="sm"
+                            color="info"
+                            onClick={() => void applyWithdrawalUpdate(item, "PROCESSING", item.notes || "")}
+                            disabled={busy || status === "PROCESSING"}
+                          >
+                            Process
+                          </SoftButton>
+                        </Stack>
                       );
-                    })}
-                    {!loading && filteredWithdrawals.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                          No withdrawals match the current filters.
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                          Loading withdrawal queue...
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                  </TableBody>
-                </Table>
-              </Box>
+                    },
+                  },
+                ]}
+                data={filteredWithdrawals}
+                rowKey="id"
+                loading={loading}
+                searchable={false}
+              />
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 

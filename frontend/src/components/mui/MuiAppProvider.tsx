@@ -9,23 +9,17 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
   const { theme: mode } = useAppTheme();
 
   const theme = useMemo(() => {
-    const transition = "background-color 220ms ease, color 220ms ease, border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease";
+    const transition = "background-color 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease";
     const isDark = mode === "dark";
 
-    const primary = isDark ? "#7dd3fc" : "#0f172a";
-    const secondary = isDark ? "#a78bfa" : "#2563eb";
-    const bg = isDark ? "#030712" : "#f5f8ff";
-    const paper = isDark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.68)";
-    const divider = isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(15, 23, 42, 0.12)";
-    const textPrimary = isDark ? "#f8fbff" : "#0a1020";
-    const textSecondary = isDark ? "#a8b3c7" : "#5b6478";
-    const contrastText = isDark ? "#03111f" : "#ffffff";
-    const glassBg = isDark
-      ? "linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.055))"
-      : "linear-gradient(145deg, rgba(255,255,255,0.78), rgba(255,255,255,0.46))";
-    const glassShadow = isDark
-      ? "0 24px 70px rgba(0, 0, 0, 0.42), 0 0 60px rgba(56,189,248,0.08)"
-      : "0 24px 70px rgba(15, 23, 42, 0.12), 0 0 52px rgba(56,189,248,0.1)";
+    const primary = isDark ? "#93c5fd" : "#111827";
+    const secondary = isDark ? "#60a5fa" : "#2563eb";
+    const bg = isDark ? "#0b1220" : "#ffffff";
+    const paper = isDark ? "#0f172a" : "#ffffff";
+    const divider = isDark ? "rgba(148, 163, 184, 0.16)" : "rgba(15, 23, 42, 0.08)";
+    const textPrimary = isDark ? "#e5e7eb" : "#0f172a";
+    const textSecondary = isDark ? "#94a3b8" : "#475569";
+    const contrastText = isDark ? "#0b1220" : "#ffffff";
 
     const base = createTheme({
       palette: {
@@ -62,12 +56,12 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
       },
       typography: {
         fontFamily: "var(--font-sans), ui-sans-serif, sans-serif",
-        h1: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 720, letterSpacing: 0, lineHeight: 1.02, fontSize: "clamp(2.2rem, 5vw, 3.7rem)" },
-        h2: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 720, letterSpacing: 0, lineHeight: 1.05, fontSize: "clamp(1.95rem, 4vw, 3.2rem)" },
-        h3: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 700, letterSpacing: 0, lineHeight: 1.08, fontSize: "clamp(1.6rem, 3vw, 2.45rem)" },
-        h4: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 680, letterSpacing: 0, lineHeight: 1.12, fontSize: "clamp(1.32rem, 2.2vw, 1.95rem)" },
-        h5: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 660, letterSpacing: 0, lineHeight: 1.14, fontSize: "clamp(1.16rem, 1.8vw, 1.5rem)" },
-        h6: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 650, letterSpacing: 0, lineHeight: 1.18, fontSize: "clamp(1.02rem, 1.1vw, 1.2rem)" },
+        h1: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1.02, fontSize: "clamp(2.2rem, 5vw, 3.7rem)" },
+        h2: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 700, letterSpacing: "-0.026em", lineHeight: 1.05, fontSize: "clamp(1.95rem, 4vw, 3.2rem)" },
+        h3: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 700, letterSpacing: "-0.022em", lineHeight: 1.08, fontSize: "clamp(1.6rem, 3vw, 2.45rem)" },
+        h4: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 670, letterSpacing: "-0.018em", lineHeight: 1.12, fontSize: "clamp(1.32rem, 2.2vw, 1.95rem)" },
+        h5: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 650, letterSpacing: "-0.014em", lineHeight: 1.14, fontSize: "clamp(1.16rem, 1.8vw, 1.5rem)" },
+        h6: { fontFamily: "var(--font-display), var(--font-sans), sans-serif", fontWeight: 640, letterSpacing: "-0.012em", lineHeight: 1.18, fontSize: "clamp(1.02rem, 1.1vw, 1.2rem)" },
         body1: { fontSize: "0.98rem", lineHeight: 1.66 },
         body2: { fontSize: "0.9rem", lineHeight: 1.58 },
         caption: { fontSize: "0.76rem", lineHeight: 1.5, letterSpacing: "0.02em" },
@@ -83,9 +77,7 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
             body: {
               backgroundColor: bg,
               color: textPrimary,
-              backgroundImage: isDark
-                ? "radial-gradient(circle at 18% 12%, rgba(56,189,248,0.2), transparent 30rem), radial-gradient(circle at 86% 6%, rgba(139,92,246,0.2), transparent 32rem), linear-gradient(135deg, #020617 0%, #06111f 48%, #0a0718 100%)"
-                : "radial-gradient(circle at 16% 12%, rgba(56,189,248,0.16), transparent 28rem), radial-gradient(circle at 86% 8%, rgba(139,92,246,0.12), transparent 30rem), linear-gradient(135deg, #f7fbff 0%, #eef4ff 48%, #f9f7ff 100%)",
+              backgroundImage: "none",
               transition: "background-color 240ms ease, color 240ms ease",
             },
             "*": {
@@ -126,10 +118,9 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
             root: {
               transition,
               borderBottom: `1px solid ${divider}`,
-              backdropFilter: "blur(28px) saturate(1.45)",
-              WebkitBackdropFilter: "blur(28px) saturate(1.45)",
-              backgroundImage: glassBg,
-              backgroundColor: "transparent",
+              backdropFilter: "none",
+              backgroundImage: "none",
+              backgroundColor: paper,
             },
           },
         },
@@ -137,10 +128,8 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
           styleOverrides: {
             paper: {
               transition,
-              backgroundImage: glassBg,
-              backgroundColor: "transparent",
-              backdropFilter: "blur(28px) saturate(1.35)",
-              WebkitBackdropFilter: "blur(28px) saturate(1.35)",
+              backgroundImage: "none",
+              backgroundColor: paper,
             },
           },
         },
@@ -161,11 +150,9 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
             root: {
               borderRadius: 18,
               border: `1px solid ${divider}`,
-              backgroundImage: glassBg,
-              backgroundColor: "transparent",
-              backdropFilter: "blur(24px) saturate(1.3)",
-              WebkitBackdropFilter: "blur(24px) saturate(1.3)",
-              boxShadow: glassShadow,
+              backgroundImage: "none",
+              backdropFilter: "none",
+              boxShadow: isDark ? "0 16px 32px rgba(0, 0, 0, 0.35)" : "0 16px 32px rgba(15, 23, 42, 0.05)",
               transition,
             },
           },
@@ -175,16 +162,12 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
             root: {
               borderRadius: 20,
               border: `1px solid ${divider}`,
-              backgroundImage: glassBg,
-              backgroundColor: "transparent",
-              backdropFilter: "blur(24px) saturate(1.3)",
-              WebkitBackdropFilter: "blur(24px) saturate(1.3)",
-              boxShadow: glassShadow,
+              backgroundImage: "none",
+              backdropFilter: "none",
+              boxShadow: isDark ? "0 18px 38px rgba(0, 0, 0, 0.4)" : "0 18px 38px rgba(15, 23, 42, 0.06)",
               transition,
               "&:hover": {
-                transform: "translateY(-3px)",
-                borderColor: alpha("#7dd3fc", 0.36),
-                boxShadow: isDark ? "0 32px 90px rgba(0,0,0,0.48), 0 0 70px rgba(56,189,248,0.12)" : "0 32px 90px rgba(15,23,42,0.16)",
+                boxShadow: isDark ? "0 18px 38px rgba(0, 0, 0, 0.4)" : "0 18px 38px rgba(15, 23, 42, 0.06)",
               },
             },
           },
@@ -212,33 +195,24 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
           styleOverrides: {
             root: {
               minHeight: 40,
-              borderRadius: 16,
+              borderRadius: 12,
               transition,
-              position: "relative",
-              overflow: "hidden",
-              backdropFilter: "blur(18px)",
-              WebkitBackdropFilter: "blur(18px)",
             },
             contained: {
               color: contrastText,
-              backgroundImage: isDark
-                ? "linear-gradient(135deg, rgba(125,211,252,0.95), rgba(167,139,250,0.86))"
-                : "linear-gradient(135deg, #0f172a, #312e81)",
+              backgroundImage: "none",
               backgroundColor: primary,
-              boxShadow: isDark ? "0 16px 42px rgba(56, 189, 248, 0.22)" : "0 16px 42px rgba(15, 23, 42, 0.18)",
+              boxShadow: isDark ? "0 10px 22px rgba(0, 0, 0, 0.35)" : "0 10px 22px rgba(15, 23, 42, 0.12)",
               "&:hover": {
-                transform: "translateY(-2px)",
-                backgroundColor: isDark ? "#7dd3fc" : "#0f172a",
-                boxShadow: isDark ? "0 22px 58px rgba(139,92,246,0.26)" : "0 22px 58px rgba(15,23,42,0.22)",
+                backgroundImage: "none",
+                backgroundColor: isDark ? "#60a5fa" : "#0f172a",
               },
             },
             outlined: {
-              borderColor: divider,
-              backgroundColor: isDark ? "rgba(255,255,255,0.055)" : "rgba(255,255,255,0.48)",
+              borderColor: isDark ? "rgba(148, 163, 184, 0.28)" : "rgba(15, 23, 42, 0.16)",
               "&:hover": {
-                transform: "translateY(-2px)",
-                borderColor: alpha("#7dd3fc", 0.42),
-                backgroundColor: isDark ? alpha("#ffffff", 0.1) : "rgba(255,255,255,0.72)",
+                borderColor: alpha(primary, 0.28),
+                backgroundColor: isDark ? alpha("#ffffff", 0.06) : "rgba(248, 250, 252, 1)",
               },
             },
             text: {
@@ -254,9 +228,7 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
               borderRadius: 12,
               transition,
               "&:hover": {
-                transform: "translateY(-2px)",
-                backgroundColor: alpha(primary, isDark ? 0.14 : 0.08),
-                boxShadow: `0 14px 34px ${alpha("#38bdf8", isDark ? 0.14 : 0.1)}`,
+                backgroundColor: alpha(primary, isDark ? 0.12 : 0.05),
               },
             },
           },
@@ -270,7 +242,7 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
         MuiInputBase: {
           styleOverrides: {
             root: {
-              borderRadius: 16,
+              borderRadius: 12,
               transition,
             },
           },
@@ -278,22 +250,17 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
         MuiOutlinedInput: {
           styleOverrides: {
             root: {
-              borderRadius: 16,
-              backgroundColor: isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.62)",
-              backdropFilter: "blur(18px)",
-              WebkitBackdropFilter: "blur(18px)",
+              borderRadius: 12,
+              backgroundColor: isDark ? "rgba(15, 23, 42, 0.55)" : "#ffffff",
               "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: divider,
+                borderColor: isDark ? "rgba(148, 163, 184, 0.28)" : "rgba(15, 23, 42, 0.14)",
               },
               "&:hover .MuiOutlinedInput-notchedOutline": {
-                borderColor: alpha("#7dd3fc", 0.36),
+                borderColor: isDark ? "rgba(148, 163, 184, 0.4)" : "rgba(15, 23, 42, 0.24)",
               },
               "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                 borderColor: secondary,
                 borderWidth: 1.5,
-              },
-              "&.Mui-focused": {
-                boxShadow: `0 0 0 4px ${alpha(secondary, 0.14)}, 0 18px 42px ${alpha("#38bdf8", isDark ? 0.14 : 0.08)}`,
               },
             },
             input: {
@@ -306,10 +273,8 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
           styleOverrides: {
             root: {
               borderRadius: 10,
-              border: `1px solid ${divider}`,
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-              backgroundImage: isDark ? "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04))" : undefined,
+              border: isDark ? "1px solid rgba(148, 163, 184, 0.18)" : "1px solid rgba(15, 23, 42, 0.1)",
+              backdropFilter: "none",
               transition,
             },
           },

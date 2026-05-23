@@ -6,7 +6,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Box, Card, CardProps, useTheme } from "@mui/material";
+import { Box, Card, CardProps, Stack, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { motion } from "framer-motion";
 
@@ -104,11 +104,13 @@ export function GlassCardHeader({
   title,
   subtitle,
   action,
+  icon,
   sx,
 }: {
   title: string;
   subtitle?: string;
   action?: ReactNode;
+  icon?: ReactNode;
   sx?: Record<string, any>;
 }) {
   const theme = useTheme();
@@ -123,31 +125,42 @@ export function GlassCardHeader({
         ...sx,
       }}
     >
-      <Box flex={1}>
-        <Box
-          className="section-title"
-          sx={{
-            fontSize: "18px",
-            color: theme.palette.text.primary,
-            letterSpacing: "-0.02em",
-            mb: 0.5,
-          }}
-        >
-          {title}
-        </Box>
-        {subtitle && (
-          <Box
-            className="body-text"
-            sx={{
-              fontSize: "13px",
-              color: theme.palette.text.secondary,
-              opacity: 0.8,
-            }}
-          >
-            {subtitle}
+      <Stack direction="row" spacing={2} alignItems="flex-start" flex={1}>
+        {icon && (
+          <Box sx={{ 
+            color: 'primary.main', 
+            mt: 0.5,
+            opacity: 0.8
+          }}>
+            {icon}
           </Box>
         )}
-      </Box>
+        <Box flex={1}>
+          <Box
+            className="section-title"
+            sx={{
+              fontSize: "18px",
+              color: theme.palette.text.primary,
+              letterSpacing: "-0.02em",
+              mb: 0.5,
+            }}
+          >
+            {title}
+          </Box>
+          {subtitle && (
+            <Box
+              className="body-text"
+              sx={{
+                fontSize: "13px",
+                color: theme.palette.text.secondary,
+                opacity: 0.8,
+              }}
+            >
+              {subtitle}
+            </Box>
+          )}
+        </Box>
+      </Stack>
       {action && <Box>{action}</Box>}
     </Box>
   );

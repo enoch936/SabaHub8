@@ -4,11 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
+  Button,
   CardContent,
+  Chip,
   Grid,
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { motion } from "framer-motion";
 import ChatRoundedIcon from "@mui/icons-material/ChatRounded";
 import MarkChatUnreadRoundedIcon from "@mui/icons-material/MarkChatUnreadRounded";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
@@ -17,6 +21,7 @@ import SoftButton from "@/components/mui/SoftButton";
 import SoftCard from "@/components/mui/SoftCard";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { useChatStore } from "@/lib/chatStore";
+import { MetricCard } from "./MetricCard";
 
 function formatDateTime(value?: string) {
   if (!value) return "Not recorded";
@@ -24,6 +29,9 @@ function formatDateTime(value?: string) {
   if (Number.isNaN(parsed)) return value;
   return new Date(parsed).toLocaleString();
 }
+
+import { GlassCard, GlassCardHeader } from "./GlassCard";
+import { DataTable } from "./DataTable";
 
 export default function AdminChatOperationsWorkspace() {
   const {
@@ -78,82 +86,74 @@ export default function AdminChatOperationsWorkspace() {
   }, [conversations]);
 
   return (
-    <Stack spacing={2.2}>
-      <SoftCard
-        sx={{
-          border: "1px solid",
-          borderColor: "rgba(24,40,59,0.16)",
+    <Stack spacing={3}>
+      <GlassCard 
+        premium 
+        sx={{ 
           background: "linear-gradient(135deg, #1b2230 0%, #27384f 55%, #4c516a 100%)",
-          color: "common.white",
+          color: "#fff"
         }}
       >
-        <CardContent>
-          <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems={{ md: "center" }} gap={1}>
+        <Box p={3}>
+          <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems={{ md: "center" }} gap={2}>
             <Box>
-              <Typography variant="overline" sx={{ letterSpacing: "0.14em", opacity: 0.82 }}>
-                CHAT OPERATIONS
+              <Typography variant="overline" sx={{ letterSpacing: "0.2em", fontWeight: 800, opacity: 0.7 }}>
+                OPERATIONAL OVERWATCH
               </Typography>
-              <Typography variant="h4" fontWeight={900} sx={{ lineHeight: 1.02 }}>
-                Admin conversation oversight
+              <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: "-0.02em", mb: 1 }}>
+                Chat Intelligence & Support
               </Typography>
-              <Typography variant="body2" sx={{ mt: 0.4, opacity: 0.9, maxWidth: 820 }}>
-                Review active conversations, unread pressure, recent messages, and escalation context across direct, group,
-                and channel threads.
+              <Typography variant="body1" sx={{ opacity: 0.8, maxWidth: 800, fontWeight: 500 }}>
+                High-fidelity oversight of platform communications. Monitor direct messaging, group escalations, 
+                and automated support threads with real-time sentiment tracking.
               </Typography>
             </Box>
-            <SoftButton
-              variant="outlined"
+            <Button
+              variant="contained"
               onClick={() => void fetchConversations()}
               disabled={isLoading}
               startIcon={<RefreshRoundedIcon />}
-              sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.55)" }}
+              sx={{ 
+                bgcolor: "rgba(255,255,255,0.15)", 
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.25)" }
+              }}
             >
-              Refresh
-            </SoftButton>
+              Sync Threads
+            </Button>
           </Stack>
-        </CardContent>
-      </SoftCard>
+        </Box>
+      </GlassCard>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <Alert severity="error" sx={{ borderRadius: 3 }}>{error}</Alert> : null}
 
-      <Grid container spacing={2}>
+      <Grid container spacing={2.5}>
         {[
-          { label: "Threads", value: metrics.total, icon: <ChatRoundedIcon fontSize="small" /> },
-          { label: "Unread", value: metrics.unread, icon: <MarkChatUnreadRoundedIcon fontSize="small" /> },
-          { label: "Group/Channel", value: metrics.groupCount, icon: <GroupsRoundedIcon fontSize="small" /> },
+          { label: "Active Threads", value: metrics.total, icon: <ChatRoundedIcon />, color: "primary" },
+          { label: "Unread Pressure", value: metrics.unread, icon: <MarkChatUnreadRoundedIcon />, color: "error" },
+          { label: "Enterprise Groups", value: metrics.groupCount, icon: <GroupsRoundedIcon />, color: "accent" },
         ].map((metric) => (
-          <Grid key={metric.label} size={{ xs: 12, sm: 6, xl: 4 }}>
-            <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
-              <CardContent>
-                <Stack spacing={0.8}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="body2" color="text.secondary">
-                      {metric.label}
-                    </Typography>
-                    {metric.icon}
-                  </Stack>
-                  <Typography variant="h4" fontWeight={900}>
-                    {metric.value}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </SoftCard>
+          <Grid key={metric.label} item xs={12} md={4}>
+            <MetricCard
+              icon={metric.icon}
+              label={metric.label}
+              value={metric.value}
+              color={metric.color as any}
+              size="small"
+            />
           </Grid>
         ))}
       </Grid>
 
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
-            <CardContent sx={{ p: 0 }}>
-              <Box sx={{ p: 2, pb: 1 }}>
-                <Typography variant="h6" fontWeight={800}>
-                  Thread Queue
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Select a conversation to inspect recent activity.
-                </Typography>
-              </Box>
+      <Grid container spacing={3}>
+        <Grid item xs={12} lg={4}>
+          <GlassCard sx={{ height: '700px', display: 'flex', flexDirection: 'column' }}>
+            <GlassCardHeader 
+              title="Conversation Queue" 
+              subtitle="Real-time message routing" 
+            />
+            <Box sx={{ flex: 1, overflowY: 'auto', px: 1 }}>
               <ConversationList
                 conversations={conversations}
                 activeId={activeConversationId}
@@ -164,62 +164,77 @@ export default function AdminChatOperationsWorkspace() {
                 resolveTitle={getConversationTitle}
                 resolveSubtitle={getConversationSubtitle}
               />
-            </CardContent>
-          </SoftCard>
+            </Box>
+          </GlassCard>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
-            <CardContent>
-              {activeConversation ? (
-                <Stack spacing={1.5}>
-                  <Box>
-                    <Typography variant="h6" fontWeight={800}>
-                      {getConversationTitle(activeConversation)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {getConversationSubtitle(activeConversation)} • Last message {formatDateTime(activeConversation.lastMessageAt)}
-                    </Typography>
-                  </Box>
-
-                  <Stack spacing={1}>
+        <Grid item xs={12} lg={8}>
+          <GlassCard sx={{ height: '700px', display: 'flex', flexDirection: 'column' }}>
+            {activeConversation ? (
+              <>
+                <GlassCardHeader 
+                  title={getConversationTitle(activeConversation)}
+                  subtitle={`${getConversationSubtitle(activeConversation)} • Last activity ${formatDateTime(activeConversation.lastMessageAt)}`}
+                  action={
+                    <Chip 
+                      label={activeConversation.threadType} 
+                      size="small" 
+                      sx={{ fontWeight: 800, borderRadius: '6px', bgcolor: alpha(theme.palette.primary.main, 0.1) }} 
+                    />
+                  }
+                />
+                
+                <Box sx={{ flex: 1, overflowY: 'auto', p: 2, bgcolor: alpha(theme.palette.text.primary, 0.01), borderRadius: '16px', m: 1 }}>
+                  <Stack spacing={2}>
                     {activeMessages.length === 0 ? (
-                      <Alert severity="info">No messages loaded for this thread yet.</Alert>
+                      <Box sx={{ py: 10, textAlign: 'center', opacity: 0.5 }}>
+                        <Typography variant="body2">No message history available for this thread.</Typography>
+                      </Box>
                     ) : (
                       activeMessages.map((message) => (
-                        <Box
+                        <motion.div
                           key={message.id}
-                          sx={{
-                            border: "1px solid",
-                            borderColor: "divider",
-                            borderRadius: 2,
-                            px: 2,
-                            py: 1.5,
-                          }}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
                         >
-                          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={2}>
-                            <Box>
-                              <Typography variant="subtitle2" fontWeight={800}>
+                          <Box
+                            sx={{
+                              p: 2,
+                              borderRadius: "16px",
+                              bgcolor: alpha(theme.palette.text.primary, 0.03),
+                              border: `1px solid var(--border)`,
+                              maxWidth: '85%',
+                              ml: message.senderId === 'system' ? 'auto' : 0,
+                              mr: message.senderId === 'system' ? 0 : 'auto',
+                            }}
+                          >
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                              <Typography sx={{ fontSize: '12px', fontWeight: 800, color: 'primary.main' }}>
                                 {message.senderId}
                               </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {message.type === "ASSET" ? "[Attachment]" : (message.text ?? "")}
+                              <Typography sx={{ fontSize: '10px', opacity: 0.5, fontWeight: 600 }}>
+                                {formatDateTime(message.createdAt)}
                               </Typography>
-                            </Box>
-                            <Typography variant="caption" color="text.secondary">
-                              {formatDateTime(message.createdAt)}
+                            </Stack>
+                            <Typography variant="body2" sx={{ lineHeight: 1.5, fontWeight: 500 }}>
+                              {message.type === "ASSET" ? "[Encrypted Media Attachment]" : (message.text ?? "")}
                             </Typography>
-                          </Stack>
-                        </Box>
+                          </Box>
+                        </motion.div>
                       ))
                     )}
                   </Stack>
+                </Box>
+              </>
+            ) : (
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+                <Stack alignItems="center" spacing={2}>
+                  <ChatRoundedIcon sx={{ fontSize: 48 }} />
+                  <Typography variant="body1" fontWeight={600}>Select a conversation to begin oversight</Typography>
                 </Stack>
-              ) : (
-                <Alert severity="info">No conversation selected.</Alert>
-              )}
-            </CardContent>
-          </SoftCard>
+              </Box>
+            )}
+          </GlassCard>
         </Grid>
       </Grid>
     </Stack>

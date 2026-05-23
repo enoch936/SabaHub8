@@ -75,6 +75,16 @@ type ControlBlueprint = {
 
 const actionBlueprints: QuickActionBlueprint[] = [
   {
+    key: "session-audit",
+    title: "Session Audit",
+    summary: "Inspect and validate live user sessions across the platform.",
+    lane: "health",
+    sectionKey: "audit-active-user-sessions",
+    operationId: "audit-active-sessions",
+    controlKey: "monitoring.auto-remediation",
+    icon: MonitorHeartRoundedIcon,
+  },
+  {
     key: "health-diagnostics",
     title: "Health Diagnostics",
     summary: "Run health diagnostics across services, queues, and core dependencies.",
@@ -150,6 +160,7 @@ const controlBlueprints: ControlBlueprint[] = [
 ];
 
 const operationLaneMap: Record<string, Exclude<MonitoringLane, "all">> = {
+  "audit-active-sessions": "health",
   "run-health-check": "health",
   "configure-system-alerts": "alerts",
   "investigate-service-outage": "incidents",
@@ -385,6 +396,17 @@ export default function AdminSystemMonitoringWorkspace({ focusSection }: AdminSy
   };
 
   const toggleFlag = async (flag: AdminCommandCenterFeatureFlag) => {
+    // Optimistic Update
+    const previousPayload = payload;
+    if (payload) {
+        setPayload({
+            ...payload,
+            featureFlags: payload.featureFlags.map(f => 
+                f.key === flag.key ? { ...f, enabled: !f.enabled } : f
+            )
+        });
+    }
+
     setFlagUpdating(flag.key);
     setActionStatus(null);
     try {
@@ -394,8 +416,10 @@ export default function AdminSystemMonitoringWorkspace({ focusSection }: AdminSy
         description: flag.description,
       });
       setActionStatus(`${titleFromFlagKey(flag.key)} updated.`);
-      await load();
+      // No need to reload immediately, we already updated UI
     } catch (err) {
+      // Rollback on error
+      setPayload(previousPayload);
       const message = err instanceof Error && err.message ? err.message : "Failed to update monitoring control.";
       setActionStatus(message);
     } finally {

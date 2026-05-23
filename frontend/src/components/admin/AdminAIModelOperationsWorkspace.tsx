@@ -29,7 +29,8 @@ import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import SoftButton from "@/components/mui/SoftButton";
-import SoftCard from "@/components/mui/SoftCard";
+import { GlassCard, GlassCardHeader } from "./GlassCard";
+import { DataTable, type TableColumn } from "./DataTable";
 import SoftTextField from "@/components/mui/SoftTextField";
 import {
   type AIDatasetImportResponse,
@@ -170,7 +171,7 @@ export default function AdminAIModelOperationsWorkspace() {
 
   return (
     <Stack spacing={2.2}>
-      <SoftCard
+      <GlassCard
         sx={{
           border: "1px solid",
           borderColor: "rgba(24,40,59,0.16)",
@@ -205,7 +206,7 @@ export default function AdminAIModelOperationsWorkspace() {
             </Stack>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
       {actionStatus ? <Alert severity="info">{actionStatus}</Alert> : null}
@@ -219,7 +220,7 @@ export default function AdminAIModelOperationsWorkspace() {
           { label: "Tracked Terms", value: String(metrics.trackedTerms), icon: <AutorenewRoundedIcon fontSize="small" /> },
         ].map((metric) => (
           <Grid key={metric.label} size={{ xs: 12, sm: 6, xl: 3 }}>
-            <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+            <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
               <CardContent>
                 <Stack spacing={0.8}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -233,14 +234,14 @@ export default function AdminAIModelOperationsWorkspace() {
                   </Typography>
                 </Stack>
               </CardContent>
-            </SoftCard>
+            </GlassCard>
           </Grid>
         ))}
       </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, xl: 7 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent sx={{ p: 0 }}>
               <Box sx={{ p: 2, pb: 1 }}>
                 <Typography variant="h6" fontWeight={800}>
@@ -250,77 +251,71 @@ export default function AdminAIModelOperationsWorkspace() {
                   Review the active release and publish another approved version when needed.
                 </Typography>
               </Box>
-              <Box sx={{ overflowX: "auto" }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Version</TableCell>
-                      <TableCell>Trained</TableCell>
-                      <TableCell>Path</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(versions?.versions ?? []).map((release) => {
-                      const active = release.version === versions?.activeVersion;
-                      return (
-                        <TableRow key={release.version} hover>
-                          <TableCell>
-                            <Stack spacing={0.25}>
-                              <Typography variant="subtitle2" fontWeight={800}>
-                                {release.version}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {active ? "Currently active" : "Available"}
-                              </Typography>
-                            </Stack>
-                          </TableCell>
-                          <TableCell>{formatDateTime(release.trainedAt)}</TableCell>
-                          <TableCell>{release.path || "Not reported"}</TableCell>
-                          <TableCell align="right">
-                            <SoftButton
-                              variant="outlined"
-                              size="small"
-                              color="success"
-                              startIcon={<PublishedWithChangesRoundedIcon />}
-                              onClick={() =>
-                                void runOperation(
-                                  `activate:${release.version}`,
-                                  () => aiActivateModel(release.version),
-                                  { reloadVersions: true },
-                                )
-                              }
-                              disabled={busyAction !== null || active}
-                            >
-                              Activate
-                            </SoftButton>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    {!loading && (versions?.versions?.length ?? 0) === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                          No model versions were returned by the registry.
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                          Loading model registry...
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                  </TableBody>
-                </Table>
-              </Box>
+          <DataTable
+            columns={[
+              {
+                key: "version",
+                label: "Version",
+                sortable: true,
+                render: (val, release) => {
+                  const active = release.version === versions?.activeVersion;
+                  return (
+                    <Stack spacing={0.25}>
+                      <Typography variant="subtitle2" fontWeight={800}>
+                        {String(val)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {active ? "Currently active" : "Available"}
+                      </Typography>
+                    </Stack>
+                  );
+                },
+              },
+              {
+                key: "trainedAt",
+                label: "Trained",
+                sortable: true,
+                render: (val) => formatDateTime(val as string),
+              },
+              { key: "path", label: "Path", render: (val) => String(val) || "Not reported" },
+              {
+                key: "id",
+                label: "Actions",
+                align: "right",
+                render: (_, release) => {
+                  const active = release.version === versions?.activeVersion;
+                  return (
+                    <SoftButton
+                      variant="outline"
+                      size="sm"
+                      color="success"
+                      leftIcon={<PublishedWithChangesRoundedIcon sx={{ fontSize: 16 }} />}
+                      onClick={() =>
+                        void runOperation(
+                          `activate:${release.version}`,
+                          () => aiActivateModel(release.version),
+                          { reloadVersions: true },
+                        )
+                      }
+                      disabled={busyAction !== null || active}
+                    >
+                      Activate
+                    </SoftButton>
+                  );
+                },
+              },
+            ]}
+            data={versions?.versions ?? []}
+            rowKey="version"
+            loading={loading}
+            searchable={false}
+          />
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, xl: 5 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack spacing={1.4}>
                 <Box>
@@ -400,7 +395,7 @@ export default function AdminAIModelOperationsWorkspace() {
                   </SoftButton>
                 </Stack>
 
-                <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+                <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
                   <CardContent>
                     <Stack spacing={0.5}>
                       <Typography variant="caption" color="text.secondary">
@@ -412,16 +407,16 @@ export default function AdminAIModelOperationsWorkspace() {
                       </Typography>
                     </Stack>
                   </CardContent>
-                </SoftCard>
+                </GlassCard>
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, xl: 7 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
             <CardContent>
               <Stack spacing={1.4}>
                 <Box>
@@ -520,11 +515,11 @@ export default function AdminAIModelOperationsWorkspace() {
                 </Stack>
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, xl: 5 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack spacing={1.2}>
                 <Typography variant="h6" fontWeight={800}>
@@ -552,11 +547,11 @@ export default function AdminAIModelOperationsWorkspace() {
                 )}
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent>
           <Stack spacing={1.4}>
             <Box>
@@ -577,76 +572,67 @@ export default function AdminAIModelOperationsWorkspace() {
               </Typography>
             </Stack>
 
-            <Box sx={{ overflowX: "auto" }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Term</TableCell>
-                    <TableCell width="180">Trend</TableCell>
-                    <TableCell>Suggested Parent</TableCell>
-                    <TableCell>Signals</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {trackedTerms.slice(0, 10).map((term) => (
-                    <TableRow key={term.term} hover>
-                      <TableCell>
-                        <Stack spacing={0.2}>
-                          <Typography variant="subtitle2" fontWeight={800}>
-                            {term.term}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Last seen {formatDateTime(term.last_seen)}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={0.7}>
-                          <Typography variant="body2" fontWeight={700}>
-                            {term.trend_score}/100
-                          </Typography>
-                          <LinearProgress
-                            variant="determinate"
-                            value={Math.max(0, Math.min(100, term.trend_score))}
-                            sx={{ height: 8, borderRadius: 999, bgcolor: "rgba(15,23,42,0.08)" }}
-                          />
-                        </Stack>
-                      </TableCell>
-                      <TableCell>{term.suggested_parent || "Awaiting stable parent fit"}</TableCell>
-                      <TableCell>
-                        <Stack spacing={0.8}>
-                          <Typography variant="body2" color="text.secondary">
-                            Seen {term.count} time{term.count === 1 ? "" : "s"}
-                          </Typography>
-                          <Stack direction="row" spacing={0.6} useFlexGap flexWrap="wrap">
-                            {term.types.map((itemType) => (
-                              <Chip key={`${term.term}-${itemType}`} label={itemType} size="small" variant="outlined" />
-                            ))}
-                          </Stack>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {!loading && trackedTerms.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                        No recurring unmatched taxonomy terms are in review yet.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                        Loading taxonomy learning signals...
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
-            </Box>
+            <DataTable
+              columns={[
+                {
+                  key: "term",
+                  label: "Term",
+                  sortable: true,
+                  render: (val, term) => (
+                    <Stack spacing={0.2}>
+                      <Typography variant="subtitle2" fontWeight={800}>
+                        {String(val)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Last seen {formatDateTime(term.last_seen)}
+                      </Typography>
+                    </Stack>
+                  ),
+                },
+                {
+                  key: "trend_score",
+                  label: "Trend",
+                  sortable: true,
+                  render: (val) => (
+                    <Stack spacing={0.7}>
+                      <Typography variant="body2" fontWeight={700}>
+                        {Number(val)}/100
+                      </Typography>
+                      <LinearProgress
+                        variant="determinate"
+                        value={Math.max(0, Math.min(100, Number(val)))}
+                        sx={{ height: 8, borderRadius: 999, bgcolor: "rgba(15,23,42,0.08)" }}
+                      />
+                    </Stack>
+                  ),
+                },
+                { key: "suggested_parent", label: "Suggested Parent", render: (val) => String(val) || "Awaiting stable parent fit" },
+                {
+                  key: "count",
+                  label: "Signals",
+                  sortable: true,
+                  render: (val, term) => (
+                    <Stack spacing={0.8}>
+                      <Typography variant="body2" color="text.secondary">
+                        Seen {Number(val)} time{Number(val) === 1 ? "" : "s"}
+                      </Typography>
+                      <Stack direction="row" spacing={0.6} useFlexGap flexWrap="wrap">
+                        {term.types.map((itemType: string) => (
+                          <Chip key={`${term.term}-${itemType}`} label={itemType} size="small" variant="outlined" />
+                        ))}
+                      </Stack>
+                    </Stack>
+                  ),
+                },
+              ]}
+              data={trackedTerms}
+              rowKey="term"
+              loading={loading}
+              pageSize={10}
+            />
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
     </Stack>
   );
 }

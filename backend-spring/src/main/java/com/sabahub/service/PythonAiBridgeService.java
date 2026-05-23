@@ -61,6 +61,10 @@ public class PythonAiBridgeService {
         return postForMap("/assist/chatbot", payload);
     }
 
+    public Optional<Map<String, Object>> adminAssist(Map<String, Object> payload) {
+        return postForMap("/admin/assist", payload);
+    }
+
     public Optional<Map<String, Object>> classifyTaxonomy(Map<String, Object> payload) {
         return postForMap("/classify/taxonomy", payload);
     }

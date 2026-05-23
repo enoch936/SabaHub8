@@ -31,14 +31,16 @@ import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import { HealthIndicator } from "./SystemStatus";
-import { NotificationCenter } from "./NotificationCenter";
+import { NotificationCenter } from "../NotificationCenter";
 import { useNotifications } from "@/lib/notifications";
 
 interface NavbarProps {
   onThemeToggle?: () => void;
   onLogout?: () => void;
   onSearch?: (query: string) => void;
+  onToggleSidebar?: () => void;
   notificationCount?: number;
   user?: { name: string; avatar?: string };
   isDarkMode?: boolean;
@@ -49,6 +51,7 @@ export function AdminNavbar({
   onThemeToggle,
   onLogout,
   onSearch,
+  onToggleSidebar,
   notificationCount = 0,
   user,
   isDarkMode = true,
@@ -65,7 +68,7 @@ export function AdminNavbar({
   return (
     <Box sx={{ width: "100%", height: 68 }}>
       <AppBar
-        position="fixed"
+        position="sticky"
         elevation={0}
         sx={{
           height: 68,
@@ -86,7 +89,14 @@ export function AdminNavbar({
           }}
         >
           {/* Left section - Context/Search */}
-          <Stack direction="row" spacing={3} alignItems="center" flex={1}>
+          <Stack direction="row" spacing={1} alignItems="center" flex={1}>
+            <IconButton
+              onClick={onToggleSidebar}
+              sx={{ display: { lg: "none" }, ml: -0.5 }}
+              color="inherit"
+            >
+              <MenuRoundedIcon />
+            </IconButton>
             <Box sx={{ maxWidth: 360, width: "100%", display: { xs: "none", sm: "block" } }}>
               <TextField
                 fullWidth
@@ -165,6 +175,7 @@ export function AdminNavbar({
                 notifications={notifications as any[]}
                 onMarkAsRead={markRead}
                 onClearAll={markAllRead}
+                onMarkAllRead={markAllRead}
               />
             </Popover>
 

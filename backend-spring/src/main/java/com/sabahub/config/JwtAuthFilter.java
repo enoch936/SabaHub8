@@ -38,6 +38,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            String tokenParam = request.getParameter("token");
+            if (tokenParam != null && !tokenParam.trim().isEmpty()) {
+                authHeader = "Bearer " + tokenParam.trim();
+            }
+        }
+        
         String contentType = request.getHeader("Content-Type");
         String contentLength = request.getHeader("Content-Length");
         

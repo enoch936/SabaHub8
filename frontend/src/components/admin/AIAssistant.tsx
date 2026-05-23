@@ -5,7 +5,7 @@
 
 "use client";
 
-import { ReactNode, useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Box,
   Stack,
@@ -22,6 +22,7 @@ import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import { motion, AnimatePresence } from "framer-motion";
 import { GlassCard, GlassCardHeader } from "./GlassCard";
+import { executeAdminAICommand } from "@/lib/api";
 
 export interface AIMessage {
   id: string;
@@ -40,23 +41,23 @@ interface AIPanelProps {
 }
 
 const defaultSuggestedQueries = [
-  "What are today's key metrics?",
-  "Show me revenue trends",
-  "Analyze user growth",
-  "What requires attention?",
-  "Generate system report",
-  "Find anomalies in data",
+  "Analyze platform performance",
+  "Generate analytics summary",
+  "Find anomalies in recent data",
+  "Suggest moderation actions",
+  "Search for high-value jobs",
 ];
 
 export function AIAssistantPanel({
   onSendMessage,
   messages = [],
-  loading = false,
+  loading: initialLoading = false,
   suggestedQueries = defaultSuggestedQueries,
 }: AIPanelProps) {
   const theme = useTheme();
   const [input, setInput] = useState("");
   const [localMessages, setLocalMessages] = useState<AIMessage[]>(messages);
+  const [loading, setLoading] = useState(initialLoading);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,27 +68,51 @@ export function AIAssistantPanel({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [localMessages]);
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
+  const handleSendMessage = async (msgOverride?: string) => {
+    const text = msgOverride || input;
+    if (!text.trim()) return;
 
     const userMessage: AIMessage = {
       id: `user-${Date.now()}`,
       type: "user",
-      content: input,
+      content: text,
       timestamp: new Date(),
     };
 
     setLocalMessages((prev) => [...prev, userMessage]);
-    onSendMessage?.(input);
-    setInput("");
+    onSendMessage?.(text);
+    if (!msgOverride) setInput("");
+    setLoading(true);
+
+    try {
+        const response = await executeAdminAICommand(text);
+        const aiMessage: AIMessage = {
+            id: `ai-${Date.now()}`,
+            type: "assistant",
+            content: response.answer,
+            timestamp: new Date(),
+            suggestions: response.suggestedActions,
+        };
+        setLocalMessages(prev => [...prev, aiMessage]);
+    } catch (err) {
+        const errorMessage: AIMessage = {
+            id: `err-${Date.now()}`,
+            type: "assistant",
+            content: "Sorry, I encountered an error while processing your request. Please try again later.",
+            timestamp: new Date(),
+        };
+        setLocalMessages(prev => [...prev, errorMessage]);
+    } finally {
+        setLoading(false);
+    }
   };
 
   const handleSuggestedQuery = (query: string) => {
-    setInput(query);
+    handleSendMessage(query);
   };
 
   return (
-    <GlassCard>
+    <GlassCard sx={{ height: { xs: 500, md: 'auto' }, display: 'flex', flexDirection: 'column' }}>
       <GlassCardHeader
         title="AI Assistant"
         subtitle="Intelligent analytics and insights"
@@ -96,11 +121,12 @@ export function AIAssistantPanel({
       {/* Messages Area */}
       <Box
         sx={{
-          height: 320,
+          flex: 1,
+          minHeight: { xs: 0, md: 320 },
           display: "flex",
           flexDirection: "column",
           mb: 2,
-          p: 2,
+          p: { xs: 1.5, md: 2 },
           borderRadius: "12px",
           backgroundColor: alpha(theme.palette.background.default, 0.3),
           border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
@@ -147,7 +173,7 @@ export function AIAssistantPanel({
                   >
                     <Box
                       sx={{
-                        maxWidth: "80%",
+                        maxWidth: "85%",
                         px: 2,
                         py: 1,
                         borderRadius: "12px",
@@ -163,7 +189,7 @@ export function AIAssistantPanel({
                     >
                       <Typography
                         sx={{
-                          fontSize: "13px",
+                          fontSize: { xs: '13px', md: '13px' },
                           color: theme.palette.text.primary,
                           wordBreak: "break-word",
                         }}
@@ -188,7 +214,7 @@ export function AIAssistantPanel({
                   </Box>
 
                   {message.suggestions && message.suggestions.length > 0 && (
-                    <Stack direction="row" spacing={1} sx={{ mt: 1, ml: 2 }}>
+                    <Box sx={{ mt: 1, ml: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                       {message.suggestions.map((suggestion) => (
                         <Chip
                           key={suggestion}
@@ -209,7 +235,7 @@ export function AIAssistantPanel({
                           }}
                         />
                       ))}
-                    </Stack>
+                    </Box>
                   )}
                 </motion.div>
               ))}
@@ -267,13 +293,13 @@ export function AIAssistantPanel({
       )}
 
       {/* Input Area */}
-      <Stack direction="row" spacing={1} alignItems="flex-end">
+      <Stack direction="row" spacing={1} alignItems="flex-end" sx={{ mt: 'auto' }}>
         <TextField
           fullWidth
           multiline
-          maxRows={3}
+          maxRows={4}
           minRows={1}
-          placeholder="Ask about metrics, reports, or platform status..."
+          placeholder="Ask about platform..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={(e) => {
@@ -289,6 +315,7 @@ export function AIAssistantPanel({
               backgroundColor: alpha(theme.palette.background.paper, 0.6),
               borderRadius: "12px",
               border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              fontSize: { xs: '14px', md: '13px' },
               "&:hover": {
                 borderColor: alpha(theme.palette.primary.main, 0.5),
               },
@@ -300,11 +327,12 @@ export function AIAssistantPanel({
         />
         <Tooltip title="Send message">
           <IconButton
-            onClick={handleSendMessage}
+            onClick={() => handleSendMessage()}
             disabled={!input.trim() || loading}
             size="small"
             sx={{
               color: theme.palette.primary.main,
+              p: 1
             }}
           >
             <SendRoundedIcon fontSize="small" />

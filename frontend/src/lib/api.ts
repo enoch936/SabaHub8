@@ -1806,6 +1806,18 @@ export async function getEmployerAnalytics() {
 }
 
 // Contracts
+export async function executeAdminAICommand(command: string) {
+  const response = await api.post("/admin/ai/command", { command });
+  return unwrapResponse(response, "AI command execution failed") as {
+    answer: string;
+    confidence: number;
+    suggestedActions?: string[];
+    engine?: string;
+    anomalies?: any[];
+    results?: any[];
+  };
+}
+
 export type Contract = {
   id: string;
   jobId: string;
@@ -2962,6 +2974,7 @@ export type ChatThread = {
   pinned?: boolean;
   muted?: boolean;
   archived?: boolean;
+  lastReadAtByUser?: Record<string, string>;
 };
 export type ChatMessage = {
   id: string;
@@ -3104,6 +3117,41 @@ export async function pinThreadMessage(threadId: string, messageId: string) {
 export async function clearPinnedThreadMessage(threadId: string) {
   const { data } = await api.delete(`/chat/threads/${threadId}/pin`);
   return asChatThreadOrThrow(data, "Failed to clear pinned message.");
+}
+
+export async function adminGetStorageAnalytics() {
+  const { data } = await api.get(`/assets/analytics`);
+  return data as {
+    totalSize: number;
+    totalCount: number;
+    sizeByType: Record<string, number>;
+    countByType: Record<string, number>;
+    storageTotal: number;
+  };
+}
+
+export async function adminGetMonitoringMetrics() {
+  const { data } = await api.get(`/admin/monitoring/metrics`);
+  return data as {
+    cpuUsage: number;
+    memoryUsed: number;
+    memoryMax: number;
+    memoryPercentage: number;
+    uptimeSeconds: number;
+    diskTotal: number;
+    diskUsed: number;
+    diskPercentage: number;
+    apiLatencyAvg: number;
+    apiRequestsTotal: number;
+    dbLatencyAvg: number;
+    websocketConnections: number;
+    activeContainers: number;
+  };
+}
+
+export async function adminGetMonitoringLogs(lines = 100) {
+  const { data } = await api.get(`/admin/monitoring/logs`, { params: { lines } });
+  return data as string[];
 }
 
 // Notifications
@@ -4144,6 +4192,17 @@ export type AdminCommandCenterDomainResponse = {
   featureFlags: AdminCommandCenterFeatureFlag[];
 };
 
+export type AIInferenceLog = {
+  id: string;
+  model: string;
+  timestamp: string;
+  latencyMs: number;
+  tokensUsed: number;
+  status: "SUCCESS" | "FAILURE";
+  promptType: string;
+  userId: string;
+};
+
 export type AdminCommandCenterCapabilityGroup = {
   id: string;
   title: string;
@@ -4255,6 +4314,11 @@ export async function adminCommandCenterUpdateFeatureFlag(
 ) {
   const { data } = await api.patch(`/admin/command-center/feature-flags/${key}`, body);
   return data as AdminCommandCenterFeatureFlag;
+}
+
+export async function adminListAIUsageLogs(count = 50) {
+  const { data } = await api.get(`/admin/analytics/ai-usage/logs?count=${count}`);
+  return data as AIInferenceLog[];
 }
 
 export async function adminCommandCenterExecuteOperation(

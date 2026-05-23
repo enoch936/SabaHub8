@@ -29,6 +29,7 @@ import {
   Users,
   X,
   UserPlus,
+  ShieldAlert as ShieldRoundedIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -725,6 +726,7 @@ function ChatContent() {
                 typingUsers={activeTyping}
                 currentUserId={currentUserId}
                 messages={activeMessages}
+                activeConversation={activeConversation}
                 assetsById={assetsById}
                 isLoading={isLoading && activeMessages.length === 0}
                 onSend={handleSend}

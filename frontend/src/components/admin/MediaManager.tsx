@@ -261,18 +261,25 @@ export function MediaManager({
                 >
                   <Box
                     sx={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: "8px",
-                      backgroundColor: alpha(typeConfig[file.type].color, 0.15),
+                      width: 48,
+                      height: 48,
+                      borderRadius: "10px",
+                      backgroundColor: alpha(typeConfig[file.type].color, 0.1),
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       color: typeConfig[file.type].color,
                       flexShrink: 0,
+                      overflow: "hidden",
                     }}
                   >
-                    {getFileIcon(file.type)}
+                    {file.type === "image" && file.url ? (
+                      <Box component="img" src={file.url} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : file.type === "video" && file.url ? (
+                      <Box component="video" src={file.url} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      getFileIcon(file.type)
+                    )}
                   </Box>
 
                   <Box flex={1} minWidth={0}>

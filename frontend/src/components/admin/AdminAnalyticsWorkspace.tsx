@@ -35,8 +35,10 @@ import {
   YAxis,
 } from "recharts";
 import NoSsrResponsiveContainer from "@/components/charts/NoSsrResponsiveContainer";
-import SoftButton from "@/components/mui/SoftButton";
-import SoftCard from "@/components/mui/SoftCard";
+import { GlassCard, GlassCardHeader } from "./GlassCard";
+import { MetricCard } from "./MetricCard";
+import { ChartContainer, ChartGrid } from "./ChartContainer";
+import { Button } from "@mui/material";
 import SoftTextField from "@/components/mui/SoftTextField";
 import {
   type AdminAnalyticsBreakdownItem,
@@ -124,7 +126,7 @@ function metricToneChip(tone?: string): "success" | "warning" | "info" {
 function renderMetricCard(metric: AdminAnalyticsMetricCard) {
   const style = toneStyle(metric.tone);
   return (
-    <SoftCard
+    <GlassCard
       key={metric.id}
       sx={{
         border: "1px solid",
@@ -149,7 +151,7 @@ function renderMetricCard(metric: AdminAnalyticsMetricCard) {
           </Typography>
         </Stack>
       </CardContent>
-    </SoftCard>
+    </GlassCard>
   );
 }
 
@@ -163,7 +165,7 @@ function BreakdownList({
   icon?: ReactNode;
 }) {
   return (
-    <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+    <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
       <CardContent>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.3 }}>
           <Stack direction="row" spacing={1} alignItems="center">
@@ -208,7 +210,7 @@ function BreakdownList({
           ) : null}
         </Stack>
       </CardContent>
-    </SoftCard>
+    </GlassCard>
   );
 }
 
@@ -321,7 +323,6 @@ export default function AdminAnalyticsWorkspace() {
       sx={{
         position: "relative",
         minHeight: "100vh",
-        overflow: "hidden",
         px: { xs: 1.5, md: 2.2 },
         py: { xs: 1.5, md: 2.2 },
         background:
@@ -337,7 +338,7 @@ export default function AdminAnalyticsWorkspace() {
       }}
     >
       <Stack spacing={2.2} sx={{ position: "relative", zIndex: 1 }}>
-      <SoftCard
+      <GlassCard
         sx={{
           border: "1px solid",
           borderColor: "rgba(15,76,129,0.22)",
@@ -391,23 +392,23 @@ export default function AdminAnalyticsWorkspace() {
             </Stack>
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1} useFlexGap flexWrap="wrap">
-              <SoftButton
+              <Button
                 component={Link}
                 href="/admin"
                 variant="contained"
                 sx={{ bgcolor: "rgba(255,255,255,0.96)", color: "#082032" }}
               >
                 Back To Overview
-              </SoftButton>
-              <SoftButton
+              </Button>
+              <Button
                 variant="outlined"
                 onClick={() => void loadWorkspace(days)}
                 startIcon={<RefreshRoundedIcon />}
                 sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.72)" }}
               >
                 Refresh Workspace
-              </SoftButton>
-              <SoftButton
+              </Button>
+              <Button
                 variant="outlined"
                 onClick={() => void generateReport(days)}
                 disabled={reportLoading}
@@ -415,8 +416,8 @@ export default function AdminAnalyticsWorkspace() {
                 sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.72)" }}
               >
                 {reportLoading ? "Generating Report..." : "Generate Executive Report"}
-              </SoftButton>
-              <SoftButton
+              </Button>
+              <Button
                 variant="outlined"
                 onClick={() => void exportJson()}
                 disabled={actionLoading !== null}
@@ -424,8 +425,8 @@ export default function AdminAnalyticsWorkspace() {
                 sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.72)" }}
               >
                 {actionLoading === "json" ? "Exporting JSON..." : "Export JSON"}
-              </SoftButton>
-              <SoftButton
+              </Button>
+              <Button
                 variant="outlined"
                 onClick={() => void exportCsv()}
                 disabled={actionLoading !== null}
@@ -433,11 +434,11 @@ export default function AdminAnalyticsWorkspace() {
                 sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.72)" }}
               >
                 {actionLoading === "csv" ? "Exporting CSV..." : "Export CSV"}
-              </SoftButton>
+              </Button>
             </Stack>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       {loading ? <LinearProgress /> : null}
       {error ? <Alert severity="error">{error}</Alert> : null}
@@ -453,7 +454,7 @@ export default function AdminAnalyticsWorkspace() {
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, xl: 8 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -497,11 +498,11 @@ export default function AdminAnalyticsWorkspace() {
                 </NoSsrResponsiveContainer>
               </Box>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, xl: 4 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -548,7 +549,7 @@ export default function AdminAnalyticsWorkspace() {
                 ))}
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
@@ -568,7 +569,7 @@ export default function AdminAnalyticsWorkspace() {
           />
         </Grid>
         <Grid size={{ xs: 12, lg: 4 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
                 <InsightsRoundedIcon color="primary" />
@@ -614,13 +615,13 @@ export default function AdminAnalyticsWorkspace() {
                 ))}
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, xl: 6 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Typography variant="h6" fontWeight={800} sx={{ mb: 1.2 }}>
                 Engagement Metrics
@@ -633,11 +634,11 @@ export default function AdminAnalyticsWorkspace() {
                 ))}
               </Grid>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, xl: 6 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Typography variant="h6" fontWeight={800} sx={{ mb: 1.2 }}>
                 Operations Metrics
@@ -650,13 +651,13 @@ export default function AdminAnalyticsWorkspace() {
                 ))}
               </Grid>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, xl: 7 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.4 }}>
                 <MemoryRoundedIcon color="primary" />
@@ -743,11 +744,11 @@ export default function AdminAnalyticsWorkspace() {
                 ))}
               </Grid>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, xl: 5 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Typography variant="h6" fontWeight={800} sx={{ mb: 1.2 }}>
                 Operational Insights
@@ -777,11 +778,11 @@ export default function AdminAnalyticsWorkspace() {
                 })}
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent>
           <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" gap={1.5} sx={{ mb: 1.4 }}>
             <Box>
@@ -831,7 +832,7 @@ export default function AdminAnalyticsWorkspace() {
             ))}
           </Grid>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 6 }}>

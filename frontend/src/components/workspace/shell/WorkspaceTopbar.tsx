@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { BrandLogo } from "@/components/landing/BrandLogo";
 import {
   AppBar,
   Avatar,
@@ -38,7 +37,6 @@ import {
 } from "@mui/icons-material";
 import RoleModeSwitch from "@/components/RoleModeSwitch";
 import { ThemeIconButton } from "@/components/mui/ThemeToggle";
-import LandingMegaMenu from "@/components/landing/LandingMegaMenu";
 import { WORKSPACE_HEADER_HEIGHT } from "@/components/workspace-shell";
 import { getWorkspaceSurfaceLabel } from "@/components/workspace/navigation/workspace-nav";
 import { getNotificationHref } from "@/lib/notificationRoutes";
@@ -133,10 +131,8 @@ export default function WorkspaceTopbar({
         height: WORKSPACE_HEADER_HEIGHT,
         justifyContent: "center",
         bgcolor: "transparent",
-        background: "linear-gradient(135deg, var(--glass-strong), var(--glass-subtle))",
-        backdropFilter: "blur(28px) saturate(1.45)",
-        boxShadow: "var(--shadow-soft)",
-        borderBottom: "1px solid var(--glass-border)",
+        boxShadow: "none",
+        borderBottom: "none",
         zIndex: (theme) => theme.zIndex.drawer + 2,
       }}
     >
@@ -144,16 +140,22 @@ export default function WorkspaceTopbar({
         disableGutters
         sx={{
           minHeight: `${WORKSPACE_HEADER_HEIGHT}px !important`,
-          px: { xs: 1.5, md: 3 },
-          gap: { xs: 1, md: 1.5 },
+          px: { xs: 1.25, md: 2.5 },
         }}
       >
         <Box
           sx={{
-            width: "100%",
+            mx: "auto",
+            width: "min(100%, 1440px)",
             display: "flex",
             alignItems: "center",
             gap: { xs: 0.75, md: 1 },
+            borderRadius: "24px",
+            px: { xs: 1, md: 1.5 },
+            py: 0.75,
+            border: "1px solid var(--border)",
+            background: "var(--surface)",
+            boxShadow: "var(--shadow-soft)",
           }}
         >
           <Tooltip title={menuTooltip}>
@@ -162,13 +164,12 @@ export default function WorkspaceTopbar({
               aria-label={menuAriaLabel}
               className="soft-click"
               sx={{
-                width: 44,
-                height: 44,
-                borderRadius: "13px",
-                bgcolor: "var(--glass)",
-                border: "1px solid var(--glass-border)",
+                width: 42,
+                height: 42,
+                borderRadius: "14px",
+                bgcolor: "var(--surface)",
+                border: "1px solid var(--border)",
                 boxShadow: "var(--shadow-soft)",
-                backdropFilter: "blur(18px)",
               }}
             >
               {menuIcon}
@@ -176,7 +177,22 @@ export default function WorkspaceTopbar({
           </Tooltip>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, flexShrink: 0 }}>
-            <BrandLogo size="md" />
+            <Box
+              sx={{
+                display: "grid",
+                width: 38,
+                height: 38,
+                borderRadius: "15px",
+                bgcolor: "#111827",
+                color: "#ffffff",
+                placeItems: "center",
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+              }}
+            >
+              SH
+            </Box>
             <Box sx={{ display: { xs: "none", sm: "block" }, minWidth: 0 }}>
               <Typography
                 sx={{ fontSize: "0.84rem", fontWeight: 700, lineHeight: 1.1, color: "var(--foreground)" }}
@@ -209,14 +225,13 @@ export default function WorkspaceTopbar({
               maxWidth: 620,
               "& .MuiOutlinedInput-root": {
                 borderRadius: "18px",
-                bgcolor: "var(--glass)",
+                bgcolor: "var(--surface)",
                 minHeight: 44,
                 pr: 0.5,
                 boxShadow: "var(--shadow-soft)",
-                backdropFilter: "blur(18px)",
-                "& fieldset": { borderColor: "var(--glass-border)" },
-                "&:hover fieldset": { borderColor: "rgba(125,211,252,0.4)" },
-                "&.Mui-focused fieldset": { borderColor: "rgba(167,139,250,0.55)" },
+                "& fieldset": { borderColor: "var(--border)" },
+                "&:hover fieldset": { borderColor: "var(--border)" },
+                "&.Mui-focused fieldset": { borderColor: "var(--border)" },
               },
             }}
             InputProps={{
@@ -228,29 +243,7 @@ export default function WorkspaceTopbar({
             }}
           />
 
-          <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: { xs: 0.5, md: 1 } }}>
-            {/* Mobile search icon — shown only when text field is hidden */}
-            <Tooltip title="Search">
-              <IconButton
-                className="soft-click"
-                sx={{
-                  display: { xs: "flex", md: "none" },
-                  width: 44,
-                  height: 44,
-                  borderRadius: "13px",
-                  bgcolor: "var(--glass)",
-                  border: "1px solid var(--glass-border)",
-                }}
-                aria-label="Search"
-              >
-                <Search fontSize="small" />
-              </IconButton>
-            </Tooltip>
-
-            <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}>
-              <LandingMegaMenu />
-            </Box>
-
+          <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1 }}>
             <Box sx={{ display: { xs: "none", lg: "block" } }}>
               <RoleModeSwitch variant="pill" />
             </Box>
@@ -258,12 +251,12 @@ export default function WorkspaceTopbar({
             <ThemeIconButton
               size="small"
               sx={{
-                width: 44,
-                height: 44,
-                borderRadius: "13px",
-                bgcolor: "var(--glass)",
+                width: 42,
+                height: 42,
+                borderRadius: "14px",
+                bgcolor: "var(--surface)",
                 color: "var(--foreground)",
-                border: "1px solid var(--glass-border)",
+                border: "1px solid var(--border)",
                 "&:hover": { bgcolor: "var(--accent)" },
               }}
             />
@@ -274,12 +267,11 @@ export default function WorkspaceTopbar({
                 href="/chat"
                 className="soft-click"
                 sx={{
-                display: { xs: "none", sm: "flex" },
-                width: 44,
-                height: 44,
-                borderRadius: "13px",
-                bgcolor: "var(--glass)",
-                border: "1px solid var(--glass-border)",
+                width: 42,
+                height: 42,
+                borderRadius: "14px",
+                bgcolor: "var(--surface)",
+                border: "1px solid var(--border)",
               }}
             >
                 <Forum />
@@ -291,11 +283,11 @@ export default function WorkspaceTopbar({
                 onClick={(event) => setNotifAnchor(event.currentTarget)}
                 className="soft-click"
                 sx={{
-                width: 44,
-                height: 44,
-                borderRadius: "13px",
-                bgcolor: "var(--glass)",
-                border: "1px solid var(--glass-border)",
+                width: 42,
+                height: 42,
+                borderRadius: "14px",
+                bgcolor: "var(--surface)",
+                border: "1px solid var(--border)",
               }}
             >
                 <Badge badgeContent={unread > 99 ? "99+" : unread} color="error">
@@ -305,7 +297,7 @@ export default function WorkspaceTopbar({
             </Tooltip>
 
             <Stack direction="row" alignItems="center" spacing={1.25}>
-              <Box sx={{ display: { xs: "none", md: "block" }, textAlign: "right" }}>
+              <Box sx={{ display: { xs: "none", sm: "block" }, textAlign: "right" }}>
                 <Typography
                   sx={{ fontSize: "0.875rem", fontWeight: 600, lineHeight: 1.2, color: "var(--foreground)" }}
                   noWrap
@@ -329,14 +321,13 @@ export default function WorkspaceTopbar({
                 onClick={(event) => setUserAnchor(event.currentTarget)}
                 sx={{
                   p: 0,
-                  borderRadius: "15px",
-                  border: "1px solid var(--glass-border)",
-                  boxShadow: "var(--shadow-soft)",
+                  borderRadius: "16px",
+                  border: "1px solid var(--border)",
                 }}
               >
                 <Avatar
                   src={safeProfilePictureUrl || undefined}
-                  sx={{ width: 40, height: 40, fontWeight: 700, color: "#ffffff", background: "linear-gradient(135deg, var(--neon-pink), var(--neon-violet))" }}
+                  sx={{ width: 38, height: 38, fontWeight: 700, color: "#ffffff", background: "#111111" }}
                 >
                   {avatarLetter}
                 </Avatar>
@@ -357,9 +348,7 @@ export default function WorkspaceTopbar({
             maxWidth: "calc(100vw - 24px)",
             borderRadius: 3,
             boxShadow: "var(--shadow-soft)",
-            border: "1px solid var(--glass-border)",
-            background: "linear-gradient(145deg, var(--glass-strong), var(--glass-subtle))",
-            backdropFilter: "blur(24px) saturate(1.3)",
+            border: "1px solid var(--border)",
           },
         }}
       >
@@ -436,9 +425,7 @@ export default function WorkspaceTopbar({
             minWidth: 240,
             borderRadius: 3,
             boxShadow: "var(--shadow-soft)",
-            border: "1px solid var(--glass-border)",
-            background: "linear-gradient(145deg, var(--glass-strong), var(--glass-subtle))",
-            backdropFilter: "blur(24px) saturate(1.3)",
+            border: "1px solid var(--border)",
           },
         }}
       >

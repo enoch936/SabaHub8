@@ -172,6 +172,13 @@ public class AdminAnalyticsController {
                 .body(adminAnalyticsReportingService.exportCsv(days));
     }
 
+    @GetMapping("/ai-usage/logs")
+    public ResponseEntity<List<AdminAnalyticsDTOs.AIInferenceLog>> aiUsageLogs(
+            @RequestParam(defaultValue = "50") @Min(1) @Max(500) int count) {
+        requireAdmin();
+        return ResponseEntity.ok(adminAnalyticsReportingService.getAIUsageLogs(count));
+    }
+
     private User requireAdmin() {
         User me = currentUserService.requireUser();
         boolean allowed = currentUserService.hasRole(me, "ADMIN")

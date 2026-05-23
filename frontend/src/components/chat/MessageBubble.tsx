@@ -3,6 +3,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
+  Check,
+  CheckCheck,
   CornerUpLeft,
   Download,
   Eye,
@@ -34,6 +36,8 @@ interface MessageBubbleProps {
   currentUserId?: string | null;
   senderLabel?: string;
   showSender?: boolean;
+  isRead?: boolean;
+  isDelivered?: boolean;
   replyPreview?: string | null;
   highlightQuery?: string | null;
   onReply?: (message: ChatMessage) => void;
@@ -111,6 +115,8 @@ export function MessageBubble({
   currentUserId,
   senderLabel,
   showSender = false,
+  isRead = false,
+  isDelivered = true,
   replyPreview,
   highlightQuery,
   onReply,
@@ -381,6 +387,17 @@ export function MessageBubble({
           <span>{formatMessageTime(message.createdAt)}</span>
           {message.editedAt ? <span>Edited</span> : null}
           {message.forwardedFromMessageId ? <span>Forwarded</span> : null}
+          {isMe && (
+            <div className="flex items-center">
+              {isRead ? (
+                <CheckCheck className="h-3 w-3 text-sky-400" />
+              ) : isDelivered ? (
+                <CheckCheck className="h-3 w-3 text-slate-400" />
+              ) : (
+                <Check className="h-3 w-3 text-slate-400" />
+              )}
+            </div>
+          )}
         </div>
 
         {message.reactions && Object.keys(message.reactions).length > 0 ? (

@@ -22,6 +22,10 @@ interface ChatConversationProps {
   typingUsers?: string[];
   currentUserId: string | null;
   messages: ChatMessage[];
+  activeConversation?: {
+    lastReadAtByUser?: Record<string, string>;
+    [key: string]: any;
+  } | null;
   assetsById?: Record<string, Asset | null>;
   isLoading?: boolean;
   inputDisabled?: boolean;
@@ -137,6 +141,7 @@ export function ChatConversation({
   typingUsers = [],
   currentUserId,
   messages,
+  activeConversation = null,
   assetsById = {},
   isLoading = false,
   inputDisabled = false,
@@ -415,6 +420,21 @@ export function ChatConversation({
                 || previous.senderId !== message.senderId
                 || Math.abs(currentTime - previousTime) > 5 * 60_000;
 
+              const isMe = Boolean(currentUserId && message.senderId === currentUserId);
+              
+              let isRead = false;
+              if (isMe && activeConversation?.lastReadAtByUser && currentUserId) {
+                const otherParticipants = participantIds.filter(id => id !== currentUserId);
+                if (otherParticipants.length > 0) {
+                  // For simplicity, mark as read if ANY other participant has read past this message
+                  // In a real group chat, you'd want "read by all" or a list of who read it
+                  isRead = otherParticipants.some(pid => {
+                    const lastRead = activeConversation.lastReadAtByUser?.[pid];
+                    return lastRead && message.createdAt && new Date(lastRead) >= new Date(message.createdAt);
+                  });
+                }
+              }
+
               return (
                 <div key={message.id} className="space-y-3">
                   {showDate ? (
@@ -428,10 +448,12 @@ export function ChatConversation({
                   <MessageBubble
                     message={message}
                     asset={message.assetId ? assetsById[message.assetId] : null}
-                    isMe={Boolean(currentUserId && message.senderId === currentUserId)}
+                    isMe={isMe}
                     currentUserId={currentUserId}
                     senderLabel={getDisplayName?.(message.senderId)}
                     showSender={showSender}
+                    isRead={isRead}
+                    isDelivered={true}
                     replyPreview={
                       message.replyToMessageId
                         ? messages.find((item) => item.id === message.replyToMessageId)?.text || "Reply"

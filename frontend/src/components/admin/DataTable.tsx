@@ -1,11 +1,11 @@
 /**
- * Modern Data Table Component
- * Supports pagination, sorting, filtering, search, bulk actions, and more
+ * Modern Data Table Component (Powered by TanStack Table & TanStack Virtual)
+ * Production-grade table with virtualization, sorting, filtering, and bulk actions
  */
 
 "use client";
 
-import { ReactNode, useState, useMemo } from "react";
+import React, { ReactNode, useState, useMemo, useRef, useEffect } from "react";
 import {
   Box,
   Table,
@@ -25,27 +25,56 @@ import {
   Pagination,
   MenuItem,
   Select,
+  Collapse,
+  Menu as MuiMenu,
+  Tooltip,
+  Popover,
+  InputAdornment,
 } from "@mui/material";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  ColumnDef,
+  flexRender,
+  SortingState,
+  ColumnFiltersState,
+} from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import KeyboardArrowUpRoundedIcon from "@mui/icons-material/KeyboardArrowUpRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { GlassCard } from "./GlassCard";
-import { motion } from "framer-motion";
+import { Button } from "../ui";
+import { motion, AnimatePresence } from "framer-motion";
 
 const MotionTableRow = motion(TableRow);
 
-export interface TableColumn<T> {
-  key: keyof T;
+export interface BulkAction<T> {
   label: string;
-  width?: string | number;
-  align?: "left" | "center" | "right";
+  value: string;
+  icon?: ReactNode;
+  color?: "primary" | "secondary" | "error" | "warning" | "info" | "success" | "danger";
+}
+
+export interface TableColumn<T> {
+  key: keyof T | string;
+  label: string;
   sortable?: boolean;
+  filterable?: boolean;
+  align?: "left" | "center" | "right";
+  width?: string | number;
   render?: (value: any, row: T) => ReactNode;
   badge?: boolean;
 }
 
 export interface DataTableProps<T> {
-  columns: TableColumn<T>[];
+  columns: any[];
   data: T[];
   rowKey: keyof T;
   loading?: boolean;
@@ -54,17 +83,20 @@ export interface DataTableProps<T> {
   onRowClick?: (row: T) => void;
   pageSize?: number;
   searchable?: boolean;
-  filterableColumns?: (keyof T)[];
   exportable?: boolean;
-  onExport?: () => void;
+  onExport?: (format: "csv" | "pdf") => void;
   striped?: boolean;
   hoverHighlight?: boolean;
+  expandableContent?: (row: T) => ReactNode;
+  bulkActions?: BulkAction<T>[];
+  onBulkAction?: (action: string, selected: T[]) => void;
+  title?: string;
+  maxHeight?: string | number;
+  virtualized?: boolean;
 }
 
-type SortDirection = "asc" | "desc" | null;
-
 export function DataTable<T extends Record<string, any>>({
-  columns,
+  columns: userColumns,
   data,
   rowKey,
   loading = false,
@@ -73,306 +105,441 @@ export function DataTable<T extends Record<string, any>>({
   onRowClick,
   pageSize = 10,
   searchable = true,
-  filterableColumns = [],
   exportable = true,
   onExport,
-  striped = true,
+  striped = false,
   hoverHighlight = true,
+  expandableContent,
+  bulkActions = [],
+  onBulkAction,
+  title,
+  maxHeight = 600,
+  virtualized = false,
 }: DataTableProps<T>) {
   const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [rowSelection, setRowSelection] = useState({});
+  const [expandedRows, setExpandedRows] = useState<Set<any>>(new Set());
+  const [exportAnchor, setExportAnchor] = useState<null | HTMLElement>(null);
 
-  const [page, setPage] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortKey, setSortKey] = useState<keyof T | null>(null);
-  const [sortDir, setSortDir] = useState<SortDirection>(null);
-  const [selectedRows, setSelectedRows] = useState<Set<any>>(new Set());
+  const tableColumns = useMemo<ColumnDef<T>[]>(() => {
+    return userColumns.map((col) => ({
+      accessorKey: col.key,
+      header: col.label,
+      cell: (info) => {
+        const value = info.getValue();
+        const row = info.row.original;
+        if (col.render) return col.render(value, row);
+        if (col.badge) return (
+            <Chip 
+              size="small" 
+              label={String(value)} 
+              sx={{ 
+                fontWeight: 800, 
+                borderRadius: "6px",
+                height: 20,
+                fontSize: "10px",
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                color: "primary.main",
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
+              }} 
+            />
+        );
+        return String(value ?? "");
+      },
+      enableSorting: col.sortable !== false,
+      enableColumnFilter: col.filterable !== false,
+      meta: {
+          align: col.align || "left",
+          width: col.width
+      }
+    }));
+  }, [userColumns, theme.palette.primary.main]);
 
-  // Filtering and searching
-  const filteredData = useMemo(() => {
-    let result = [...data];
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter((row) =>
-        filterableColumns.length > 0
-          ? filterableColumns.some((col) =>
-              String(row[col]).toLowerCase().includes(query)
-            )
-          : Object.values(row).some((val) =>
-              String(val).toLowerCase().includes(query)
-            )
-      );
+  const table = useReactTable({
+    data,
+    columns: tableColumns,
+    state: {
+      sorting,
+      columnFilters,
+      globalFilter,
+      rowSelection,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: virtualized ? undefined : getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+        pagination: {
+            pageSize: pageSize,
+        }
     }
+  });
 
-    return result;
-  }, [data, searchQuery, filterableColumns]);
+  const { rows } = table.getRowModel();
 
-  // Sorting
-  const sortedData = useMemo(() => {
-    if (!sortKey || !sortDir) return filteredData;
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 52, // Estimated row height
+    overscan: 10,
+  });
 
-    return [...filteredData].sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
 
-      if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [filteredData, sortKey, sortDir]);
+  const paddingTop = virtualRows.length > 0 ? virtualRows?.[0]?.start || 0 : 0;
+  const paddingBottom = virtualRows.length > 0 ? totalSize - (virtualRows?.[virtualRows.length - 1]?.end || 0) : 0;
 
-  // Pagination
-  const paginatedData = useMemo(() => {
-    const start = page * pageSize;
-    return sortedData.slice(start, start + pageSize);
-  }, [sortedData, page, pageSize]);
+  useEffect(() => {
+    const selected = table.getSelectedRowModel().flatRows.map(r => r.original);
+    onSelectionChange?.(selected);
+  }, [rowSelection, onSelectionChange, table]);
 
-  const totalPages = Math.ceil(sortedData.length / pageSize);
-
-  // Selection handling
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allKeys = new Set(paginatedData.map((row) => row[rowKey]));
-      setSelectedRows(allKeys);
-      onSelectionChange?.(paginatedData);
+  const toggleRowExpansion = (rowId: any) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(rowId)) {
+      newExpanded.delete(rowId);
     } else {
-      setSelectedRows(new Set());
-      onSelectionChange?.([]);
+      newExpanded.add(rowId);
     }
+    setExpandedRows(newExpanded);
   };
-
-  const handleSelectRow = (row: T, checked: boolean) => {
-    const newSelected = new Set(selectedRows);
-    const key = row[rowKey];
-
-    if (checked) {
-      newSelected.add(key);
-    } else {
-      newSelected.delete(key);
-    }
-
-    setSelectedRows(newSelected);
-    const selectedData = paginatedData.filter((r) =>
-      newSelected.has(r[rowKey])
-    );
-    onSelectionChange?.(selectedData);
-  };
-
-  const allSelected = paginatedData.length > 0 &&
-    paginatedData.every((row) => selectedRows.has(row[rowKey]));
 
   return (
-    <GlassCard>
+    <GlassCard sx={{ p: 0, overflow: "hidden", position: "relative" }}>
       {/* Toolbar */}
-      <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-        {searchable && (
-          <TextField
-            placeholder="Search..."
-            size="small"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setPage(0);
-            }}
-            InputProps={{
-              startAdornment: <SearchRoundedIcon sx={{ mr: 1, color: "text.secondary" }} />,
-            }}
-            sx={{
-              flex: 1,
-              "& .MuiOutlinedInput-root": {
-                backgroundColor: alpha(theme.palette.background.default, 0.5),
-                border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-              },
-            }}
-          />
-        )}
+      <Box sx={{ p: 2.5, borderBottom: `1px solid var(--border)`, backdropFilter: "blur(10px)", bgcolor: alpha(theme.palette.background.paper, 0.4) }}>
+        <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
+          {title && (
+            <Typography variant="h6" fontWeight={800} sx={{ mr: 2 }}>
+              {title}
+            </Typography>
+          )}
+          
+          {searchable && (
+            <TextField
+              placeholder="Global search..."
+              size="small"
+              value={globalFilter ?? ""}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              InputProps={{
+                startAdornment: <SearchRoundedIcon sx={{ mr: 1.5, color: "text.secondary", fontSize: 20 }} />,
+              }}
+              sx={{
+                flex: 1,
+                maxWidth: 400,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px",
+                  backgroundColor: alpha(theme.palette.text.primary, 0.03),
+                  "& fieldset": { borderColor: "transparent" },
+                  "&:hover fieldset": { borderColor: alpha(theme.palette.divider, 0.2) },
+                },
+              }}
+            />
+          )}
 
-        {selectedRows.size > 0 && (
-          <Chip
-            label={`${selectedRows.size} selected`}
-            color="primary"
-            variant="outlined"
-          />
-        )}
+          <Box flex={1} />
 
-        <Box flex={1} />
-
-        {exportable && onExport && (
-          <IconButton size="small" onClick={onExport} title="Export">
-            <FileDownloadRoundedIcon fontSize="small" />
-          </IconButton>
-        )}
-      </Stack>
-
-      {/* Table */}
-      <Box
-        sx={{
-          border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-          borderRadius: "8px",
-          overflow: "hidden",
-        }}
-      >
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow
-                sx={{
-                  backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                  borderBottom: `2px solid ${alpha(theme.palette.divider, 0.5)}`,
-                }}
+          <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
+            {table.getSelectedRowModel().flatRows.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, x: 20 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <Chip
+                    label={`${table.getSelectedRowModel().flatRows.length} selected`}
+                    color="primary"
+                    size="small"
+                    sx={{ fontWeight: 800, borderRadius: "8px", mr: 1 }}
+                  />
+                  {bulkActions.map((action) => (
+                    <Button
+                      key={action.value}
+                      size="sm"
+                      variant="outline"
+                      color={action.color as any || "primary"}
+                      leftIcon={action.icon}
+                      onClick={() => onBulkAction?.(action.value, table.getSelectedRowModel().flatRows.map(r => r.original))}
+                      sx={{ borderRadius: "10px", fontWeight: 700 }}
+                    >
+                      {action.label}
+                    </Button>
+                  ))}
+                </motion.div>
+            )}
+            
+            <Tooltip title="Reset All Filters">
+              <IconButton 
+                size="small" 
+                onClick={() => { table.resetColumnFilters(); table.resetGlobalFilter(); table.resetSorting(); }}
+                sx={{ borderRadius: "10px", border: `1px solid var(--border)`, opacity: (columnFilters.length > 0 || globalFilter) ? 1 : 0.5 }}
               >
+                <FilterListRoundedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            {exportable && (
+              <>
+                <IconButton 
+                  size="small" 
+                  onClick={(e) => setExportAnchor(e.currentTarget)} 
+                  sx={{ borderRadius: "10px", border: `1px solid var(--border)` }}
+                  title="Export Data"
+                >
+                  <FileDownloadRoundedIcon fontSize="small" />
+                </IconButton>
+                <MuiMenu
+                  anchorEl={exportAnchor}
+                  open={Boolean(exportAnchor)}
+                  onClose={() => setExportAnchor(null)}
+                  PaperProps={{
+                    sx: {
+                      mt: 1,
+                      borderRadius: "12px",
+                      boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+                      border: "1px solid var(--border)",
+                      backdropFilter: "blur(20px)",
+                      bgcolor: alpha(theme.palette.background.paper, 0.8),
+                    }
+                  }}
+                >
+                  <MenuItem onClick={() => { onExport?.("csv"); setExportAnchor(null); }}>Export as CSV</MenuItem>
+                  <MenuItem onClick={() => { onExport?.("pdf"); setExportAnchor(null); }}>Export as PDF</MenuItem>
+                </MuiMenu>
+              </>
+            )}
+          </Stack>
+        </Stack>
+      </Box>
+
+      {/* Table Content */}
+      <TableContainer ref={tableContainerRef} sx={{ maxHeight, overflowX: "auto" }}>
+        <Table stickyHeader size="medium">
+          <TableHead>
+            {table.getHeaderGroups().map(headerGroup => (
+              <TableRow key={headerGroup.id}>
+                {expandableContent && <TableCell sx={{ width: 40, bgcolor: alpha(theme.palette.background.paper, 0.9), backdropFilter: "blur(5px)" }} />}
                 {selectable && (
-                  <TableCell padding="checkbox">
+                  <TableCell padding="checkbox" sx={{ bgcolor: alpha(theme.palette.background.paper, 0.9), backdropFilter: "blur(5px)" }}>
                     <Checkbox
-                      checked={allSelected}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      checked={table.getIsAllPageRowsSelected()}
+                      indeterminate={table.getIsSomePageRowsSelected()}
+                      onChange={table.getToggleAllPageRowsSelectedHandler()}
                       size="small"
                     />
                   </TableCell>
                 )}
-                {columns.map((col) => (
-                  <TableCell
-                    key={String(col.key)}
-                    align={col.align || "left"}
-                    width={col.width}
+                {headerGroup.headers.map(header => {
+                    const meta = header.column.columnDef.meta as any;
+                    return (
+                        <TableCell
+                          key={header.id}
+                          align={meta?.align || "left"}
+                          width={meta?.width}
+                          sx={{
+                            bgcolor: alpha(theme.palette.background.paper, 0.9),
+                            backdropFilter: "blur(5px)",
+                            fontWeight: 800,
+                            fontSize: "10px",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.12em",
+                            color: "text.secondary",
+                            borderBottom: `2px solid var(--border)`,
+                            py: 1.5,
+                            cursor: header.column.getCanSort() ? "pointer" : "default",
+                            userSelect: "none",
+                            whiteSpace: "nowrap",
+                            transition: "all 0.2s",
+                            "&:hover": header.column.getCanSort() ? {
+                              color: "primary.main",
+                              bgcolor: alpha(theme.palette.primary.main, 0.02),
+                            } : {},
+                          }}
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          <Stack direction="row" alignItems="center" spacing={0.5} justifyContent={meta?.align === "center" ? "center" : meta?.align === "right" ? "flex-end" : "flex-start"}>
+                            <Box>
+                                {flexRender(header.column.columnDef.header, header.getContext())}
+                            </Box>
+                            {header.column.getCanSort() && (
+                                <Box sx={{ color: "primary.main", display: "flex", alignItems: "center" }}>
+                                  {{
+                                    asc: <KeyboardArrowUpRoundedIcon sx={{ fontSize: 16 }} />,
+                                    desc: <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16 }} />,
+                                  }[header.column.getIsSorted() as string] ?? null}
+                                </Box>
+                            )}
+                          </Stack>
+                        </TableCell>
+                    );
+                })}
+              </TableRow>
+            ))}
+          </TableHead>
+          <TableBody>
+            {paddingTop > 0 && (
+              <TableRow>
+                <TableCell colSpan={99} style={{ height: `${paddingTop}px` }} />
+              </TableRow>
+            )}
+            
+            {(virtualized ? virtualRows : rows).map((virtualRowOrRow, idx) => {
+              const row = virtualized ? rows[virtualRowOrRow.index] : virtualRowOrRow;
+              const isExpanded = expandedRows.has(row.original[rowKey]);
+              const isSelected = row.getIsSelected();
+              
+              return (
+                <React.Fragment key={row.id}>
+                  <MotionTableRow
+                    initial={{ opacity: 0 }}
+                    animate={{ 
+                      opacity: 1, 
+                      backgroundColor: isSelected 
+                        ? alpha(theme.palette.primary.main, 0.08)
+                        : striped && idx % 2 === 1
+                        ? alpha(theme.palette.text.primary, 0.01)
+                        : "transparent",
+                    }}
+                    onClick={() => onRowClick?.(row.original)}
                     sx={{
-                      fontWeight: 700,
-                      fontSize: "12px",
-                      cursor: col.sortable ? "pointer" : "default",
-                      userSelect: "none",
-                      "&:hover": col.sortable ? {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                      borderBottom: isExpanded ? "none" : `1px solid ${alpha(theme.palette.divider, 0.06)}`,
+                      cursor: onRowClick ? "pointer" : "default",
+                      transition: "background-color 0.2s ease",
+                      "&:hover": hoverHighlight ? {
+                        backgroundColor: isSelected 
+                          ? alpha(theme.palette.primary.main, 0.12)
+                          : alpha(theme.palette.primary.main, 0.04),
                       } : {},
                     }}
-                    onClick={() => {
-                      if (col.sortable) {
-                        if (sortKey === col.key) {
-                          setSortDir(
-                            sortDir === "asc" ? "desc" : sortDir === "desc" ? null : "asc"
-                          );
-                        } else {
-                          setSortKey(col.key);
-                          setSortDir("asc");
-                        }
-                      }
-                    }}
                   >
-                    {col.label}
-                    {col.sortable && sortKey === col.key && (
-                      <Typography
-                        component="span"
-                        sx={{ ml: 0.5, fontSize: "10px" }}
-                      >
-                        {sortDir === "asc" ? "▲" : "▼"}
-                      </Typography>
+                    {expandableContent && (
+                      <TableCell padding="checkbox">
+                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleRowExpansion(row.original[rowKey]); }}>
+                          {isExpanded ? <KeyboardArrowUpRoundedIcon /> : <KeyboardArrowDownRoundedIcon />}
+                        </IconButton>
+                      </TableCell>
                     )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedData.map((row, idx) => (
-                <MotionTableRow
-                  key={String(row[rowKey])}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: idx * 0.02 }}
-                  onClick={() => onRowClick?.(row)}
-                  sx={{
-                    backgroundColor: striped && idx % 2 === 1
-                      ? alpha(theme.palette.primary.main, 0.03)
-                      : "transparent",
-                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
-                    cursor: onRowClick ? "pointer" : "default",
-                    transition: "background-color 200ms ease",
-                    "&:hover": hoverHighlight ? {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                    } : {},
-                  }}
-                >
-                  {selectable && (
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={selectedRows.has(row[rowKey])}
-                        onChange={(e) => handleSelectRow(row, e.target.checked)}
-                        onClick={(e) => e.stopPropagation()}
-                        size="small"
-                      />
-                    </TableCell>
+                    {selectable && (
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={row.getToggleSelectedHandler()}
+                          onClick={(e) => e.stopPropagation()}
+                          size="small"
+                        />
+                      </TableCell>
+                    )}
+                    {row.getVisibleCells().map(cell => {
+                      const meta = cell.column.columnDef.meta as any;
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          align={meta?.align || "left"}
+                          sx={{
+                            fontSize: "13.5px",
+                            fontWeight: 500,
+                            color: "text.primary",
+                            py: 1.5,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      );
+                    })}
+                  </MotionTableRow>
+                  
+                  {expandableContent && (
+                    <TableRow>
+                      <TableCell sx={{ p: 0, borderBottom: isExpanded ? `1px solid ${alpha(theme.palette.divider, 0.1)}` : "none" }} colSpan={table.getVisibleFlatColumns().length + (selectable ? 1 : 0) + 1}>
+                        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                          <Box sx={{ p: 3, bgcolor: alpha(theme.palette.text.primary, 0.02), borderLeft: `4px solid ${theme.palette.primary.main}` }}>
+                            {expandableContent(row.original)}
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
                   )}
-                  {columns.map((col) => (
-                    <TableCell
-                      key={String(col.key)}
-                      align={col.align || "left"}
-                      sx={{
-                        fontSize: "13px",
-                        color: theme.palette.text.primary,
-                      }}
-                    >
-                      {col.render
-                        ? col.render(row[col.key], row)
-                        : col.badge
-                        ? <Chip size="small" label={String(row[col.key])} />
-                        : String(row[col.key])}
-                    </TableCell>
-                  ))}
-                </MotionTableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
+                </React.Fragment>
+              );
+            })}
 
-      {/* Pagination */}
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        mt={2}
-      >
-        <Typography variant="body2" color="text.secondary">
-          Showing {paginatedData.length > 0 ? page * pageSize + 1 : 0}-
-          {Math.min((page + 1) * pageSize, sortedData.length)} of {sortedData.length}
-        </Typography>
-        {totalPages > 1 && (
-          <Pagination
-            count={totalPages}
-            page={page + 1}
-            onChange={(_, newPage) => setPage(newPage - 1)}
-            size="small"
-          />
-        )}
-      </Stack>
+            {paddingBottom > 0 && (
+              <TableRow>
+                <TableCell colSpan={99} style={{ height: `${paddingBottom}px` }} />
+              </TableRow>
+            )}
+            
+            {!loading && rows.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={99} sx={{ py: 12, textAlign: "center" }}>
+                  <Stack spacing={1} alignItems="center">
+                    <SearchRoundedIcon sx={{ fontSize: 48, opacity: 0.1 }} />
+                    <Typography variant="body1" fontWeight={700} color="text.secondary">No matching records found</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.7 }}>Try adjusting your search or filters</Typography>
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {!virtualized && (
+        <Box sx={{ p: 2, borderTop: `1px solid var(--border)`, backdropFilter: "blur(10px)", bgcolor: alpha(theme.palette.background.paper, 0.4) }}>
+            <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            alignItems="center"
+            spacing={2}
+            >
+            <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", opacity: 0.8 }}>
+                Showing {table.getRowModel().rows.length} of {table.getFilteredRowModel().rows.length} records
+            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center">
+                <Typography variant="caption" color="text.secondary">Rows per page:</Typography>
+                <Select
+                    size="small"
+                    value={table.getState().pagination.pageSize}
+                    onChange={e => table.setPageSize(Number(e.target.value))}
+                    sx={{ height: 28, fontSize: '12px', borderRadius: '8px' }}
+                >
+                    {[5, 10, 20, 30, 40, 50].map(size => (
+                    <MenuItem key={size} value={size}>{size}</MenuItem>
+                    ))}
+                </Select>
+                <Pagination
+                    count={table.getPageCount()}
+                    page={table.getState().pagination.pageIndex + 1}
+                    onChange={(_, p) => table.setPageIndex(p - 1)}
+                    size="small"
+                    sx={{
+                        "& .MuiPaginationItem-root": {
+                            borderRadius: "8px",
+                            fontWeight: 800,
+                            fontSize: "12px",
+                            "&.Mui-selected": {
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: "primary.main",
+                                "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.2) }
+                            }
+                        }
+                    }}
+                />
+            </Stack>
+            </Stack>
+        </Box>
+      )}
     </GlassCard>
   );
-}
-
-// Export CSV utility
-export function exportTableToCSV<T>(
-  data: T[],
-  columns: TableColumn<T>[],
-  filename: string = "export.csv"
-) {
-  const headers = columns.map((col) => col.label).join(",");
-  const rows = data
-    .map((row) =>
-      columns
-        .map((col) => {
-          const val = row[col.key];
-          const str = String(val);
-          return str.includes(",") ? `"${str}"` : str;
-        })
-        .join(",")
-    )
-    .join("\n");
-
-  const csv = `${headers}\n${rows}`;
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  window.URL.revokeObjectURL(url);
 }

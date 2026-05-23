@@ -29,7 +29,8 @@ import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import SoftButton from "@/components/mui/SoftButton";
-import SoftCard from "@/components/mui/SoftCard";
+import { GlassCard, GlassCardHeader } from "./GlassCard";
+import { DataTable, type TableColumn } from "./DataTable";
 import SoftTextField from "@/components/mui/SoftTextField";
 import {
   type AuditLogEntry,
@@ -115,7 +116,7 @@ export default function AdminAuditLogWorkspace() {
 
   return (
     <Stack spacing={2.2}>
-      <SoftCard
+      <GlassCard
         sx={{
           border: "1px solid",
           borderColor: "rgba(24,40,59,0.16)",
@@ -149,7 +150,7 @@ export default function AdminAuditLogWorkspace() {
             </Stack>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
 
@@ -161,7 +162,7 @@ export default function AdminAuditLogWorkspace() {
           { label: "Security Events", value: metrics.securityEvents, icon: <SecurityRoundedIcon fontSize="small" /> },
         ].map((metric) => (
           <Grid key={metric.label} size={{ xs: 12, sm: 6, xl: 3 }}>
-            <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+            <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
               <CardContent>
                 <Stack spacing={0.8}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -175,12 +176,12 @@ export default function AdminAuditLogWorkspace() {
                   </Typography>
                 </Stack>
               </CardContent>
-            </SoftCard>
+            </GlassCard>
           </Grid>
         ))}
       </Grid>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent>
           <Grid container spacing={1.2}>
             <Grid size={{ xs: 12, md: 8 }}>
@@ -212,9 +213,9 @@ export default function AdminAuditLogWorkspace() {
             </Grid>
           </Grid>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent sx={{ p: 0 }}>
           <Box sx={{ p: 2, pb: 1 }}>
             <Typography variant="h6" fontWeight={800}>
@@ -224,66 +225,76 @@ export default function AdminAuditLogWorkspace() {
               Review the latest admin and system events, then open any record to inspect full metadata.
             </Typography>
           </Box>
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Time</TableCell>
-                  <TableCell>Action</TableCell>
-                  <TableCell>Entity</TableCell>
-                  <TableCell>Actor</TableCell>
-                  <TableCell>IP</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredLogs.map((item) => (
-                  <TableRow key={item.id} hover>
-                    <TableCell sx={{ minWidth: 180 }}>{formatDateTime(item.createdAt)}</TableCell>
-                    <TableCell sx={{ minWidth: 220 }}>
-                      <Stack spacing={0.25}>
-                        <Typography variant="subtitle2" fontWeight={800}>
-                          {item.action || "UNKNOWN_ACTION"}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {item.entityType || "Unknown"} / {item.entityId || "n/a"}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>{item.entityType || "Unknown"}</TableCell>
-                    <TableCell>{item.actorUserId || "System"}</TableCell>
-                    <TableCell>{item.ip || "n/a"}</TableCell>
-                    <TableCell align="right">
-                      <SoftButton
-                        variant="outlined"
-                        size="small"
-                        startIcon={<VisibilityRoundedIcon />}
-                        onClick={() => setSelectedLog(item)}
-                      >
-                        View
-                      </SoftButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {!loading && filteredLogs.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                      No audit events match the current filters.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                      Loading audit events...
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-              </TableBody>
-            </Table>
-          </Box>
+          <DataTable
+            columns={[
+              {
+                key: "createdAt",
+                label: "Time",
+                sortable: true,
+                render: (val) => formatDateTime(val as string),
+              },
+              {
+                key: "action",
+                label: "Action",
+                sortable: true,
+                render: (val, item) => (
+                  <Stack spacing={0.25}>
+                    <Typography variant="subtitle2" fontWeight={800}>
+                      {String(val) || "UNKNOWN_ACTION"}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {item.entityType || "Unknown"} / {item.entityId || "n/a"}
+                    </Typography>
+                  </Stack>
+                ),
+              },
+              { key: "entityType", label: "Entity", sortable: true },
+              { key: "actorUserId", label: "Actor", sortable: true },
+              { key: "ip", label: "IP", sortable: true },
+              {
+                key: "id",
+                label: "Actions",
+                align: "right",
+                render: (_, item) => (
+                  <SoftButton
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<VisibilityRoundedIcon sx={{ fontSize: 16 }} />}
+                    onClick={() => setSelectedLog(item)}
+                  >
+                    View
+                  </SoftButton>
+                ),
+              },
+            ]}
+            data={filteredLogs}
+            rowKey="id"
+            loading={loading}
+            searchable={false}
+            expandableContent={(log) => (
+              <Stack spacing={1}>
+                <Typography variant="body2" color="text.secondary">
+                  User agent: {log.userAgent || "Not recorded"}
+                </Typography>
+                <Box
+                  component="pre"
+                  sx={{
+                    m: 0,
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: "rgba(15, 23, 42, 0.6)",
+                    color: "#dbeafe",
+                    fontSize: 12,
+                    overflowX: "auto",
+                  }}
+                >
+                  {JSON.stringify(log.metadata ?? {}, null, 2)}
+                </Box>
+              </Stack>
+            )}
+          />
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       <Dialog open={!!selectedLog} onClose={() => setSelectedLog(null)} fullWidth maxWidth="md">
         <DialogTitle>Audit Event Detail</DialogTitle>

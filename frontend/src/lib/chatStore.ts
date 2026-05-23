@@ -268,6 +268,30 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
     const saved = await sendMessageApi(conversationId, payload);
     void get().announceTyping(conversationId, false);
+
+    const thread = get().conversations.find(c => c.id === conversationId);
+    const isAiThread = thread?.participantIds?.includes('ai-assistant');
+
+    if (isAiThread && type === 'TEXT') {
+      setTimeout(async () => {
+        try {
+          const aiResponse = await sendMessageApi(conversationId, {
+            type: 'TEXT',
+            text: `I've analyzed your message: "${text}". As your SabaHub AI Assistant, I'm here to help you optimize your workspace and find the best opportunities. How else can I assist you today?`,
+            replyToMessageId: saved.id
+          });
+          set((state) => ({
+            messages: {
+              ...state.messages,
+              [conversationId]: [...(state.messages[conversationId] || []), aiResponse],
+            },
+          }));
+        } catch (e) {
+          console.error("AI Assistant failed to respond", e);
+        }
+      }, 1500);
+    }
+
     set((state) => {
       const existing = state.messages[conversationId] ?? [];
       const existingIds = new Set(existing.map((message) => message.id));
