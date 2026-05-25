@@ -426,6 +426,61 @@ export function LiveViewerWorkspace({ streamId }: { streamId: string }) {
     };
   }, [iceServers, isOwner, streamId]);
 
+  useEffect(() => {
+    if (!streamId) {
+      return;
+    }
+
+    let active = true;
+    const interval = window.setInterval(async () => {
+      try {
+        const updatedStream = await getStream(streamId);
+        if (!active) {
+          return;
+        }
+
+        setStream((current) => {
+          if (
+            !current ||
+            current.status !== updatedStream.status ||
+            current.liveHlsUrl !== updatedStream.liveHlsUrl ||
+            current.playbackHlsUrl !== updatedStream.playbackHlsUrl ||
+            current.viewerCount !== updatedStream.viewerCount
+          ) {
+            return updatedStream;
+          }
+          return current;
+        });
+
+        setViewerCount((current) => updatedStream.viewerCount ?? current);
+      } catch {
+        // Ignore refresh errors, keep existing stream data.
+      }
+    }, 10000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [streamId]);
+
+  useEffect(() => {
+    if (
+      stream?.status === "LIVE" &&
+      !isOwner &&
+      currentUserId &&
+      stream.ownerUserId &&
+      webrtcState === "idle"
+    ) {
+      sendStreamSignal(streamId, {
+        signalType: "CONTROL",
+        targetPeerId: stream.ownerUserId,
+        payload: { controlType: "REQUEST_OFFER" },
+      });
+      setWebrtcState("connecting");
+    }
+  }, [currentUserId, isOwner, sendStreamSignal, stream?.ownerUserId, stream?.status, streamId, webrtcState]);
+
   const enableOwnerMedia = async () => {
     if (!stream || !isOwner) {
       return;

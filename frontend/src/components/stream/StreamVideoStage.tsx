@@ -51,40 +51,9 @@ export function StreamVideoStage({
       return;
     }
 
-    let active = true;
-    const controller = new AbortController();
-
-    setSource("");
+    setSource(primarySrc);
     setIsPlaying(false);
     setStatusNote("");
-
-    void fetch(primarySrc, {
-      method: "HEAD",
-      cache: "no-store",
-      signal: controller.signal,
-    })
-      .then((response) => {
-        if (!active) {
-          return;
-        }
-
-        if (response.ok) {
-          setSource(primarySrc);
-          return;
-        }
-
-        setStatusNote("Live media is not available yet. The broadcast may still be starting.");
-      })
-      .catch(() => {
-        if (active) {
-          setStatusNote("Live media is not available yet. The broadcast may still be starting.");
-        }
-      });
-
-    return () => {
-      active = false;
-      controller.abort();
-    };
   }, [mediaStream, primarySrc]);
 
   useEffect(() => {
