@@ -36,8 +36,8 @@ import {
 } from "recharts";
 import AdminSectionFocus from "@/components/admin/AdminSectionFocus";
 import NoSsrResponsiveContainer from "@/components/charts/NoSsrResponsiveContainer";
-import SoftButton from "@/components/mui/SoftButton";
-import SoftCard from "@/components/mui/SoftCard";
+import { Button } from "@mui/material";
+import { GlassCard } from "./GlassCard";
 import SoftTextField from "@/components/mui/SoftTextField";
 import {
   type AdminCommandCenterDomainResponse,
@@ -73,6 +73,16 @@ type ControlBlueprint = {
 };
 
 const actionBlueprints: QuickActionBlueprint[] = [
+  {
+    key: "api-token-management",
+    title: "API Token Management",
+    summary: "Generate and revoke system API tokens for integration access.",
+    lane: "identity",
+    sectionKey: "generate-system-api-tokens",
+    operationId: "generate-api-token",
+    controlKey: "integration.partner-auth-enforcement",
+    icon: ApiRoundedIcon,
+  },
   {
     key: "oauth-rotation",
     title: "OAuth Rotation",
@@ -159,6 +169,8 @@ const controlBlueprints: ControlBlueprint[] = [
 ];
 
 const operationLaneMap: Record<string, Exclude<IntegrationLane, "all">> = {
+  "generate-api-token": "identity",
+  "revoke-api-token": "identity",
   "rotate-oauth-secrets": "identity",
   "apply-rate-limit-policy": "traffic",
   "validate-webhook-integrity": "webhooks",
@@ -458,7 +470,7 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
 
   return (
     <Stack spacing={2.2}>
-      <SoftCard
+      <GlassCard
         sx={{
           border: "1px solid",
           borderColor: "rgba(15,23,42,0.16)",
@@ -498,14 +510,14 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                   variant="outlined"
                   sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.4)", bgcolor: "rgba(255,255,255,0.08)" }}
                 />
-                <SoftButton
+                <Button
                   onClick={() => void load()}
                   variant="outlined"
                   startIcon={<RefreshRoundedIcon />}
                   sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.58)" }}
                 >
                   Refresh
-                </SoftButton>
+                </Button>
               </Stack>
             </Stack>
 
@@ -532,7 +544,7 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
             </Stack>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
       {actionStatus ? <Alert severity="info">{actionStatus}</Alert> : null}
@@ -540,7 +552,7 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
       <Grid container spacing={2}>
         {(payload?.metrics ?? []).map((metric) => (
           <Grid key={metric.id} size={{ xs: 12, sm: 6, xl: 4 }}>
-            <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+            <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
                   {metric.label}
@@ -552,14 +564,14 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                   {metric.trend}
                 </Typography>
               </CardContent>
-            </SoftCard>
+            </GlassCard>
           </Grid>
         ))}
       </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 6 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                 <Box>
@@ -591,11 +603,11 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                 )}
               </Box>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 6 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                 <Box>
@@ -623,11 +635,11 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                 </NoSsrResponsiveContainer>
               </Box>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 6 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                 <Box>
@@ -657,11 +669,11 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                 )}
               </Box>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 6 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                 <Box>
@@ -693,11 +705,11 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                 )}
               </Box>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent>
           <Stack spacing={1.4}>
             <Box>
@@ -716,7 +728,7 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                 const isRunning = runningOperationId === `${item.operation?.id}:run`;
                 return (
                   <Grid key={item.key} size={{ xs: 12, md: 6, xl: 4 }}>
-                    <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+                    <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
                       <CardContent>
                         <Stack spacing={1.2}>
                           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
@@ -758,16 +770,16 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                           </Stack>
 
                           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} flexWrap="wrap" useFlexGap>
-                            <SoftButton
+                            <Button
                               variant={activeSection === item.sectionKey ? "contained" : "outlined"}
                               size="small"
                               startIcon={<RuleFolderRoundedIcon />}
                               onClick={() => setActiveSection(item.sectionKey)}
                             >
                               {activeSection === item.sectionKey ? "Focused" : "Open Focus"}
-                            </SoftButton>
+                            </Button>
                             {item.operation ? (
-                              <SoftButton
+                              <Button
                                 variant="outlined"
                                 size="small"
                                 startIcon={<PreviewRoundedIcon />}
@@ -775,10 +787,10 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                                 disabled={!!runningOperationId}
                               >
                                 {isDryRunning ? "Dry Run..." : "Dry Run"}
-                              </SoftButton>
+                              </Button>
                             ) : null}
                             {item.operation ? (
-                              <SoftButton
+                              <Button
                                 variant="contained"
                                 size="small"
                                 startIcon={<PlayCircleRoundedIcon />}
@@ -786,10 +798,10 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                                 disabled={!!runningOperationId}
                               >
                                 {isRunning ? "Executing..." : "Execute"}
-                              </SoftButton>
+                              </Button>
                             ) : null}
                             {item.control ? (
-                              <SoftButton
+                              <Button
                                 variant={item.control.enabled ? "outlined" : "contained"}
                                 size="small"
                                 startIcon={<SettingsSuggestRoundedIcon />}
@@ -797,19 +809,19 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                                 disabled={flagUpdating === item.control.key}
                               >
                                 {flagUpdating === item.control.key ? "Updating..." : item.control.enabled ? "Disable Control" : "Enable Control"}
-                              </SoftButton>
+                              </Button>
                             ) : null}
                           </Stack>
                         </Stack>
                       </CardContent>
-                    </SoftCard>
+                    </GlassCard>
                   </Grid>
                 );
               })}
             </Grid>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       <AdminSectionFocus
         parentKey="api-integration-management"
@@ -819,7 +831,7 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 5 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
                 Integration Controls
@@ -860,12 +872,12 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                           />
                         </Stack>
                         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} flexWrap="wrap" useFlexGap>
-                          <SoftButton size="small" variant="outlined" onClick={() => setActiveSection(blueprint?.sectionKey ?? "manage-oauth-integrations")}>
+                          <Button size="small" variant="outlined" onClick={() => setActiveSection(blueprint?.sectionKey ?? "manage-oauth-integrations")}>
                             Open Focus
-                          </SoftButton>
-                          <SoftButton size="small" variant="outlined" onClick={() => openFlagEditor(flag)}>
+                          </Button>
+                          <Button size="small" variant="outlined" onClick={() => openFlagEditor(flag)}>
                             Edit Control
-                          </SoftButton>
+                          </Button>
                         </Stack>
                       </Stack>
                     </Box>
@@ -873,11 +885,11 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                 })}
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 7 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
                 Active Alerts
@@ -914,15 +926,15 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                       </Stack>
 
                       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} flexWrap="wrap" useFlexGap>
-                        <SoftButton
+                        <Button
                           size="small"
                           variant="outlined"
                           onClick={() => setActiveSection(alert.level === "success" ? "manage-third-party-integrations" : "manage-oauth-integrations")}
                         >
                           Open Focus
-                        </SoftButton>
+                        </Button>
                         {oauthOperation ? (
-                          <SoftButton
+                          <Button
                             size="small"
                             variant="outlined"
                             startIcon={<PreviewRoundedIcon />}
@@ -930,10 +942,10 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                             disabled={!!runningOperationId}
                           >
                             {runningOperationId === `${oauthOperation.id}:dry` ? "Checking..." : "Check OAuth"}
-                          </SoftButton>
+                          </Button>
                         ) : null}
                         {rateLimitOperation ? (
-                          <SoftButton
+                          <Button
                             size="small"
                             variant="contained"
                             startIcon={<PlayCircleRoundedIcon />}
@@ -941,17 +953,17 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                             disabled={!!runningOperationId}
                           >
                             {runningOperationId === `${rateLimitOperation.id}:run` ? "Applying..." : "Tune Traffic"}
-                          </SoftButton>
+                          </Button>
                         ) : null}
                         {webhookOperation ? (
-                          <SoftButton
+                          <Button
                             size="small"
                             variant="outlined"
                             onClick={() => void executeOperation(webhookOperation, false, `Webhook validation from alert ${alert.title}`)}
                             disabled={!!runningOperationId}
                           >
                             {runningOperationId === `${webhookOperation.id}:run` ? "Validating..." : "Validate Webhooks"}
-                          </SoftButton>
+                          </Button>
                         ) : null}
                       </Stack>
                     </Stack>
@@ -961,11 +973,11 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                 {!loading && !(payload?.alerts.length ?? 0) ? <Alert severity="success">No active integration alerts right now.</Alert> : null}
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent>
           <Stack spacing={1.2}>
             <Box>
@@ -1018,10 +1030,10 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                       </Stack>
 
                       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} flexWrap="wrap" useFlexGap>
-                        <SoftButton size="small" variant="outlined" onClick={() => setActiveSection(sectionKey)}>
+                        <Button size="small" variant="outlined" onClick={() => setActiveSection(sectionKey)}>
                           Open Focus
-                        </SoftButton>
-                        <SoftButton
+                        </Button>
+                        <Button
                           size="small"
                           variant="outlined"
                           startIcon={<PreviewRoundedIcon />}
@@ -1029,8 +1041,8 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                           disabled={!!runningOperationId}
                         >
                           {isDryRunning ? "Dry Run..." : "Dry Run"}
-                        </SoftButton>
-                        <SoftButton
+                        </Button>
+                        <Button
                           size="small"
                           variant="contained"
                           startIcon={<PlayCircleRoundedIcon />}
@@ -1038,7 +1050,7 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
                           disabled={!!runningOperationId}
                         >
                           {isRunning ? "Executing..." : "Execute"}
-                        </SoftButton>
+                        </Button>
                       </Stack>
                     </Stack>
                   </Box>
@@ -1047,7 +1059,7 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
             </Stack>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       <Dialog open={!!editingFlag} onClose={closeFlagEditor} fullWidth maxWidth="sm">
         <DialogTitle>Edit Integration Control</DialogTitle>
@@ -1080,12 +1092,12 @@ export default function AdminApiIntegrationWorkspace({ focusSection }: AdminApiI
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <SoftButton variant="text" onClick={closeFlagEditor} disabled={!!flagUpdating}>
+          <Button variant="text" onClick={closeFlagEditor} disabled={!!flagUpdating}>
             Cancel
-          </SoftButton>
-          <SoftButton variant="contained" onClick={() => void saveFlagEditor()} disabled={!!flagUpdating}>
+          </Button>
+          <Button variant="contained" onClick={() => void saveFlagEditor()} disabled={!!flagUpdating}>
             {flagUpdating ? "Saving..." : "Save Control"}
-          </SoftButton>
+          </Button>
         </DialogActions>
       </Dialog>
     </Stack>

@@ -1,8 +1,14 @@
 "use client";
 
+import { ReactNode } from "react";
 import { Button, ButtonProps } from "@mui/material";
 
-export default function SoftButton({ disableElevation, size, sx, ...props }: ButtonProps) {
+interface SoftButtonProps extends ButtonProps {
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+}
+
+export default function SoftButton({ disableElevation, size, sx, leftIcon, rightIcon, ...props }: SoftButtonProps) {
   const baseSx = size === "small"
     ? { borderRadius: 2.5, px: 1.2, minHeight: 30, textTransform: "none", fontSize: "0.78rem" }
     : size === "large"
@@ -13,5 +19,14 @@ export default function SoftButton({ disableElevation, size, sx, ...props }: But
     ? [baseSx, ...sx]
     : [baseSx, sx];
 
-  return <Button disableElevation={disableElevation ?? true} size={size ?? "medium"} sx={mergedSx} {...props} />;
+  return (
+    <Button
+      disableElevation={disableElevation ?? true}
+      size={size ?? "medium"}
+      sx={mergedSx}
+      startIcon={leftIcon}
+      endIcon={rightIcon}
+      {...props}
+    />
+  );
 }

@@ -78,103 +78,135 @@ const mapBackendTypeToFrontend = (type: string): ActivityEventType => {
 function ActivityEventItem({ event, index }: { event: ActivityEvent; index: number }) {
   const theme = useTheme();
   const config = typeConfig[event.type] || typeConfig['success'];
-  const showDivider = index > 0;
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -20, height: 0 }}
-      animate={{ opacity: 1, x: 0, height: 'auto' }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
       layout
     >
-      <Box sx={{ overflow: 'hidden' }}>
-        {showDivider && (
-          <Box
-            sx={{
-              height: "1px",
-              background: alpha(config.color, 0.1),
-              my: 1.5,
-            }}
-          />
-        )}
-        <Stack direction="row" spacing={2} alignItems="flex-start" sx={{ py: 0.5 }}>
-          {/* Timeline indicator */}
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: config.bgColor,
-              border: `2px solid ${config.color}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: config.color,
-              fontSize: "14px",
-              flexShrink: 0,
-              mt: 0.25,
-            }}
-          >
-            {event.avatar ? (
-              <Avatar src={event.avatar} sx={{ width: '100%', height: '100%' }} />
-            ) : (
-              event.icon || config.emoji
+      <Box 
+        sx={{ 
+          position: 'relative',
+          p: 2,
+          mb: 1,
+          borderRadius: "16px",
+          bgcolor: alpha(theme.palette.text.primary, 0.02),
+          border: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
+          transition: "all 0.2s ease-in-out",
+          "&:hover": {
+            bgcolor: alpha(theme.palette.text.primary, 0.04),
+            transform: "translateX(4px)",
+            borderColor: alpha(config.color, 0.2),
+          }
+        }}
+      >
+        <Stack direction="row" spacing={2} alignItems="flex-start">
+          {/* Status Indicator with Pulse if very recent */}
+          <Box sx={{ position: 'relative' }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: "12px",
+                background: alpha(config.color, 0.1),
+                border: `1px solid ${alpha(config.color, 0.2)}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: config.color,
+                fontSize: "18px",
+                flexShrink: 0,
+              }}
+            >
+              {event.avatar ? (
+                <Avatar src={event.avatar} sx={{ width: '100%', height: '100%', borderRadius: "10px" }} />
+              ) : (
+                event.icon || config.emoji
+              )}
+            </Box>
+            {new Date().getTime() - event.timestamp.getTime() < 60000 && (
+              <Box
+                component={motion.div}
+                animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                sx={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  bgcolor: config.color,
+                }}
+              />
             )}
           </Box>
 
           {/* Event content */}
           <Box flex={1} minWidth={0}>
-            <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={0.5}>
               <Typography
                 sx={{
-                  fontSize: "13px",
-                  fontWeight: 600,
+                  fontSize: "14px",
+                  fontWeight: 700,
                   color: theme.palette.text.primary,
+                  letterSpacing: "-0.01em"
                 }}
               >
                 {event.title}
               </Typography>
-              {event.badge && (
-                <Chip
-                  label={event.badge}
-                  size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: "10px",
-                    backgroundColor: alpha(badgeColorMap[event.badgeColor || "default"], 0.15),
-                    color: badgeColorMap[event.badgeColor || "default"],
-                    fontWeight: 600,
-                  }}
-                />
-              )}
+              <Typography
+                sx={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: alpha(theme.palette.text.secondary, 0.5),
+                  textTransform: "uppercase"
+                }}
+              >
+                {formatTimeAgo(event.timestamp)}
+              </Typography>
             </Stack>
 
             {event.description && (
               <Typography
                 sx={{
-                  fontSize: "12px",
+                  fontSize: "13px",
                   color: theme.palette.text.secondary,
-                  mb: 0.75,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
+                  mb: 1,
+                  lineHeight: 1.4,
+                  opacity: 0.8
                 }}
               >
                 {event.description}
               </Typography>
             )}
 
-            <Typography
-              sx={{
-                fontSize: "11px",
-                color: alpha(theme.palette.text.secondary, 0.6),
-              }}
-            >
-              {formatTimeAgo(event.timestamp)}
-            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center">
+              {event.badge && (
+                <Chip
+                  label={event.badge}
+                  size="small"
+                  sx={{
+                    height: 18,
+                    fontSize: "10px",
+                    backgroundColor: alpha(badgeColorMap[event.badgeColor || "default"], 0.1),
+                    color: badgeColorMap[event.badgeColor || "default"],
+                    fontWeight: 800,
+                    borderRadius: "6px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.02em"
+                  }}
+                />
+              )}
+              {event.category && (
+                <Typography variant="caption" sx={{ opacity: 0.4, fontWeight: 600 }}>
+                  # {event.category}
+                </Typography>
+              )}
+            </Stack>
           </Box>
         </Stack>
       </Box>
@@ -221,17 +253,18 @@ export function ActivityFeed({
 
     const sub = subscribeLiveActivities((data: any) => {
       const frontendEvent: ActivityEvent = {
-        id: data.id,
+        id: data.id || Math.random().toString(36).substr(2, 9),
         type: mapBackendTypeToFrontend(data.type),
-        title: data.type.replace(/_/g, ' '),
+        title: data.metadata?.title || data.type.replace(/_/g, ' '),
         description: data.message,
-        timestamp: new Date(data.timestamp),
+        timestamp: new Date(data.timestamp || new Date()),
         avatar: data.avatarUrl,
         badge: data.badge,
         badgeColor: data.badge === 'success' ? 'success' : 
                    data.badge === 'warning' ? 'warning' : 
                    data.badge === 'danger' ? 'error' : 
-                   data.badge === 'info' ? 'info' : 'default'
+                   data.badge === 'info' ? 'info' : 'default',
+        category: data.metadata?.category || undefined
       };
 
       setLiveEvents(prev => [frontendEvent, ...prev].slice(0, 50));

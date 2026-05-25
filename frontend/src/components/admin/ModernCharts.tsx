@@ -5,7 +5,7 @@
 
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, Fragment } from "react";
 import {
   LineChart,
   BarChart,
@@ -19,7 +19,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   Legend,
   ResponsiveContainer,
   RadarChart,
@@ -30,8 +30,113 @@ import {
   ScatterChart,
   Scatter,
 } from "recharts";
-import { Box, useTheme } from "@mui/material";
+import { Box, useTheme, Typography, alpha, Tooltip } from "@mui/material";
+import { motion } from "framer-motion";
 import { chartConfig } from "./ChartContainer";
+
+// ============================================================================
+// 10. GAUGE - Circular resource utilization (CPU, RAM, Disk)
+// ============================================================================
+interface ModernGaugeProps {
+  value: number;
+  label: string;
+  color?: string;
+  size?: number;
+  thickness?: number;
+}
+
+export function ModernGauge({
+  value,
+  label,
+  color,
+  size = 180,
+  thickness = 12,
+}: ModernGaugeProps) {
+  const theme = useTheme();
+  const radius = (size - thickness) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (value / 100) * circumference;
+  const displayColor = color || (value > 85 ? theme.palette.error.main : value > 65 ? theme.palette.warning.main : theme.palette.success.main);
+
+  return (
+    <Box sx={{ position: "relative", width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", mx: "auto" }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={alpha(theme.palette.divider, 0.1)}
+          strokeWidth={thickness}
+          fill="transparent"
+        />
+        <motion.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={displayColor}
+          strokeWidth={thickness}
+          fill="transparent"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          strokeLinecap="round"
+        />
+      </svg>
+      <Box sx={{ position: "absolute", textAlign: "center" }}>
+        <Typography variant="h4" fontWeight={900} sx={{ color: displayColor, lineHeight: 1 }}>
+          {Math.round(value)}%
+        </Typography>
+        <Typography variant="caption" sx={{ fontWeight: 800, opacity: 0.6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          {label}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+
+// ============================================================================
+// 11. STREAMING GRAPH - Real-time metrics with live updates
+// ============================================================================
+interface ModernStreamingGraphProps {
+  data: Array<{ timestamp: string; value: number }>;
+  color?: string;
+  height?: number;
+  yDomain?: [number, number];
+}
+
+export function ModernStreamingGraph({
+  data,
+  color,
+  height = 120,
+  yDomain = [0, 100],
+}: ModernStreamingGraphProps) {
+  const theme = useTheme();
+  const displayColor = color || theme.palette.primary.main;
+
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <AreaChart data={data} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id={`streamGradient-${displayColor}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={displayColor} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={displayColor} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <Area
+          type="monotone"
+          dataKey="value"
+          stroke={displayColor}
+          strokeWidth={2}
+          fill={`url(#streamGradient-${displayColor})`}
+          isAnimationActive={false}
+        />
+        <YAxis hide domain={yDomain} />
+        <XAxis hide dataKey="timestamp" />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
 
 // ============================================================================
 // 1. LINE CHART - Revenue growth, user activity, traffic, engagement
@@ -67,7 +172,7 @@ export function ModernLineChart({
         <CartesianGrid {...chartConfig.grid} />
         <XAxis {...chartConfig.axis} />
         <YAxis {...chartConfig.axis} />
-        <Tooltip {...chartConfig.tooltip} />
+        <RechartsTooltip {...chartConfig.tooltip} />
         <Legend />
         {lines.map((line) => (
           <Line
@@ -78,7 +183,8 @@ export function ModernLineChart({
             strokeWidth={line.strokeWidth || 2}
             dot={false}
             isAnimationActive={true}
-            animationDuration={800}
+            animationDuration={1200}
+            animationEasing="ease-in-out"
           />
         ))}
       </LineChart>
@@ -124,7 +230,7 @@ export function ModernBarChart({
           <CartesianGrid {...chartConfig.grid} />
           <XAxis {...chartConfig.axis} />
           <YAxis {...chartConfig.axis} />
-          <Tooltip {...chartConfig.tooltip} />
+          <RechartsTooltip {...chartConfig.tooltip} />
           <Legend />
           {bars.map((bar) => (
             <Bar
@@ -133,7 +239,8 @@ export function ModernBarChart({
               name={bar.name}
               fill={bar.color || chartConfig.colors.primary}
               isAnimationActive={true}
-              animationDuration={800}
+              animationDuration={1200}
+              animationEasing="ease-in-out"
               radius={[8, 8, 0, 0]}
             />
           ))}
@@ -147,7 +254,7 @@ export function ModernBarChart({
           <CartesianGrid {...chartConfig.grid} />
           <XAxis type="number" {...chartConfig.axis} />
           <YAxis dataKey="name" type="category" {...chartConfig.axis} />
-          <Tooltip {...chartConfig.tooltip} />
+          <RechartsTooltip {...chartConfig.tooltip} />
           <Legend />
           {bars.map((bar) => (
             <Bar
@@ -156,7 +263,8 @@ export function ModernBarChart({
               name={bar.name}
               fill={bar.color || chartConfig.colors.primary}
               isAnimationActive={true}
-              animationDuration={800}
+              animationDuration={1200}
+              animationEasing="ease-in-out"
               radius={[0, 8, 8, 0]}
             />
           ))}
@@ -223,7 +331,7 @@ export function ModernAreaChart({
         <CartesianGrid {...chartConfig.grid} />
         <XAxis {...chartConfig.axis} />
         <YAxis {...chartConfig.axis} />
-        <Tooltip {...chartConfig.tooltip} />
+        <RechartsTooltip {...chartConfig.tooltip} />
         <Legend />
         {areas.map((area) => (
           <Area
@@ -235,7 +343,8 @@ export function ModernAreaChart({
             stroke={area.color || chartConfig.colors.primary}
             strokeWidth={2}
             isAnimationActive={true}
-            animationDuration={800}
+            animationDuration={1200}
+            animationEasing="ease-in-out"
             stackId={stacked ? "stack" : undefined}
           />
         ))}
@@ -279,13 +388,14 @@ export function ModernDonutChart({
           paddingAngle={2}
           dataKey="value"
           isAnimationActive={true}
-          animationDuration={800}
+          animationDuration={1200}
+          animationEasing="ease-in-out"
         >
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
           ))}
         </Pie>
-        <Tooltip {...chartConfig.tooltip} />
+        <RechartsTooltip {...chartConfig.tooltip} />
         <Legend />
       </PieChart>
     </ResponsiveContainer>
@@ -319,7 +429,7 @@ export function ModernRadarChart({
         <PolarGrid stroke={chartConfig.grid.stroke} />
         <PolarAngleAxis dataKey="name" {...chartConfig.axis} />
         <PolarRadiusAxis {...chartConfig.axis} />
-        <Tooltip {...chartConfig.tooltip} />
+        <RechartsTooltip {...chartConfig.tooltip} />
         {axes.map((axis, index) => (
           <Radar
             key={axis.key}
@@ -329,7 +439,8 @@ export function ModernRadarChart({
             fill={colors[index % colors.length]}
             fillOpacity={0.25}
             isAnimationActive={true}
-            animationDuration={800}
+            animationDuration={1200}
+            animationEasing="ease-in-out"
           />
         ))}
         <Legend />
@@ -339,41 +450,132 @@ export function ModernRadarChart({
 }
 
 // ============================================================================
-// 6. SCATTER CHART - Correlation analysis, distribution patterns
+// 7. STREAM CHART - Real-time data flow, stacked volume
 // ============================================================================
-interface ScatterData {
-  x: number;
-  y: number;
-  z?: number;
-  category?: string;
+export function ModernStreamChart({
+  data,
+  areas,
+  height = 300,
+}: ModernAreaChartProps) {
+  return (
+    <ModernAreaChart data={data} areas={areas} stacked height={height} />
+  );
 }
 
-interface ModernScatterChartProps {
-  data: ScatterData[];
-  xLabel?: string;
-  yLabel?: string;
-  color?: string;
+// ============================================================================
+// 8. HEATMAP - Activity intensity, login distribution
+// ============================================================================
+interface HeatmapData {
+  x: string;
+  y: string;
+  value: number;
+}
+
+interface ModernHeatmapProps {
+  data: HeatmapData[];
+  xLabels: string[];
+  yLabels: string[];
   height?: number;
 }
 
-export function ModernScatterChart({
-  data,
-  xLabel = "X Axis",
-  yLabel = "Y Axis",
-  color = chartConfig.colors.primary,
-  height = 300,
-}: ModernScatterChartProps) {
+export function ModernHeatmap({ data, xLabels, yLabels, height = 300 }: ModernHeatmapProps) {
+  const theme = useTheme();
+  
+  // Normalize data into a matrix
+  const matrix: Record<string, Record<string, number>> = {};
+  data.forEach(item => {
+    if (!matrix[item.y]) matrix[item.y] = {};
+    matrix[item.y][item.x] = item.value;
+  });
+
+  const maxValue = Math.max(...data.map(d => d.value), 1);
+
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <ScatterChart
-        margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-      >
-        <CartesianGrid {...chartConfig.grid} />
-        <XAxis type="number" dataKey="x" name={xLabel} {...chartConfig.axis} />
-        <YAxis type="number" dataKey="y" name={yLabel} {...chartConfig.axis} />
-        <Tooltip {...chartConfig.tooltip} />
-        <Scatter name="Data Points" data={data} fill={color} isAnimationActive={true} />
-      </ScatterChart>
-    </ResponsiveContainer>
+    <Box sx={{ height, width: '100%', overflow: 'hidden', p: 1 }}>
+      <Box sx={{ 
+        display: 'grid', 
+        gridTemplateColumns: `auto repeat(${xLabels.length}, 1fr)`,
+        gap: 0.5,
+        height: '100%'
+      }}>
+        {/* X-axis labels */}
+        <Box /> 
+        {xLabels.map(label => (
+          <Box key={label} sx={{ fontSize: '10px', textAlign: 'center', opacity: 0.5, fontWeight: 700 }}>
+            {label}
+          </Box>
+        ))}
+
+        {/* Rows */}
+        {yLabels.map(y => (
+          <Fragment key={`row-${y}`}>
+            <Box sx={{ fontSize: '10px', pr: 1, textAlign: 'right', display: 'flex', alignItems: 'center', opacity: 0.5, fontWeight: 700 }}>
+              {y}
+            </Box>
+            {xLabels.map(x => {
+              const val = matrix[y]?.[x] || 0;
+              const opacity = 0.1 + (val / maxValue) * 0.9;
+              return (
+                <Tooltip key={`${y}-${x}`} title={`${y} ${x}: ${val}`} arrow>
+                  <Box sx={{ 
+                    bgcolor: alpha(theme.palette.primary.main, opacity),
+                    borderRadius: '4px',
+                    aspectRatio: '1/1',
+                    cursor: 'pointer',
+                    '&:hover': { outline: `2px solid ${theme.palette.primary.main}`, zIndex: 1 }
+                  }} />
+                </Tooltip>
+              );
+            })}
+          </Fragment>
+        ))}
+      </Box>
+    </Box>
   );
 }
+
+// ============================================================================
+// 9. GEO VISUALIZATION - Stylized regional performance
+// ============================================================================
+interface GeoData {
+  region: string;
+  value: number;
+  percentage: number;
+  color?: string;
+}
+
+export function ModernGeoChart({ data, height = 300 }: { data: GeoData[], height?: number }) {
+  const theme = useTheme();
+  
+  return (
+    <Box sx={{ height, width: '100%', p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {data.map((item, idx) => (
+        <Box key={item.region}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+            <Typography variant="caption" sx={{ fontWeight: 800, opacity: 0.8 }}>{item.region}</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 800 }}>{item.percentage}%</Typography>
+          </Box>
+          <Box sx={{ 
+            height: 8, 
+            width: '100%', 
+            bgcolor: alpha(theme.palette.text.primary, 0.05), 
+            borderRadius: 4,
+            overflow: 'hidden'
+          }}>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${item.percentage}%` }}
+              transition={{ duration: 1, delay: idx * 0.1 }}
+              style={{ 
+                height: '100%', 
+                backgroundColor: item.color || chartConfig.colors.primary,
+                borderRadius: 4
+              }}
+            />
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+

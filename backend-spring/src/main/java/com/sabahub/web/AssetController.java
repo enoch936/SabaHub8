@@ -33,6 +33,15 @@ public class AssetController {
         return service.list();
     }
 
+    @GetMapping("/assets/analytics")
+    public java.util.Map<String, Object> getAnalytics() {
+        var me = currentUserService.requireUser();
+        if (!currentUserService.hasRole(me, "ADMIN")) {
+            throw new IllegalStateException("Forbidden");
+        }
+        return service.getStorageAnalytics();
+    }
+
     @GetMapping("/assets/{id}")
     public Asset get(@PathVariable String id) {
         return service.get(id).orElseThrow(() -> new NoSuchElementException("Asset not found"));

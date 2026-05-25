@@ -9,6 +9,9 @@ import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import SoftCard from "@/components/mui/SoftCard";
+import LoadingSkeleton from "@/components/LoadingSkeleton";
+import EmptyState from "@/components/EmptyState";
+import ErrorState from "@/components/ErrorState";
 import {
   type AdminSectionInsightResponse,
   adminSectionInsight,
@@ -26,7 +29,7 @@ export default function AdminSectionFocus({ parentKey, parentLabel, sectionKey }
   const [error, setError] = useState<string | null>(null);
   const activeSectionKey = sectionKey ?? "";
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!activeSectionKey) {
       setPayload(null);
       setLoading(false);
@@ -34,67 +37,47 @@ export default function AdminSectionFocus({ parentKey, parentLabel, sectionKey }
       return;
     }
 
-    let active = true;
     setLoading(true);
     setError(null);
 
-    void adminSectionInsight(parentKey, activeSectionKey)
-      .then((result) => {
-        if (!active) {
-          return;
-        }
+    try {
+        const result = await adminSectionInsight(parentKey, activeSectionKey);
         setPayload(result);
-      })
-      .catch((err) => {
-        if (!active) {
-          return;
-        }
+    } catch (err) {
         setPayload(null);
-        const message = err instanceof Error && err.message ? err.message : "Failed to load section insights.";
+        const message = err instanceof Error && err.message ? err.message : "Failed to load operational section insights.";
         setError(message);
-      })
-      .finally(() => {
-        if (!active) {
-          return;
-        }
+    } finally {
         setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
+    }
   }, [parentKey, activeSectionKey]);
 
+  useEffect(() => {
+    void load();
+  }, [load]);
+
   if (!activeSectionKey) {
-    return null;
+    return (
+      <EmptyState 
+        title="No operational focus area selected"
+        description="Select a section from the capability map or quick actions to view detailed operational controls and documentation."
+        icon={<TopicRoundedIcon sx={{ fontSize: 48, opacity: 0.2 }} />}
+      />
+    );
   }
 
   if (loading) {
     return (
       <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent>
-          <Stack spacing={1.2}>
-            <Skeleton variant="text" width={220} height={36} />
-            <Skeleton variant="text" width={420} />
-            <Grid container spacing={1}>
-              {Array.from({ length: 3 }).map((_, idx) => (
-                <Grid key={idx} size={{ xs: 12, md: 4 }}>
-                  <Skeleton variant="rounded" height={90} />
-                </Grid>
-              ))}
-            </Grid>
-          </Stack>
+          <LoadingSkeleton variant="card" />
         </CardContent>
       </SoftCard>
     );
   }
 
   if (error || !payload) {
-    return (
-      <Alert severity="warning" sx={{ borderRadius: 2 }}>
-        {error ?? "Live section data is not available right now. Please retry from the section link."}
-      </Alert>
-    );
+    return <ErrorState title="Section Data Unavailable" description={error ?? "Live section data is not available right now."} onRetry={load} />;
   }
 
   const status = payload.status.toLowerCase() === "attention" ? "Attention" : "Healthy";

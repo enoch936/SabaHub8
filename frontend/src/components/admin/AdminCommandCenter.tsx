@@ -51,8 +51,8 @@ import {
   YAxis,
 } from "recharts";
 import NoSsrResponsiveContainer from "@/components/charts/NoSsrResponsiveContainer";
-import SoftButton from "@/components/mui/SoftButton";
-import SoftCard from "@/components/mui/SoftCard";
+import { Button } from "@mui/material";
+import { GlassCard } from "./GlassCard";
 import {
   type AdminCommandCenterFeatureFlag,
   type AdminCommandCenterOverviewResponse,
@@ -424,7 +424,7 @@ function DrilldownPanel({
   emptyDetail: string;
 }) {
   return (
-    <SoftCard sx={{ ...paperCardSx, height: "100%" }}>
+    <GlassCard sx={{ ...paperCardSx, height: "100%" }}>
       <CardContent sx={{ height: "100%" }}>
         <Stack spacing={1.2} sx={{ height: "100%" }}>
           <Stack
@@ -459,9 +459,9 @@ function DrilldownPanel({
                 </Typography>
               </Box>
             </Stack>
-            <SoftButton component={Link} href={href} variant="text" size="small" endIcon={<ArrowForwardRoundedIcon />} sx={{ px: 0 }}>
+            <Button component={Link} href={href} variant="text" size="small" endIcon={<ArrowForwardRoundedIcon />} sx={{ px: 0 }}>
               {ctaLabel}
-            </SoftButton>
+            </Button>
           </Stack>
 
           <Grid container spacing={1}>
@@ -534,7 +534,7 @@ function DrilldownPanel({
           </Stack>
         </Stack>
       </CardContent>
-    </SoftCard>
+    </GlassCard>
   );
 }
 
@@ -1021,7 +1021,6 @@ export default function AdminCommandCenter() {
       sx={{
         position: "relative",
         minHeight: "100vh",
-        overflow: "hidden",
         px: { xs: 1.5, md: 2.2 },
         py: { xs: 1.5, md: 2.2 },
         background:
@@ -1044,7 +1043,7 @@ export default function AdminCommandCenter() {
       }}
     >
       <Stack spacing={2.2} sx={{ position: "relative", zIndex: 1 }}>
-      <SoftCard
+      <GlassCard
         sx={{
           ...paperCardSx,
           overflow: "hidden",
@@ -1083,16 +1082,16 @@ export default function AdminCommandCenter() {
                 </Typography>
               </Box>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1} useFlexGap flexWrap="wrap" alignItems={{ sm: "center" }}>
-                <SoftButton component={Link} href="/admin/analytics" variant="outlined" sx={{ minWidth: { sm: 170 }, width: { xs: "100%", sm: "auto" } }}>
+                <Button component={Link} href="/admin/analytics" variant="outlined" sx={{ minWidth: { sm: 170 }, width: { xs: "100%", sm: "auto" } }}>
                   Open Analytics
-                </SoftButton>
-                <SoftButton component={Link} href="/admin/transactions" variant="outlined" sx={{ width: { xs: "100%", sm: "auto" } }}>
+                </Button>
+                <Button component={Link} href="/admin/transactions" variant="outlined" sx={{ width: { xs: "100%", sm: "auto" } }}>
                   Review Payments
-                </SoftButton>
-                <SoftButton component={Link} href="/admin/users" variant="outlined" sx={{ width: { xs: "100%", sm: "auto" } }}>
+                </Button>
+                <Button component={Link} href="/admin/users" variant="outlined" sx={{ width: { xs: "100%", sm: "auto" } }}>
                   Manage Users
-                </SoftButton>
-                <SoftButton
+                </Button>
+                <Button
                   onClick={() => void load()}
                   variant="outlined"
                   startIcon={<RefreshRoundedIcon />}
@@ -1100,7 +1099,7 @@ export default function AdminCommandCenter() {
                   sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Refresh
-                </SoftButton>
+                </Button>
               </Stack>
             </Stack>
 
@@ -1225,34 +1224,34 @@ export default function AdminCommandCenter() {
             </Grid>
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-              <SoftButton
+              <Button
                 variant="outlined"
                 startIcon={<FileDownloadRoundedIcon />}
                 onClick={exportSnapshot}
                 sx={{ width: { xs: "100%", sm: "auto" } }}
               >
                 Export Snapshot JSON
-              </SoftButton>
-              <SoftButton
+              </Button>
+              <Button
                 variant="outlined"
                 startIcon={<FileDownloadRoundedIcon />}
                 onClick={exportTrendsCsv}
                 sx={{ width: { xs: "100%", sm: "auto" } }}
               >
                 Export Trends CSV
-              </SoftButton>
-              <SoftButton
+              </Button>
+              <Button
                 variant="outlined"
                 startIcon={<FileDownloadRoundedIcon />}
                 onClick={exportOperationsCsv}
                 sx={{ width: { xs: "100%", sm: "auto" } }}
               >
                 Export Operations CSV
-              </SoftButton>
+              </Button>
             </Stack>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       {loading ? <LinearProgress sx={{ borderRadius: 999, height: 6 }} /> : null}
       {error ? <Alert severity="error">{error}</Alert> : null}
@@ -1266,7 +1265,7 @@ export default function AdminCommandCenter() {
       <Grid container spacing={1.25}>
         {metricCards.map((card) => (
           <Grid key={card.label} size={{ xs: 12, sm: 6, xl: 2 }}>
-            <SoftCard sx={{ ...paperCardSx, height: "100%" }}>
+            <GlassCard sx={{ ...paperCardSx, height: "100%" }}>
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
                   {card.label}
@@ -1278,12 +1277,12 @@ export default function AdminCommandCenter() {
                   {card.helper}
                 </Typography>
               </CardContent>
-            </SoftCard>
+            </GlassCard>
           </Grid>
         ))}
       </Grid>
 
-      <SoftCard sx={paperCardSx}>
+      <GlassCard sx={paperCardSx}>
         <CardContent>
           <Stack
             direction={{ xs: "column", md: "row" }}
@@ -1386,11 +1385,11 @@ export default function AdminCommandCenter() {
             </Grid>
           </Grid>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 7 }}>
-          <SoftCard sx={{ ...paperCardSx, height: "100%" }}>
+          <GlassCard sx={{ ...paperCardSx, height: "100%" }}>
             <CardContent>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
@@ -1487,11 +1486,11 @@ export default function AdminCommandCenter() {
                 </Grid>
               </Grid>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 5 }}>
-          <SoftCard sx={{ ...paperCardSx, height: "100%" }}>
+          <GlassCard sx={{ ...paperCardSx, height: "100%" }}>
             <CardContent>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
@@ -1570,13 +1569,13 @@ export default function AdminCommandCenter() {
                 </Grid>
               </Grid>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 4 }}>
-          <SoftCard sx={{ ...paperCardSx, height: "100%" }}>
+          <GlassCard sx={{ ...paperCardSx, height: "100%" }}>
             <CardContent>
               <Typography variant="h6" fontWeight={800} sx={{ mb: 1.2 }}>
                 Job Status Mix
@@ -1621,11 +1620,11 @@ export default function AdminCommandCenter() {
                 ))}
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
-          <SoftCard sx={{ ...paperCardSx, height: "100%" }}>
+          <GlassCard sx={{ ...paperCardSx, height: "100%" }}>
             <CardContent>
               <Typography variant="h6" fontWeight={800} sx={{ mb: 1.2 }}>
                 Proposal Funnel
@@ -1661,11 +1660,11 @@ export default function AdminCommandCenter() {
                 {formatCompactNumber(reviewedProposals)} reviewed out of {formatCompactNumber(state.proposals.length)} total proposals.
               </Typography>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
-          <SoftCard sx={{ ...paperCardSx, height: "100%" }}>
+          <GlassCard sx={{ ...paperCardSx, height: "100%" }}>
             <CardContent>
               <Typography variant="h6" fontWeight={800} sx={{ mb: 1.2 }}>
                 Trust Posture
@@ -1698,13 +1697,13 @@ export default function AdminCommandCenter() {
                 {verifiedUsers} verified accounts, {activeRecently} active in the last 7 days, and {suspendedUsers} suspended.
               </Typography>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 7 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.4 }}>
                 <Box>
@@ -1752,9 +1751,9 @@ export default function AdminCommandCenter() {
                             }}
                           />
                           <Box sx={{ mt: "auto", pt: 0.4 }}>
-                            <SoftButton component={Link} href={domain.route} variant="text" size="small" endIcon={<ArrowForwardRoundedIcon />} sx={{ px: 0 }}>
+                            <Button component={Link} href={domain.route} variant="text" size="small" endIcon={<ArrowForwardRoundedIcon />} sx={{ px: 0 }}>
                               Open domain
-                            </SoftButton>
+                            </Button>
                           </Box>
                         </Stack>
                       </Box>
@@ -1769,11 +1768,11 @@ export default function AdminCommandCenter() {
                 />
               )}
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 5 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
@@ -1849,13 +1848,13 @@ export default function AdminCommandCenter() {
                 )}
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 8 }}>
-          <SoftCard sx={paperCardSx}>
+          <GlassCard sx={paperCardSx}>
             <CardContent>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
@@ -1914,11 +1913,11 @@ export default function AdminCommandCenter() {
                 />
               )}
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
-          <SoftCard sx={{ ...paperCardSx, height: "100%" }}>
+          <GlassCard sx={{ ...paperCardSx, height: "100%" }}>
             <CardContent>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
@@ -1988,11 +1987,11 @@ export default function AdminCommandCenter() {
                 )}
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
-      <SoftCard sx={paperCardSx}>
+      <GlassCard sx={paperCardSx}>
         <CardContent>
           <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={1.2} sx={{ mb: 1.2 }}>
             <Box>
@@ -2004,12 +2003,12 @@ export default function AdminCommandCenter() {
               </Typography>
             </Box>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-              <SoftButton component={Link} href="/admin/users" variant="outlined" size="small">
+              <Button component={Link} href="/admin/users" variant="outlined" size="small">
                 Open Users
-              </SoftButton>
-              <SoftButton component={Link} href="/admin/transactions" variant="outlined" size="small">
+              </Button>
+              <Button component={Link} href="/admin/transactions" variant="outlined" size="small">
                 Payments Queue
-              </SoftButton>
+              </Button>
             </Stack>
           </Stack>
           {roleMix.length > 0 ? (
@@ -2049,7 +2048,7 @@ export default function AdminCommandCenter() {
             />
           )}
         </CardContent>
-      </SoftCard>
+      </GlassCard>
       </Stack>
     </Box>
   );

@@ -7,8 +7,10 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import PageTransition from "@/components/animations/PageTransition";
 import MuiAppProvider from "@/components/mui/MuiAppProvider";
+import { FloatingChatPanel } from "@/components/chat/FloatingChatPanel";
 
 export default function Providers({ children }: { children: ReactNode }) {
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [client] = useState(
     () =>
       new QueryClient({
@@ -27,6 +29,7 @@ export default function Providers({ children }: { children: ReactNode }) {
         <MuiAppProvider>
           <MotionConfig reducedMotion="user" transition={{ type: "spring", stiffness: 320, damping: 32 }}>
             <PageTransition>{children}</PageTransition>
+            <FloatingChatPanel isOpen={isChatOpen} onToggle={() => setIsChatOpen(!isChatOpen)} />
           </MotionConfig>
           <Toaster position="top-right" richColors />
         </MuiAppProvider>

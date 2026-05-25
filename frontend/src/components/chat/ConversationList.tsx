@@ -117,6 +117,9 @@ export function ConversationList({
                   >
                     {getConversationInitial(title)}
                   </div>
+                  {liveCount > 0 ? (
+                    <div className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+                  ) : null}
                   {unreadCount > 0 ? (
                     <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] font-bold text-white">
                       {unreadCount > 9 ? "9+" : unreadCount}

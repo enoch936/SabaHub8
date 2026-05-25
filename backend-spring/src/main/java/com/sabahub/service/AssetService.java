@@ -141,6 +141,28 @@ public class AssetService {
         ));
     }
 
+    public Map<String, Object> getStorageAnalytics() {
+        List<Asset> all = repository.findAll();
+        long totalSize = all.stream().mapToLong(a -> a.getSize() != null ? a.getSize() : 0).sum();
+
+        Map<String, Long> sizeByType = new HashMap<>();
+        Map<String, Long> countByType = new HashMap<>();
+
+        for (Asset a : all) {
+            String type = a.getResourceType() != null ? a.getResourceType() : "other";
+            sizeByType.put(type, sizeByType.getOrDefault(type, 0L) + (a.getSize() != null ? a.getSize() : 0));
+            countByType.put(type, countByType.getOrDefault(type, 0L) + 1);
+        }
+
+        return Map.of(
+                "totalSize", totalSize,
+                "totalCount", (long) all.size(),
+                "sizeByType", sizeByType,
+                "countByType", countByType,
+                "storageTotal", 5368709120L // 5GB default
+        );
+    }
+
     private Asset withDownloadUrl(Asset asset) {
         if (asset == null || asset.getPublicId() == null || asset.getPublicId().isBlank()) {
             return asset;

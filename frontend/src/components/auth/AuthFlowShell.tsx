@@ -107,14 +107,19 @@ export function AuthFlowShell({
         </motion.nav>
       </div>
 
-      <main className="relative px-4 pb-12 pt-24 sm:px-6 md:pb-16 md:pt-28">
-        <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.85fr)] lg:items-start">
+      <main className="relative px-6 pb-16 pt-32 md:pt-36">
+        <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <motion.section className={clsx(styles.glassPanel, styles.sidePanel)} {...revealUp()}>
             <span className={styles.stageBadge}>{stageLabel}</span>
-            <h1 className={clsx(styles.displayHeading, "mt-3 text-2xl font-bold leading-tight text-slate-950 md:text-3xl")}>
+            <h1
+              className={clsx(
+                styles.displayHeading,
+                "mt-5 text-4xl font-bold leading-[0.98] tracking-[-0.05em] text-slate-950 md:text-5xl",
+              )}
+            >
               {title}
             </h1>
-            <p className="mt-2 max-w-lg text-sm leading-6 text-slate-600">{description}</p>
+            <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600 md:text-lg">{description}</p>
 
             <div className={styles.stepRail}>
               {steps.map((step, index) => {
@@ -130,8 +135,8 @@ export function AuthFlowShell({
                       {step.status === "complete" ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
                     </span>
                     <div>
-                      <div className="text-xs font-semibold text-slate-950">{step.label}</div>
-                      <div className="mt-0.5 text-[0.68rem] leading-4 text-slate-500">{step.detail}</div>
+                      <div className="text-sm font-semibold text-slate-950">{step.label}</div>
+                      <div className="mt-1 text-sm leading-6 text-slate-500">{step.detail}</div>
                     </div>
                   </div>
                 );
@@ -148,7 +153,7 @@ export function AuthFlowShell({
               })}
             </div>
 
-            <div className={styles.heroStack}>{hero}</div>
+            <div className="mt-6">{hero}</div>
           </motion.section>
 
           <motion.section className={clsx(styles.glassPanel, styles.formPanel)} {...revealUp(0.1)}>

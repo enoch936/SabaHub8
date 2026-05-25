@@ -109,4 +109,16 @@ public final class AdminAnalyticsDTOs {
             ExecutiveReportResponse report
     ) {
     }
+
+    public record AIInferenceLog(
+            String id,
+            String model,
+            Instant timestamp,
+            long latencyMs,
+            long tokensUsed,
+            String status,
+            String promptType,
+            String userId
+    ) {
+    }
 }

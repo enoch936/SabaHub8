@@ -258,6 +258,66 @@ public class NotificationService {
         ));
     }
 
+    public void sendSecurityAlert(String userId, String title, String message, String priority) {
+        createNotification(userId, "SECURITY_ALERT", payload(
+                title,
+                message,
+                "category", "security",
+                "priority", priority != null ? priority : "high",
+                "route", "/admin/security-governance"
+        ));
+    }
+
+    public void sendPaymentAlert(String userId, String title, String message) {
+        createNotification(userId, "PAYMENT_ALERT", payload(
+                title,
+                message,
+                "category", "payment",
+                "priority", "medium",
+                "route", "/admin/financial-operations"
+        ));
+    }
+
+    public void sendSystemFailure(String userId, String title, String message) {
+        createNotification(userId, "SYSTEM_FAILURE", payload(
+                title,
+                message,
+                "category", "system",
+                "priority", "critical",
+                "route", "/admin/platform-control"
+        ));
+    }
+
+    public void sendAIWarning(String userId, String title, String message) {
+        createNotification(userId, "AI_WARNING", payload(
+                title,
+                message,
+                "category", "ai",
+                "priority", "medium",
+                "route", "/admin/ai-models"
+        ));
+    }
+
+    public void sendModerationAlert(String userId, String title, String message) {
+        createNotification(userId, "MODERATION_ALERT", payload(
+                title,
+                message,
+                "category", "user",
+                "priority", "high",
+                "route", "/admin/content-moderation"
+        ));
+    }
+
+    public void sendUserReport(String userId, String title, String message) {
+        createNotification(userId, "USER_REPORT", payload(
+                title,
+                message,
+                "category", "user",
+                "priority", "high",
+                "route", "/admin/disputes"
+        ));
+    }
+
     public List<Notification> listMyNotifications() {
         User me = currentUserService.requireUser();
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(me.getId());

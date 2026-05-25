@@ -122,6 +122,111 @@ class LocalModelRuntime:
         confidence = float(np.max(probs))
         return {"intent": str(pred), "confidence": confidence}
 
+    def admin_assist(self, command: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        command_l = command.lower().strip()
+        
+        if "summary" in command_l or "analyze" in command_l:
+            return self._generate_analytics_summary(data)
+        
+        if "anomaly" in command_l or "outlier" in command_l:
+            return self._detect_anomalies(data)
+            
+        if "moderation" in command_l or "flag" in command_l:
+            return self._suggest_moderation(data)
+            
+        if "search" in command_l:
+            return self._smart_search(command, data)
+
+        return {
+            "answer": "I can help with analytics summaries, anomaly detection, and content moderation suggestions. Try 'Analyze platform stats' or 'Find anomalies in transactions'.",
+            "confidence": 0.5
+        }
+
+    def _generate_analytics_summary(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        # Heuristic-based summary generation
+        users = data.get("totalUsers", 0)
+        revenue = data.get("revenue", 0.0)
+        active = data.get("activeUsers", 0)
+        
+        summary = f"Platform health is stable with {users} total users and ${revenue:,.2f} in revenue. "
+        if active > (users * 0.2):
+            summary += "Engagement is high with over 20% active user ratio. "
+        else:
+            summary += "Engagement is slightly below target; consider user retention campaigns. "
+            
+        if data.get("failedTransactions", 0) > 10:
+            summary += "ALERT: High transaction failure rate detected."
+            
+        return {
+            "answer": summary,
+            "confidence": 0.85,
+            "suggestedActions": ["View detailed analytics", "Check failed transactions", "Run user retention campaign"]
+        }
+
+    def _detect_anomalies(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        # Statistical anomaly detection (simplified)
+        items = data.get("items", []) # e.g., list of transaction amounts or login counts
+        if not items:
+            return {"answer": "No data provided for anomaly detection.", "confidence": 1.0}
+            
+        values = [float(i.get("value", 0)) for i in items if "value" in i]
+        if not values:
+            return {"answer": "No numeric values found for anomaly detection.", "confidence": 1.0}
+            
+        mean = np.mean(values)
+        std = np.std(values)
+        threshold = 2.0 # 2 standard deviations
+        
+        anomalies = [items[i] for i, v in enumerate(values) if abs(v - mean) > threshold * std]
+        
+        if anomalies:
+            return {
+                "answer": f"Detected {len(anomalies)} anomalies in the provided data set.",
+                "anomalies": anomalies,
+                "confidence": 0.9,
+                "suggestedActions": ["Investigate anomalies", "Adjust sensitivity threshold"]
+            }
+            
+        return {"answer": "No significant anomalies detected in the current data set.", "confidence": 0.95}
+
+    def _suggest_moderation(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        text = data.get("text", "")
+        # Basic keyword-based moderation for now
+        flagged_words = ["scam", "spam", "fraud", "violation", "fake"]
+        found = [word for word in flagged_words if word in text.lower()]
+        
+        if found:
+            return {
+                "answer": f"Content contains suspicious terms: {', '.join(found)}. Suggesting manual review.",
+                "riskLevel": "MEDIUM",
+                "confidence": 0.8,
+                "suggestedActions": ["Flag for review", "Auto-suspend user", "Contact user for clarification"]
+            }
+            
+        return {"answer": "Content appears clean and compliant with platform policies.", "confidence": 0.9}
+
+    def _smart_search(self, query: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        # Semantic search using vectorizer if loaded
+        items = data.get("items", [])
+        if self.artifacts.recommender_vectorizer is None or not items:
+            return {"answer": "Smart search is initializing or no items provided.", "items": items, "confidence": 0.5}
+            
+        query_vec = self.artifacts.recommender_vectorizer.transform([query])
+        
+        results = []
+        for item in items:
+            text = f"{item.get('title', '')} {item.get('description', '')}"
+            item_vec = self.artifacts.recommender_vectorizer.transform([text])
+            score = (query_vec @ item_vec.T).toarray()[0][0]
+            results.append({"item": item, "score": float(score)})
+            
+        results.sort(key=lambda x: x["score"], reverse=True)
+        return {
+            "answer": f"Found {len(results)} matches for your search.",
+            "results": results[:10],
+            "confidence": 0.88
+        }
+
     def classify_taxonomy(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         return self.taxonomy_engine.classify(payload)
 

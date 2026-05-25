@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
+  Button,
   CardContent,
   Chip,
   Dialog,
@@ -33,7 +34,8 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
 import SoftButton from "@/components/mui/SoftButton";
-import SoftCard from "@/components/mui/SoftCard";
+import { GlassCard, GlassCardHeader } from "./GlassCard";
+import { DataTable, type TableColumn } from "./DataTable";
 import SoftTextField from "@/components/mui/SoftTextField";
 import {
   type AdminCommandCenterOperation,
@@ -366,7 +368,7 @@ export default function AdminJobModerationWorkspace() {
 
   return (
     <Stack spacing={2.2}>
-      <SoftCard
+      <GlassCard
         sx={{
           border: "1px solid",
           borderColor: "rgba(24,40,59,0.16)",
@@ -388,7 +390,7 @@ export default function AdminJobModerationWorkspace() {
                   Review live job records, inspect marketplace posts, and change moderation state with direct admin controls instead of placeholder responsibilities.
                 </Typography>
               </Box>
-              <SoftButton
+              <Button
                 variant="outlined"
                 onClick={() => void load()}
                 disabled={loading}
@@ -396,24 +398,24 @@ export default function AdminJobModerationWorkspace() {
                 sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.55)" }}
               >
                 Refresh
-              </SoftButton>
+              </Button>
             </Stack>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       {error ? (
         <Alert 
           severity="error"
           action={
             error.includes("/admin-bootstrap") && (
-              <SoftButton
+              <Button
                 size="small"
                 href="/admin-bootstrap"
                 sx={{ color: "error.main" }}
               >
                 Setup Admin
-              </SoftButton>
+              </Button>
             )
           }
         >
@@ -430,7 +432,7 @@ export default function AdminJobModerationWorkspace() {
           { label: "Closed / Cancelled", value: metrics.closed, icon: <GavelRoundedIcon fontSize="small" /> },
         ].map((metric) => (
           <Grid key={metric.label} size={{ xs: 12, sm: 6, xl: 3 }}>
-            <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+            <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
               <CardContent>
                 <Stack spacing={0.8}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -444,12 +446,12 @@ export default function AdminJobModerationWorkspace() {
                   </Typography>
                 </Stack>
               </CardContent>
-            </SoftCard>
+            </GlassCard>
           </Grid>
         ))}
       </Grid>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent>
           <Grid container spacing={1.2}>
             <Grid size={{ xs: 12, md: 8 }}>
@@ -482,9 +484,9 @@ export default function AdminJobModerationWorkspace() {
             </Grid>
           </Grid>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent>
           <Stack spacing={1.2}>
             <Box>
@@ -525,14 +527,14 @@ export default function AdminJobModerationWorkspace() {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
-                <SoftButton
+                <Button
                   variant="outlined"
                   fullWidth
                   onClick={() => setRunbookForm(defaultRunbookForm)}
                   sx={{ height: "100%" }}
                 >
                   Clear Parameters
-                </SoftButton>
+                </Button>
               </Grid>
 
               <Grid size={{ xs: 12 }}>
@@ -596,20 +598,20 @@ export default function AdminJobModerationWorkspace() {
 
               <Grid size={{ xs: 12 }}>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                  <SoftButton
+                  <Button
                     variant="outlined"
                     onClick={() => void executeRunbook(true)}
                     disabled={loading || !selectedOperation || !!runbookBusyId}
                   >
                     {runbookBusyId === `${selectedOperationId}:dry` ? "Dry Run..." : "Dry Run"}
-                  </SoftButton>
-                  <SoftButton
+                  </Button>
+                  <Button
                     variant="contained"
                     onClick={() => void executeRunbook(false)}
                     disabled={loading || !selectedOperation || !!runbookBusyId}
                   >
                     {runbookBusyId === `${selectedOperationId}:run` ? "Executing..." : "Execute Runbook"}
-                  </SoftButton>
+                  </Button>
                   {selectedOperation ? (
                     <Chip
                       label={`${selectedOperation.impact} impact`}
@@ -623,196 +625,206 @@ export default function AdminJobModerationWorkspace() {
             </Grid>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
-      <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
         <CardContent sx={{ p: 0 }}>
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Job</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Budget</TableCell>
-                  <TableCell>Media</TableCell>
-                  <TableCell>Signals</TableCell>
-                  <TableCell>Created</TableCell>
-                  <TableCell align="right">Moderation Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredJobs.map((job) => {
-                  const busy = busyJobId === job.id;
-                  const normalizedStatus = (job.status ?? "DRAFT").toUpperCase();
+          <DataTable
+            columns={[
+              {
+                key: "title",
+                label: "Job",
+                sortable: true,
+                render: (_, job) => (
+                  <Stack spacing={0.35}>
+                    <Typography variant="subtitle2" fontWeight={800}>
+                      {job.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {job.companyName || "Marketplace posting"} · {job.employerId || "No employer ID"}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {job.categoryId || "No category"} · {job.workLocation || "Location not set"}
+                    </Typography>
+                  </Stack>
+                ),
+              },
+              {
+                key: "status",
+                label: "Status",
+                sortable: true,
+                render: (val) => (
+                  <Chip label={String(val).toUpperCase()} size="small" color={statusTone(String(val))} variant="outlined" />
+                ),
+              },
+              {
+                key: "budget",
+                label: "Budget",
+                render: (_, job) => formatBudget(job),
+              },
+              {
+                key: "sampleImageUrls",
+                label: "Media",
+                render: (_, job) => {
                   const mediaSummary = getMediaSummary(job);
+                  const firstImageUrl = firstNonEmptyUrl(job.sampleImageUrls);
+                  const firstVideoUrl = firstNonEmptyUrl(job.sampleVideoUrls);
+                  const videoPosterUrl = firstVideoUrl
+                    ? deriveCloudinaryVideoPosterUrl(firstVideoUrl, { width: 240, height: 160 })
+                    : null;
+
+                  const thumbSx = {
+                    width: 76,
+                    height: 52,
+                    objectFit: "cover" as const,
+                    borderRadius: 1.2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                  };
 
                   return (
-                    <TableRow key={job.id} hover>
-                      <TableCell sx={{ minWidth: 280 }}>
-                        <Stack spacing={0.35}>
-                          <Typography variant="subtitle2" fontWeight={800}>
-                            {job.title}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {job.companyName || "Marketplace posting"} · {job.employerId || "No employer ID"}
-                          </Typography>
+                    <Stack spacing={0.7}>
+                      <Stack direction="row" spacing={0.7} alignItems="center">
+                        {firstImageUrl ? (
+                          <Box
+                            component="img"
+                            src={firstImageUrl}
+                            alt={`Thumbnail for ${job.title}`}
+                            loading="lazy"
+                            sx={thumbSx}
+                          />
+                        ) : null}
+
+                        {firstVideoUrl ? (
+                          videoPosterUrl ? (
+                            <Box
+                              component="img"
+                              src={videoPosterUrl}
+                              alt={`Video thumbnail for ${job.title}`}
+                              loading="lazy"
+                              sx={{ ...thumbSx, bgcolor: "grey.900" }}
+                            />
+                          ) : (
+                            <Box
+                              component="video"
+                              src={firstVideoUrl}
+                              muted
+                              preload="metadata"
+                              playsInline
+                              sx={{ ...thumbSx, bgcolor: "grey.900" }}
+                            />
+                          )
+                        ) : null}
+
+                        {!firstImageUrl && !firstVideoUrl ? (
                           <Typography variant="caption" color="text.secondary">
-                            {job.categoryId || "No category"} · {job.workLocation || "Location not set"}
+                            No media
                           </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Chip label={normalizedStatus} size="small" color={statusTone(normalizedStatus)} variant="outlined" />
-                      </TableCell>
-                      <TableCell>{formatBudget(job)}</TableCell>
-                      <TableCell sx={{ minWidth: 220 }}>
-                        {(() => {
-                          const firstImageUrl = firstNonEmptyUrl(job.sampleImageUrls);
-                          const firstVideoUrl = firstNonEmptyUrl(job.sampleVideoUrls);
-                          const videoPosterUrl = firstVideoUrl
-                            ? deriveCloudinaryVideoPosterUrl(firstVideoUrl, { width: 240, height: 160 })
-                            : null;
+                        ) : null}
+                      </Stack>
 
-                          const thumbSx = {
-                            width: 76,
-                            height: 52,
-                            objectFit: "cover" as const,
-                            borderRadius: 1.2,
-                            border: "1px solid",
-                            borderColor: "divider",
-                          };
-
-                          return (
-                            <Stack spacing={0.7}>
-                              <Stack direction="row" spacing={0.7} alignItems="center">
-                                {firstImageUrl ? (
-                                  <Box
-                                    component="img"
-                                    src={firstImageUrl}
-                                    alt={`Thumbnail for ${job.title}`}
-                                    loading="lazy"
-                                    sx={thumbSx}
-                                  />
-                                ) : null}
-
-                                {firstVideoUrl ? (
-                                  videoPosterUrl ? (
-                                    <Box
-                                      component="img"
-                                      src={videoPosterUrl}
-                                      alt={`Video thumbnail for ${job.title}`}
-                                      loading="lazy"
-                                      sx={{ ...thumbSx, bgcolor: "grey.900" }}
-                                    />
-                                  ) : (
-                                    <Box
-                                      component="video"
-                                      src={firstVideoUrl}
-                                      muted
-                                      preload="metadata"
-                                      playsInline
-                                      sx={{ ...thumbSx, bgcolor: "grey.900" }}
-                                    />
-                                  )
-                                ) : null}
-
-                                {!firstImageUrl && !firstVideoUrl ? (
-                                  <Typography variant="caption" color="text.secondary">
-                                    No media
-                                  </Typography>
-                                ) : null}
-                              </Stack>
-
-                              <Stack direction="row" spacing={0.7} useFlexGap flexWrap="wrap">
-                                <Chip label={`Images: ${mediaSummary.imageCount}`} size="small" variant="outlined" />
-                                <Chip label={`Videos: ${mediaSummary.videoCount}`} size="small" variant="outlined" />
-                              </Stack>
-                            </Stack>
-                          );
-                        })()}
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 220 }}>
-                        <Stack direction="row" spacing={0.7} useFlexGap flexWrap="wrap">
-                          {job.isEnterpriseOnly ? <Chip label="Enterprise" size="small" color="secondary" variant="outlined" /> : null}
-                          {job.requiresNDA ? <Chip label="NDA" size="small" variant="outlined" /> : null}
-                          {job.requiresBGCheck ? <Chip label="BG Check" size="small" variant="outlined" /> : null}
-                          {(job.skills ?? []).slice(0, 2).map((skill) => (
-                            <Chip key={`${job.id}-${skill}`} label={skill} size="small" variant="outlined" />
-                          ))}
-                        </Stack>
-                      </TableCell>
-                      <TableCell>{formatDateTime(job.createdAt)}</TableCell>
-                      <TableCell align="right" sx={{ minWidth: 330 }}>
-                        <Stack direction="row" spacing={0.8} justifyContent="flex-end" useFlexGap flexWrap="wrap">
-                          <SoftButton
-                            variant="outlined"
-                            size="small"
-                            startIcon={<VisibilityRoundedIcon />}
-                            onClick={() => openReview(job)}
-                            disabled={busy}
-                          >
-                            Review
-                          </SoftButton>
-                          <SoftButton
-                            variant="outlined"
-                            size="small"
-                            color="success"
-                            onClick={() => void changeStatus(job, "OPEN")}
-                            disabled={busy || normalizedStatus === "OPEN"}
-                          >
-                            Open
-                          </SoftButton>
-                          <SoftButton
-                            variant="outlined"
-                            size="small"
-                            onClick={() => void changeStatus(job, "DRAFT")}
-                            disabled={busy || normalizedStatus === "DRAFT"}
-                          >
-                            Draft
-                          </SoftButton>
-                          <SoftButton
-                            variant="outlined"
-                            size="small"
-                            color="warning"
-                            onClick={() => void changeStatus(job, "CLOSED")}
-                            disabled={busy || normalizedStatus === "CLOSED"}
-                          >
-                            Close
-                          </SoftButton>
-                          <SoftButton
-                            variant="outlined"
-                            size="small"
-                            color="error"
-                            startIcon={<CloseRoundedIcon />}
-                            onClick={() => void changeStatus(job, "CANCELLED")}
-                            disabled={busy || normalizedStatus === "CANCELLED"}
-                          >
-                            Cancel
-                          </SoftButton>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
+                      <Stack direction="row" spacing={0.7} useFlexGap flexWrap="wrap">
+                        <Chip label={`Images: ${mediaSummary.imageCount}`} size="small" variant="outlined" />
+                        <Chip label={`Videos: ${mediaSummary.videoCount}`} size="small" variant="outlined" />
+                      </Stack>
+                    </Stack>
                   );
-                })}
-                {!loading && filteredJobs.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                      No jobs match the current moderation filters.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                      Loading jobs...
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-              </TableBody>
-            </Table>
-          </Box>
+                },
+              },
+              {
+                key: "skills",
+                label: "Signals",
+                render: (_, job) => (
+                  <Stack direction="row" spacing={0.7} useFlexGap flexWrap="wrap">
+                    {job.isEnterpriseOnly ? <Chip label="Enterprise" size="small" color="secondary" variant="outlined" /> : null}
+                    {job.requiresNDA ? <Chip label="NDA" size="small" variant="outlined" /> : null}
+                    {job.requiresBGCheck ? <Chip label="BG Check" size="small" variant="outlined" /> : null}
+                    {(job.skills ?? []).slice(0, 2).map((skill) => (
+                      <Chip key={`${job.id}-${skill}`} label={skill} size="small" variant="outlined" />
+                    ))}
+                  </Stack>
+                ),
+              },
+              {
+                key: "createdAt",
+                label: "Created",
+                sortable: true,
+                render: (val) => formatDateTime(val as string),
+              },
+              {
+                key: "id",
+                label: "Moderation Actions",
+                align: "right",
+                render: (_, job) => {
+                  const busy = busyJobId === job.id;
+                  const normalizedStatus = (job.status ?? "DRAFT").toUpperCase();
+                  return (
+                    <Stack direction="row" spacing={0.8} justifyContent="flex-end" useFlexGap flexWrap="wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        leftIcon={<VisibilityRoundedIcon sx={{ fontSize: 16 }} />}
+                        onClick={() => openReview(job)}
+                        disabled={busy}
+                      >
+                        Review
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        color="success"
+                        onClick={() => void changeStatus(job, "OPEN")}
+                        disabled={busy || normalizedStatus === "OPEN"}
+                      >
+                        Open
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void changeStatus(job, "DRAFT")}
+                        disabled={busy || normalizedStatus === "DRAFT"}
+                      >
+                        Draft
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        color="warning"
+                        onClick={() => void changeStatus(job, "CLOSED")}
+                        disabled={busy || normalizedStatus === "CLOSED"}
+                      >
+                        Close
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        color="danger"
+                        leftIcon={<CloseRoundedIcon sx={{ fontSize: 16 }} />}
+                        onClick={() => void changeStatus(job, "CANCELLED")}
+                        disabled={busy || normalizedStatus === "CANCELLED"}
+                      >
+                        Cancel
+                      </Button>
+                    </Stack>
+                  );
+                },
+              },
+            ]}
+            data={filteredJobs}
+            rowKey="id"
+            loading={loading}
+            searchable={false}
+            expandableContent={(job) => (
+              <Box p={1}>
+                <Typography variant="subtitle2" fontWeight={800} mb={1}>Job Description</Typography>
+                <Typography variant="body2" color="text.secondary" whiteSpace="pre-wrap">
+                  {job.description || "No description provided."}
+                </Typography>
+              </Box>
+            )}
+          />
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       <Dialog open={!!selectedJob} onClose={() => setSelectedJob(null)} fullWidth maxWidth="md">
         <DialogTitle>Moderation Review</DialogTitle>
@@ -830,7 +842,7 @@ export default function AdminJobModerationWorkspace() {
 
               <Grid container spacing={1.2}>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+                  <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
                     <CardContent>
                       <Stack spacing={0.8}>
                         <Typography variant="subtitle2" fontWeight={800}>
@@ -841,10 +853,10 @@ export default function AdminJobModerationWorkspace() {
                         </Typography>
                       </Stack>
                     </CardContent>
-                  </SoftCard>
+                  </GlassCard>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+                  <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
                     <CardContent>
                       <Stack spacing={0.8}>
                         <Typography variant="subtitle2" fontWeight={800}>
@@ -867,10 +879,10 @@ export default function AdminJobModerationWorkspace() {
                         </Typography>
                       </Stack>
                     </CardContent>
-                  </SoftCard>
+                  </GlassCard>
                 </Grid>
                 <Grid size={{ xs: 12 }}>
-                  <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+                  <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
                     <CardContent>
                       <Stack spacing={0.8}>
                         <Typography variant="subtitle2" fontWeight={800}>
@@ -922,7 +934,7 @@ export default function AdminJobModerationWorkspace() {
                         )}
                       </Stack>
                     </CardContent>
-                  </SoftCard>
+                  </GlassCard>
                 </Grid>
               </Grid>
 
@@ -945,17 +957,17 @@ export default function AdminJobModerationWorkspace() {
           ) : null}
         </DialogContent>
         <DialogActions>
-          <SoftButton variant="outlined" onClick={() => setSelectedJob(null)}>
+          <Button variant="outlined" onClick={() => setSelectedJob(null)}>
             Close
-          </SoftButton>
-          <SoftButton
+          </Button>
+          <Button
             variant="contained"
             onClick={() => void applyReviewStatus()}
             disabled={!selectedJob || busyJobId === selectedJob.id}
             startIcon={<WorkOutlineRoundedIcon />}
           >
             {selectedJob && busyJobId === selectedJob.id ? "Applying..." : "Apply Status"}
-          </SoftButton>
+          </Button>
         </DialogActions>
       </Dialog>
     </Stack>

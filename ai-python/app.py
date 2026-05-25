@@ -51,6 +51,11 @@ class ChatPayload(BaseModel):
     localAnswer: Optional[str] = None
 
 
+class AdminAssistPayload(BaseModel):
+    command: str
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
 class TaxonomyPayload(BaseModel):
     type: str
     title: str = ""
@@ -378,6 +383,14 @@ def assist_chatbot(payload: ChatPayload) -> Dict[str, Any]:
         "engine": "python-local-nlp",
         "externalAiApiUsed": False,
     }
+
+
+@app.post("/admin/assist")
+def admin_assist(payload: AdminAssistPayload) -> Dict[str, Any]:
+    res = runtime.admin_assist(payload.command, payload.data)
+    res["externalAiApiUsed"] = False
+    res["engine"] = "python-local-admin"
+    return res
 
 
 @app.post("/classify/taxonomy")

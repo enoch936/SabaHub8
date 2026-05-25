@@ -20,12 +20,10 @@ import {
   Select,
   Stack,
   Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Typography,
+  Avatar,
+  useTheme,
+  alpha,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
@@ -60,11 +58,11 @@ import {
   YAxis,
 } from "recharts";
 import NoSsrResponsiveContainer from "@/components/charts/NoSsrResponsiveContainer";
-import SoftButton from "@/components/mui/SoftButton";
-import SoftCard from "@/components/mui/SoftCard";
+import { GlassCard, GlassCardHeader } from "./GlassCard";
+import { DataTable, type TableColumn } from "./DataTable";
+import { Button } from "../ui";
 import SoftTextField from "@/components/mui/SoftTextField";
 import {
-  type AdminCreateUserInput,
   type AdminIdentityPolicySummary,
   type AdminIdentityRoleDefinition,
   type AdminIdentityWorkspace,
@@ -282,6 +280,132 @@ const basePermissions = [
   "security.audit",
   "iam.export",
 ];
+
+export function UserTableColumns(
+  roleLookup: Map<string, string>,
+  onEdit: (user: AppUser) => void,
+  onSuspend: (user: AppUser) => void,
+  onDelete: (user: AppUser) => void,
+  busyAction: string | null
+): TableColumn<AppUser>[] {
+  return [
+    {
+      key: "fullName",
+      label: "User",
+      sortable: true,
+      render: (_, user) => (
+        <Stack spacing={0.35}>
+          <Typography variant="subtitle2" fontWeight={800}>
+            {user.fullName}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {user.email}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {(user.accountType ?? "user").toUpperCase()} {user.companyName ? `· ${user.companyName}` : ""} {user.username ? `· @${user.username}` : ""}
+          </Typography>
+        </Stack>
+      ),
+    },
+    {
+      key: "identity",
+      label: "Identity",
+      render: (_, user) => (
+        <Stack spacing={0.65}>
+          <Chip label={user.identity?.status ?? "UNVERIFIED"} size="small" color={user.identity?.status === "VERIFIED" ? "success" : "default"} variant="outlined" />
+          <Chip label={user.suspended ? "Suspended" : "Active"} size="small" color={user.suspended ? "warning" : "success"} variant="outlined" />
+          <Chip 
+            label={user.security?.banned ? "Banned" : user.security?.riskLevel ?? "LOW"} 
+            size="small" 
+            color={user.security?.riskLevel === "CRITICAL" ? "error" : user.security?.riskLevel === "HIGH" ? "warning" : "default"} 
+            variant="outlined" 
+          />
+        </Stack>
+      ),
+    },
+    {
+      key: "access",
+      label: "Access",
+      render: (_, user) => (
+        <Stack spacing={0.4}>
+          <Typography variant="body2" fontWeight={700}>
+            {user.access?.accessLevel ?? "STANDARD"}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {(user.access?.permissions?.length ?? 0)} permissions · {user.access?.accessScope ?? "PLATFORM"}
+          </Typography>
+        </Stack>
+      ),
+    },
+    {
+      key: "roles",
+      label: "Roles",
+      render: (_, user) => (
+        <Stack direction="row" spacing={0.6} useFlexGap flexWrap="wrap" sx={{ maxWidth: 200 }}>
+          {user.roles.map((role) => (
+            <Chip
+              key={`${user.id}-${role}`}
+              size="small"
+              label={roleLookup.get(role) ?? role.replace(/^ROLE_/, "").replace(/_/g, " ")}
+              color={role.includes("ADMIN") ? "primary" : "default"}
+              variant="outlined"
+            />
+          ))}
+        </Stack>
+      ),
+    },
+    {
+      key: "createdAt",
+      label: "Activity",
+      sortable: true,
+      render: (_, user) => (
+        <Stack spacing={0.35}>
+          <Typography variant="caption" color="text.secondary">
+            Created: {formatDateTime(user.createdAt)}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Last seen: {formatDateTime(user.lastSeenAt)}
+          </Typography>
+        </Stack>
+      ),
+    },
+    {
+      key: "id",
+      label: "Actions",
+      align: "right",
+      render: (_, user) => {
+        const busy = busyAction?.includes(user.id);
+        return (
+          <Stack direction="row" spacing={0.8} justifyContent="flex-end">
+            <Button variant="outline" size="sm" leftIcon={<EditRoundedIcon sx={{ fontSize: 16 }} />} onClick={(e) => { e.stopPropagation(); onEdit(user); }}>
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              color={user.suspended ? "success" : "warning"}
+              isLoading={busy}
+              leftIcon={user.suspended ? <LockOpenRoundedIcon sx={{ fontSize: 16 }} /> : <LockRoundedIcon sx={{ fontSize: 16 }} />}
+              onClick={(e) => { e.stopPropagation(); onSuspend(user); }}
+            >
+              {user.suspended ? "Reactivate" : "Suspend"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              color="danger"
+              isLoading={busy}
+              leftIcon={<DeleteRoundedIcon sx={{ fontSize: 16 }} />}
+              onClick={(e) => { e.stopPropagation(); onDelete(user); }}
+            >
+              Delete
+            </Button>
+          </Stack>
+        );
+      },
+    },
+  ];
+}
 
 function formatDateTime(value?: string | null) {
   if (!value) {
@@ -829,13 +953,11 @@ export default function AdminUserManagementWorkspace() {
 
   return (
     <Stack spacing={2.2}>
-      <SoftCard
+      <GlassCard
         sx={{
-          border: "1px solid",
-          borderColor: "rgba(17,24,39,0.16)",
-          background: "linear-gradient(135deg, #111827 0%, #1f2937 52%, #0f172a 100%)",
           color: "common.white",
         }}
+        gradient
       >
         <CardContent>
           <Stack spacing={1.2}>
@@ -853,32 +975,32 @@ export default function AdminUserManagementWorkspace() {
                 </Typography>
               </Box>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                <SoftButton
-                  variant="outlined"
+                <Button
+                  variant="outline"
                   onClick={() => void load()}
-                  disabled={loading}
-                  startIcon={<RefreshRoundedIcon />}
+                  isLoading={loading}
+                  leftIcon={<RefreshRoundedIcon />}
                   sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.45)" }}
                 >
                   Refresh
-                </SoftButton>
-                <SoftButton
-                  variant="outlined"
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={exportAuditJson}
                   disabled={!workspace}
-                  startIcon={<HistoryRoundedIcon />}
+                  leftIcon={<HistoryRoundedIcon />}
                   sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.45)" }}
                 >
                   Export JSON
-                </SoftButton>
-                <SoftButton variant="contained" onClick={openCreateUser} startIcon={<AddRoundedIcon />} sx={{ bgcolor: "#fff", color: "#111827" }}>
+                </Button>
+                <Button variant="primary" onClick={openCreateUser} leftIcon={<AddRoundedIcon />} sx={{ bgcolor: "#fff", color: "#111827", "&:hover": { bgcolor: alpha("#fff", 0.9) } }}>
                   Add User
-                </SoftButton>
+                </Button>
               </Stack>
             </Stack>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
       {notice ? <Alert severity={noticeSeverity(notice)}>{notice.message}</Alert> : null}
@@ -886,7 +1008,7 @@ export default function AdminUserManagementWorkspace() {
       <Grid container spacing={2}>
         {(workspace?.metrics ?? []).map((metric) => (
           <Grid key={metric.key} size={{ xs: 12, sm: 6, xl: 2 }}>
-            <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+            <GlassCard sx={{ height: "100%" }} hover>
               <CardContent>
                 <Stack spacing={0.7}>
                   <Typography variant="body2" color="text.secondary">
@@ -907,14 +1029,14 @@ export default function AdminUserManagementWorkspace() {
                   />
                 </Stack>
               </CardContent>
-            </SoftCard>
+            </GlassCard>
           </Grid>
         ))}
       </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 6 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack spacing={1}>
                 <Typography variant="h6" fontWeight={800}>
@@ -937,12 +1059,12 @@ export default function AdminUserManagementWorkspace() {
                 </Box>
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+              <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
                 <CardContent>
                   <Stack spacing={1}>
                     <Typography variant="h6" fontWeight={800}>
@@ -964,10 +1086,10 @@ export default function AdminUserManagementWorkspace() {
                     </Box>
                   </Stack>
                 </CardContent>
-              </SoftCard>
+              </GlassCard>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+              <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
                 <CardContent>
                   <Stack spacing={1}>
                     <Typography variant="h6" fontWeight={800}>
@@ -994,7 +1116,7 @@ export default function AdminUserManagementWorkspace() {
                     </Box>
                   </Stack>
                 </CardContent>
-              </SoftCard>
+              </GlassCard>
             </Grid>
           </Grid>
         </Grid>
@@ -1002,7 +1124,7 @@ export default function AdminUserManagementWorkspace() {
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, xl: 7 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
             <CardContent>
               <Stack spacing={1.2}>
                 <Stack direction={{ xs: "column", lg: "row" }} gap={1.2}>
@@ -1046,148 +1168,24 @@ export default function AdminUserManagementWorkspace() {
                   </FormControl>
                 </Stack>
 
-                <Box sx={{ overflowX: "auto" }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>User</TableCell>
-                        <TableCell>Identity</TableCell>
-                        <TableCell>Access</TableCell>
-                        <TableCell>Roles</TableCell>
-                        <TableCell>Activity</TableCell>
-                        <TableCell align="right">Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {filteredUsers.map((user) => {
-                        const selected = user.id === selectedUser?.id;
-                        const riskTone = user.security?.riskLevel === "CRITICAL" ? "error" : user.security?.riskLevel === "HIGH" ? "warning" : "default";
-                        const busy = busyAction?.includes(user.id);
-
-                        return (
-                          <TableRow
-                            key={user.id}
-                            hover
-                            selected={selected}
-                            onClick={() => setSelectedUserId(user.id)}
-                            sx={{ cursor: "pointer", "& .MuiTableCell-root": { verticalAlign: "top" } }}
-                          >
-                            <TableCell sx={{ minWidth: 250 }}>
-                              <Stack spacing={0.35}>
-                                <Typography variant="subtitle2" fontWeight={800}>
-                                  {user.fullName}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                  {user.email}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {(user.accountType ?? "user").toUpperCase()} {user.companyName ? `· ${user.companyName}` : ""} {user.username ? `· @${user.username}` : ""}
-                                </Typography>
-                              </Stack>
-                            </TableCell>
-                            <TableCell sx={{ minWidth: 180 }}>
-                              <Stack spacing={0.65}>
-                                <Chip label={user.identity?.status ?? "UNVERIFIED"} size="small" color={user.identity?.status === "VERIFIED" ? "success" : "default"} variant="outlined" />
-                                <Chip label={user.suspended ? "Suspended" : "Active"} size="small" color={user.suspended ? "warning" : "success"} variant="outlined" />
-                                <Chip label={user.security?.banned ? "Banned" : user.security?.riskLevel ?? "LOW"} size="small" color={riskTone} variant="outlined" />
-                              </Stack>
-                            </TableCell>
-                            <TableCell sx={{ minWidth: 190 }}>
-                              <Stack spacing={0.4}>
-                                <Typography variant="body2" fontWeight={700}>
-                                  {user.access?.accessLevel ?? "STANDARD"}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {(user.access?.permissions?.length ?? 0)} permissions · {user.access?.accessScope ?? "PLATFORM"}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  MFA {user.security?.mfaRequired ? "required" : "optional"} · Reset {user.security?.forcePasswordReset ? "pending" : "clear"}
-                                </Typography>
-                              </Stack>
-                            </TableCell>
-                            <TableCell sx={{ minWidth: 220 }}>
-                              <Stack direction="row" spacing={0.6} useFlexGap flexWrap="wrap">
-                                {user.roles.map((role) => (
-                                  <Chip
-                                    key={`${user.id}-${role}`}
-                                    size="small"
-                                    label={roleLookup.get(role) ?? role.replace(/^ROLE_/, "").replace(/_/g, " ")}
-                                    color={role.includes("ADMIN") ? "primary" : "default"}
-                                    variant="outlined"
-                                  />
-                                ))}
-                              </Stack>
-                            </TableCell>
-                            <TableCell sx={{ minWidth: 160 }}>
-                              <Stack spacing={0.35}>
-                                <Typography variant="caption" color="text.secondary">
-                                  Created: {formatDateTime(user.createdAt)}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  Last seen: {formatDateTime(user.lastSeenAt)}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  Open warnings: {(user.warnings ?? []).filter((warning) => warning.status === "OPEN").length}
-                                </Typography>
-                              </Stack>
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 220 }}>
-                              <Stack direction="row" spacing={0.8} justifyContent="flex-end">
-                                <SoftButton variant="outlined" size="small" startIcon={<EditRoundedIcon />} onClick={(event) => {
-                                  event.stopPropagation();
-                                  openEditUser(user);
-                                }}>
-                                  Edit
-                                </SoftButton>
-                                <SoftButton
-                                  variant="outlined"
-                                  size="small"
-                                  color={user.suspended ? "success" : "warning"}
-                                  disabled={busy}
-                                  startIcon={user.suspended ? <LockOpenRoundedIcon /> : <LockRoundedIcon />}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    void handleToggleSuspend(user);
-                                  }}
-                                >
-                                  {user.suspended ? "Reactivate" : "Suspend"}
-                                </SoftButton>
-                                <SoftButton
-                                  variant="outlined"
-                                  size="small"
-                                  color="error"
-                                  disabled={busy}
-                                  startIcon={<DeleteRoundedIcon />}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    void handleDeleteUser(user);
-                                  }}
-                                >
-                                  Delete
-                                </SoftButton>
-                              </Stack>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                      {!loading && filteredUsers.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                            No users match the active filters.
-                          </TableCell>
-                        </TableRow>
-                      ) : null}
-                    </TableBody>
-                  </Table>
-                </Box>
+                <DataTable
+                  columns={UserTableColumns(roleLookup, openEditUser, handleToggleSuspend, handleDeleteUser, busyAction)}
+                  data={filteredUsers}
+                  rowKey="id"
+                  loading={loading}
+                  onRowClick={(user) => setSelectedUserId(user.id)}
+                  searchable={false} // Already have custom search above
+                  exportable={true}
+                  onExport={(format) => format === 'csv' ? exportActivityReport() : undefined}
+                />
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, xl: 5 }}>
           <Stack spacing={2}>
-            <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+            <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
               <CardContent>
                 {selectedUser ? (
                   <Stack spacing={1.2}>
@@ -1246,9 +1244,9 @@ export default function AdminUserManagementWorkspace() {
                             ))}
                           </Select>
                         </FormControl>
-                        <SoftButton variant="outlined" startIcon={<ManageAccountsRoundedIcon />} disabled={!selectedGrantRole || !!busyAction} onClick={() => void handleGrantRole()}>
+                        <Button variant="outlined" startIcon={<ManageAccountsRoundedIcon />} disabled={!selectedGrantRole || !!busyAction} onClick={() => void handleGrantRole()}>
                           Grant
-                        </SoftButton>
+                        </Button>
                       </Stack>
                     </Stack>
                   </Stack>
@@ -1258,9 +1256,9 @@ export default function AdminUserManagementWorkspace() {
                   </Typography>
                 )}
               </CardContent>
-            </SoftCard>
+            </GlassCard>
 
-            <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+            <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
               <CardContent>
                 <Stack spacing={1.2}>
                   <Stack direction="row" spacing={1} alignItems="center">
@@ -1375,14 +1373,14 @@ export default function AdminUserManagementWorkspace() {
                     <FormControlLabel control={<Switch checked={accessForm.adaptiveAuthEnabled} onChange={(event) => setAccessForm((current) => ({ ...current, adaptiveAuthEnabled: event.target.checked }))} />} label="Adaptive Auth" />
                     <FormControlLabel control={<Switch checked={accessForm.forcePasswordReset} onChange={(event) => setAccessForm((current) => ({ ...current, forcePasswordReset: event.target.checked }))} />} label="Force Reset" />
                   </Stack>
-                  <SoftButton variant="contained" startIcon={<SaveRoundedIcon />} disabled={!selectedUser || !!busyAction} onClick={() => void handleApplyAccessControl()}>
+                  <Button variant="contained" startIcon={<SaveRoundedIcon />} disabled={!selectedUser || !!busyAction} onClick={() => void handleApplyAccessControl()}>
                     Apply Access Control
-                  </SoftButton>
+                  </Button>
                 </Stack>
               </CardContent>
-            </SoftCard>
+            </GlassCard>
 
-            <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+            <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
               <CardContent>
                 <Stack spacing={1.2}>
                   <Stack direction="row" spacing={1} alignItems="center">
@@ -1440,9 +1438,9 @@ export default function AdminUserManagementWorkspace() {
                     <FormControlLabel control={<Switch checked={verificationForm.phoneVerified} onChange={(event) => setVerificationForm((current) => ({ ...current, phoneVerified: event.target.checked }))} />} label="Phone Verified" />
                     <FormControlLabel control={<Switch checked={verificationForm.documentVerified} onChange={(event) => setVerificationForm((current) => ({ ...current, documentVerified: event.target.checked }))} />} label="Document Verified" />
                   </Stack>
-                  <SoftButton variant="outlined" startIcon={<VerifiedUserRoundedIcon />} disabled={!selectedUser || !!busyAction} onClick={() => void handleReviewIdentity()}>
+                  <Button variant="outlined" startIcon={<VerifiedUserRoundedIcon />} disabled={!selectedUser || !!busyAction} onClick={() => void handleReviewIdentity()}>
                     Save Identity Review
-                  </SoftButton>
+                  </Button>
 
                   <Divider />
 
@@ -1475,14 +1473,14 @@ export default function AdminUserManagementWorkspace() {
                     </Grid>
                   </Grid>
                   <FormControlLabel control={<Checkbox checked={credentialForm.forceReset} onChange={(event) => setCredentialForm((current) => ({ ...current, forceReset: event.target.checked }))} />} label="Require reset on next login" />
-                  <SoftButton variant="outlined" startIcon={<LockResetRoundedIcon />} disabled={!selectedUser || !!busyAction} onClick={() => void handleResetCredentials()}>
+                  <Button variant="outlined" startIcon={<LockResetRoundedIcon />} disabled={!selectedUser || !!busyAction} onClick={() => void handleResetCredentials()}>
                     Trigger Credential Reset
-                  </SoftButton>
+                  </Button>
                 </Stack>
               </CardContent>
-            </SoftCard>
+            </GlassCard>
 
-            <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+            <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
               <CardContent>
                 <Stack spacing={1.2}>
                   <Stack direction="row" spacing={1} alignItems="center">
@@ -1527,9 +1525,9 @@ export default function AdminUserManagementWorkspace() {
                     </Grid>
                   </Grid>
                   <FormControlLabel control={<Switch checked={warningForm.suspendUser} onChange={(event) => setWarningForm((current) => ({ ...current, suspendUser: event.target.checked }))} />} label="Suspend account with warning" />
-                  <SoftButton variant="outlined" startIcon={<ReportProblemRoundedIcon />} disabled={!selectedUser || !!busyAction || !warningForm.reason.trim()} onClick={() => void handleIssueWarning()}>
+                  <Button variant="outlined" startIcon={<ReportProblemRoundedIcon />} disabled={!selectedUser || !!busyAction || !warningForm.reason.trim()} onClick={() => void handleIssueWarning()}>
                     Issue Warning
-                  </SoftButton>
+                  </Button>
 
                   <Divider />
 
@@ -1578,7 +1576,7 @@ export default function AdminUserManagementWorkspace() {
                       />
                     </Grid>
                   </Grid>
-                  <SoftButton
+                  <Button
                     variant="contained"
                     color={maliciousForm.action === "UNBLOCK" ? "info" : "error"}
                     startIcon={maliciousForm.action === "UNBLOCK" ? <LockOpenRoundedIcon /> : <BlockRoundedIcon />}
@@ -1586,7 +1584,7 @@ export default function AdminUserManagementWorkspace() {
                     onClick={() => void handleMaliciousControl()}
                   >
                     Execute Malicious User Control
-                  </SoftButton>
+                  </Button>
 
                   {selectedUser?.warnings?.length ? (
                     <>
@@ -1596,7 +1594,7 @@ export default function AdminUserManagementWorkspace() {
                       </Typography>
                       <Stack spacing={0.8}>
                         {selectedUser.warnings.map((warning) => (
-                          <SoftCard key={warning.id} variant="outlined" sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none" }}>
+                          <GlassCard key={warning.id} variant="outlined" sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none" }}>
                             <CardContent sx={{ py: 1.2, "&:last-child": { pb: 1.2 } }}>
                               <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={1}>
                                 <Box>
@@ -1613,27 +1611,27 @@ export default function AdminUserManagementWorkspace() {
                                   ) : null}
                                 </Box>
                                 {warning.status === "OPEN" ? (
-                                  <SoftButton variant="outlined" size="small" disabled={!!busyAction} onClick={() => void handleResolveWarning(warning.id)}>
+                                  <Button variant="outlined" size="small" disabled={!!busyAction} onClick={() => void handleResolveWarning(warning.id)}>
                                     Resolve
-                                  </SoftButton>
+                                  </Button>
                                 ) : null}
                               </Stack>
                             </CardContent>
-                          </SoftCard>
+                          </GlassCard>
                         ))}
                       </Stack>
                     </>
                   ) : null}
                 </Stack>
               </CardContent>
-            </SoftCard>
+            </GlassCard>
           </Stack>
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, xl: 6 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
             <CardContent>
               <Stack spacing={1.2}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -1645,64 +1643,69 @@ export default function AdminUserManagementWorkspace() {
                       Predefined and custom roles with inheritance and permission mapping.
                     </Typography>
                   </Box>
-                  <SoftButton variant="outlined" startIcon={<AddRoundedIcon />} onClick={openCreateRole}>
+                  <Button variant="outlined" startIcon={<AddRoundedIcon />} onClick={openCreateRole}>
                     Create Role
-                  </SoftButton>
+                  </Button>
                 </Stack>
-                <Box sx={{ overflowX: "auto" }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Role</TableCell>
-                        <TableCell>Permissions</TableCell>
-                        <TableCell>Assignments</TableCell>
-                        <TableCell align="right">Action</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {roles.map((role) => (
-                        <TableRow key={role.id} hover>
-                          <TableCell sx={{ minWidth: 220 }}>
-                            <Stack spacing={0.35}>
-                              <Typography variant="subtitle2" fontWeight={800}>
-                                {role.label}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {role.key} · v{role.version} · {role.systemRole ? "System role" : "Custom role"}
-                              </Typography>
-                              {role.description ? (
-                                <Typography variant="body2" color="text.secondary">
-                                  {role.description}
-                                </Typography>
-                              ) : null}
-                            </Stack>
-                          </TableCell>
-                          <TableCell sx={{ minWidth: 220 }}>
-                            <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
-                              {role.permissions.slice(0, 4).map((permission) => (
-                                <Chip key={`${role.id}-${permission}`} label={permission} size="small" variant="outlined" />
-                              ))}
-                              {role.permissions.length > 4 ? <Chip label={`+${role.permissions.length - 4} more`} size="small" variant="outlined" /> : null}
-                            </Stack>
-                          </TableCell>
-                          <TableCell>{role.assignedUsers}</TableCell>
-                          <TableCell align="right">
-                            <SoftButton variant="outlined" size="small" startIcon={<EditRoundedIcon />} onClick={() => openEditRole(role)}>
-                              Edit
-                            </SoftButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Box>
+                <DataTable
+                  columns={[
+                    {
+                      key: "label",
+                      label: "Role",
+                      sortable: true,
+                      render: (_, role) => (
+                        <Stack spacing={0.35}>
+                          <Typography variant="subtitle2" fontWeight={800}>
+                            {role.label}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {role.key} · v{role.version} · {role.systemRole ? "System role" : "Custom role"}
+                          </Typography>
+                          {role.description ? (
+                            <Typography variant="body2" color="text.secondary">
+                              {role.description}
+                            </Typography>
+                          ) : null}
+                        </Stack>
+                      ),
+                    },
+                    {
+                      key: "permissions",
+                      label: "Permissions",
+                      render: (_, role) => (
+                        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+                          {role.permissions.slice(0, 4).map((permission) => (
+                            <Chip key={`${role.id}-${permission}`} label={permission} size="small" variant="outlined" />
+                          ))}
+                          {role.permissions.length > 4 ? <Chip label={`+${role.permissions.length - 4} more`} size="small" variant="outlined" /> : null}
+                        </Stack>
+                      ),
+                    },
+                    { key: "assignedUsers", label: "Assignments", sortable: true },
+                    {
+                      key: "id",
+                      label: "Action",
+                      align: "right",
+                      render: (_, role) => (
+                        <Button variant="outline" size="sm" leftIcon={<EditRoundedIcon sx={{ fontSize: 16 }} />} onClick={() => openEditRole(role)}>
+                          Edit
+                        </Button>
+                      ),
+                    },
+                  ]}
+                  data={roles}
+                  rowKey="id"
+                  loading={loading}
+                  searchable={true}
+                  pageSize={5}
+                />
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
 
         <Grid size={{ xs: 12, xl: 6 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
             <CardContent>
               <Stack spacing={1.2}>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -1801,18 +1804,18 @@ export default function AdminUserManagementWorkspace() {
                   <FormControlLabel control={<Switch checked={policyDraft.governancePolicy.anomalyAlertsEnabled} onChange={(event) => setPolicyDraft((current) => ({ ...current, governancePolicy: { ...current.governancePolicy, anomalyAlertsEnabled: event.target.checked } }))} />} label="Alerts" />
                   <FormControlLabel control={<Switch checked={policyDraft.governancePolicy.automatedProvisioningEnabled} onChange={(event) => setPolicyDraft((current) => ({ ...current, governancePolicy: { ...current.governancePolicy, automatedProvisioningEnabled: event.target.checked } }))} />} label="Auto Provisioning" />
                 </Stack>
-                <SoftButton variant="contained" startIcon={<SaveRoundedIcon />} disabled={!!busyAction} onClick={() => void handleSavePolicies()}>
+                <Button variant="contained" startIcon={<SaveRoundedIcon />} disabled={!!busyAction} onClick={() => void handleSavePolicies()}>
                   Save Policies
-                </SoftButton>
+                </Button>
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 5 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack spacing={1.2}>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -1824,7 +1827,7 @@ export default function AdminUserManagementWorkspace() {
                 <Stack spacing={0.9}>
                   {(workspace?.alerts ?? []).length ? (
                     (workspace?.alerts ?? []).map((alert) => (
-                      <SoftCard key={alert.key} variant="outlined" sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none" }}>
+                      <GlassCard key={alert.key} variant="outlined" sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none" }}>
                         <CardContent sx={{ py: 1.1, "&:last-child": { pb: 1.1 } }}>
                           <Stack spacing={0.35}>
                             <Stack direction="row" justifyContent="space-between" gap={1}>
@@ -1845,18 +1848,18 @@ export default function AdminUserManagementWorkspace() {
                               {alert.detail}
                             </Typography>
                             {alert.userId ? (
-                              <SoftButton
+                              <Button
                                 variant="text"
                                 size="small"
                                 sx={{ alignSelf: "flex-start", px: 0 }}
                                 onClick={() => setSelectedUserId(alert.userId ?? null)}
                               >
                                 {alert.actionHint ?? "Open user"}
-                              </SoftButton>
+                              </Button>
                             ) : null}
                           </Stack>
                         </CardContent>
-                      </SoftCard>
+                      </GlassCard>
                     ))
                   ) : (
                     <Typography variant="body2" color="text.secondary">
@@ -1866,10 +1869,10 @@ export default function AdminUserManagementWorkspace() {
                 </Stack>
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
         <Grid size={{ xs: 12, lg: 7 }}>
-          <SoftCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
+          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
             <CardContent>
               <Stack spacing={1.2}>
                 <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} gap={1}>
@@ -1882,51 +1885,67 @@ export default function AdminUserManagementWorkspace() {
                     </Typography>
                   </Box>
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                    <SoftButton variant="outlined" startIcon={<HistoryRoundedIcon />} onClick={exportAuditCsv} disabled={!workspace}>
+                    <Button variant="outlined" startIcon={<HistoryRoundedIcon />} onClick={exportAuditCsv} disabled={!workspace}>
                       Audit CSV
-                    </SoftButton>
-                    <SoftButton variant="outlined" startIcon={<HistoryRoundedIcon />} onClick={exportAuditJson} disabled={!workspace}>
+                    </Button>
+                    <Button variant="outlined" startIcon={<HistoryRoundedIcon />} onClick={exportAuditJson} disabled={!workspace}>
                       Audit JSON
-                    </SoftButton>
-                    <SoftButton variant="outlined" startIcon={<KeyRoundedIcon />} onClick={exportActivityReport} disabled={!workspace}>
+                    </Button>
+                    <Button variant="outlined" startIcon={<KeyRoundedIcon />} onClick={exportActivityReport} disabled={!workspace}>
                       Activity Report
-                    </SoftButton>
+                    </Button>
                   </Stack>
                 </Stack>
-                <Box sx={{ overflowX: "auto" }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Action</TableCell>
-                        <TableCell>Entity</TableCell>
-                        <TableCell>Actor</TableCell>
-                        <TableCell>Created</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {(workspace?.auditTrail ?? []).slice(0, 16).map((entry) => (
-                        <TableRow key={entry.id} hover>
-                          <TableCell sx={{ minWidth: 260 }}>
-                            <Typography variant="subtitle2" fontWeight={700}>
-                              {entry.action}
-                            </Typography>
-                            {entry.metadata ? (
-                              <Typography variant="caption" color="text.secondary">
-                                {JSON.stringify(entry.metadata)}
-                              </Typography>
-                            ) : null}
-                          </TableCell>
-                          <TableCell>{entry.entityType ?? "--"} {entry.entityId ? `· ${entry.entityId}` : ""}</TableCell>
-                          <TableCell>{entry.actorUserId ?? "--"}</TableCell>
-                          <TableCell>{formatDateTime(entry.createdAt)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Box>
+                <DataTable
+                  columns={[
+                    {
+                      key: "action",
+                      label: "Action",
+                      sortable: true,
+                      render: (val, entry) => (
+                        <Stack spacing={0.25}>
+                          <Typography variant="subtitle2" fontWeight={700}>
+                            {String(val)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {entry.entityType} / {entry.entityId}
+                          </Typography>
+                        </Stack>
+                      ),
+                    },
+                    { key: "actorUserId", label: "Actor", sortable: true },
+                    {
+                      key: "createdAt",
+                      label: "Created",
+                      sortable: true,
+                      render: (val) => formatDateTime(val as string),
+                    },
+                  ]}
+                  data={workspace?.auditTrail ?? []}
+                  rowKey="id"
+                  loading={loading}
+                  pageSize={5}
+                  searchable={true}
+                  expandableContent={(entry) => (
+                    <Box
+                      component="pre"
+                      sx={{
+                        m: 0,
+                        p: 1.5,
+                        borderRadius: 2,
+                        bgcolor: "rgba(15, 23, 42, 0.6)",
+                        color: "#dbeafe",
+                        fontSize: 12,
+                        overflowX: "auto",
+                      }}
+                    >
+                      {JSON.stringify(entry.metadata ?? {}, null, 2)}
+                    </Box>
+                  )}
+                />
               </Stack>
             </CardContent>
-          </SoftCard>
+          </GlassCard>
         </Grid>
       </Grid>
 
@@ -1983,16 +2002,16 @@ export default function AdminUserManagementWorkspace() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <SoftButton variant="text" onClick={() => setUserDialogMode(null)} disabled={!!busyAction}>
+          <Button variant="text" onClick={() => setUserDialogMode(null)} disabled={!!busyAction}>
             Cancel
-          </SoftButton>
-          <SoftButton
+          </Button>
+          <Button
             variant="contained"
             onClick={() => void handleSaveUser()}
             disabled={!!busyAction || !userForm.fullName.trim() || !userForm.email.trim() || userForm.roles.length === 0 || (userDialogMode === "create" && userForm.password.trim().length < 8)}
           >
             {userDialogMode === "create" ? "Create" : "Save"}
-          </SoftButton>
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -2047,16 +2066,16 @@ export default function AdminUserManagementWorkspace() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <SoftButton variant="text" onClick={() => setRoleDialogMode(null)} disabled={!!busyAction}>
+          <Button variant="text" onClick={() => setRoleDialogMode(null)} disabled={!!busyAction}>
             Cancel
-          </SoftButton>
-          <SoftButton
+          </Button>
+          <Button
             variant="contained"
             onClick={() => void handleSaveRole()}
             disabled={!!busyAction || !roleForm.label.trim() || !roleForm.key.trim()}
           >
             {roleDialogMode === "create" ? "Create Role" : "Save Role"}
-          </SoftButton>
+          </Button>
         </DialogActions>
       </Dialog>
     </Stack>

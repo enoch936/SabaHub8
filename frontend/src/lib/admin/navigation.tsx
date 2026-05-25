@@ -8,6 +8,7 @@ import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
 import ApartmentRoundedIcon from "@mui/icons-material/ApartmentRounded";
 import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
+import VideoLibraryRoundedIcon from "@mui/icons-material/VideoLibraryRounded";
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
 import OutlinedFlagRoundedIcon from "@mui/icons-material/OutlinedFlagRounded";
 import ReportProblemRoundedIcon from "@mui/icons-material/ReportProblemRounded";
@@ -25,6 +26,10 @@ import ManageAccountsRoundedIcon from "@mui/icons-material/ManageAccountsRounded
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
+import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
+import CampaignRoundedIcon from "@mui/icons-material/CampaignRounded";
+import SettingsSuggestRoundedIcon from "@mui/icons-material/SettingsSuggestRounded";
+import BusinessCenterRoundedIcon from "@mui/icons-material/BusinessCenterRounded";
 
 const primaryIconSx = { fontSize: 18 };
 const secondaryIconSx = { fontSize: 16 };
@@ -107,11 +112,12 @@ export const adminNavigationGroups: AdminNavigationGroup[] = [
             icon: <BoltRoundedIcon sx={secondaryIconSx} />,
           },
           {
-            key: "system-monitoring",
+            key: "system-monitoring-health-management",
             label: "System Monitoring",
-            href: "/admin/domain/system-monitoring-health-management",
+            href: "/admin/monitoring",
             icon: <MonitorHeartRoundedIcon sx={secondaryIconSx} />,
           },
+
           {
             key: "devops-infrastructure",
             label: "DevOps & Infrastructure",
@@ -223,11 +229,25 @@ export const adminNavigationGroups: AdminNavigationGroup[] = [
         ],
       },
       {
+        key: "workspace-management",
+        label: "Workspace Management",
+        href: "/admin/workspaces",
+        icon: <BusinessCenterRoundedIcon sx={primaryIconSx} />,
+        description: "User organization directory, team health, and workspace-level audits.",
+      },
+      {
         key: "jobs-management",
         label: "Jobs Management",
         href: "/admin/jobs",
         icon: <WorkOutlineRoundedIcon sx={primaryIconSx} />,
         description: "Job queues, publishing oversight, and listing reviews.",
+      },
+      {
+        key: "media-management",
+        label: "Media & Assets",
+        href: "/admin/media",
+        icon: <VideoLibraryRoundedIcon sx={primaryIconSx} />,
+        description: "Cloud storage analytics, file distribution, and global asset management.",
       },
       {
         key: "proposals",
@@ -295,18 +315,17 @@ export const adminNavigationGroups: AdminNavigationGroup[] = [
       },
       {
         key: "chat-operations",
-        label: "Chat Operations",
-        href: "/admin/chat",
+        label: "Chat & Support",
+        href: "/admin/chat-moderation",
         icon: <ChatBubbleOutlineRoundedIcon sx={primaryIconSx} />,
-        description: "Conversation oversight, unread pressure, and support escalations.",
-        children: [
-          {
-            key: "support-operational-management",
-            label: "Support Operations",
-            href: "/admin/domain/support-operational-management",
-            icon: <SupportAgentRoundedIcon sx={secondaryIconSx} />,
-          },
-        ],
+        description: "Support ticket management, user moderation, and chat oversight.",
+      },
+      {
+        key: "notification-center",
+        label: "Notification Center",
+        href: "/admin/notifications",
+        icon: <CampaignRoundedIcon sx={primaryIconSx} />,
+        description: "System announcements, broadcast logs, and delivery channel oversight.",
       },
     ],
   },
@@ -325,6 +344,12 @@ export const adminNavigationGroups: AdminNavigationGroup[] = [
         icon: <PsychologyRoundedIcon sx={primaryIconSx} />,
         description: "Model lifecycle, dataset controls, and AI governance operations.",
         children: [
+          {
+            key: "ai-usage-analytics",
+            label: "AI Usage",
+            href: "/admin/ai-usage",
+            icon: <TrendingUpRoundedIcon sx={secondaryIconSx} />,
+          },
           {
             key: "ai-governance-model-management",
             label: "AI Governance",
@@ -347,6 +372,13 @@ export const adminNavigationGroups: AdminNavigationGroup[] = [
             icon: <FactCheckRoundedIcon sx={secondaryIconSx} />,
           },
         ],
+      },
+      {
+        key: "admin-settings",
+        label: "Admin Settings",
+        href: "/admin/settings",
+        icon: <SettingsSuggestRoundedIcon sx={primaryIconSx} />,
+        description: "Global platform configuration, branding, and registration policies.",
       },
     ],
   },
