@@ -1396,10 +1396,10 @@ public class AdminCommandCenterService {
         long auditEvents = auditLogRepository.count();
 
         // System Metrics from Micrometer
-        double cpu = meterRegistry.find("system.cpu.usage").gauge() != null ? meterRegistry.get("system.cpu.usage").value() : 0.0;
-        double memUsed = meterRegistry.find("jvm.memory.used").gauge() != null ? meterRegistry.get("jvm.memory.used").value() : 0.0;
-        double memMax = meterRegistry.find("jvm.memory.max").gauge() != null ? meterRegistry.get("jvm.memory.max").value() : 1.0;
-        double uptimeSec = meterRegistry.find("process.uptime").gauge() != null ? meterRegistry.get("process.uptime").value() : 0.0;
+        double cpu = meterRegistry.find("system.cpu.usage").gauge() != null ? meterRegistry.find("system.cpu.usage").gauge().value() : 0.0;
+        double memUsed = meterRegistry.find("jvm.memory.used").gauge() != null ? meterRegistry.find("jvm.memory.used").gauge().value() : 0.0;
+        double memMax = meterRegistry.find("jvm.memory.max").gauge() != null ? meterRegistry.find("jvm.memory.max").gauge().value() : 1.0;
+        double uptimeSec = meterRegistry.find("process.uptime").gauge() != null ? meterRegistry.find("process.uptime").gauge().value() : 0.0;
 
         String cpuUsage = String.format("%.1f%%", cpu * 100);
         String memoryUsage = String.format("%.1f%%", (memUsed / memMax) * 100);
