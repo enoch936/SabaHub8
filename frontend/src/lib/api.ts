@@ -80,7 +80,8 @@ api.interceptors.response.use(
 
     // Optionally handle 401 navigation without throwing
     if (status === 401 && typeof window !== "undefined") {
-      // window.location.href = "/login";
+      localStorage.removeItem("auth_token");
+      window.location.href = "/login";
     }
 
     return Promise.resolve(emptyResponse);

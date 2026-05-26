@@ -18,7 +18,6 @@ import {
   InputAdornment,
   Menu,
   MenuItem,
-  Badge,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -191,39 +190,25 @@ export default function AdminSidebar({
     }}>
       {/* Header: Logo & Workspace */}
       <Box sx={{ p: 2, mb: 1 }}>
-        <Stack direction="row" alignItems="center" spacing={collapsed ? 0 : 2} justifyContent={collapsed ? "center" : "flex-start"}>
+        <Stack direction="row" alignItems="center" spacing={collapsed ? 0 : 1.5} justifyContent={collapsed ? "center" : "flex-start"}>
           <Box sx={{ 
-            width: 42, 
-            height: 42, 
-            borderRadius: "14px", 
-            background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #4338CA 100%)",
+            width: 36, 
+            height: 36, 
+            borderRadius: "10px", 
+            background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
             display: "grid",
             placeItems: "center",
             color: "#fff",
             fontWeight: 900,
-            fontSize: 24,
-            flexShrink: 0,
-            boxShadow: "0 8px 16px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
-            position: "relative",
-            overflow: "hidden",
-            "&::after": {
-              content: '""',
-              position: "absolute",
-              top: "-50%",
-              left: "-50%",
-              width: "200%",
-              height: "200%",
-              background: "linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent)",
-              transform: "rotate(45deg)",
-              animation: "shimmer 3s infinite"
-            }
+            fontSize: 20,
+            flexShrink: 0
           }}>
             S
           </Box>
           {!collapsed && (
             <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 900, lineHeight: 1.2, letterSpacing: "-0.02em" }}>SabaHub</Typography>
-              <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: 9 }}>Enterprise HQ</Typography>
+              <Typography variant="subtitle2" fontWeight={800} noWrap>SabaHub Admin</Typography>
+              <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block", opacity: 0.7 }}>Enterprise v1.0</Typography>
             </Box>
           )}
         </Stack>
@@ -341,15 +326,7 @@ export default function AdminSidebar({
         <Stack direction="row" alignItems="center" justifyContent={collapsed ? "center" : "space-between"} spacing={1}>
           {!collapsed && (
             <Stack direction="row" spacing={0.5}>
-              <IconButton size="small" sx={{ color: "text.secondary" }}>
-                <Badge 
-                  badgeContent={moderationBadges.unreadMessages} 
-                  color="error" 
-                  sx={{ "& .MuiBadge-badge": { fontSize: 9, height: 16, minWidth: 16 } }}
-                >
-                  <NotificationsRoundedIcon fontSize="small" />
-                </Badge>
-              </IconButton>
+              <IconButton size="small" sx={{ color: "text.secondary" }}><NotificationsRoundedIcon fontSize="small" /></IconButton>
               <IconButton size="small" sx={{ color: "text.secondary" }}><SettingsRoundedIcon fontSize="small" /></IconButton>
             </Stack>
           )}

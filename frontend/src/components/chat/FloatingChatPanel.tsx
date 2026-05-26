@@ -6,6 +6,7 @@ import { MessageSquare, X, Minimize2 } from 'lucide-react';
 import { TypingIndicator } from './TypingIndicator';
 import { MessageInput } from './MessageInput';
 import { useChatStore } from '@/lib/chatStore';
+import { isAuthenticated } from '@/lib/auth';
 
 interface FloatingChatPanelProps {
 	isOpen: boolean;
@@ -32,7 +33,7 @@ export function FloatingChatPanel({ isOpen, onToggle }: FloatingChatPanelProps) 
 	const totalUnread = getTotalUnread();
 
 	useEffect(() => {
-		if (conversations.length === 0) {
+		if (conversations.length === 0 && isAuthenticated()) {
 			void fetchConversations();
 		}
 	}, [conversations.length, fetchConversations]);

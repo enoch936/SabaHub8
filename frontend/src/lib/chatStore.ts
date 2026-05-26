@@ -31,6 +31,7 @@ import {
   subscribeUserNotifications,
   type Subscription,
 } from './ws';
+import { isAuthenticated } from './auth';
 
 type DirectoryEntry = {
   id: string;
@@ -159,15 +160,29 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       return;
     }
 
-    const profile = await me();
-    set({
-      currentUserId: profile.id,
-      currentUserName: profile.fullName?.trim() || profile.username?.trim() || 'You',
-    });
+    if (!isAuthenticated()) {
+      return;
+    }
+
+    try {
+      const profile = await me();
+      set({
+        currentUserId: profile.id,
+        currentUserName: profile.fullName?.trim() || profile.username?.trim() || 'You',
+      });
+    } catch (error) {
+      console.warn('Failed to bootstrap current user:', error);
+    }
   },
 
   connectRealtime: async () => {
+    if (!isAuthenticated()) {
+      return;
+    }
     await get().bootstrapCurrentUser();
+    if (!get().currentUserId) {
+      return;
+    }
     await connectWs();
 
     if (!chatNotificationSubscription) {
@@ -195,6 +210,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   refreshDirectory: async () => {
+    if (!isAuthenticated()) {
+      return;
+    }
     const { users } = await listDirectoryUsers(250).catch(() => ({ users: [] }));
     if (!Array.isArray(users) || users.length === 0) {
       return;
@@ -219,8 +237,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   fetchConversations: async () => {
+    if (!isAuthenticated()) {
+      return;
+    }
     set({ isLoading: true });
     await get().bootstrapCurrentUser();
+    if (!get().currentUserId) {
+      set({ isLoading: false });
+      return;
+    }
     await get().connectRealtime();
 
     const [threads] = await Promise.all([
