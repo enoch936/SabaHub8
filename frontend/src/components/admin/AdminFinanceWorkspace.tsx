@@ -694,7 +694,7 @@ export default function AdminFinanceWorkspace() {
                 ),
               },
               {
-                key: "id",
+                key: "recipientUserId",
                 label: "Recipient",
                 render: (_, item) => (
                   (item.metadata?.counterpartyEmail as string | undefined) ||
@@ -716,7 +716,7 @@ export default function AdminFinanceWorkspace() {
                 render: (val) => formatDateTime(val as string),
               },
               {
-                key: "id",
+                key: "actions",
                 label: "Actions",
                 align: "right",
                 render: (_, item) => {
@@ -1100,7 +1100,7 @@ export default function AdminFinanceWorkspace() {
                     render: (val) => formatDateTime(val as string),
                   },
                   {
-                    key: "id",
+                    key: "actions",
                     label: "Actions",
                     align: "right",
                     render: (_, item) => (
@@ -1184,7 +1184,7 @@ export default function AdminFinanceWorkspace() {
                   },
                   { key: "paymentMethod", label: "Method", sortable: true },
                   {
-                    key: "id",
+                    key: "actions",
                     label: "Actions",
                     align: "right",
                     render: (_, item) => {

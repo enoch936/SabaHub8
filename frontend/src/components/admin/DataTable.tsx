@@ -127,7 +127,8 @@ export function DataTable<T extends Record<string, any>>({
   const [exportAnchor, setExportAnchor] = useState<null | HTMLElement>(null);
 
   const tableColumns = useMemo<ColumnDef<T>[]>(() => {
-    return userColumns.map((col) => ({
+    return userColumns.map((col, index) => ({
+      id: `${String(col.key)}-${index}`,
       accessorKey: col.key,
       header: col.label,
       cell: (info) => {
