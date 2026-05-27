@@ -1,3 +1,8 @@
+declare module "simple-peer" {
+  const SimplePeer: any;
+  export default SimplePeer;
+}
+
 import { create } from "zustand";
 import SimplePeer from "simple-peer";
 
@@ -51,6 +56,15 @@ const useCallStore = create<CallState>((set, get) => ({
   // Initiate a call
   initiatCall: async (participantId, participantName, type) => {
     try {
+      // Check if we're in the browser and media devices are available
+      if (typeof window === "undefined") {
+        throw new Error("Media API not available - browser context required");
+      }
+
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        throw new Error("Camera/Microphone access not supported in this browser");
+      }
+
       // Generate call ID
       const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -104,6 +118,15 @@ const useCallStore = create<CallState>((set, get) => ({
     if (state.status !== "ringing") return;
 
     try {
+      // Check if we're in the browser and media devices are available
+      if (typeof window === "undefined") {
+        throw new Error("Media API not available - browser context required");
+      }
+
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        throw new Error("Camera/Microphone access not supported in this browser");
+      }
+
       const constraints =
         state.callType === "video" ? { video: true, audio: true } : { audio: true };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);

@@ -18,6 +18,7 @@ import { useChatInbox } from "@/lib/chatInbox";
 import { useNotifications } from "@/lib/notifications";
 import { countUnreadProposalNotifications } from "@/lib/proposalNotifications";
 import { useSession } from "@/lib/session";
+import { LandingMegaMenuMobile } from "@/components/landing/LandingMegaMenu";
 
 type WorkspaceRole = "EMPLOYER" | "FREELANCER";
 
@@ -174,6 +175,10 @@ export default function WorkspaceSidebar({
           </Box>
         ))}
 
+        <Box sx={{ mb: 2.5 }}>
+          <LandingMegaMenuMobile onNavigate={onClose} />
+        </Box>
+
         <Box
           sx={{
             mt: 2,
@@ -253,3 +258,4 @@ export default function WorkspaceSidebar({
     </Drawer>
   );
 }
+

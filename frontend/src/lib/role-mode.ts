@@ -48,13 +48,12 @@ export function getWorkspaceRoles(roles: AppRole[] | undefined): WorkspaceRole[]
   return [];
 }
 
-export function readStoredActiveRole(): WorkspaceRole | undefined {
+export function readStoredActiveRole(): AppRole | undefined {
   if (typeof window === "undefined") return undefined;
-  const stored = normalizeRole(window.localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY));
-  return stored === "EMPLOYER" || stored === "FREELANCER" ? stored : undefined;
+  return normalizeRole(window.localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY));
 }
 
-export function persistActiveRole(role: WorkspaceRole | undefined) {
+export function persistActiveRole(role: AppRole | undefined) {
   if (typeof window === "undefined") return;
   if (!role) {
     window.localStorage.removeItem(ACTIVE_ROLE_STORAGE_KEY);
@@ -69,8 +68,9 @@ export function resolveActiveRole(roles: AppRole[], primaryRole?: AppRole): AppR
   const workspaceRoles = getWorkspaceRoles(roles);
   const stored = readStoredActiveRole();
 
-  if (stored && workspaceRoles.includes(stored)) {
-    return stored;
+  if (stored) {
+    if (stored === "ADMIN" && roles.includes("ADMIN")) return "ADMIN";
+    if (workspaceRoles.includes(stored as WorkspaceRole)) return stored;
   }
 
   if (primaryRole && workspaceRoles.includes(primaryRole as WorkspaceRole)) {

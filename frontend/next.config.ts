@@ -5,6 +5,7 @@ import type { NextConfig } from "next";
 // API handlers run instead of being bypassed.
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  outputFileTracingRoot: __dirname,
   async redirects() {
     return [
       { source: "/dashboard", destination: "/jobs", permanent: true },

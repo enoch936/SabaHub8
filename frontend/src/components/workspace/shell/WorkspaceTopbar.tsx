@@ -36,6 +36,7 @@ import {
   Wallet,
 } from "@mui/icons-material";
 import RoleModeSwitch from "@/components/RoleModeSwitch";
+import LandingMegaMenu from "@/components/landing/LandingMegaMenu";
 import { ThemeIconButton } from "@/components/mui/ThemeToggle";
 import { WORKSPACE_HEADER_HEIGHT } from "@/components/workspace-shell";
 import { getWorkspaceSurfaceLabel } from "@/components/workspace/navigation/workspace-nav";
@@ -212,6 +213,10 @@ export default function WorkspaceTopbar({
                 {surfaceLabel}
               </Typography>
             </Box>
+          </Box>
+
+          <Box sx={{ display: { xs: "none", md: "block" }, ml: 1 }}>
+            <LandingMegaMenu />
           </Box>
 
           <TextField

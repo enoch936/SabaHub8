@@ -23,7 +23,19 @@ export function connectWs(): Promise<void> {
   if (connected) return Promise.resolve();
   if (connectPromise) return connectPromise;
 
-  ensureClient();
+  // Check for auth token in multiple locations
+  const token = typeof window !== "undefined" ? 
+    (localStorage.getItem("auth_token") || 
+     sessionStorage.getItem("auth_token") || 
+     localStorage.getItem("token") ||
+     sessionStorage.getItem("token")) : null;
+
+  // Silently skip connection if no token found (user not authenticated)
+  if (!token) {
+    return Promise.resolve();
+  }
+
+  ensureClient(token);
   if (client && !client.active) {
     client.activate();
   }
@@ -111,44 +123,50 @@ export function sendStreamSignal(streamId: string, payload: Record<string, unkno
   client.publish({ destination: `/app/streams/${streamId}/signal.publish`, body: JSON.stringify(payload) });
 }
 
-function ensureClient() {
+function ensureClient(token?: string) {
   if (client) return;
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+  const authToken = token || (typeof window !== "undefined" ? 
+    (localStorage.getItem("auth_token") || 
+     sessionStorage.getItem("auth_token") || 
+     localStorage.getItem("token") ||
+     sessionStorage.getItem("token")) : null);
 
-  // NOTE: In Codespaces, port 8080 must be set to "Public" visibility in the Ports panel
-  // Otherwise WebSocket connections will fail with 302 redirect
-  const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
+  // Use the same hostname as the frontend, but connect to port 8080
+  // This ensures the browser can reach the backend regardless of network setup
   const protocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss" : "ws";
-
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  
   let wsUrl: string;
-  if (isLocalhost) {
-    wsUrl = `ws://localhost:8080/ws`;
+  if (hostname) {
+    // Pass token as query parameter for handshake authentication
+    const params = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+    wsUrl = `${protocol}://${hostname}:8080/ws${params}`;
   } else {
-    const host = typeof window !== "undefined" ? window.location.hostname : "";
-    const wsHost = host.replace(/-3000\./, "-8080.");
-    wsUrl = `${protocol}://${wsHost}/ws`;
+    // Fallback for SSR context
+    wsUrl = `${protocol}://localhost:8080/ws`;
   }
 
   client = new Client({
     brokerURL: wsUrl,
-    connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+    connectHeaders: authToken ? { Authorization: `Bearer ${authToken}` } : {},
     reconnectDelay: 10000,
     onConnect: () => {
       connected = true;
+      console.debug("WebSocket connected");
       restoreSubscriptions();
       const resolver = resolveConnect;
       resolveConnect = null;
       if (resolver) resolver();
     },
     onStompError: (frame) => {
-      console.warn("WebSocket STOMP error (port 8080 must be public in Codespaces):", frame.headers?.message);
+      console.debug("WebSocket STOMP error:", frame.headers?.message);
     },
     onWebSocketClose: () => {
       connected = false;
     },
-    onWebSocketError: () => {
-      console.warn("WebSocket connection error - check that port 8080 is public in Codespaces");
+    onWebSocketError: (error) => {
+      console.debug("WebSocket connection error - will retry", error);
     },
   });
 }

@@ -72,7 +72,7 @@ export const useSession = create<SessionState>((set) => ({
         const primaryRole = normalizeRole(payload?.role);
         roles = extractedRoles;
         role = resolveActiveRole(extractedRoles, primaryRole);
-        if (role === "EMPLOYER" || role === "FREELANCER") {
+        if (role === "EMPLOYER" || role === "FREELANCER" || role === "ADMIN") {
           persistActiveRole(role);
         }
       }
@@ -100,7 +100,7 @@ export const useSession = create<SessionState>((set) => ({
       }
     }
 
-    if (role === "EMPLOYER" || role === "FREELANCER") {
+    if (role === "EMPLOYER" || role === "FREELANCER" || role === "ADMIN") {
       persistActiveRole(role);
     }
 
@@ -132,7 +132,7 @@ export const useSession = create<SessionState>((set) => ({
         return state;
       }
 
-      if (nextRole === "EMPLOYER" || nextRole === "FREELANCER") {
+      if (nextRole === "EMPLOYER" || nextRole === "FREELANCER" || nextRole === "ADMIN") {
         persistActiveRole(nextRole);
       }
 

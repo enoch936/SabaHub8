@@ -69,7 +69,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const sectionQuery = searchParams.get("section");
-  const sessionUser = useSession((s) => s.user);
+  const sessionEmail = useSession((s) => s.email);
+  const sessionFullName = useSession((s) => s.fullName);
+  const sessionProfilePicture = useSession((s) => s.profilePictureUrl);
   const role = useSession((s) => s.role);
   const clearSession = useSession((s) => s.clear);
   const hydrateFromUser = useSession((s) => s.hydrateFromUser);
@@ -126,6 +128,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           router.replace("/forbidden");
           return;
         }
+        // Force active role to ADMIN when in admin layout
+        useSession.getState().setRole("ADMIN");
         if (!cancelled) setAuthReady(true);
       } catch {
         if (!cancelled) {
@@ -152,14 +156,14 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       const [platform, security, jobs, proposals, disputes, content, threads] = results.map(r => r.status === "fulfilled" ? r.value : []);
       
       setModerationBadges({
-        platformControlAlerts: platform?.alerts?.length || 0,
-        securityAlerts: security?.alerts?.length || 0,
-        flaggedJobs: jobs?.filter(isLikelyFlaggedJob).length || 0,
-        openDisputes: disputes?.filter((d: any) => ["OPEN", "INVESTIGATING"].includes(d.status?.toUpperCase())).length || 0,
-        unpublishedPolicyUpdates: content?.filter((c: any) => c.status?.toUpperCase() === "DRAFT").length || 0,
-        jobs: jobs?.length || 0,
-        proposals: proposals?.length || 0,
-        unreadMessages: threads?.reduce((t: number, th: any) => t + (th.unreadCount || 0), 0) || 0,
+        platformControlAlerts: (platform as any)?.alerts?.length || 0,
+        securityAlerts: (security as any)?.alerts?.length || 0,
+        flaggedJobs: (jobs as any)?.filter?.(isLikelyFlaggedJob).length || 0,
+        openDisputes: (disputes as any)?.filter?.((d: any) => ["OPEN", "INVESTIGATING"].includes(d.status?.toUpperCase())).length || 0,
+        unpublishedPolicyUpdates: (content as any)?.filter?.((c: any) => c.status?.toUpperCase() === "DRAFT").length || 0,
+        jobs: (jobs as any)?.length || 0,
+        proposals: (proposals as any)?.length || 0,
+        unreadMessages: (threads as any)?.reduce?.((t: number, th: any) => t + (th.unreadCount || 0), 0) || 0,
         total: 0
       });
     };
@@ -226,9 +230,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           onNavigate={(href) => router.push(href)}
           onToggleParent={(key) => setExpandedParents(p => ({ ...p, [key]: !p[key] }))}
           user={{ 
-            name: sessionUser?.firstName ? `${sessionUser.firstName} ${sessionUser.lastName}` : "Admin",
-            email: sessionUser?.email || "admin@sabahub.com",
-            avatar: sessionUser?.avatarUrl
+            name: sessionFullName || "Admin",
+            email: sessionEmail || "admin@sabahub.com",
+            avatar: sessionProfilePicture
           }}
         />
       </Box>
@@ -255,8 +259,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             isDarkMode={isDarkMode}
             notificationCount={moderationBadges.unreadMessages}
             user={{ 
-              name: sessionUser?.firstName || "Admin",
-              avatar: sessionUser?.avatarUrl
+              name: sessionFullName || "Admin",
+              avatar: sessionProfilePicture
             }}
             onThemeToggle={() => {
               const currentTheme = document.documentElement.getAttribute('data-theme');
