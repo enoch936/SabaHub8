@@ -82,6 +82,7 @@ const MOCK_CONTRACTS: PlatformContract[] = [
     autoReleaseDays: 5,
     requiresEscrow: true,
     adminReviewRequired: true,
+    available: true,
     signatures: {
       employerSigned: true,
       freelancerSigned: true,
@@ -329,6 +330,7 @@ function toPlatformContract(contract: ApiContract): PlatformContract {
     autoReleaseDays: contract.autoReleaseDays ?? 5,
     requiresEscrow: contract.requiresEscrow ?? true,
     adminReviewRequired: contract.adminReviewRequired ?? true,
+    available: contract.available ?? true,
     refundRequest,
   };
 }

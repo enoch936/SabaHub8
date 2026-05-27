@@ -1,241 +1,323 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { AlertTriangle, CircleEllipsis, FileSearch, Paperclip, ShieldCheck } from "lucide-react";
-import { useContractStore } from "@/lib/contractStore";
+import {
+  AlertTriangle,
+  Balance,
+  Calendar,
+  CheckCircle,
+  FileText,
+  Gavel,
+  History,
+  MessageSquare,
+  Scale,
+  ShieldAlert,
+  Users,
+  XCircle,
+} from "lucide-react";
 import { useDisputeStore } from "@/lib/disputeStore";
-import { DisputeContractModal } from "./DisputeContractModal";
-import { ACTIVE_ROLE_STORAGE_KEY } from "@/lib/role-mode";
-import { useSession } from "@/lib/session";
-import type { PlatformContract } from "@/lib/types";
+import type { Dispute, DisputeStatus } from "@/lib/types";
 
-type WorkspaceRole = "EMPLOYER" | "FREELANCER";
+interface DisputesWorkspaceProps {
+  userRole?: "ADMIN" | "EMPLOYER" | "FREELANCER";
+}
 
-export function DisputesWorkspace() {
-  const { contracts, fetchContracts } = useContractStore();
-  const disputes = useDisputeStore((state) => state.disputes);
-  const fetchDisputes = useDisputeStore((state) => state.fetchDisputes);
-  const sessionRole = useSession((state) => state.role);
-  const [selectedContract, setSelectedContract] = useState<PlatformContract | null>(null);
+const STATUS_CONFIG: Record<DisputeStatus, { label: string; color: string }> = {
+  OPEN: { label: "Open / Under Review", color: "bg-blue-100 text-blue-700" },
+  NEGOTIATION: { label: "In Negotiation", color: "bg-amber-100 text-amber-700" },
+  ARBITRATION: { label: "Arbitration", color: "bg-purple-100 text-purple-700" },
+  RESOLVED: { label: "Resolved", color: "bg-green-100 text-green-700" },
+  CANCELLED: { label: "Cancelled", color: "bg-gray-100 text-gray-600" },
+};
+
+export function DisputesWorkspace({
+  userRole = "ADMIN",
+}: DisputesWorkspaceProps) {
+  const { disputes, fetchDisputes, updateDisputeStatus } = useDisputeStore();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchContracts();
     void fetchDisputes();
-  }, [fetchContracts, fetchDisputes]);
+  }, [fetchDisputes]);
 
-  const role = useMemo<WorkspaceRole>(() => {
-    if (sessionRole === "EMPLOYER" || sessionRole === "FREELANCER") {
-      return sessionRole;
-    }
-
-    if (typeof window !== "undefined") {
-      const storedRole = window.localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY);
-      if (storedRole === "EMPLOYER" || storedRole === "FREELANCER") {
-        return storedRole;
-      }
-    }
-
-    return "FREELANCER";
-  }, [sessionRole]);
-
-  const enriched = useMemo(
-    () =>
-      disputes.map((dispute) => ({
-        ...dispute,
-        contract: contracts.find((contract) => contract.id === dispute.contractId),
-      })),
-    [contracts, disputes],
+  const selectedDispute = useMemo(
+    () => disputes.find((d) => d.id === selectedId),
+    [disputes, selectedId],
   );
 
-  const disputedContractIds = useMemo(() => new Set(disputes.map((dispute) => dispute.contractId)), [disputes]);
-  const disputableContracts = useMemo(
-    () =>
-      contracts.filter((contract) => {
-        if (disputedContractIds.has(contract.id) || contract.disputeId) {
-          return false;
-        }
-        return contract.status === "ACTIVE" || contract.status === "IN_PROGRESS" || contract.status === "DELIVERED";
-      }),
-    [contracts, disputedContractIds],
-  );
+  const filteredDisputes = useMemo(() => {
+    // If not admin, you'd filter by participation. For now, showing all for the dev workspace.
+    return disputes;
+  }, [disputes]);
 
   return (
-    <div className="sheet-shell min-h-screen">
-      <div className="sheet-container space-y-6">
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Disputes</h1>
-              <p className="text-sm text-muted-foreground">
-                Enterprise dispute cases, escrow freezes, and admin-driven settlement records.
-              </p>
-            </div>
-            <div className="rounded-full bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700">
-              {enriched.length} active case{enriched.length === 1 ? "" : "s"}
-            </div>
+    <div className="flex h-full min-h-[600px] gap-6">
+      {/* Sidebar List */}
+      <div className="sheet-panel w-80 flex flex-col overflow-hidden">
+        <div className="border-b border-[var(--border)] p-4">
+          <div className="flex items-center gap-2">
+            <Scale className="h-5 w-5 text-primary" />
+            <h2 className="font-bold">Active Disputes</h2>
           </div>
-        </section>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {filteredDisputes.length} cases requiring attention
+          </p>
+        </div>
 
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Submit a dispute</h2>
-              <p className="text-sm text-muted-foreground">
-                Open a real dispute directly from the web workspace. The form below writes to the backend dispute APIs and
-                freezes escrow for admin review.
-              </p>
-            </div>
-            <div className="rounded-full bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-slate-700">
-              {disputableContracts.length} eligible contract{disputableContracts.length === 1 ? "" : "s"}
-            </div>
-          </div>
-
-          {disputableContracts.length === 0 ? (
-            <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--accent)] p-4 text-sm text-muted-foreground">
-              No active contracts are currently eligible for a new dispute.
+        <div className="custom-scrollbar flex-1 overflow-y-auto">
+          {filteredDisputes.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              <ShieldAlert className="mx-auto mb-2 h-8 w-8 opacity-20" />
+              <p className="text-sm">No active dispute cases</p>
             </div>
           ) : (
-            <div className="mt-4 grid gap-4 lg:grid-cols-2">
-              {disputableContracts.map((contract) => (
-                <div key={contract.id} className="rounded-2xl border border-[var(--border)] bg-[var(--accent)] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-lg font-semibold text-slate-900">{contract.jobTitle}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {contract.employerName} ↔ {contract.freelancerName}
-                      </p>
-                    </div>
-                    <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-xs font-medium">
-                      {contract.status}
-                    </span>
-                  </div>
-                  <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
-                    <p>Total value: {contract.currency} {contract.totalAmount.toLocaleString()}</p>
-                    <p>Paid before dispute: {contract.currency} {contract.paidAmount.toLocaleString()}</p>
-                    <p>Dispute window: {contract.disputeWindowDays ?? 7} days</p>
-                  </div>
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedContract(contract)}
-                      className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700"
-                    >
-                      <AlertTriangle className="h-4 w-4" />
-                      Open dispute
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {enriched.length === 0 ? (
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-10 text-center">
-            <ShieldCheck className="mx-auto mb-3 h-10 w-10 text-emerald-600" />
-            <p className="font-medium">No disputes are open.</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Escrow-protected contracts will appear here if either party escalates a formal case.
-            </p>
-          </section>
-        ) : (
-          <div className="space-y-4">
-            {enriched.map((dispute) => (
-              <article
-                key={dispute.id}
-                className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5"
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-2 text-xs">
-                      <span className="rounded-full bg-[var(--accent)] px-2 py-1">#{dispute.id}</span>
-                      <span className="rounded-full border border-red-200 bg-red-50 px-2 py-1 text-red-700">
+            <div className="divide-y divide-[var(--border)]">
+              {filteredDisputes.map((dispute) => {
+                const config = STATUS_CONFIG[dispute.status];
+                return (
+                  <button
+                    key={dispute.id}
+                    onClick={() => setSelectedId(dispute.id)}
+                    className={`flex w-full flex-col gap-1 p-4 text-left transition-colors hover:bg-slate-50 ${
+                      selectedId === dispute.id ? "bg-slate-50" : ""
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="truncate text-xs font-mono font-medium text-muted-foreground">
+                        {dispute.id}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${config.color}`}
+                      >
                         {dispute.status}
                       </span>
-                      <span className="rounded-full border border-[var(--border)] px-2 py-1">
-                        Contract {dispute.contractId}
+                    </div>
+                    <p className="line-clamp-1 text-sm font-semibold">
+                      Contract {dispute.contractId}
+                    </p>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>
+                        {new Date(dispute.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    <div>
-                      <h2 className="text-lg font-semibold">{dispute.contractTitle}</h2>
-                      <p className="text-sm text-muted-foreground">
-                        {dispute.employerName} ↔ {dispute.freelancerName}
-                      </p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{dispute.reason}</p>
-                    {dispute.details ? (
-                      <p className="rounded-xl bg-[var(--accent)] p-3 text-sm text-muted-foreground">
-                        {dispute.details}
-                      </p>
-                    ) : null}
-                    <div className="flex flex-wrap items-center gap-2 text-xs">
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--accent)] px-2.5 py-1">
-                        <Paperclip className="h-3.5 w-3.5" />
-                        {dispute.evidenceAssetIds.length} evidence file{dispute.evidenceAssetIds.length === 1 ? "" : "s"}
-                      </span>
-                      {dispute.contract?.freelancerId ? (
-                        <Link
-                          href={`/chat?user=${encodeURIComponent(dispute.contract.freelancerId)}`}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 font-medium text-slate-700"
-                        >
-                          <CircleEllipsis className="h-3.5 w-3.5" />
-                          Chat with freelancer
-                        </Link>
-                      ) : null}
-                      {dispute.contract?.employerId ? (
-                        <Link
-                          href={`/chat?user=${encodeURIComponent(dispute.contract.employerId)}`}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 font-medium text-slate-700"
-                        >
-                          <CircleEllipsis className="h-3.5 w-3.5" />
-                          Chat with employer
-                        </Link>
-                      ) : null}
-                    </div>
-                  </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
 
-                  <div className="min-w-[220px] rounded-2xl border border-[var(--border)] bg-[var(--accent)] p-4">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <FileSearch className="h-4 w-4" />
-                      Case controls
-                    </div>
-                    <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                      <p>Held escrow: {dispute.currency} {dispute.heldAmount.toLocaleString()}</p>
-                      <p>Paid before dispute: {dispute.currency} {dispute.paidAmount.toLocaleString()}</p>
-                      <p>
-                        Account actions: employer {dispute.participantControls.employer.toLowerCase()}, freelancer{" "}
-                        {dispute.participantControls.freelancer.toLowerCase()}
-                      </p>
-                    </div>
+      {/* Main Detail Area */}
+      <div className="min-w-0 flex-1 space-y-6">
+        {selectedDispute ? (
+          <>
+            {/* Header Card */}
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface-solid)] p-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-xl font-bold">Case {selectedDispute.id}</h1>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_CONFIG[selectedDispute.status].color}`}
+                    >
+                      {STATUS_CONFIG[selectedDispute.status].label}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-muted-foreground">
+                    Originating from contract{" "}
+                    <span className="font-medium text-slate-900">
+                      {selectedDispute.contractId}
+                    </span>
+                  </p>
+                </div>
+
+                {userRole === "ADMIN" && (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() =>
+                        void updateDisputeStatus(selectedDispute.id, "RESOLVED")
+                      }
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white hover:bg-green-700"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      Resolve Case
+                    </button>
+                    <button className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50">
+                      <Gavel className="h-4 w-4" />
+                      Arbitrate
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-xl bg-slate-50 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Reason
+                  </p>
+                  <p className="mt-1 text-sm font-semibold">
+                    {selectedDispute.reason}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Disputed By
+                  </p>
+                  <p className="mt-1 text-sm font-semibold capitalize">
+                    {selectedDispute.openedByRole.toLowerCase()}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Review Started
+                  </p>
+                  <p className="mt-1 text-sm font-semibold">
+                    {new Date(selectedDispute.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Description & Evidence */}
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface-solid)] p-6">
+              <h3 className="flex items-center gap-2 font-bold">
+                <FileText className="h-4 w-4 text-primary" />
+                Case Description
+              </h3>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                {selectedDispute.description}
+              </p>
+
+              <div className="mt-8 border-t border-[var(--border)] pt-6">
+                <h3 className="mb-4 text-sm font-bold">Evidence Items</h3>
+                <div className="flex flex-wrap gap-3">
+                  {selectedDispute.evidence.length === 0 ? (
+                    <p className="text-xs italic text-muted-foreground">
+                      No attachments provided with this case.
+                    </p>
+                  ) : (
+                    selectedDispute.evidence.map((item) => (
+                      <span
+                        key={item.id}
+                        className="rounded-full border border-[var(--border)] bg-[var(--surface-solid)] px-2.5 py-1 text-xs font-medium"
+                      >
+                        {item.type}: {item.id}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* Admin Internal Log / Chat (Simplified) */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold">Case Timeline &amp; Activity</h3>
+                <button className="text-xs font-bold text-primary">
+                  View Full Audit Log
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
+                    <History className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Case opened</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(selectedDispute.createdAt).toLocaleString()}
+                    </p>
                   </div>
                 </div>
 
-                {dispute.settlement ? (
-                  <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                    Settlement: employer {dispute.settlement.employerPercent}%, freelancer{" "}
-                    {dispute.settlement.freelancerPercent}%, admin {dispute.settlement.adminPercent}%.
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                    <Balance className="h-4 w-4 text-blue-600" />
                   </div>
-                ) : (
-                  <div className="mt-4 flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                    <AlertTriangle className="h-4 w-4" />
-                    Awaiting administrator review, message routing, or settlement decision.
+                  <div className="flex-1 rounded-xl bg-blue-50/50 p-4">
+                    <p className="text-sm font-semibold text-blue-900">
+                      Arbitrator Assigned
+                    </p>
+                    <p className="mt-1 text-sm text-blue-800">
+                      System automatically flagged for priority review based on
+                      payment model.
+                    </p>
                   </div>
-                )}
-              </article>
-            ))}
+                </div>
+              </div>
+            </section>
+          </>
+        ) : (
+          <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface-solid)] p-10 text-center">
+            <Balance className="mx-auto mb-4 h-12 w-12 opacity-10" />
+            <h2 className="text-lg font-bold">Select a dispute case</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Choose a case from the sidebar to review evidence and make an
+              arbitration decision.
+            </p>
+          </section>
+        )}
+
+        {/* Messaging (Placeholder) */}
+        {selectedDispute && (
+          <div className="mt-8 border-t border-[var(--border)] pt-8">
+            <div className="flex items-center gap-2 px-1">
+              <MessageSquare className="h-4 w-4 text-primary" />
+              <h3 className="font-bold">Case Messages</h3>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-solid)] p-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700">
+                      SY
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold">System Notification</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        2 days ago
+                      </p>
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+                    PUBLIC
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  The dispute has been formally opened. Parties are encouraged
+                  to upload any additional evidence within 48 hours.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 px-2">
+                <input
+                  type="text"
+                  placeholder="Type a message to parties..."
+                  className="flex-1 rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm outline-none"
+                />
+                <button className="rounded-full bg-primary p-2 text-white">
+                  <MessageSquare className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-center gap-4 px-2">
+                <button className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-solid)] px-2.5 py-1 font-medium text-slate-700">
+                  <Users className="h-3 w-3" />
+                  <span className="text-[10px]">Notify Parties</span>
+                </button>
+                <button className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-solid)] px-2.5 py-1 font-medium text-slate-700">
+                  <ShieldAlert className="h-3 w-3 text-red-500" />
+                  <span className="text-[10px]">Internal Note</span>
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {selectedContract ? (
-        <DisputeContractModal
-          contract={selectedContract}
-          isOpen={Boolean(selectedContract)}
-          onClose={() => setSelectedContract(null)}
-          openedByRole={role}
-        />
-      ) : null}
     </div>
   );
 }

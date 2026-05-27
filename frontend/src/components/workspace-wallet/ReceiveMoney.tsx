@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Check, Copy, Download, QrCode, RefreshCcw, Share2 } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
 import { getWalletCurrencyLabel } from "@/lib/walletCurrencies";
 import { useWalletStore } from "@/lib/walletStore";
@@ -31,6 +32,47 @@ export function ReceiveMoney() {
     } catch {
       toast.error("Unable to copy. Please copy manually.");
     }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/pay/${receiveAlias}`;
+    const shareData = {
+      title: "Pay via SabaHub",
+      text: `Pay me on SabaHub using my handle: ${receiveAlias}`,
+      url: shareUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          toast.error("Sharing failed");
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Payment link copied to clipboard");
+      } catch {
+        toast.error("Unable to copy link");
+      }
+    }
+  };
+
+  const handleDownload = () => {
+    const canvas = document.getElementById("wallet-qr-canvas") as HTMLCanvasElement;
+    if (!canvas) {
+      toast.error("QR component not found");
+      return;
+    }
+
+    const url = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = `sabahub-qr-${receiveAlias}.png`;
+    link.href = url;
+    link.click();
+    toast.success("QR code downloaded");
   };
 
   const handleRefresh = async () => {
@@ -100,18 +142,18 @@ export function ReceiveMoney() {
                 </div>
               </div>
 
-              <div className="mx-auto w-full max-w-[180px] rounded-2xl bg-white p-4 text-slate-900">
-                <div className="grid grid-cols-7 gap-1">
-                  {Array.from({ length: 49 }).map((_, idx) => (
-                    <span
-                      key={idx}
-                      className={`block h-4 w-4 rounded-[2px] ${
-                        (idx + receiveAlias.length) % 3 === 0 ? "bg-slate-900" : "bg-slate-200"
-                      }`}
-                    />
-                  ))}
+              <div className="mx-auto flex w-full max-w-[180px] flex-col items-center rounded-2xl bg-white p-4 text-slate-900 shadow-xl">
+                <div className="flex aspect-square w-full items-center justify-center bg-white p-1">
+                  <QRCodeCanvas 
+                    id="wallet-qr-canvas"
+                    value={receiveAlias} 
+                    size={240}
+                    level="H"
+                    includeMargin={false}
+                    className="h-full w-full"
+                  />
                 </div>
-                <p className="mt-3 text-center text-xs font-medium">Scan to pay {receiveAlias}</p>
+                <p className="mt-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">Scan to pay {receiveAlias}</p>
               </div>
             </div>
           </div>
@@ -161,21 +203,19 @@ export function ReceiveMoney() {
               </button>
               <button
                 type="button"
-                disabled
-                className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-muted-foreground opacity-60"
-                aria-disabled
+                onClick={handleShare}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 transition-colors hover:bg-muted"
               >
                 <Share2 className="h-4 w-4" />
-                <span>Share link (coming soon)</span>
+                <span>Share link</span>
               </button>
               <button
                 type="button"
-                disabled
-                className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-muted-foreground opacity-60"
-                aria-disabled
+                onClick={handleDownload}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 transition-colors hover:bg-muted"
               >
                 <Download className="h-4 w-4" />
-                <span>Download QR card (coming soon)</span>
+                <span>Download QR card</span>
               </button>
             </div>
           </div>

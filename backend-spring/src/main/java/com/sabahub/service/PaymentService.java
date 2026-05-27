@@ -14,6 +14,7 @@ import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.stripe.param.TransferCreateParams;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Slf4j
 @Service
 public class PaymentService {
 
@@ -43,9 +45,11 @@ public class PaymentService {
     private final ObjectMapper mapper;
     private final String chapaWebhookSecret;
     private final String chapaSecretKey;
+    private final String chapaPublicKey;
     private final String chapaBaseUrl;
     private final String chapaCallbackUrl;
     private final String chapaReturnUrl;
+    private final String chapaDefaultCurrency;
     private final String stripeWebhookSecret;
     private final String stripeReturnUrl;
     private final String stripeCancelUrl;
@@ -60,9 +64,11 @@ public class PaymentService {
 
     public PaymentService(@Value("${chapa.webhook.secret:}") String chapaWebhookSecret,
                           @Value("${chapa.secret.key:}") String chapaSecretKey,
+                          @Value("${chapa.public.key:}") String chapaPublicKey,
                           @Value("${chapa.base.url:https://api.chapa.co/v1}") String chapaBaseUrl,
                           @Value("${chapa.callback.url:}") String chapaCallbackUrl,
                           @Value("${chapa.return.url:}") String chapaReturnUrl,
+                          @Value("${chapa.default.currency:ETB}") String chapaDefaultCurrency,
                           @Value("${stripe.webhook.secret:}") String stripeWebhookSecret,
                           @Value("${stripe.return.url:}") String stripeReturnUrl,
                           @Value("${stripe.cancel.url:}") String stripeCancelUrl,
@@ -72,9 +78,11 @@ public class PaymentService {
             .build();
         this.chapaWebhookSecret = chapaWebhookSecret;
         this.chapaSecretKey = chapaSecretKey;
+        this.chapaPublicKey = chapaPublicKey;
         this.chapaBaseUrl = chapaBaseUrl;
         this.chapaCallbackUrl = chapaCallbackUrl;
         this.chapaReturnUrl = chapaReturnUrl;
+        this.chapaDefaultCurrency = chapaDefaultCurrency;
         this.stripeWebhookSecret = stripeWebhookSecret;
         this.stripeReturnUrl = stripeReturnUrl;
         this.stripeCancelUrl = stripeCancelUrl;
@@ -205,7 +213,7 @@ public class PaymentService {
             throw new IllegalStateException("CHAPA_SECRET_KEY is not configured");
         }
 
-        String normalizedCurrency = (currency == null || currency.isBlank()) ? "ETB" : currency.trim().toUpperCase();
+        String normalizedCurrency = (currency == null || currency.isBlank()) ? chapaDefaultCurrency : currency.trim().toUpperCase();
         String amountAsString = amount.stripTrailingZeros().toPlainString();
         String safeEmail = (email == null || email.isBlank()) ? "payments@sabahub.local" : email.trim();
         String firstName = extractFirstName(fullName);
@@ -227,7 +235,7 @@ public class PaymentService {
             requestPayload.put("return_url", returnUrl);
         }
         requestPayload.put("customization", Map.of(
-                "title", "SabaHub Wallet Top-up",
+                "title", "SabaHub Top-up",
                 "description", "Add funds to your SabaHub wallet"
         ));
         requestPayload.put("meta", Map.of("transactionId", transactionId));
@@ -243,6 +251,7 @@ public class PaymentService {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                log.error("Chapa initialize failed. Status: {}, Body: {}", response.statusCode(), response.body());
                 throw new IllegalStateException("Chapa initialize failed with HTTP " + response.statusCode());
             }
 

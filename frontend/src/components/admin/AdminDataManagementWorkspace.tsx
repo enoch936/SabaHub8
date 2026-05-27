@@ -17,6 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import { MediaManager } from "./MediaManager";
+import { GlassCard, GlassCardHeader } from "./GlassCard";
 import BackupRoundedIcon from "@mui/icons-material/BackupRounded";
 import DataObjectRoundedIcon from "@mui/icons-material/DataObjectRounded";
 import PlayCircleRoundedIcon from "@mui/icons-material/PlayCircleRounded";
@@ -457,82 +458,72 @@ export default function AdminDataManagementWorkspace({ focusSection }: AdminData
   };
 
   return (
-    <Stack spacing={2.2}>
-      <SoftCard
+    <Stack spacing={3}>
+      <GlassCard
         sx={{
-          border: "1px solid",
-          borderColor: "rgba(15,23,42,0.16)",
+          border: "1px solid var(--border)",
+          background: "linear-gradient(135deg, #171c28 0%, #284056 54%, #4a6778 100%)",
           color: "common.white",
-          background: "linear-gradient(135deg, #171c28 0%, #284056 50%, #4a6778 100%)",
+          p: 0
         }}
       >
-        <CardContent>
-          <Stack spacing={1.2}>
-            <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems={{ md: "center" }} gap={1.2}>
-              <Box>
-                <Typography variant="overline" fontWeight={800} sx={{ opacity: 0.84, letterSpacing: "0.14em" }}>
-                  DATA OPERATIONS
-                </Typography>
-                <Typography variant="h4" fontWeight={900} sx={{ lineHeight: 1.04 }}>
-                  {payload?.domain.title ?? "Data Management"}
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 0.4, opacity: 0.92, maxWidth: 860 }}>
-                  Operate maintenance, migration, and backup workflows from a dedicated data operations console. Data
-                  controls are editable in place and every runbook call executes against the live admin API.
-                </Typography>
-              </Box>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                <Chip
-                  label={`Status: ${payload?.domain.status ?? "loading"}`}
-                  color={statusTone[payload?.domain.status ?? ""] || "info"}
-                  variant="outlined"
-                  sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.4)", bgcolor: "rgba(255,255,255,0.08)" }}
-                />
-                <Chip
-                  label={`Controls: ${enabledControls}/${controlFlags.length}`}
-                  variant="outlined"
-                  sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.4)", bgcolor: "rgba(255,255,255,0.08)" }}
-                />
-                <Chip
-                  label={`Last Sync: ${generatedAtLabel}`}
-                  variant="outlined"
-                  sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.4)", bgcolor: "rgba(255,255,255,0.08)" }}
-                />
-                <SoftButton
-                  onClick={() => void load()}
-                  variant="outlined"
-                  startIcon={<RefreshRoundedIcon />}
-                  sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.58)" }}
-                >
-                  Refresh
-                </SoftButton>
-              </Stack>
-            </Stack>
-
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              {[
-                { key: "all", label: "All Lanes" },
-                { key: "maintenance", label: "Maintenance" },
-                { key: "migration", label: "Migration" },
-                { key: "backup", label: "Backups" },
-              ].map((lane) => (
-                <Chip
-                  key={lane.key}
-                  label={lane.label}
-                  color={activeLane === lane.key ? "primary" : "default"}
-                  variant={activeLane === lane.key ? "filled" : "outlined"}
-                  onClick={() => setActiveLane(lane.key as DataLane)}
-                  sx={{
-                    bgcolor: activeLane === lane.key ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.06)",
-                    color: "#fff",
-                    borderColor: "rgba(255,255,255,0.3)",
-                  }}
-                />
-              ))}
+        <CardContent sx={{ p: 4 }}>
+          <Stack direction={{ xs: "column", lg: "row" }} justifyContent="space-between" alignItems={{ lg: "center" }} gap={3}>
+            <Box>
+              <Typography variant="overline" fontWeight={900} sx={{ letterSpacing: "0.15em", opacity: 0.8 }}>
+                ENTERPRISE DATA ORCHESTRATION & TELEMETRY
+              </Typography>
+              <Typography variant="h3" fontWeight={900} sx={{ lineHeight: 1, mt: 1 }}>
+                {payload?.domain.title || "Data Control Plane"}
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 1.5, opacity: 0.9, maxWidth: 880, fontWeight: 600 }}>
+                Orchestrate maintenance, migration, and backup pipelines with real-time integrity guardrails. 
+                Execute runbooks directly against the live environment with full telemetry oversight.
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1.5} flexWrap="wrap">
+              <Chip
+                label={`Status: ${payload?.domain.status?.toUpperCase() ?? "SYNCING"}`}
+                color={statusTone[payload?.domain.status ?? ""] || "info"}
+                variant="outlined"
+                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.4)", bgcolor: "rgba(255,255,255,0.08)", fontWeight: 900, px: 1 }}
+              />
+              <SoftButton
+                onClick={() => void load()}
+                variant="outlined"
+                startIcon={<RefreshRoundedIcon />}
+                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.4)" }}
+              >
+                Sync
+              </SoftButton>
             </Stack>
           </Stack>
+
+          <Stack direction="row" spacing={1.5} mt={4} flexWrap="wrap">
+            {[
+              { key: "all", label: "All Data Lanes" },
+              { key: "maintenance", label: "Integrity & Maintenance" },
+              { key: "migration", label: "State Migration" },
+              { key: "backup", label: "Resilience & Backups" },
+            ].map((lane) => (
+              <Chip
+                key={lane.key}
+                label={lane.label}
+                color={activeLane === lane.key ? "primary" : "default"}
+                variant={activeLane === lane.key ? "filled" : "outlined"}
+                onClick={() => setActiveLane(lane.key as DataLane)}
+                sx={{
+                  bgcolor: activeLane === lane.key ? "white" : "rgba(255,255,255,0.06)",
+                  color: activeLane === lane.key ? "#171c28" : "#fff",
+                  borderColor: "rgba(255,255,255,0.3)",
+                  fontWeight: 800,
+                  "&:hover": { bgcolor: activeLane === lane.key ? "white" : "rgba(255,255,255,0.12)" }
+                }}
+              />
+            ))}
+          </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       <MediaManager 
         files={[]}

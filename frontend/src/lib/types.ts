@@ -303,6 +303,7 @@ export interface PlatformContract {
   autoReleaseDays?: number
   requiresEscrow?: boolean
   adminReviewRequired?: boolean
+  available?: boolean
   disputeId?: string
   refundRequest?: EscrowRefundRequest
 }

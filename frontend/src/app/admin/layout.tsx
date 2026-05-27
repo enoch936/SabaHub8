@@ -187,25 +187,28 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     <Box sx={{ 
       display: "flex", 
       height: "100vh", 
+      width: "100vw",
       bgcolor: "var(--background)",
-      overflow: "hidden"
+      overflow: "hidden",
+      position: "relative"
     }}>
       <CommandPalette />
+      
+      {/* Fixed Sidebar for Enterprise Feel */}
       <Box
         component="aside"
+        className="sidebar-transition"
         sx={{
           width: currentSidebarWidth,
           flexShrink: 0,
-          position: "sticky",
-          top: 0,
           height: "100vh",
           zIndex: (themeValue) => themeValue.zIndex.drawer + 2,
           bgcolor: "var(--surface)",
           backdropFilter: "blur(var(--glass-blur))",
           borderRight: `1px solid var(--border)`,
-          transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          overflowY: "auto",
-          display: { xs: "none", lg: "block" }
+          display: { xs: "none", lg: "block" },
+          position: "relative",
+          overflow: "visible"
         }}
       >
         <AdminSidebar
@@ -230,15 +233,24 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         />
       </Box>
 
+      {/* Main Content Area */}
       <Box sx={{ 
         flexGrow: 1, 
-        width: { xs: "100%", lg: `calc(100% - ${currentSidebarWidth}px)` },
+        height: "100vh",
         display: "flex",
         flexDirection: "column",
-        minHeight: 0,
+        minWidth: 0,
+        position: "relative",
         overflow: "hidden"
       }}>
-        <Box sx={{ position: "sticky", top: 0, zIndex: 10, bgcolor: "var(--background)" }}>
+        {/* Navbar is sticky at the top of this container */}
+        <Box sx={{ 
+          flexShrink: 0, 
+          zIndex: 10,
+          position: "sticky",
+          top: 0,
+          width: "100%"
+        }}>
           <AdminNavbar
             isDarkMode={isDarkMode}
             notificationCount={moderationBadges.unreadMessages}
@@ -257,26 +269,29 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           />
         </Box>
 
+        {/* Scrollable Main View */}
         <Box 
           component="main" 
+          className="custom-scrollbar"
           sx={{ 
             flexGrow: 1,
-            minHeight: 0,
-            p: { xs: 2, sm: 3, md: 5, xl: 6 },
-            overflowY: "auto"
+            p: { xs: 2, sm: 4, md: 6, xl: 8 },
+            pb: { xs: 10, lg: 8 },
+            bgcolor: "transparent",
+            overflowX: "hidden"
           }}
         >
-          <Box sx={{ mb: 5 }}>
+          <Box sx={{ mb: 6, maxWidth: 1600, mx: "auto", width: "100%" }}>
             <Breadcrumbs 
               separator={<NavigateNextIcon sx={{ fontSize: 14, opacity: 0.4 }} />} 
               sx={{ 
-                mb: 1.5, 
+                mb: 2, 
                 "& .MuiBreadcrumbs-li": { 
-                  fontSize: 11, 
+                  fontSize: 12, 
                   fontWeight: 800, 
                   opacity: 0.5, 
                   textTransform: "uppercase", 
-                  letterSpacing: "0.1em" 
+                  letterSpacing: "0.12em" 
                 } 
               }}
             >
@@ -297,33 +312,59 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               ))}
             </Breadcrumbs>
             
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+            <Stack direction="row" spacing={3} alignItems="flex-end" justifyContent="space-between">
               <Box>
-                <Typography variant="h4" className="section-title" sx={{ 
-                  fontSize: { xs: 28, md: 36 }, 
-                  letterSpacing: "-0.03em",
-                  color: "text.primary" 
+                <Typography variant="h3" className="section-title" sx={{ 
+                  fontSize: { xs: 32, md: 48 }, 
+                  fontWeight: 900,
+                  letterSpacing: "-0.05em",
+                  color: "text.primary",
+                  lineHeight: 1
                 }}>
                   {activeContext.child?.label || activeContext.item?.label || "Command Center"}
                 </Typography>
                 <Typography variant="body1" className="body-text" sx={{ 
-                  mt: 0.75, 
-                  opacity: 0.6, 
-                  fontSize: { xs: 14, md: 16 },
-                  maxWidth: 600
+                  mt: 2, 
+                  opacity: 0.7, 
+                  fontSize: { xs: 16, md: 20 },
+                  maxWidth: 800,
+                  fontWeight: 600,
+                  lineHeight: 1.6
                 }}>
-                  {activeContext.item?.description || "Manage and monitor your enterprise operations."}
+                  {activeContext.item?.description || "Monitor and orchestrate your enterprise workspace with real-time analytics and global moderation tools."}
                 </Typography>
               </Box>
             </Stack>
           </Box>
 
-          <Box sx={{ flexGrow: 1 }}>
+          <Box sx={{ 
+            maxWidth: 1600, 
+            mx: "auto", 
+            width: "100%",
+            animation: "fadeIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+            "@keyframes fadeIn": {
+              from: { opacity: 0, transform: "translateY(20px)" },
+              to: { opacity: 1, transform: "translateY(0)" }
+            }
+          }}>
             {children}
           </Box>
         </Box>
       </Box>
-      <Box sx={{ display: { lg: 'none' } }}>
+
+
+      {/* Mobile Navigation */}
+      <Box sx={{ 
+        display: { lg: 'none' }, 
+        position: "fixed", 
+        bottom: 0, 
+        left: 0, 
+        right: 0, 
+        zIndex: 100,
+        bgcolor: "var(--surface)",
+        backdropFilter: "blur(20px)",
+        borderTop: "1px solid var(--border)"
+      }}>
         <BottomNavigation />
       </Box>
     </Box>

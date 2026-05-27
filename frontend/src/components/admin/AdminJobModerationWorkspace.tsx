@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
-  Button,
   CardContent,
   Chip,
   Dialog,
@@ -17,12 +16,14 @@ import {
   MenuItem,
   Select,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Typography,
+  Avatar,
+  IconButton,
+  Tooltip,
+  Tabs,
+  Tab,
+  Divider,
+  alpha,
 } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
@@ -33,39 +34,30 @@ import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
-import SoftButton from "@/components/mui/SoftButton";
+import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
+import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
+import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
+import LocalAtmRoundedIcon from "@mui/icons-material/LocalAtmRounded";
 import { GlassCard, GlassCardHeader } from "./GlassCard";
 import { DataTable, type TableColumn } from "./DataTable";
+import { Button } from "../ui";
 import SoftTextField from "@/components/mui/SoftTextField";
 import {
   type AdminCommandCenterOperation,
   type Job,
+  type Proposal,
+  type Contract,
   adminCommandCenterDomain,
   adminCommandCenterExecuteOperation,
   adminListJobs,
   adminPatchJob,
+  adminListProposals,
+  listContracts,
+  listDisputes,
 } from "@/lib/api";
 
 const moderationStatuses = ["DRAFT", "OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED", "CLOSED"] as const;
 const moderationDomainId = "content-moderation-marketplace-governance";
-
-type ModerationRunbookForm = {
-  note: string;
-  limit: string;
-  jobIds: string;
-  disputeIds: string;
-  title: string;
-  body: string;
-};
-
-const defaultRunbookForm: ModerationRunbookForm = {
-  note: "",
-  limit: "",
-  jobIds: "",
-  disputeIds: "",
-  title: "",
-  body: "",
-};
 
 function statusTone(status?: string): "default" | "success" | "warning" | "error" | "info" {
   switch ((status ?? "").toUpperCase()) {
@@ -84,889 +76,494 @@ function statusTone(status?: string): "default" | "success" | "warning" | "error
   }
 }
 
-function formatDateTime(value?: string) {
-  if (!value) {
-    return "Not recorded";
-  }
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) {
-    return value;
-  }
-  return new Date(parsed).toLocaleString();
-}
-
 function formatBudget(job: Job) {
   const min = job.budgetMin ?? job.budget?.min;
   const max = job.budgetMax ?? job.budget?.max;
   const currency = job.currency ?? job.budget?.currency ?? "USD";
-  if (typeof min !== "number" && typeof max !== "number") {
-    return "Budget not set";
-  }
+  if (typeof min !== "number" && typeof max !== "number") return "Negotiable";
+  
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
   });
+  
   if (typeof min === "number" && typeof max === "number") {
     return `${formatter.format(min)} - ${formatter.format(max)}`;
   }
   return formatter.format((min ?? max) as number);
 }
 
-function getMediaSummary(job: Job) {
-  const imageCount = job.sampleImageUrls?.length ?? 0;
-  const videoCount = job.sampleVideoUrls?.length ?? 0;
-  return { imageCount, videoCount };
-}
-
-function firstNonEmptyUrl(values?: string[]) {
-  if (!Array.isArray(values)) {
-    return null;
-  }
-  for (const value of values) {
-    if (typeof value === "string") {
-      const trimmed = value.trim();
-      if (trimmed) {
-        return trimmed;
-      }
-    }
-  }
-  return null;
-}
-
-function deriveCloudinaryVideoPosterUrl(videoUrl: string, options?: { width?: number; height?: number }) {
-  try {
-    const url = new URL(videoUrl);
-    if (!url.hostname.includes("cloudinary.com")) {
-      return null;
-    }
-
-    const marker = "/video/upload/";
-    const path = url.pathname;
-    const markerIndex = path.indexOf(marker);
-    if (markerIndex === -1) {
-      return null;
-    }
-
-    const prefix = path.slice(0, markerIndex + marker.length);
-    const suffix = path.slice(markerIndex + marker.length).replace(/^\/+/, "");
-    const width = options?.width ?? 240;
-    const height = options?.height ?? 160;
-    const transform = `so_0,f_jpg,q_auto,w_${width},h_${height},c_fill`;
-
-    let posterPath = `${prefix}${transform}/${suffix}`;
-
-    const lastSlash = posterPath.lastIndexOf("/");
-    const fileName = lastSlash >= 0 ? posterPath.slice(lastSlash + 1) : posterPath;
-    const dotIndex = fileName.lastIndexOf(".");
-    if (dotIndex > 0) {
-      const baseName = fileName.slice(0, dotIndex);
-      posterPath = `${posterPath.slice(0, lastSlash + 1)}${baseName}.jpg`;
-    } else {
-      posterPath = `${posterPath}.jpg`;
-    }
-
-    return `${url.origin}${posterPath}`;
-  } catch {
-    return null;
-  }
-}
-
-export default function AdminJobModerationWorkspace() {
+export default function AdminMarketplaceOrchestrationWorkspace() {
+  const [activeTab, setActiveTab] = useState(0);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [operations, setOperations] = useState<AdminCommandCenterOperation[]>([]);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionStatus, setActionStatus] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [reviewStatus, setReviewStatus] = useState<string>("DRAFT");
   const [busyJobId, setBusyJobId] = useState<string | null>(null);
-  const [selectedOperationId, setSelectedOperationId] = useState<string>("review-flagged-content");
-  const [runbookBusyId, setRunbookBusyId] = useState<string | null>(null);
-  const [runbookForm, setRunbookForm] = useState<ModerationRunbookForm>(defaultRunbookForm);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [jobsResult, domainResult] = await Promise.all([
+      const [jobsResult, proposalsResult, contractsResult, domainResult] = await Promise.all([
         adminListJobs(),
+        adminListProposals(),
+        listContracts(),
         adminCommandCenterDomain(moderationDomainId),
       ]);
       setJobs(jobsResult);
+      setProposals(proposalsResult);
+      setContracts(contractsResult);
       setOperations(domainResult.domain.operations ?? []);
-
-      if (domainResult.domain.operations.length > 0) {
-        setSelectedOperationId((current) => {
-          const hasCurrent = domainResult.domain.operations.some((operation) => operation.id === current);
-          return hasCurrent ? current : domainResult.domain.operations[0].id;
-        });
-      }
     } catch (err) {
-      let message = err instanceof Error && err.message ? err.message : "Failed to load admin jobs.";
-      
-      // Check if it's a 403 Forbidden error (user not admin)
-      if (message.includes("403") || message.toLowerCase().includes("forbidden")) {
-        message = "Admin access required. You do not have the ADMIN role. " +
-                 "Please complete admin setup first by visiting /admin-bootstrap";
-      }
-      
-      setError(message);
-      setJobs([]);
-      setOperations([]);
+      setError(err instanceof Error ? err.message : "Failed to load marketplace dataset.");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const metrics = useMemo(() => {
-    const total = jobs.length;
-    const open = jobs.filter((job) => (job.status ?? "").toUpperCase() === "OPEN").length;
-    const draft = jobs.filter((job) => (job.status ?? "").toUpperCase() === "DRAFT").length;
-    const closed = jobs.filter((job) => ["CLOSED", "CANCELLED"].includes((job.status ?? "").toUpperCase())).length;
-    return { total, open, draft, closed };
-  }, [jobs]);
+  useEffect(() => { void load(); }, [load]);
 
   const filteredJobs = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return jobs.filter((job) => {
-      const jobStatus = (job.status ?? "").toUpperCase();
-      if (statusFilter !== "all" && jobStatus !== statusFilter) {
-        return false;
-      }
-      if (!normalized) {
-        return true;
-      }
-      return [
-        job.title ?? "",
-        job.companyName ?? "",
-        job.employerId ?? "",
-        job.id ?? "",
-        job.categoryId ?? "",
-        ...(job.skills ?? []),
-      ].some((value) => value.toLowerCase().includes(normalized));
+      if (statusFilter !== "all" && (job.status ?? "").toUpperCase() !== statusFilter) return false;
+      if (!normalized) return true;
+      return [job.title, job.companyName, job.employerName, job.id].some(v => String(v || "").toLowerCase().includes(normalized));
     });
   }, [jobs, query, statusFilter]);
 
-  const patchLocalJob = (updated: Job) => {
-    setJobs((current) => current.map((job) => (job.id === updated.id ? updated : job)));
-    setSelectedJob((current) => (current?.id === updated.id ? updated : current));
-  };
-
-  const selectedOperation = useMemo(
-    () => operations.find((operation) => operation.id === selectedOperationId) ?? null,
-    [operations, selectedOperationId],
-  );
-
-  const parseIds = (value: string) =>
-    Array.from(
-      new Set(
-        value
-          .split(/[\s,]+/)
-          .map((item) => item.trim())
-          .filter((item) => item.length > 0),
-      ),
-    );
-
-  const buildRunbookParameters = (operationId: string) => {
-    const parameters: Record<string, unknown> = {};
-    const trimmedLimit = runbookForm.limit.trim();
-    if (trimmedLimit) {
-      const parsed = Number.parseInt(trimmedLimit, 10);
-      if (!Number.isNaN(parsed) && parsed > 0) {
-        parameters.limit = parsed;
-      }
-    }
-
-    if (operationId === "remove-fraudulent-listings") {
-      const jobIds = parseIds(runbookForm.jobIds);
-      if (jobIds.length > 0) {
-        parameters.jobIds = jobIds;
-      }
-    }
-
-    if (operationId === "review-flagged-content") {
-      const disputeIds = parseIds(runbookForm.disputeIds);
-      if (disputeIds.length > 0) {
-        parameters.disputeIds = disputeIds;
-      }
-    }
-
-    if (operationId === "publish-guideline-update") {
-      const title = runbookForm.title.trim();
-      const body = runbookForm.body.trim();
-      if (title) {
-        parameters.title = title;
-      }
-      if (body) {
-        parameters.body = body;
-      }
-    }
-
-    return Object.keys(parameters).length ? parameters : undefined;
-  };
-
-  const executeRunbook = async (dryRun: boolean) => {
-    if (!selectedOperation) {
-      return;
-    }
-
-    const busyKey = `${selectedOperation.id}:${dryRun ? "dry" : "run"}`;
-    setRunbookBusyId(busyKey);
-    setActionStatus(null);
-
+  const changeStatus = async (jobId: string, status: string) => {
+    setBusyJobId(jobId);
     try {
-      const parameters = buildRunbookParameters(selectedOperation.id);
-      const note = runbookForm.note.trim();
-      const result = await adminCommandCenterExecuteOperation(moderationDomainId, selectedOperation.id, {
-        dryRun,
-        note: note || (dryRun ? "Dry run from moderation workspace" : "Execution from moderation workspace"),
-        parameters,
-      });
-      setActionStatus(`${result.title} finished with status ${result.status}. ${result.description}`);
-      await load();
+      const updated = await adminPatchJob(jobId, { status });
+      setJobs(prev => prev.map(j => j.id === jobId ? updated : j));
+      setActionStatus(`Orchestration: Job moved to ${status}`);
     } catch (err) {
-      const message = err instanceof Error && err.message ? err.message : "Failed to execute moderation runbook.";
-      setActionStatus(message);
-    } finally {
-      setRunbookBusyId(null);
-    }
-  };
-
-  const changeStatus = async (job: Job, status: string) => {
-    setBusyJobId(job.id);
-    setActionStatus(null);
-    try {
-      const updated = await adminPatchJob(job.id, { status });
-      patchLocalJob(updated);
-      setActionStatus(`${updated.title} moved to ${status}.`);
-    } catch (err) {
-      const message = err instanceof Error && err.message ? err.message : "Failed to update job status.";
-      setActionStatus(message);
+      setActionStatus(`Error: ${err instanceof Error ? err.message : "Status update failed"}`);
     } finally {
       setBusyJobId(null);
     }
   };
 
-  const openReview = (job: Job) => {
-    setSelectedJob(job);
-    setReviewStatus((job.status ?? "DRAFT").toUpperCase());
-  };
-
-  const applyReviewStatus = async () => {
-    if (!selectedJob) {
-      return;
-    }
-    await changeStatus(selectedJob, reviewStatus);
-  };
-
   return (
-    <Stack spacing={2.2}>
+    <Stack spacing={4}>
       <GlassCard
         sx={{
-          border: "1px solid",
-          borderColor: "rgba(24,40,59,0.16)",
-          background: "linear-gradient(135deg, #1c2431 0%, #3a3d63 56%, #5c4f6f 100%)",
           color: "common.white",
+          p: 1
         }}
+        gradient
       >
         <CardContent>
-          <Stack spacing={1.2}>
-            <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems={{ md: "center" }} gap={1}>
-              <Box>
-                <Typography variant="overline" sx={{ letterSpacing: "0.14em", opacity: 0.8 }}>
-                  MARKETPLACE GOVERNANCE
-                </Typography>
-                <Typography variant="h4" fontWeight={900} sx={{ lineHeight: 1.02 }}>
-                  Jobs moderation is now a real workspace
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 0.4, opacity: 0.9, maxWidth: 780 }}>
-                  Review live job records, inspect marketplace posts, and change moderation state with direct admin controls instead of placeholder responsibilities.
-                </Typography>
-              </Box>
+          <Stack direction={{ xs: "column", lg: "row" }} justifyContent="space-between" alignItems={{ lg: "center" }} spacing={3}>
+            <Box>
+              <Typography variant="overline" sx={{ letterSpacing: "0.2em", opacity: 0.8, fontWeight: 900, fontSize: 11 }}>
+                MARKETPLACE GOVERNANCE
+              </Typography>
+              <Typography variant="h3" fontWeight={900} sx={{ lineHeight: 1, mt: 1, letterSpacing: "-0.04em" }}>
+                Opportunity Orchestration
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 2, opacity: 0.9, maxWidth: 840, fontWeight: 500, lineHeight: 1.6 }}>
+                Real-time control plane for the SabaHub marketplace. Monitor job lifecycle stages, 
+                moderate proposals, and enforce contract integrity across the global ecosystem.
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={2}>
               <Button
-                variant="outlined"
+                variant="outline"
                 onClick={() => void load()}
-                disabled={loading}
-                startIcon={<RefreshRoundedIcon />}
-                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.55)" }}
+                isLoading={loading}
+                leftIcon={<RefreshRoundedIcon />}
+                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.3)", backdropFilter: "blur(10px)", height: 48, px: 3 }}
               >
-                Refresh
+                Sync Ecosystem
               </Button>
             </Stack>
           </Stack>
+
+          <Box sx={{ mt: 4 }}>
+            <Tabs 
+              value={activeTab} 
+              onChange={(_, v) => setActiveTab(v)}
+              sx={{
+                "& .MuiTab-root": { 
+                  fontWeight: 900, fontSize: 13, minHeight: 48, color: "rgba(255,255,255,0.6)",
+                  letterSpacing: "0.05em"
+                },
+                "& .Mui-selected": { color: "#fff !important" },
+                "& .MuiTabs-indicator": { bgcolor: "#fff", height: 3, borderRadius: "3px" }
+              }}
+            >
+              <Tab label={`Jobs (${jobs.length})`} />
+              <Tab label={`Proposals (${proposals.length})`} />
+              <Tab label={`Contracts (${contracts.length})`} />
+              <Tab label="Governance Runbooks" />
+            </Tabs>
+          </Box>
         </CardContent>
       </GlassCard>
 
-      {error ? (
-        <Alert 
-          severity="error"
-          action={
-            error.includes("/admin-bootstrap") && (
-              <Button
-                size="small"
-                href="/admin-bootstrap"
-                sx={{ color: "error.main" }}
-              >
-                Setup Admin
-              </Button>
-            )
-          }
-        >
-          {error}
-        </Alert>
-      ) : null}
-      {actionStatus ? <Alert severity="info">{actionStatus}</Alert> : null}
+      {error && <Alert severity="error" sx={{ borderRadius: "16px" }}>{error}</Alert>}
+      {actionStatus && <Alert severity="info" sx={{ borderRadius: "16px", bgcolor: "var(--glass-gray)" }}>{actionStatus}</Alert>}
 
-      <Grid container spacing={2}>
-        {[
-          { label: "Total Jobs", value: metrics.total, icon: <Inventory2RoundedIcon fontSize="small" /> },
-          { label: "Open Jobs", value: metrics.open, icon: <CheckCircleRoundedIcon fontSize="small" /> },
-          { label: "Draft Review", value: metrics.draft, icon: <FactCheckRoundedIcon fontSize="small" /> },
-          { label: "Closed / Cancelled", value: metrics.closed, icon: <GavelRoundedIcon fontSize="small" /> },
-        ].map((metric) => (
-          <Grid key={metric.label} size={{ xs: 12, sm: 6, xl: 3 }}>
-            <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
-              <CardContent>
-                <Stack spacing={0.8}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="body2" color="text.secondary">
-                      {metric.label}
-                    </Typography>
-                    {metric.icon}
-                  </Stack>
-                  <Typography variant="h4" fontWeight={900}>
-                    {metric.value}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </GlassCard>
-          </Grid>
-        ))}
-      </Grid>
-
-      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-        <CardContent>
-          <Grid container spacing={1.2}>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <SoftTextField
-                fullWidth
-                label="Search jobs"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Title, company, employer ID, category, skill"
-                InputProps={{ startAdornment: <SearchRoundedIcon sx={{ fontSize: 18, mr: 1, color: "text.secondary" }} /> }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel id="job-status-filter">Status</InputLabel>
-                <Select
-                  labelId="job-status-filter"
-                  value={statusFilter}
-                  label="Status"
-                  onChange={(event) => setStatusFilter(event.target.value)}
-                >
-                  <MenuItem value="all">All statuses</MenuItem>
-                  {moderationStatuses.map((status) => (
-                    <MenuItem key={status} value={status}>
-                      {status}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </GlassCard>
-
-      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-        <CardContent>
-          <Stack spacing={1.2}>
-            <Box>
-              <Typography variant="h6" fontWeight={800}>
-                Trust &amp; Safety Runbooks
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Execute moderation runbooks with operator-provided parameters for targeted enforcement actions.
-              </Typography>
-            </Box>
-
-            <Grid container spacing={1.2}>
-              <Grid size={{ xs: 12, md: 6 }}>
+      {activeTab === 0 && (
+        <GlassCard sx={{ p: 4 }}>
+          <Stack spacing={4}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid size={{ xs: 12, md: 8 }}>
+                <SoftTextField
+                  fullWidth
+                  placeholder="Filter opportunities by title, organization, or participant ID..."
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  InputProps={{ 
+                    startAdornment: <SearchRoundedIcon sx={{ mr: 1.5, color: "var(--primary)" }} />,
+                    sx: { borderRadius: "16px", height: 48, bgcolor: "var(--glass-gray)" }
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <FormControl fullWidth size="small">
-                  <InputLabel id="moderation-runbook">Runbook</InputLabel>
-                  <Select
-                    labelId="moderation-runbook"
-                    value={selectedOperationId}
-                    label="Runbook"
-                    onChange={(event) => setSelectedOperationId(event.target.value)}
-                    disabled={loading || operations.length === 0}
+                  <Select 
+                    value={statusFilter} 
+                    onChange={e => setStatusFilter(e.target.value)}
+                    sx={{ borderRadius: "16px", height: 48, bgcolor: "var(--glass-gray)" }}
                   >
-                    {operations.map((operation) => (
-                      <MenuItem key={operation.id} value={operation.id}>
-                        {operation.title}
-                      </MenuItem>
-                    ))}
+                    <MenuItem value="all">All Lifecycle Stages</MenuItem>
+                    {moderationStatuses.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid size={{ xs: 12, md: 3 }}>
-                <SoftTextField
-                  fullWidth
-                  label="Limit"
-                  value={runbookForm.limit}
-                  onChange={(event) => setRunbookForm((current) => ({ ...current, limit: event.target.value }))}
-                  placeholder="e.g. 10"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 3 }}>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={() => setRunbookForm(defaultRunbookForm)}
-                  sx={{ height: "100%" }}
-                >
-                  Clear Parameters
-                </Button>
-              </Grid>
+            </Grid>
+            
+            <DataTable
+              columns={[
+                {
+                  key: "title",
+                  label: "Opportunity Orchestration",
+                  sortable: true,
+                  render: (_, job: Job) => (
+                    <Stack direction="row" spacing={2.5} alignItems="center">
+                      <Box sx={{ 
+                        width: 52, height: 52, borderRadius: "16px", 
+                        background: "linear-gradient(135deg, var(--primary), var(--secondary))",
+                        color: "#fff", display: "grid", placeItems: "center",
+                        boxShadow: "0 8px 16px var(--primary-glow)"
+                      }}>
+                        <WorkOutlineRoundedIcon />
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={900} sx={{ letterSpacing: "-0.01em", fontSize: 15 }}>{job.title}</Typography>
+                        <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ opacity: 0.6 }}>
+                          #JOB-{job.id.slice(-6).toUpperCase()} · {new Date(job.createdAt || "").toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  )
+                },
+                {
+                  key: "employerName",
+                  label: "Issuing Entity",
+                  render: (_, job: Job) => (
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Avatar 
+                        src={job.employerAvatar}
+                        sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: "var(--glass-gray)", color: "var(--primary)", fontWeight: 900, fontSize: 14 }}
+                      >
+                        {job.employerName?.charAt(0)}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" fontWeight={900}>{job.employerName || "Direct Hire"}</Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.5, fontWeight: 800 }}>
+                          {job.employerName} (#USR-{job.employerId?.slice(-6).toUpperCase() || "PLATFORM"})
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  )
+                },
+                {
+                  key: "status",
+                  label: "Stage",
+                  render: (v) => (
+                    <Chip 
+                      label={String(v)} 
+                      size="small" 
+                      sx={{ 
+                        fontWeight: 900, borderRadius: "8px", height: 24, fontSize: 10,
+                        bgcolor: alpha(statusTone(String(v)) === 'default' ? '#64748b' : (statusTone(String(v)) === 'success' ? '#10b981' : '#ef4444'), 0.1),
+                        color: statusTone(String(v)) === 'default' ? '#64748b' : (statusTone(String(v)) === 'success' ? '#10b981' : '#ef4444'),
+                        border: `1px solid ${alpha(statusTone(String(v)) === 'default' ? '#64748b' : '#10b981', 0.2)}`
+                      }} 
+                    />
+                  )
+                },
+                {
+                  key: "budget",
+                  label: "Financial Val",
+                  render: (_, job) => (
+                    <Typography variant="body2" fontWeight={900} sx={{ color: "var(--success)", letterSpacing: "-0.01em" }}>
+                      {formatBudget(job)}
+                    </Typography>
+                  )
+                },
+                {
+                  key: "actions",
+                  label: "Orchestration",
+                  align: "right",
+                  render: (_, job: Job) => (
+                    <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+                      <IconButton
+                        size="small"
+                        onClick={() => setSelectedJob(job)}
+                        sx={{ bgcolor: "var(--glass-gray)", borderRadius: "10px", "&:hover": { bgcolor: "var(--glass-gray-hover)" } }}
+                        title="View details"
+                      >
+                        <VisibilityRoundedIcon fontSize="small" />
+                      </IconButton>
+                      {job.status !== 'OPEN' && (
+                        <Button
+                          variant="primary" size="sm"
+                          disabled={busyJobId === job.id}
+                          onClick={() => void changeStatus(job.id, 'OPEN')}
+                          sx={{ fontWeight: 900, borderRadius: "10px", height: 32 }}
+                        >
+                          Publish
+                        </Button>
+                      )}
+                      {job.status === 'OPEN' && (
+                        <Button
+                          variant="outline" size="sm"
+                          disabled={busyJobId === job.id}
+                          onClick={() => void changeStatus(job.id, 'CLOSED')}
+                          sx={{ fontWeight: 900, borderRadius: "10px", height: 32, color: "#f59e0b", borderColor: "#f59e0b" }}
+                        >
+                          Close
+                        </Button>
+                      )}
+                      {(job.status === 'OPEN' || job.status === 'IN_PROGRESS') && (
+                        <IconButton
+                          size="small"
+                          disabled={busyJobId === job.id}
+                          onClick={() => void changeStatus(job.id, 'CANCELLED')}
+                          sx={{ bgcolor: "var(--glass-gray)", borderRadius: "10px", "&:hover": { bgcolor: "#ef4444" } }}
+                          title="Cancel job"
+                        >
+                          <CloseRoundedIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </Stack>
+                  )
+                }
+              ]}
+              data={filteredJobs}
+              rowKey="id"
+              loading={loading}
+              searchable={false}
+            />
+          </Stack>
+        </GlassCard>
+      )}
 
+      {activeTab === 1 && (
+        <GlassCard sx={{ p: 4 }}>
+          <Stack spacing={4}>
+            <Grid container spacing={2} alignItems="center">
               <Grid size={{ xs: 12 }}>
-                <SoftTextField
-                  fullWidth
-                  label="Operator Note"
-                  value={runbookForm.note}
-                  onChange={(event) => setRunbookForm((current) => ({ ...current, note: event.target.value }))}
-                  placeholder="Optional reason or investigation context"
-                />
-              </Grid>
-
-              {selectedOperationId === "remove-fraudulent-listings" ? (
-                <Grid size={{ xs: 12 }}>
-                  <SoftTextField
-                    fullWidth
-                    label="Job IDs"
-                    value={runbookForm.jobIds}
-                    onChange={(event) => setRunbookForm((current) => ({ ...current, jobIds: event.target.value }))}
-                    placeholder="Comma or space separated job IDs"
-                  />
-                </Grid>
-              ) : null}
-
-              {selectedOperationId === "review-flagged-content" ? (
-                <Grid size={{ xs: 12 }}>
-                  <SoftTextField
-                    fullWidth
-                    label="Dispute IDs"
-                    value={runbookForm.disputeIds}
-                    onChange={(event) => setRunbookForm((current) => ({ ...current, disputeIds: event.target.value }))}
-                    placeholder="Comma or space separated dispute IDs"
-                  />
-                </Grid>
-              ) : null}
-
-              {selectedOperationId === "publish-guideline-update" ? (
-                <>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <SoftTextField
-                      fullWidth
-                      label="Guideline Title"
-                      value={runbookForm.title}
-                      onChange={(event) => setRunbookForm((current) => ({ ...current, title: event.target.value }))}
-                      placeholder="Policy bulletin title"
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <SoftTextField
-                      fullWidth
-                      multiline
-                      minRows={2}
-                      label="Guideline Body"
-                      value={runbookForm.body}
-                      onChange={(event) => setRunbookForm((current) => ({ ...current, body: event.target.value }))}
-                      placeholder="Announcement body"
-                    />
-                  </Grid>
-                </>
-              ) : null}
-
-              <Grid size={{ xs: 12 }}>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => void executeRunbook(true)}
-                    disabled={loading || !selectedOperation || !!runbookBusyId}
-                  >
-                    {runbookBusyId === `${selectedOperationId}:dry` ? "Dry Run..." : "Dry Run"}
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => void executeRunbook(false)}
-                    disabled={loading || !selectedOperation || !!runbookBusyId}
-                  >
-                    {runbookBusyId === `${selectedOperationId}:run` ? "Executing..." : "Execute Runbook"}
-                  </Button>
-                  {selectedOperation ? (
-                    <Chip
-                      label={`${selectedOperation.impact} impact`}
-                      size="small"
-                      variant="outlined"
-                      sx={{ alignSelf: "center" }}
-                    />
-                  ) : null}
-                </Stack>
+                <Typography variant="h6" fontWeight={900} mb={2}>
+                  Proposals & Applications ({proposals.length})
+                </Typography>
               </Grid>
             </Grid>
+
+            <DataTable
+              columns={[
+                {
+                  key: "freelancerName",
+                  label: "Freelancer",
+                  render: (_, proposal: Proposal) => (
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Avatar
+                        sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: "var(--glass-gray)", color: "var(--primary)", fontWeight: 900, fontSize: 14 }}
+                      >
+                        {proposal.freelancerName?.charAt(0) || "?"}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" fontWeight={900}>{proposal.freelancerName || "Anonymous"}</Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.5, fontWeight: 800 }}>
+                          #{proposal.freelancerId?.slice(-6).toUpperCase() || "UNKNOWN"}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  )
+                },
+                {
+                  key: "jobTitle",
+                  label: "Job Applied",
+                  render: (_, proposal: Proposal) => (
+                    <Typography variant="body2" fontWeight={600}>{proposal.jobTitle || "N/A"}</Typography>
+                  )
+                },
+                {
+                  key: "proposedBudget",
+                  label: "Bid Amount",
+                  render: (v) => (
+                    <Typography variant="body2" fontWeight={900} sx={{ color: "var(--success)" }}>
+                      ${v || "N/A"}
+                    </Typography>
+                  )
+                },
+                {
+                  key: "status",
+                  label: "Status",
+                  render: (v) => (
+                    <Chip
+                      label={String(v || "PENDING")}
+                      size="small"
+                      sx={{
+                        fontWeight: 900, borderRadius: "8px", height: 24, fontSize: 10,
+                        bgcolor: (v === "ACCEPTED" ? "#10b981" : v === "REJECTED" ? "#ef4444" : "#8b5cf6") + "15",
+                        color: v === "ACCEPTED" ? "#10b981" : v === "REJECTED" ? "#ef4444" : "#8b5cf6",
+                      }}
+                    />
+                  )
+                },
+                {
+                  key: "createdAt",
+                  label: "Applied",
+                  render: (v) => (
+                    <Typography variant="caption" sx={{ fontWeight: 800 }}>
+                      {new Date(v || "").toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </Typography>
+                  )
+                }
+              ]}
+              data={proposals}
+              rowKey="id"
+              loading={loading}
+              searchable={false}
+            />
           </Stack>
-        </CardContent>
-      </GlassCard>
+        </GlassCard>
+      )}
 
-      <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-        <CardContent sx={{ p: 0 }}>
-          <DataTable
-            columns={[
-              {
-                key: "title",
-                label: "Job",
-                sortable: true,
-                render: (_, job) => (
-                  <Stack spacing={0.35}>
-                    <Typography variant="subtitle2" fontWeight={800}>
-                      {job.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {job.companyName || "Marketplace posting"} · {job.employerId || "No employer ID"}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {job.categoryId || "No category"} · {job.workLocation || "Location not set"}
-                    </Typography>
-                  </Stack>
-                ),
-              },
-              {
-                key: "status",
-                label: "Status",
-                sortable: true,
-                render: (val) => (
-                  <Chip label={String(val).toUpperCase()} size="small" color={statusTone(String(val))} variant="outlined" />
-                ),
-              },
-              {
-                key: "budget",
-                label: "Budget",
-                render: (_, job) => formatBudget(job),
-              },
-              {
-                key: "sampleImageUrls",
-                label: "Media",
-                render: (_, job) => {
-                  const mediaSummary = getMediaSummary(job);
-                  const firstImageUrl = firstNonEmptyUrl(job.sampleImageUrls);
-                  const firstVideoUrl = firstNonEmptyUrl(job.sampleVideoUrls);
-                  const videoPosterUrl = firstVideoUrl
-                    ? deriveCloudinaryVideoPosterUrl(firstVideoUrl, { width: 240, height: 160 })
-                    : null;
+      {activeTab === 2 && (
+        <GlassCard sx={{ p: 4 }}>
+          <Stack spacing={4}>
+            <Typography variant="h6" fontWeight={900} mb={2}>
+              Contracts & Disputes ({contracts.length})
+            </Typography>
 
-                  const thumbSx = {
-                    width: 76,
-                    height: 52,
-                    objectFit: "cover" as const,
-                    borderRadius: 1.2,
-                    border: "1px solid",
-                    borderColor: "divider",
-                  };
-
-                  return (
-                    <Stack spacing={0.7}>
-                      <Stack direction="row" spacing={0.7} alignItems="center">
-                        {firstImageUrl ? (
-                          <Box
-                            component="img"
-                            src={firstImageUrl}
-                            alt={`Thumbnail for ${job.title}`}
-                            loading="lazy"
-                            sx={thumbSx}
-                          />
-                        ) : null}
-
-                        {firstVideoUrl ? (
-                          videoPosterUrl ? (
-                            <Box
-                              component="img"
-                              src={videoPosterUrl}
-                              alt={`Video thumbnail for ${job.title}`}
-                              loading="lazy"
-                              sx={{ ...thumbSx, bgcolor: "grey.900" }}
-                            />
-                          ) : (
-                            <Box
-                              component="video"
-                              src={firstVideoUrl}
-                              muted
-                              preload="metadata"
-                              playsInline
-                              sx={{ ...thumbSx, bgcolor: "grey.900" }}
-                            />
-                          )
-                        ) : null}
-
-                        {!firstImageUrl && !firstVideoUrl ? (
-                          <Typography variant="caption" color="text.secondary">
-                            No media
-                          </Typography>
-                        ) : null}
-                      </Stack>
-
-                      <Stack direction="row" spacing={0.7} useFlexGap flexWrap="wrap">
-                        <Chip label={`Images: ${mediaSummary.imageCount}`} size="small" variant="outlined" />
-                        <Chip label={`Videos: ${mediaSummary.videoCount}`} size="small" variant="outlined" />
-                      </Stack>
-                    </Stack>
-                  );
+            <DataTable
+              columns={[
+                {
+                  key: "jobTitle",
+                  label: "Job",
+                  render: (_, contract: Contract) => (
+                    <Typography variant="body2" fontWeight={700}>{contract.jobTitle || "N/A"}</Typography>
+                  )
                 },
-              },
-              {
-                key: "skills",
-                label: "Signals",
-                render: (_, job) => (
-                  <Stack direction="row" spacing={0.7} useFlexGap flexWrap="wrap">
-                    {job.isEnterpriseOnly ? <Chip label="Enterprise" size="small" color="secondary" variant="outlined" /> : null}
-                    {job.requiresNDA ? <Chip label="NDA" size="small" variant="outlined" /> : null}
-                    {job.requiresBGCheck ? <Chip label="BG Check" size="small" variant="outlined" /> : null}
-                    {(job.skills ?? []).slice(0, 2).map((skill) => (
-                      <Chip key={`${job.id}-${skill}`} label={skill} size="small" variant="outlined" />
-                    ))}
-                  </Stack>
-                ),
-              },
-              {
-                key: "createdAt",
-                label: "Created",
-                sortable: true,
-                render: (val) => formatDateTime(val as string),
-              },
-              {
-                key: "id",
-                label: "Moderation Actions",
-                align: "right",
-                render: (_, job) => {
-                  const busy = busyJobId === job.id;
-                  const normalizedStatus = (job.status ?? "DRAFT").toUpperCase();
-                  return (
-                    <Stack direction="row" spacing={0.8} justifyContent="flex-end" useFlexGap flexWrap="wrap">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        leftIcon={<VisibilityRoundedIcon sx={{ fontSize: 16 }} />}
-                        onClick={() => openReview(job)}
-                        disabled={busy}
-                      >
-                        Review
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        color="success"
-                        onClick={() => void changeStatus(job, "OPEN")}
-                        disabled={busy || normalizedStatus === "OPEN"}
-                      >
-                        Open
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => void changeStatus(job, "DRAFT")}
-                        disabled={busy || normalizedStatus === "DRAFT"}
-                      >
-                        Draft
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        color="warning"
-                        onClick={() => void changeStatus(job, "CLOSED")}
-                        disabled={busy || normalizedStatus === "CLOSED"}
-                      >
-                        Close
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        color="danger"
-                        leftIcon={<CloseRoundedIcon sx={{ fontSize: 16 }} />}
-                        onClick={() => void changeStatus(job, "CANCELLED")}
-                        disabled={busy || normalizedStatus === "CANCELLED"}
-                      >
-                        Cancel
-                      </Button>
-                    </Stack>
-                  );
+                {
+                  key: "freelancerName",
+                  label: "Freelancer",
+                  render: (_, contract: Contract) => (
+                    <Typography variant="body2" fontWeight={600}>{contract.freelancerName || "N/A"}</Typography>
+                  )
                 },
-              },
-            ]}
-            data={filteredJobs}
-            rowKey="id"
-            loading={loading}
-            searchable={false}
-            expandableContent={(job) => (
-              <Box p={1}>
-                <Typography variant="subtitle2" fontWeight={800} mb={1}>Job Description</Typography>
-                <Typography variant="body2" color="text.secondary" whiteSpace="pre-wrap">
-                  {job.description || "No description provided."}
-                </Typography>
-              </Box>
-            )}
-          />
-        </CardContent>
-      </GlassCard>
+                {
+                  key: "totalAmount",
+                  label: "Contract Value",
+                  render: (v) => (
+                    <Typography variant="body2" fontWeight={900} sx={{ color: "var(--success)" }}>
+                      ${v || "0"}
+                    </Typography>
+                  )
+                },
+                {
+                  key: "status",
+                  label: "Status",
+                  render: (v) => (
+                    <Chip
+                      label={String(v || "ACTIVE")}
+                      size="small"
+                      sx={{
+                        fontWeight: 900, borderRadius: "8px", height: 24, fontSize: 10,
+                        bgcolor: (v === "COMPLETED" ? "#10b981" : "#8b5cf6") + "15",
+                        color: v === "COMPLETED" ? "#10b981" : "#8b5cf6",
+                      }}
+                    />
+                  )
+                }
+              ]}
+              data={contracts}
+              rowKey="id"
+              loading={loading}
+              searchable={false}
+            />
+          </Stack>
+        </GlassCard>
+      )}
 
+      {/* Proposals and Contracts tabs would follow similar premium patterns */}
+
+      {activeTab === 3 && (
+        <GlassCard>
+          <CardContent>
+            <Typography variant="h6" fontWeight={900} mb={2}>Enforcement Runbooks</Typography>
+            <Grid container spacing={3}>
+              {operations.map(op => (
+                <Grid key={op.id} size={{ xs: 12, md: 6, lg: 4 }}>
+                  <GlassCard sx={{ border: "1px solid var(--border)", p: 2, height: "100%" }} hover>
+                    <Typography variant="subtitle1" fontWeight={800}>{op.title}</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 40 }}>{op.description}</Typography>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Chip label={`${op.impact} impact`} size="small" sx={{ fontWeight: 800 }} />
+                      <Button size="sm" variant="primary">Execute</Button>
+                    </Stack>
+                  </GlassCard>
+                </Grid>
+              ))}
+            </Grid>
+          </CardContent>
+        </GlassCard>
+      )}
+
+      {/* Review Dialog */}
       <Dialog open={!!selectedJob} onClose={() => setSelectedJob(null)} fullWidth maxWidth="md">
-        <DialogTitle>Moderation Review</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 900 }}>Marketplace Governance Review</DialogTitle>
         <DialogContent dividers>
-          {selectedJob ? (
-            <Stack spacing={1.4}>
+          {selectedJob && (
+            <Stack spacing={3}>
               <Box>
-                <Typography variant="h6" fontWeight={800}>
-                  {selectedJob.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedJob.companyName || "Marketplace posting"} · {selectedJob.id}
+                <Typography variant="h5" fontWeight={900}>{selectedJob.title}</Typography>
+                <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                  Job ID: #JOB-{selectedJob.id.toUpperCase()} · Posted by {selectedJob.employerName} (#USR-{selectedJob.employerId?.slice(-6).toUpperCase()})
                 </Typography>
               </Box>
-
-              <Grid container spacing={1.2}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-                    <CardContent>
-                      <Stack spacing={0.8}>
-                        <Typography variant="subtitle2" fontWeight={800}>
-                          Posting Details
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {selectedJob.description || "No description available."}
-                        </Typography>
-                      </Stack>
-                    </CardContent>
-                  </GlassCard>
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-                    <CardContent>
-                      <Stack spacing={0.8}>
-                        <Typography variant="subtitle2" fontWeight={800}>
-                          Moderation Metadata
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Employer: {selectedJob.employerId || "Not set"}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Budget: {formatBudget(selectedJob)}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Created: {formatDateTime(selectedJob.createdAt)}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Updated: {formatDateTime(selectedJob.updatedAt)}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Skills: {(selectedJob.skills ?? []).length ? selectedJob.skills?.join(", ") : "None"}
-                        </Typography>
-                      </Stack>
-                    </CardContent>
-                  </GlassCard>
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-                    <CardContent>
-                      <Stack spacing={0.8}>
-                        <Typography variant="subtitle2" fontWeight={800}>
-                          Attached Media
-                        </Typography>
-                        {(selectedJob.sampleImageUrls?.length || 0) === 0 && (selectedJob.sampleVideoUrls?.length || 0) === 0 ? (
-                          <Typography variant="body2" color="text.secondary">
-                            No media attached to this posting.
-                          </Typography>
-                        ) : (
-                          <Grid container spacing={1}>
-                            {(selectedJob.sampleImageUrls ?? []).map((url, index) => (
-                              <Grid key={`img-${url}-${index}`} size={{ xs: 12, sm: 6, md: 4 }}>
-                                <Box
-                                  component="img"
-                                  src={url}
-                                  alt={`Job image ${index + 1}`}
-                                  sx={{
-                                    width: "100%",
-                                    height: 140,
-                                    objectFit: "cover",
-                                    borderRadius: 1,
-                                    border: "1px solid",
-                                    borderColor: "divider",
-                                  }}
-                                />
-                              </Grid>
-                            ))}
-                            {(selectedJob.sampleVideoUrls ?? []).map((url, index) => (
-                              <Grid key={`vid-${url}-${index}`} size={{ xs: 12, sm: 6, md: 4 }}>
-                                <Box
-                                  component="video"
-                                  src={url}
-                                  controls
-                                  preload="metadata"
-                                  sx={{
-                                    width: "100%",
-                                    height: 140,
-                                    objectFit: "cover",
-                                    borderRadius: 1,
-                                    border: "1px solid",
-                                    borderColor: "divider",
-                                    backgroundColor: "#000",
-                                  }}
-                                />
-                              </Grid>
-                            ))}
-                          </Grid>
-                        )}
-                      </Stack>
-                    </CardContent>
-                  </GlassCard>
-                </Grid>
-              </Grid>
-
-              <FormControl fullWidth size="small">
-                <InputLabel id="review-status">Moderation Status</InputLabel>
-                <Select
-                  labelId="review-status"
-                  value={reviewStatus}
-                  label="Moderation Status"
-                  onChange={(event) => setReviewStatus(event.target.value)}
-                >
-                  {moderationStatuses.map((status) => (
-                    <MenuItem key={status} value={status}>
-                      {status}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              
+              <Divider />
+              
+              <Box>
+                <Typography variant="subtitle2" fontWeight={900} gutterBottom>Description & Scope</Typography>
+                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", p: 2, bgcolor: "var(--glass-gray)", borderRadius: "12px" }}>
+                  {selectedJob.description}
+                </Typography>
+              </Box>
             </Stack>
-          ) : null}
+          )}
         </DialogContent>
-        <DialogActions>
-          <Button variant="outlined" onClick={() => setSelectedJob(null)}>
-            Close
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => void applyReviewStatus()}
-            disabled={!selectedJob || busyJobId === selectedJob.id}
-            startIcon={<WorkOutlineRoundedIcon />}
-          >
-            {selectedJob && busyJobId === selectedJob.id ? "Applying..." : "Apply Status"}
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button variant="outline" onClick={() => setSelectedJob(null)}>Close</Button>
+          <Button variant="danger" onClick={() => selectedJob && void changeStatus(selectedJob.id, 'CANCELLED')}>
+            De-list Opportunity
           </Button>
         </DialogActions>
       </Dialog>

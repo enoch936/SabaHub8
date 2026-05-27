@@ -106,28 +106,29 @@ function AdminSidebarItem({
         href={href}
         selected={selected}
         onClick={onClick}
-        className="motion-card body-text"
+        className="glass-gray-hover"
         sx={{
-          minHeight: 44,
-          px: collapsed ? 1.5 : 2,
-          py: 1,
-          mb: 0.5,
-          borderRadius: "14px",
+          minHeight: 52,
+          px: collapsed ? 1.5 : 2.5,
+          py: 1.5,
+          mb: 1,
+          borderRadius: "18px",
           justifyContent: collapsed ? "center" : "flex-start",
           color: selected ? selectionColor : "text.primary",
-          bgcolor: selected ? alpha(selectionColor, isDark ? 0.16 : 0.08) : "transparent",
+          bgcolor: selected ? alpha(selectionColor, isDark ? 0.15 : 0.08) : "transparent",
           border: selected ? `1px solid ${alpha(selectionColor, 0.3)}` : "1px solid transparent",
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          transition: "all 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
           "&:hover": { 
-            bgcolor: alpha(selectionColor, isDark ? 0.12 : 0.04),
-            transform: collapsed ? "scale(1.1)" : "translateX(4px)",
+            bgcolor: "var(--glass-gray-hover)",
+            transform: collapsed ? "scale(1.1)" : "translateX(8px)",
+            "& .MuiListItemIcon-root": { color: selectionColor, transform: "scale(1.1)" }
           },
         }}
       >
         <ListItemIcon sx={{ 
-          minWidth: collapsed ? 0 : 34, 
-          color: selected ? selectionColor : alpha(theme.palette.text.primary, 0.6),
-          transition: "all 0.3s" 
+          minWidth: collapsed ? 0 : 40, 
+          color: selected ? selectionColor : alpha(theme.palette.text.primary, 0.45),
+          transition: "all 0.4s cubic-bezier(0.22, 1, 0.36, 1)" 
         }}>
           {icon}
         </ListItemIcon>
@@ -136,10 +137,11 @@ function AdminSidebarItem({
           <ListItemText
             primary={label}
             primaryTypographyProps={{
-              fontSize: 13.5,
-              fontWeight: selected ? 700 : 500,
+              fontSize: 15,
+              fontWeight: selected ? 800 : 600,
               color: selected ? selectionColor : "text.primary",
-              noWrap: true
+              noWrap: true,
+              letterSpacing: "-0.02em"
             }}
             sx={{ my: 0 }}
           />
@@ -148,16 +150,17 @@ function AdminSidebarItem({
         {badgeValue > 0 && !collapsed && (
           <Box
             sx={{
-              minWidth: 20,
-              height: 20,
-              px: 0.7,
-              borderRadius: "8px",
+              minWidth: 24,
+              height: 24,
+              px: 1,
+              borderRadius: "12px",
               display: "grid",
               placeItems: "center",
               bgcolor: selected ? selectionColor : alpha(theme.palette.error.main, 0.1),
               color: selected ? "#fff" : theme.palette.error.main,
-              fontSize: 10,
-              fontWeight: 800,
+              fontSize: 11,
+              fontWeight: 900,
+              boxShadow: selected ? `0 8px 16px ${alpha(selectionColor, 0.4)}` : "none"
             }}
           >
             {badgeValue > 99 ? "99+" : badgeValue}
@@ -186,29 +189,30 @@ export default function AdminSidebar({
       display: "flex", 
       flexDirection: "column", 
       height: "100%",
-      transition: "width 0.3s ease",
+      bgcolor: "transparent"
     }}>
       {/* Header: Logo & Workspace */}
-      <Box sx={{ p: 2, mb: 1 }}>
-        <Stack direction="row" alignItems="center" spacing={collapsed ? 0 : 1.5} justifyContent={collapsed ? "center" : "flex-start"}>
+      <Box sx={{ p: 3, mb: 2 }}>
+        <Stack direction="row" alignItems="center" spacing={collapsed ? 0 : 2} justifyContent={collapsed ? "center" : "flex-start"}>
           <Box sx={{ 
-            width: 36, 
-            height: 36, 
-            borderRadius: "10px", 
-            background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+            width: 44, 
+            height: 44, 
+            borderRadius: "14px", 
+            background: "linear-gradient(135deg, #4F46E5, #7C3AED)",
             display: "grid",
             placeItems: "center",
             color: "#fff",
             fontWeight: 900,
-            fontSize: 20,
-            flexShrink: 0
+            fontSize: 24,
+            flexShrink: 0,
+            boxShadow: "0 8px 20px rgba(79, 70, 229, 0.3)"
           }}>
             S
           </Box>
           {!collapsed && (
             <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle2" fontWeight={800} noWrap>SabaHub Admin</Typography>
-              <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block", opacity: 0.7 }}>Enterprise v1.0</Typography>
+              <Typography variant="h6" fontWeight={900} noWrap sx={{ letterSpacing: "-0.04em" }}>SabaHub</Typography>
+              <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block", opacity: 0.6, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: 10 }}>Enterprise OS</Typography>
             </Box>
           )}
         </Stack>
@@ -217,22 +221,26 @@ export default function AdminSidebar({
           <Box
             onClick={(e) => setWorkspaceAnchor(e.currentTarget)}
             sx={{ 
-              mt: 2.5, 
-              p: 1.25, 
-              borderRadius: "12px", 
-              bgcolor: alpha(theme.palette.text.primary, 0.04),
-              border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+              mt: 4, 
+              p: 1.5, 
+              borderRadius: "16px", 
+              bgcolor: "var(--glass-gray)",
+              border: `1px solid var(--border)`,
               cursor: "pointer",
-              transition: "all 0.2s",
-              "&:hover": { bgcolor: alpha(theme.palette.text.primary, 0.07) }
+              transition: "all 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
+              "&:hover": { 
+                bgcolor: "var(--glass-gray-hover)",
+                transform: "translateY(-2px)",
+                borderColor: alpha(theme.palette.primary.main, 0.2)
+              }
             }}
           >
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#10B981" }} />
-                <Typography variant="caption" fontWeight={700}>Main Workspace</Typography>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Box className="pulse-glow" sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: "#10B981" }} />
+                <Typography variant="caption" fontWeight={800} sx={{ letterSpacing: "0.02em" }}>Operational HQ</Typography>
               </Stack>
-              <UnfoldMoreRoundedIcon sx={{ fontSize: 16, opacity: 0.5 }} />
+              <UnfoldMoreRoundedIcon sx={{ fontSize: 18, opacity: 0.4 }} />
             </Stack>
           </Box>
         )}
@@ -240,24 +248,25 @@ export default function AdminSidebar({
 
       {/* Sidebar Search */}
       {!collapsed && (
-        <Box sx={{ px: 2, mb: 2 }}>
+        <Box sx={{ px: 3, mb: 3 }}>
           <TextField
             fullWidth
-            placeholder="Search..."
+            placeholder="Search Admin..."
             size="small"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchRoundedIcon sx={{ fontSize: 18, opacity: 0.5 }} />
+                  <SearchRoundedIcon sx={{ fontSize: 20, opacity: 0.4 }} />
                 </InputAdornment>
               ),
             }}
             sx={{ 
               "& .MuiOutlinedInput-root": { 
-                borderRadius: "12px",
-                bgcolor: alpha(theme.palette.text.primary, 0.03),
+                borderRadius: "14px",
+                bgcolor: "var(--glass-gray)",
                 "& fieldset": { borderColor: "transparent" },
-                "&:hover fieldset": { borderColor: alpha(theme.palette.divider, 0.1) },
+                "&:hover": { bgcolor: "var(--glass-gray-hover)" },
+                "&.Mui-focused": { bgcolor: "var(--surface)" },
               }
             }}
           />
@@ -268,12 +277,12 @@ export default function AdminSidebar({
       <Box sx={{ 
         flex: 1, 
         overflowY: "auto", 
-        px: 1.5,
+        px: 2,
         "&::-webkit-scrollbar": { width: 4 },
-        "&::-webkit-scrollbar-thumb": { borderRadius: 10, bgcolor: alpha(theme.palette.text.primary, 0.05) }
+        "&::-webkit-scrollbar-thumb": { borderRadius: 10, bgcolor: "var(--glass-gray-hover)" }
       }}>
-        <Box sx={{ mb: 3 }}>
-          {!collapsed && <Typography variant="caption" sx={{ px: 2, mb: 1, display: "block", fontWeight: 800, opacity: 0.4, textTransform: "uppercase", letterSpacing: "0.1em" }}>Operations</Typography>}
+        <Box sx={{ mb: 4 }}>
+          {!collapsed && <Typography variant="caption" sx={{ px: 2, mb: 1.5, display: "block", fontWeight: 900, opacity: 0.4, textTransform: "uppercase", letterSpacing: "0.15em", fontSize: 11 }}>Governance</Typography>}
           <AdminSidebarItem
             badgeValue={0}
             href={adminOverviewItem.href}
@@ -285,8 +294,8 @@ export default function AdminSidebar({
         </Box>
 
         {adminNavigationGroups.map((group) => (
-          <Box key={group.key} sx={{ mb: 3 }}>
-            {!collapsed && <Typography variant="caption" sx={{ px: 2, mb: 1, display: "block", fontWeight: 800, opacity: 0.4, textTransform: "uppercase", letterSpacing: "0.1em" }}>{group.label}</Typography>}
+          <Box key={group.key} sx={{ mb: 4 }}>
+            {!collapsed && <Typography variant="caption" sx={{ px: 2, mb: 1.5, display: "block", fontWeight: 900, opacity: 0.4, textTransform: "uppercase", letterSpacing: "0.15em", fontSize: 11 }}>{group.label}</Typography>}
             {group.items.map((item) => (
               <AdminSidebarItem
                 key={item.key}
@@ -305,19 +314,31 @@ export default function AdminSidebar({
       </Box>
 
       {/* Footer: User Profile & Collapse */}
-      <Box sx={{ p: 1.5, borderTop: `1px solid ${alpha(theme.palette.divider, 0.06)}` }}>
+      <Box sx={{ p: 2, borderTop: `1px solid var(--border)` }}>
         {!collapsed && (
           <Box sx={{ 
-            p: 1.5, 
-            borderRadius: "14px", 
+            p: 2, 
+            borderRadius: "18px", 
             bgcolor: alpha(theme.palette.primary.main, 0.05),
-            mb: 1
+            mb: 2,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
           }}>
             <Stack direction="row" spacing={1.5} alignItems="center">
-              <Avatar src={user?.avatar} sx={{ width: 34, height: 34, borderRadius: "10px", bgcolor: theme.palette.primary.main }}>{user?.name?.charAt(0)}</Avatar>
+              <Avatar 
+                src={user?.avatar} 
+                sx={{ 
+                  width: 38, 
+                  height: 38, 
+                  borderRadius: "12px", 
+                  bgcolor: "var(--primary)",
+                  boxShadow: "0 4px 12px var(--primary-glow)"
+                }}
+              >
+                {user?.name?.charAt(0)}
+              </Avatar>
               <Box sx={{ minWidth: 0 }}>
-                <Typography variant="body2" fontWeight={700} noWrap>{user?.name || "Admin User"}</Typography>
-                <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block", opacity: 0.7 }}>{user?.email || "admin@sabahub.com"}</Typography>
+                <Typography variant="body2" fontWeight={800} noWrap sx={{ letterSpacing: "-0.01em" }}>{user?.name || "Admin User"}</Typography>
+                <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block", opacity: 0.6, fontWeight: 700 }}>Super Administrator</Typography>
               </Box>
             </Stack>
           </Box>
@@ -326,23 +347,28 @@ export default function AdminSidebar({
         <Stack direction="row" alignItems="center" justifyContent={collapsed ? "center" : "space-between"} spacing={1}>
           {!collapsed && (
             <Stack direction="row" spacing={0.5}>
-              <IconButton size="small" sx={{ color: "text.secondary" }}><NotificationsRoundedIcon fontSize="small" /></IconButton>
-              <IconButton size="small" sx={{ color: "text.secondary" }}><SettingsRoundedIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: "text.secondary", "&:hover": { color: "var(--primary)" } }}><NotificationsRoundedIcon fontSize="small" /></IconButton>
+              <IconButton size="small" sx={{ color: "text.secondary", "&:hover": { color: "var(--primary)" } }}><SettingsRoundedIcon fontSize="small" /></IconButton>
             </Stack>
           )}
           <IconButton 
             size="small" 
             onClick={onToggleCollapse}
             sx={{ 
-              borderRadius: "10px", 
-              bgcolor: alpha(theme.palette.text.primary, 0.04),
-              "&:hover": { bgcolor: alpha(theme.palette.text.primary, 0.08) }
+              width: 36,
+              height: 36,
+              borderRadius: "12px", 
+              bgcolor: "var(--glass-gray)",
+              border: `1px solid var(--border)`,
+              "&:hover": { bgcolor: "var(--glass-gray-hover)", transform: "scale(1.05)" },
+              transition: "all 0.3s cubic-bezier(0.22, 1, 0.36, 1)"
             }}
           >
-            {collapsed ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />}
+            {collapsed ? <ChevronRightRoundedIcon fontSize="small" /> : <ChevronLeftRoundedIcon fontSize="small" />}
           </IconButton>
         </Stack>
       </Box>
+
 
       <Menu
         anchorEl={workspaceAnchor}

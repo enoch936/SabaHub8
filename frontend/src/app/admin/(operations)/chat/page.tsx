@@ -1,7 +1,7 @@
 "use client";
 
-import AdminChatOperationsWorkspace from "@/components/admin/AdminChatOperationsWorkspace";
+import { AdminChatSupportWorkspace } from "@/components/admin/AdminChatSupportWorkspace";
 
 export default function AdminChatPage() {
-  return <AdminChatOperationsWorkspace />;
+  return <AdminChatSupportWorkspace />;
 }

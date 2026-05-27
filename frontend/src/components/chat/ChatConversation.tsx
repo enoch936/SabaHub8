@@ -1,7 +1,9 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Archive, ArrowLeft, BellOff, BellRing, Info, Pin, Radio, Search } from "lucide-react";
+import { Phone, Video, Archive, ArrowLeft, BellOff, BellRing, Info, Pin, Radio, Search, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 import type { Asset, ChatMessage } from "@/lib/api";
 import {
   buildTypingLabel,
@@ -13,6 +15,9 @@ import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
 import { TypingIndicator } from "./TypingIndicator";
 import { ChatSearchInput, chatUi } from "./chat-ui";
+import { VideoCallModal } from "@/components/call/VideoCallModal";
+import { AudioCallOverlay } from "@/components/call/AudioCallOverlay";
+import useCallStore from "@/lib/callStore";
 
 interface ChatConversationProps {
   conversationId: string;
@@ -56,13 +61,7 @@ interface ChatConversationProps {
 }
 
 const conversationCanvasStyle = {
-  backgroundColor: "#e6efe6",
-  backgroundImage: [
-    "radial-gradient(circle at 18% 18%, rgba(255,255,255,0.55) 0, rgba(255,255,255,0) 24%)",
-    "radial-gradient(circle at 82% 12%, rgba(241,224,198,0.38) 0, rgba(241,224,198,0) 20%)",
-    "radial-gradient(circle at 12% 86%, rgba(202,221,205,0.42) 0, rgba(202,221,205,0) 24%)",
-    "linear-gradient(180deg, rgba(250,247,239,0.38), rgba(224,235,225,0.82))",
-  ].join(", "),
+  backgroundColor: "#030712",
 };
 
 function messageMatchesQuery(
@@ -93,9 +92,9 @@ function MessageSkeleton({ align = "left" }: { align?: "left" | "right" }) {
   return (
     <div className={`flex ${align === "right" ? "justify-end" : "justify-start"}`}>
       <div
-        className={`h-24 w-full max-w-[320px] rounded-[28px] border border-white/70 ${
-          align === "right" ? "bg-[#eef5e8]" : "bg-white/85"
-        } shadow-[0_18px_30px_rgba(38,67,56,0.05)]`}
+        className={`h-24 w-full max-w-[320px] rounded-[28px] border border-white/10 ${
+          align === "right" ? "bg-indigo-500/10" : "bg-white/5"
+        } shadow-xl backdrop-blur-xl animate-pulse`}
       />
     </div>
   );
@@ -106,25 +105,30 @@ function HeaderActionButton({
   onClick,
   icon,
   active = false,
+  tone = "neutral"
 }: {
   label: string;
   onClick?: () => void;
   icon: ReactNode;
   active?: boolean;
+  tone?: "neutral" | "primary" | "success" | "error";
 }) {
   if (!onClick) {
     return null;
   }
 
+  const toneClasses = {
+    neutral: active ? "border-white/20 bg-white text-gray-950" : "border-transparent bg-transparent text-slate-400 hover:bg-white/10 hover:text-white",
+    primary: "border-indigo-500/20 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300",
+    success: "border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300",
+    error: "border-rose-500/20 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 hover:text-rose-300",
+  };
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl border transition ${
-        active
-          ? "border-[#cfe0d0] bg-[#ecf4ec] text-[#315447]"
-          : "border-[#d8e0d6] bg-white text-[#5f6d65] hover:bg-[#f6f8f3] hover:text-[#315447]"
-      }`}
+      className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-all active:scale-95 ${toneClasses[tone]}`}
       aria-label={label}
       title={label}
     >
@@ -209,11 +213,42 @@ export function ChatConversation({
     : replyTarget
       ? `Replying to: ${replyTarget.text || "attachment"}`
       : null;
-  const secondaryStatus = typingLabel || headerMeta || subtitle;
-  void unreadCountAtOpen;
-  void threadType;
-  void participantIds;
-  void onMissedCall;
+
+  const initiateAudioCall = async () => {
+    const initiatCall = useCallStore.getState().initiatCall;
+
+    // Get participant ID from thread type
+    if (threadType === "DIRECT" && participantIds && participantIds.length > 0) {
+      const participantId = participantIds[0];
+      const participantName = title;
+      try {
+        await initiatCall(participantId, participantName, "audio");
+        toast.success("Initiating audio call...");
+      } catch (error) {
+        toast.error("Failed to initiate call");
+      }
+    } else {
+      toast.error("Audio calls only available in direct messages");
+    }
+  };
+
+  const initiateVideoCall = async () => {
+    const initiatCall = useCallStore.getState().initiatCall;
+
+    // Get participant ID from thread type
+    if (threadType === "DIRECT" && participantIds && participantIds.length > 0) {
+      const participantId = participantIds[0];
+      const participantName = title;
+      try {
+        await initiatCall(participantId, participantName, "video");
+        toast.success("Initiating video call...");
+      } catch (error) {
+        toast.error("Failed to initiate call");
+      }
+    } else {
+      toast.error("Video calls only available in direct messages");
+    }
+  };
 
   const handleSend = (content: string) => {
     if (editingMessageId && onEditMessage) {
@@ -232,267 +267,183 @@ export function ChatConversation({
   return (
     <div
       data-thread-id={conversationId}
-      className="flex h-full min-h-0 flex-col bg-[linear-gradient(180deg,rgba(250,247,239,0.72),rgba(231,239,231,0.9))]"
+      className="flex h-full min-h-0 flex-col bg-[#030712]"
     >
-      <div className="border-b border-[#d8e0d6] bg-[rgba(250,247,239,0.88)] px-4 py-4 backdrop-blur-md">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-3">
+      <div className="border-b border-white/10 bg-black/40 px-4 sm:px-6 py-4 backdrop-blur-3xl shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
             {onBack ? (
               <button
                 type="button"
                 onClick={onBack}
-                className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-[#d8e0d6] bg-white text-[#5f6d65] transition hover:bg-[#f6f8f3] hover:text-[#315447] lg:hidden"
-                aria-label="Back to conversations"
+                className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-400 transition hover:bg-white/10 hover:text-white lg:hidden"
               >
-                <ArrowLeft className="h-4.5 w-4.5" />
+                <ArrowLeft className="h-5 w-5" />
               </button>
             ) : null}
 
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#8eb6a0,#6f95d2)] text-base font-semibold text-white shadow-[0_18px_32px_rgba(84,111,151,0.18)]">
-              {title.charAt(0).toUpperCase() || "C"}
+            <div className="relative">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-lg font-black text-white shadow-2xl">
+                {title.charAt(0).toUpperCase() || "C"}
+              </div>
+              {liveCount > 0 && (
+                <div className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-[#030712] shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+              )}
             </div>
 
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="truncate font-[family:var(--font-display)] text-xl font-semibold text-[#20332d]">
+              <div className="flex items-center gap-3">
+                <h2 className="truncate text-lg font-black tracking-tight text-white uppercase">
                   {title}
                 </h2>
-                <span className="rounded-full border border-[#d8e0d6] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6b7b73]">
+                <span className="hidden sm:inline-flex rounded-lg border border-white/5 bg-white/5 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
                   {subtitle}
                 </span>
-                {isPinned ? (
-                  <span className="rounded-full bg-[#edf4ec] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#315447]">
-                    Pinned
-                  </span>
-                ) : null}
-                {isMuted ? (
-                  <span className="rounded-full bg-[#f4efe5] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#86684a]">
-                    Muted
-                  </span>
-                ) : null}
-                {isArchived ? (
-                  <span className="rounded-full bg-[#eef1f5] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#617182]">
-                    Archived
-                  </span>
-                ) : null}
-                {liveCount > 0 ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#cce7d5] bg-[#effaf2] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#287047]">
-                    <span className="h-2 w-2 rounded-full bg-[#2fbe62] shadow-[0_0_0_3px_rgba(47,190,98,0.16)]" />
-                    Live {liveCount}
-                  </span>
-                ) : null}
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5f6d65]">
-                {liveCount > 0 ? (
-                  <span className="inline-flex items-center gap-1.5 text-[#315447]">
-                    <Radio className="h-4 w-4" />
-                    Live view active
+              <div className="mt-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                {typingLabel ? (
+                  <span className="text-cyan-400 flex items-center gap-1.5 animate-pulse">
+                    <Radio className="h-3 w-3" />
+                    {typingLabel}
                   </span>
-                ) : null}
-                <span>{secondaryStatus}</span>
+                ) : (
+                  <span>{headerMeta || "Secure Communication Channel"}</span>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <div className="flex items-center gap-1.5 mr-2 pr-2 border-r border-white/10">
+              <HeaderActionButton
+                label="Voice Call"
+                onClick={initiateAudioCall}
+                icon={<Phone className="h-4.5 w-4.5" />}
+                tone="primary"
+              />
+              <HeaderActionButton
+                label="Video Call"
+                onClick={initiateVideoCall}
+                icon={<Video className="h-4.5 w-4.5" />}
+                tone="primary"
+              />
+            </div>
+
             <HeaderActionButton
-              label={searchOpen ? "Hide in-thread search" : "Search this conversation"}
-              onClick={() => {
-                setSearchOpen((current) => {
-                  const next = !current;
-                  if (!next) {
-                    setSearchQuery("");
-                  }
-                  return next;
-                });
-              }}
+              label="Search"
+              onClick={() => setSearchOpen(!searchOpen)}
               icon={<Search className="h-4.5 w-4.5" />}
               active={searchOpen}
             />
             <HeaderActionButton
-              label={isPinned ? "Unpin conversation" : "Pin conversation"}
-              onClick={onTogglePinned}
-              icon={<Pin className="h-4.5 w-4.5" />}
-              active={isPinned}
-            />
-            <HeaderActionButton
-              label={isMuted ? "Unmute conversation" : "Mute conversation"}
-              onClick={onToggleMuted}
-              icon={isMuted ? <BellRing className="h-4.5 w-4.5" /> : <BellOff className="h-4.5 w-4.5" />}
-              active={isMuted}
-            />
-            <HeaderActionButton
-              label={isArchived ? "Restore conversation" : "Archive conversation"}
-              onClick={onToggleArchived}
-              icon={<Archive className="h-4.5 w-4.5" />}
-              active={isArchived}
-            />
-            <HeaderActionButton
-              label="Open conversation details"
+              label="Details"
               onClick={onOpenDetails}
               icon={<Info className="h-4.5 w-4.5" />}
             />
           </div>
         </div>
 
-        {searchOpen ? (
-          <ChatSearchInput className="mt-4 rounded-[22px] px-4 py-3">
-            <Search className="h-4.5 w-4.5 text-[#7d8c84]" />
-            <input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search messages and attachments in this conversation"
-              className={chatUi.input}
-            />
-            {hasSearchQuery ? (
-              <span className={chatUi.subtlePill}>
-                {visibleMessages.length} match{visibleMessages.length === 1 ? "" : "es"}
-              </span>
-            ) : null}
-          </ChatSearchInput>
-        ) : null}
-
-        {readOnlyNote ? (
-          <div className="mt-4 rounded-[22px] border border-[#f0d5ae] bg-[#fbf2df] px-4 py-3 text-sm font-medium text-[#7a5d35]">
-            {readOnlyNote}
-          </div>
-        ) : null}
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <ChatSearchInput className="mt-4 rounded-2xl bg-white/5 border-white/10 px-4 py-3">
+                <Search className="h-4.5 w-4.5 text-slate-500" />
+                <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search messages and attachments..."
+                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-600"
+                />
+                {hasSearchQuery ? (
+                  <span className="px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase">
+                    {visibleMessages.length} match{visibleMessages.length === 1 ? "" : "es"}
+                  </span>
+                ) : null}
+              </ChatSearchInput>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {pinnedMessage ? (
-          <div className="mt-4 flex items-start gap-3 rounded-[24px] border border-[#d8e7d8] bg-[#edf4ec] px-4 py-3 text-sm text-[#27463b]">
-            <div className="mt-0.5 rounded-2xl bg-white p-2 text-[#315447] shadow-[0_12px_24px_rgba(38,67,56,0.06)]">
+          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3 text-sm text-indigo-200 backdrop-blur-xl">
+            <div className="mt-0.5 rounded-xl bg-indigo-500/20 p-2 text-indigo-400">
               <Pin className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6c7d74]">Pinned message</p>
-              <p className="mt-2 line-clamp-2">
-                {pinnedMessage.type === "ASSET" ? "Pinned attachment" : pinnedMessage.text || "Pinned message"}
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400/80">Pinned signal</p>
+              <p className="mt-1 line-clamp-1 font-medium text-indigo-100/90">
+                {pinnedMessage.type === "ASSET" ? "Satellite attachment" : pinnedMessage.text || "Direct intercept"}
               </p>
             </div>
           </div>
         ) : null}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5 lg:px-8" style={conversationCanvasStyle}>
-        {isLoading && messages.length === 0 ? (
-          <div className="mx-auto max-w-4xl space-y-4">
-            <MessageSkeleton />
-            <MessageSkeleton align="right" />
-            <MessageSkeleton />
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-            <div className="grid h-16 w-16 place-items-center rounded-[24px] border border-white/70 bg-white/80 text-[#5f6d65] shadow-[0_24px_40px_rgba(38,67,56,0.06)]">
-              <Info className="h-6 w-6" />
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 custom-scrollbar" style={conversationCanvasStyle}>
+        <div className="mx-auto max-w-4xl space-y-6">
+          {isLoading && messages.length === 0 ? (
+            <div className="space-y-4">
+              <MessageSkeleton />
+              <MessageSkeleton align="right" />
+              <MessageSkeleton />
             </div>
-            <h3 className="mt-4 text-lg font-semibold text-[#20332d]">No messages yet</h3>
-            <p className="mt-2 max-w-[340px] text-sm text-[#5f6d65]">
-              Start the conversation with a message, file, image, video, or voice note.
-            </p>
-          </div>
-        ) : hasSearchQuery && visibleMessages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-            <div className="grid h-16 w-16 place-items-center rounded-[24px] border border-white/70 bg-white/80 text-[#5f6d65] shadow-[0_24px_40px_rgba(38,67,56,0.06)]">
-              <Search className="h-6 w-6" />
-            </div>
-            <h3 className="mt-4 text-lg font-semibold text-[#20332d]">No search matches</h3>
-            <p className="mt-2 max-w-[340px] text-sm text-[#5f6d65]">
-              Try another keyword. Search looks through message text and shared attachment names.
-            </p>
-          </div>
-        ) : (
-          <div className="mx-auto max-w-4xl space-y-5">
-            {hasSearchQuery ? (
-              <div className="flex justify-center">
-                <span className="rounded-full border border-white/70 bg-white/80 px-4 py-2 text-xs font-semibold text-[#5f6d65] shadow-[0_14px_24px_rgba(38,67,56,0.05)]">
-                  Showing {visibleMessages.length} result{visibleMessages.length === 1 ? "" : "s"} from {messages.length} messages
-                </span>
+          ) : messages.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center py-20 text-center opacity-40">
+              <div className="h-20 w-20 rounded-[32px] bg-white/5 border border-white/10 flex items-center justify-center text-slate-500 mb-6">
+                <MessageSquare className="h-8 w-8" />
               </div>
-            ) : null}
+              <h3 className="text-xl font-black uppercase tracking-widest text-white">No signals detected</h3>
+              <p className="mt-2 max-w-[280px] text-xs font-bold uppercase tracking-tighter text-slate-500">
+                Initiate first contact via text or asset transmission.
+              </p>
+            </div>
+          ) : (
+            <>
+              {visibleMessages.map((message, index) => {
+                const previous = index > 0 ? visibleMessages[index - 1] : null;
+                const showDate = !previous || !isSameCalendarDay(previous.createdAt, message.createdAt);
+                const isMe = Boolean(currentUserId && message.senderId === currentUserId);
+                
+                return (
+                  <div key={message.id} className="space-y-4">
+                    {showDate ? (
+                      <div className="flex justify-center">
+                        <span className="rounded-xl border border-white/5 bg-white/5 px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.25em] text-slate-500 backdrop-blur-xl">
+                          {formatDayLabel(message.createdAt)}
+                        </span>
+                      </div>
+                    ) : null}
 
-            {visibleMessages.map((message, index) => {
-              const previous = index > 0 ? visibleMessages[index - 1] : null;
-              const showDate = !previous || !isSameCalendarDay(previous.createdAt, message.createdAt);
-              const previousTime = previous?.createdAt ? Date.parse(previous.createdAt) : 0;
-              const currentTime = message.createdAt ? Date.parse(message.createdAt) : 0;
-              const showSender =
-                !previous
-                || previous.senderId !== message.senderId
-                || Math.abs(currentTime - previousTime) > 5 * 60_000;
-
-              const isMe = Boolean(currentUserId && message.senderId === currentUserId);
-              
-              let isRead = false;
-              if (isMe && activeConversation?.lastReadAtByUser && currentUserId) {
-                const otherParticipants = participantIds.filter(id => id !== currentUserId);
-                if (otherParticipants.length > 0) {
-                  // For simplicity, mark as read if ANY other participant has read past this message
-                  // In a real group chat, you'd want "read by all" or a list of who read it
-                  isRead = otherParticipants.some(pid => {
-                    const lastRead = activeConversation.lastReadAtByUser?.[pid];
-                    return lastRead && message.createdAt && new Date(lastRead) >= new Date(message.createdAt);
-                  });
-                }
-              }
-
-              return (
-                <div key={message.id} className="space-y-3">
-                  {showDate ? (
-                    <div className="flex justify-center">
-                      <span className="rounded-full border border-white/70 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6c7d74] shadow-[0_12px_24px_rgba(38,67,56,0.05)]">
-                        {formatDayLabel(message.createdAt)}
-                      </span>
-                    </div>
-                  ) : null}
-
-                  <MessageBubble
-                    message={message}
-                    asset={message.assetId ? assetsById[message.assetId] : null}
-                    isMe={isMe}
-                    currentUserId={currentUserId}
-                    senderLabel={getDisplayName?.(message.senderId)}
-                    showSender={showSender}
-                    isRead={isRead}
-                    isDelivered={true}
-                    replyPreview={
-                      message.replyToMessageId
-                        ? messages.find((item) => item.id === message.replyToMessageId)?.text || "Reply"
-                        : null
-                    }
-                    highlightQuery={hasSearchQuery ? deferredSearchQuery : null}
-                    onReply={(target) => {
-                      setReplyToId(target.id);
-                      setEditingMessageId(null);
-                    }}
-                    onEdit={
-                      onEditMessage
-                        ? (target) => {
-                            setEditingMessageId(target.id);
-                            setReplyToId(null);
-                            setDraftText(target.text || "");
-                          }
-                        : undefined
-                    }
-                    onDelete={onDeleteMessage ? (target) => onDeleteMessage(target.id) : undefined}
-                    onForward={onForwardMessage ? (target) => onForwardMessage(target.id) : undefined}
-                    onPin={onPinMessage ? (target) => onPinMessage(target.id) : undefined}
-                    onReact={onReactMessage ? (target, emoji) => onReactMessage(target.id, emoji) : undefined}
-                  />
-                </div>
-              );
-            })}
-
-            {typingUsers.length > 0 && !hasSearchQuery ? (
-              <div className="flex justify-start">
+                    <MessageBubble
+                      message={message}
+                      asset={message.assetId ? assetsById[message.assetId] : null}
+                      isMe={isMe}
+                      currentUserId={currentUserId}
+                      senderLabel={getDisplayName?.(message.senderId)}
+                      showSender={!previous || previous.senderId !== message.senderId}
+                      isRead={true}
+                      isDelivered={true}
+                      onReply={(target) => setReplyToId(target.id)}
+                      onDelete={(target) => onDeleteMessage?.(target.id)}
+                    />
+                  </div>
+                );
+              })}
+              {typingUsers.length > 0 && (
                 <TypingIndicator label={typingLabel || "Typing…"} />
-              </div>
-            ) : null}
-            <div ref={bottomRef} />
-          </div>
-        )}
+              )}
+              <div ref={bottomRef} />
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="shrink-0 border-t border-[#d8e0d6] bg-[rgba(250,247,239,0.9)] backdrop-blur-sm">
+      <div className="shrink-0 border-t border-white/10 bg-black/40 backdrop-blur-3xl px-4 py-4">
         <MessageInput
           onSend={handleSend}
           onSendAsset={onSendAsset}
@@ -508,6 +459,10 @@ export function ChatConversation({
           }}
         />
       </div>
+
+      {/* Call modals */}
+      <VideoCallModal />
+      <AudioCallOverlay />
     </div>
   );
 }

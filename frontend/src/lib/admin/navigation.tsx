@@ -30,6 +30,7 @@ import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import CampaignRoundedIcon from "@mui/icons-material/CampaignRounded";
 import SettingsSuggestRoundedIcon from "@mui/icons-material/SettingsSuggestRounded";
 import BusinessCenterRoundedIcon from "@mui/icons-material/BusinessCenterRounded";
+import TerminalRoundedIcon from "@mui/icons-material/TerminalRounded";
 
 const primaryIconSx = { fontSize: 18 };
 const secondaryIconSx = { fontSize: 16 };
@@ -315,10 +316,25 @@ export const adminNavigationGroups: AdminNavigationGroup[] = [
       },
       {
         key: "chat-operations",
-        label: "Chat & Support",
+        label: "Communication Governance",
         href: "/admin/chat-moderation",
         icon: <ChatBubbleOutlineRoundedIcon sx={primaryIconSx} />,
-        description: "Support ticket management, user moderation, and chat oversight.",
+        description: "Direct oversight of DMs, groups, and channels with real-time moderation and support orchestration.",
+        children: [
+          {
+            key: "oversight-terminal",
+            label: "Oversight Terminal",
+            href: "/admin/chat-moderation",
+            icon: <TerminalRoundedIcon sx={secondaryIconSx} />,
+          },
+          {
+            key: "support-queues",
+            label: "Support Queues",
+            href: "/admin/chat-moderation",
+            section: "support-queues",
+            icon: <SupportAgentRoundedIcon sx={secondaryIconSx} />,
+          },
+        ],
       },
       {
         key: "notification-center",

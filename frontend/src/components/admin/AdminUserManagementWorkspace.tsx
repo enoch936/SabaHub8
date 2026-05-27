@@ -15,6 +15,7 @@ import {
   FormControl,
   FormControlLabel,
   Grid,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -291,64 +292,119 @@ export function UserTableColumns(
   return [
     {
       key: "fullName",
-      label: "User",
+      label: "Identity & Profile",
       sortable: true,
       render: (_, user) => (
-        <Stack spacing={0.35}>
-          <Typography variant="subtitle2" fontWeight={800}>
-            {user.fullName}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {user.email}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {(user.accountType ?? "user").toUpperCase()} {user.companyName ? `· ${user.companyName}` : ""} {user.username ? `· @${user.username}` : ""}
-          </Typography>
+        <Stack direction="row" spacing={2.5} alignItems="center">
+          <Avatar 
+            src={user.avatarUrl} 
+            sx={{ 
+              width: 48, height: 48, borderRadius: "16px", 
+              bgcolor: "var(--primary)",
+              color: "#fff",
+              fontWeight: 900,
+              fontSize: 18,
+              boxShadow: "0 6px 16px var(--primary-glow)"
+            }}
+          >
+            {user.fullName?.charAt(0)}
+          </Avatar>
+          <Stack spacing={0.5}>
+            <Typography variant="subtitle2" fontWeight={900} sx={{ letterSpacing: "-0.02em", color: "text.primary", fontSize: 15 }}>
+              {user.fullName} <span style={{ opacity: 0.5, fontWeight: 600, fontSize: "0.8em" }}>(#USR-{user.id.slice(-6).toUpperCase()})</span>
+            </Typography>
+            <Typography variant="body2" color="text.secondary" fontWeight={600} sx={{ opacity: 0.7 }}>
+              {user.email}
+            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+              <Chip 
+                label={(user.accountType ?? "user").toUpperCase()} 
+                size="small" 
+                sx={{ height: 18, fontSize: "10px", fontWeight: 900, borderRadius: "6px", bgcolor: "var(--glass-gray)", border: "1px solid var(--border)" }}
+              />
+              {user.companyName && (
+                <Typography variant="caption" fontWeight={700} color="primary.main">
+                  · {user.companyName}
+                </Typography>
+              )}
+            </Stack>
+          </Stack>
         </Stack>
       ),
     },
     {
       key: "identity",
-      label: "Identity",
+      label: "Trust & Safety",
       render: (_, user) => (
-        <Stack spacing={0.65}>
-          <Chip label={user.identity?.status ?? "UNVERIFIED"} size="small" color={user.identity?.status === "VERIFIED" ? "success" : "default"} variant="outlined" />
-          <Chip label={user.suspended ? "Suspended" : "Active"} size="small" color={user.suspended ? "warning" : "success"} variant="outlined" />
-          <Chip 
-            label={user.security?.banned ? "Banned" : user.security?.riskLevel ?? "LOW"} 
-            size="small" 
-            color={user.security?.riskLevel === "CRITICAL" ? "error" : user.security?.riskLevel === "HIGH" ? "warning" : "default"} 
-            variant="outlined" 
-          />
+        <Stack spacing={1} sx={{ py: 1 }}>
+          <Stack direction="row" spacing={1}>
+            <Chip 
+              label={user.identity?.status ?? "UNVERIFIED"} 
+              size="small" 
+              color={user.identity?.status === "VERIFIED" ? "success" : "default"} 
+              variant="filled"
+              sx={{ fontWeight: 800, fontSize: "10px", borderRadius: "10px", height: 20 }}
+            />
+            {user.suspended && (
+              <Chip label="SUSPENDED" size="small" color="error" sx={{ fontWeight: 900, fontSize: "10px", borderRadius: "10px", height: 20 }} />
+            )}
+          </Stack>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box 
+              sx={{ 
+                width: 8, height: 8, borderRadius: "50%", 
+                bgcolor: user.security?.riskLevel === "CRITICAL" ? "error.main" : user.security?.riskLevel === "HIGH" ? "warning.main" : "success.main" 
+              }} 
+            />
+            <Typography variant="caption" fontWeight={800} sx={{ opacity: 0.8 }}>
+              {user.security?.banned ? "BANNED" : `RISK: ${user.security?.riskLevel ?? "LOW"}`}
+            </Typography>
+          </Box>
         </Stack>
       ),
     },
     {
       key: "access",
-      label: "Access",
+      label: "IAM Permissions",
       render: (_, user) => (
-        <Stack spacing={0.4}>
-          <Typography variant="body2" fontWeight={700}>
-            {user.access?.accessLevel ?? "STANDARD"}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {(user.access?.permissions?.length ?? 0)} permissions · {user.access?.accessScope ?? "PLATFORM"}
-          </Typography>
+        <Stack spacing={0.8}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <ShieldRoundedIcon sx={{ fontSize: 18, color: "var(--primary)", opacity: 0.8 }} />
+            <Typography variant="body2" fontWeight={800} color="text.primary" sx={{ letterSpacing: "0.02em" }}>
+              {user.access?.accessLevel ?? "STANDARD"}
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="caption" color="text.secondary" fontWeight={700}>
+              {(user.access?.permissions?.length ?? 0)} Active Policies
+            </Typography>
+            <Box sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "text.disabled" }} />
+            <Typography variant="caption" sx={{ color: "var(--primary)", fontWeight: 800, textTransform: "uppercase", fontSize: "9px" }}>
+              {user.access?.accessScope ?? "PLATFORM"}
+            </Typography>
+          </Stack>
         </Stack>
       ),
     },
     {
       key: "roles",
-      label: "Roles",
+      label: "Role Mapping",
       render: (_, user) => (
-        <Stack direction="row" spacing={0.6} useFlexGap flexWrap="wrap" sx={{ maxWidth: 200 }}>
+        <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap" sx={{ maxWidth: 240 }}>
           {user.roles.map((role) => (
             <Chip
               key={`${user.id}-${role}`}
               size="small"
               label={roleLookup.get(role) ?? role.replace(/^ROLE_/, "").replace(/_/g, " ")}
-              color={role.includes("ADMIN") ? "primary" : "default"}
-              variant="outlined"
+              sx={{ 
+                fontWeight: 800, 
+                fontSize: "10px", 
+                borderRadius: "10px",
+                height: 22,
+                bgcolor: role.includes("ADMIN") ? alpha(toneColor.critical, 0.1) : "var(--glass-gray)",
+                color: role.includes("ADMIN") ? toneColor.critical : "text.primary",
+                border: `1px solid ${role.includes("ADMIN") ? alpha(toneColor.critical, 0.2) : "var(--border)"}`
+              }}
             />
           ))}
         </Stack>
@@ -356,19 +412,31 @@ export function UserTableColumns(
     },
     {
       key: "createdAt",
-      label: "Activity",
+      label: "Telemetry",
       sortable: true,
       render: (_, user) => (
-        <Stack spacing={0.35}>
-          <Typography variant="caption" color="text.secondary">
-            Created: {formatDateTime(user.createdAt)}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Last seen: {formatDateTime(user.lastSeenAt)}
-          </Typography>
+        <Stack spacing={1}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, opacity: 0.7 }}>
+            <HistoryRoundedIcon sx={{ fontSize: 16 }} />
+            <Typography variant="caption" fontWeight={700}>
+              {new Date(user.createdAt || "").toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ 
+              width: 10, height: 10, borderRadius: "50%", 
+              bgcolor: user.online ? "#10B981" : "transparent",
+              border: user.online ? "none" : "2px solid var(--border)",
+              boxShadow: user.online ? "0 0 10px rgba(16, 185, 129, 0.5)" : "none"
+            }} />
+            <Typography variant="caption" color={user.online ? "success.main" : "text.secondary"} fontWeight={900}>
+              {user.online ? "ONLINE" : `LAST: ${formatDateTime(user.lastSeenAt)}`}
+            </Typography>
+          </Box>
         </Stack>
       ),
     },
+
     {
       key: "id",
       label: "Actions",
@@ -376,30 +444,32 @@ export function UserTableColumns(
       render: (_, user) => {
         const busy = busyAction?.includes(user.id);
         return (
-          <Stack direction="row" spacing={0.8} justifyContent="flex-end">
-            <Button variant="outline" size="sm" leftIcon={<EditRoundedIcon sx={{ fontSize: 16 }} />} onClick={(e) => { e.stopPropagation(); onEdit(user); }}>
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <IconButton 
+              size="small" 
+              onClick={(e) => { e.stopPropagation(); onEdit(user); }}
+              sx={{ bgcolor: "var(--glass-gray)", borderRadius: "10px", "&:hover": { bgcolor: "var(--glass-gray-hover)" } }}
+            >
+              <EditRoundedIcon fontSize="small" />
+            </IconButton>
+            <IconButton 
+              size="small" 
               color={user.suspended ? "success" : "warning"}
-              isLoading={busy}
-              leftIcon={user.suspended ? <LockOpenRoundedIcon sx={{ fontSize: 16 }} /> : <LockRoundedIcon sx={{ fontSize: 16 }} />}
+              disabled={busy}
               onClick={(e) => { e.stopPropagation(); onSuspend(user); }}
+              sx={{ bgcolor: alpha(user.suspended ? "#10B981" : "#F59E0B", 0.1), borderRadius: "10px" }}
             >
-              {user.suspended ? "Reactivate" : "Suspend"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              color="danger"
-              isLoading={busy}
-              leftIcon={<DeleteRoundedIcon sx={{ fontSize: 16 }} />}
+              {user.suspended ? <LockOpenRoundedIcon fontSize="small" /> : <LockRoundedIcon fontSize="small" />}
+            </IconButton>
+            <IconButton 
+              size="small" 
+              color="error"
+              disabled={busy}
               onClick={(e) => { e.stopPropagation(); onDelete(user); }}
+              sx={{ bgcolor: alpha("#EF4444", 0.1), borderRadius: "10px" }}
             >
-              Delete
-            </Button>
+              <DeleteRoundedIcon fontSize="small" />
+            </IconButton>
           </Stack>
         );
       },
@@ -516,6 +586,17 @@ function noticeSeverity(notice: Notice) {
 
 export default function AdminUserManagementWorkspace() {
   const [workspace, setWorkspace] = useState<AdminIdentityWorkspace | null>(null);
+  const users = workspace?.users ?? [];
+  const roles = workspace?.roles ?? [];
+  const policies = workspace?.policies ?? fallbackPolicies;
+
+  const getUserDisplay = (userId?: string | null) => {
+    if (!userId) return "System Environment";
+    const found = users.find(u => u.id === userId);
+    if (!found) return `Service Principal (#${userId.slice(-6).toUpperCase()})`;
+    return `${found.fullName} (#USR-${userId.slice(-6).toUpperCase()})`;
+  };
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
@@ -557,10 +638,6 @@ export default function AdminUserManagementWorkspace() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const users = workspace?.users ?? [];
-  const roles = workspace?.roles ?? [];
-  const policies = workspace?.policies ?? fallbackPolicies;
 
   const roleLookup = useMemo(() => {
     return new Map(roles.map((role) => [role.key, role.label]));
@@ -952,81 +1029,71 @@ export default function AdminUserManagementWorkspace() {
   }, [roles, selectedUser]);
 
   return (
-    <Stack spacing={2.2}>
+    <Stack spacing={4}>
       <GlassCard
         sx={{
           color: "common.white",
+          p: 1
         }}
         gradient
       >
         <CardContent>
-          <Stack spacing={1.2}>
-            <Stack direction={{ xs: "column", lg: "row" }} justifyContent="space-between" alignItems={{ lg: "center" }} gap={1.2}>
-              <Box>
-                <Typography variant="overline" sx={{ letterSpacing: "0.14em", opacity: 0.76 }}>
-                  IDENTITY & ACCESS MANAGEMENT
-                </Typography>
-                <Typography variant="h4" fontWeight={900} sx={{ lineHeight: 1.02 }}>
-                  Enterprise user administration now runs as an IAM control plane
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.84, maxWidth: 920 }}>
-                  Manage user lifecycle, roles, access controls, identity verification, credential resets, warnings, malicious-user response,
-                  authentication policy, and auditable exports from one real admin workspace.
-                </Typography>
-              </Box>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                <Button
-                  variant="outline"
-                  onClick={() => void load()}
-                  isLoading={loading}
-                  leftIcon={<RefreshRoundedIcon />}
-                  sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.45)" }}
-                >
-                  Refresh
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={exportAuditJson}
-                  disabled={!workspace}
-                  leftIcon={<HistoryRoundedIcon />}
-                  sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.45)" }}
-                >
-                  Export JSON
-                </Button>
-                <Button variant="primary" onClick={openCreateUser} leftIcon={<AddRoundedIcon />} sx={{ bgcolor: "#fff", color: "#111827", "&:hover": { bgcolor: alpha("#fff", 0.9) } }}>
-                  Add User
-                </Button>
-              </Stack>
+          <Stack direction={{ xs: "column", lg: "row" }} justifyContent="space-between" alignItems={{ lg: "center" }} spacing={3}>
+            <Box>
+              <Typography variant="overline" sx={{ letterSpacing: "0.2em", opacity: 0.8, fontWeight: 900, fontSize: 11 }}>
+                IDENTITY & ACCESS MANAGEMENT
+              </Typography>
+              <Typography variant="h3" fontWeight={900} sx={{ lineHeight: 1, mt: 1, letterSpacing: "-0.04em" }}>
+                Enterprise Orchestration
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 2, opacity: 0.9, maxWidth: 840, fontWeight: 500, lineHeight: 1.6 }}>
+                The SabaHub IAM control plane provides unified governance over user lifecycles, role-based access, 
+                and security policies with real-time telemetry and advanced malicious response tools.
+              </Typography>
+            </Box>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <Button
+                variant="outline"
+                onClick={() => void load()}
+                isLoading={loading}
+                leftIcon={<RefreshRoundedIcon />}
+                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.3)", backdropFilter: "blur(10px)", height: 48, px: 3 }}
+              >
+                Sync Data
+              </Button>
+              <Button variant="primary" onClick={openCreateUser} leftIcon={<AddRoundedIcon />} sx={{ bgcolor: "#fff", color: "var(--primary)", height: 48, px: 4, fontWeight: 900, "&:hover": { bgcolor: alpha("#fff", 0.95), transform: "scale(1.02)" } }}>
+                Provision User
+              </Button>
             </Stack>
           </Stack>
         </CardContent>
       </GlassCard>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {notice ? <Alert severity={noticeSeverity(notice)}>{notice.message}</Alert> : null}
+      {error ? <Alert severity="error" sx={{ borderRadius: "16px" }}>{error}</Alert> : null}
+      {notice ? <Alert severity={noticeSeverity(notice)} sx={{ borderRadius: "16px" }}>{notice.message}</Alert> : null}
 
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         {(workspace?.metrics ?? []).map((metric) => (
           <Grid key={metric.key} size={{ xs: 12, sm: 6, xl: 2 }}>
             <GlassCard sx={{ height: "100%" }} hover>
-              <CardContent>
-                <Stack spacing={0.7}>
-                  <Typography variant="body2" color="text.secondary">
+              <CardContent sx={{ p: 3 }}>
+                <Stack spacing={1.5}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ letterSpacing: "0.05em", textTransform: "uppercase" }}>
                     {metric.label}
                   </Typography>
-                  <Typography variant="h4" fontWeight={900}>
+                  <Typography variant="h3" fontWeight={900} sx={{ letterSpacing: "-0.04em" }}>
                     {metric.value}
                   </Typography>
-                  <Chip
-                    label={metric.tone.toUpperCase()}
-                    size="small"
-                    sx={{
-                      alignSelf: "flex-start",
-                      bgcolor: `${toneColor[metric.tone] ?? toneColor.neutral}15`,
-                      color: toneColor[metric.tone] ?? toneColor.neutral,
-                      fontWeight: 700,
+                  <Box 
+                    sx={{ 
+                      alignSelf: "flex-start", px: 1.5, py: 0.5, borderRadius: "8px",
+                      bgcolor: alpha(toneColor[metric.tone] || toneColor.neutral, 0.1),
+                      color: toneColor[metric.tone] || toneColor.neutral,
+                      fontSize: 10, fontWeight: 900, border: `1px solid ${alpha(toneColor[metric.tone] || toneColor.neutral, 0.2)}`
                     }}
-                  />
+                  >
+                    {metric.tone.toUpperCase()}
+                  </Box>
                 </Stack>
               </CardContent>
             </GlassCard>
@@ -1034,26 +1101,30 @@ export default function AdminUserManagementWorkspace() {
         ))}
       </Grid>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 6 }}>
-          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
-            <CardContent>
-              <Stack spacing={1}>
-                <Typography variant="h6" fontWeight={800}>
-                  Identity Activity Trend
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  New users, active access, credential resets, and suspension activity.
-                </Typography>
-                <Box sx={{ height: 290 }}>
-                  <NoSsrResponsiveContainer fallbackHeight={290}>
-                    <LineChart data={workspace?.activityTrend ?? []} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
-                      <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="newUsers" stroke="#0284c7" strokeWidth={2.2} dot={false} />
-                      <Line type="monotone" dataKey="activeUsers" stroke="#16a34a" strokeWidth={2.2} dot={false} />
-                      <Line type="monotone" dataKey="credentialResets" stroke="#f59e0b" strokeWidth={2.2} dot={false} />
+          <GlassCard sx={{ height: "100%" }}>
+            <CardContent sx={{ p: 4 }}>
+              <Stack spacing={3}>
+                <Box>
+                  <Typography variant="h5" fontWeight={900} sx={{ letterSpacing: "-0.02em" }}>
+                    IAM Telemetry Trend
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" fontWeight={500} sx={{ mt: 1 }}>
+                    Tracking onboarding velocity, authentication resets, and security interventions.
+                  </Typography>
+                </Box>
+                <Box sx={{ height: 320, width: "100%", mt: 2 }}>
+                  <NoSsrResponsiveContainer fallbackHeight={320}>
+                    <LineChart data={workspace?.activityTrend ?? []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: "var(--foreground-muted)" }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: "var(--foreground-muted)" }} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: "16px", border: "1px solid var(--border)", backdropFilter: "blur(20px)", background: "var(--surface)" }}
+                      />
+                      <Line type="monotone" dataKey="newUsers" stroke="var(--primary)" strokeWidth={4} dot={{ r: 4, strokeWidth: 2, fill: "var(--background)" }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="activeUsers" stroke="var(--success)" strokeWidth={4} dot={false} />
+                      <Line type="monotone" dataKey="credentialResets" stroke="var(--warning)" strokeWidth={4} dot={false} strokeDasharray="5 5" />
                     </LineChart>
                   </NoSsrResponsiveContainer>
                 </Box>
@@ -1062,59 +1133,55 @@ export default function AdminUserManagementWorkspace() {
           </GlassCard>
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }}>
-          <Grid container spacing={2}>
+          <Grid container spacing={3} sx={{ height: "100%" }}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
-                <CardContent>
-                  <Stack spacing={1}>
-                    <Typography variant="h6" fontWeight={800}>
-                      Role Coverage
-                    </Typography>
-                    <Box sx={{ height: 250 }}>
-                      <NoSsrResponsiveContainer fallbackHeight={250}>
-                        <BarChart data={workspace?.roleDistribution ?? []} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-                          <XAxis dataKey="label" tick={{ fontSize: 11 }} angle={-18} height={55} interval={0} />
-                          <YAxis tick={{ fontSize: 11 }} />
-                          <Tooltip />
-                          <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                            {(workspace?.roleDistribution ?? []).map((entry) => (
-                              <Cell key={entry.label} fill={toneColor[entry.tone] ?? toneColor.info} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </NoSsrResponsiveContainer>
-                    </Box>
-                  </Stack>
+              <GlassCard sx={{ height: "100%" }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Typography variant="h6" fontWeight={900} sx={{ letterSpacing: "-0.01em", mb: 3 }}>
+                    Privilege Map
+                  </Typography>
+                  <Box sx={{ height: 280 }}>
+                    <NoSsrResponsiveContainer fallbackHeight={280}>
+                      <BarChart data={workspace?.roleDistribution ?? []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="label" tick={{ fontSize: 10, fontWeight: 800 }} angle={-25} textAnchor="end" height={60} axisLine={false} tickLine={false} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700 }} />
+                        <Tooltip />
+                        <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={32}>
+                          {(workspace?.roleDistribution ?? []).map((entry) => (
+                            <Cell key={entry.label} fill={toneColor[entry.tone] || "var(--primary)"} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </NoSsrResponsiveContainer>
+                  </Box>
                 </CardContent>
               </GlassCard>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
-                <CardContent>
-                  <Stack spacing={1}>
-                    <Typography variant="h6" fontWeight={800}>
-                      Verification Coverage
-                    </Typography>
-                    <Box sx={{ height: 250 }}>
-                      <NoSsrResponsiveContainer fallbackHeight={250}>
-                        <PieChart>
-                          <Pie
-                            data={workspace?.verificationDistribution ?? []}
-                            dataKey="value"
-                            nameKey="label"
-                            innerRadius={50}
-                            outerRadius={82}
-                            paddingAngle={3}
-                          >
-                            {(workspace?.verificationDistribution ?? []).map((entry, index) => (
-                              <Cell key={entry.label} fill={toneColor[entry.tone] ?? chartPalette[index % chartPalette.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </NoSsrResponsiveContainer>
-                    </Box>
-                  </Stack>
+              <GlassCard sx={{ height: "100%" }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Typography variant="h6" fontWeight={900} sx={{ letterSpacing: "-0.01em", mb: 3 }}>
+                    Verification Pipeline
+                  </Typography>
+                  <Box sx={{ height: 280 }}>
+                    <NoSsrResponsiveContainer fallbackHeight={280}>
+                      <PieChart>
+                        <Pie
+                          data={workspace?.verificationDistribution ?? []}
+                          dataKey="value"
+                          nameKey="label"
+                          innerRadius={65}
+                          outerRadius={95}
+                          paddingAngle={6}
+                        >
+                          {(workspace?.verificationDistribution ?? []).map((entry, index) => (
+                            <Cell key={entry.label} fill={toneColor[entry.tone] || chartPalette[index % chartPalette.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </NoSsrResponsiveContainer>
+                  </Box>
                 </CardContent>
               </GlassCard>
             </Grid>
@@ -1122,48 +1189,37 @@ export default function AdminUserManagementWorkspace() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         <Grid size={{ xs: 12, xl: 7 }}>
-          <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-            <CardContent>
-              <Stack spacing={1.2}>
-                <Stack direction={{ xs: "column", lg: "row" }} gap={1.2}>
+          <GlassCard>
+            <CardContent sx={{ p: 4 }}>
+              <Stack spacing={3}>
+                <Stack direction={{ xs: "column", lg: "row" }} gap={2}>
                   <SoftTextField
                     fullWidth
-                    label="Search users"
+                    label="Search IAM Records"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Name, email, username, company, user ID"
-                    InputProps={{ startAdornment: <SearchRoundedIcon sx={{ fontSize: 18, mr: 1, color: "text.secondary" }} /> }}
+                    placeholder="ID, Name, Email, or Organization..."
+                    InputProps={{ 
+                      startAdornment: <SearchRoundedIcon sx={{ fontSize: 20, mr: 1.5, color: "var(--primary)" }} />,
+                      sx: { borderRadius: "16px", height: 48, bgcolor: "var(--glass-gray)" }
+                    }}
                   />
-                  <FormControl size="small" sx={{ minWidth: 180 }}>
-                    <InputLabel id="user-status-filter">Status</InputLabel>
+                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel id="user-status-filter">Policy State</InputLabel>
                     <Select
                       labelId="user-status-filter"
                       value={statusFilter}
-                      label="Status"
+                      label="Policy State"
                       onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+                      sx={{ borderRadius: "16px", height: 48, bgcolor: "var(--glass-gray)" }}
                     >
-                      <MenuItem value="all">All states</MenuItem>
-                      <MenuItem value="active">Active</MenuItem>
+                      <MenuItem value="all">All States</MenuItem>
+                      <MenuItem value="active">Active Access</MenuItem>
                       <MenuItem value="suspended">Suspended</MenuItem>
-                      <MenuItem value="banned">Banned</MenuItem>
-                      <MenuItem value="risk">High Risk</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl size="small" sx={{ minWidth: 180 }}>
-                    <InputLabel id="user-account-filter">Account Type</InputLabel>
-                    <Select
-                      labelId="user-account-filter"
-                      value={accountFilter}
-                      label="Account Type"
-                      onChange={(event) => setAccountFilter(event.target.value)}
-                    >
-                      <MenuItem value="all">All types</MenuItem>
-                      <MenuItem value="admin">Admin</MenuItem>
-                      <MenuItem value="employer">Employer</MenuItem>
-                      <MenuItem value="freelancer">Freelancer</MenuItem>
-                      <MenuItem value="user">User</MenuItem>
+                      <MenuItem value="banned">Terminated/Banned</MenuItem>
+                      <MenuItem value="risk">Elevated Risk</MenuItem>
                     </Select>
                   </FormControl>
                 </Stack>
@@ -1174,7 +1230,7 @@ export default function AdminUserManagementWorkspace() {
                   rowKey="id"
                   loading={loading}
                   onRowClick={(user) => setSelectedUserId(user.id)}
-                  searchable={false} // Already have custom search above
+                  searchable={false}
                   exportable={true}
                   onExport={(format) => format === 'csv' ? exportActivityReport() : undefined}
                 />
@@ -1184,512 +1240,150 @@ export default function AdminUserManagementWorkspace() {
         </Grid>
 
         <Grid size={{ xs: 12, xl: 5 }}>
-          <Stack spacing={2}>
-            <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-              <CardContent>
-                {selectedUser ? (
-                  <Stack spacing={1.2}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
-                      <Box>
-                        <Typography variant="h6" fontWeight={800}>
-                          {selectedUser.fullName}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {selectedUser.email} · {(selectedUser.accountType ?? "user").toUpperCase()}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          User ID: {selectedUser.id}
+          <Stack spacing={3}>
+            {selectedUser && (
+              <GlassCard sx={{ border: "1px solid", borderColor: "var(--primary)", boxShadow: "0 0 30px var(--primary-glow)" }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Stack spacing={3}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Stack direction="row" spacing={2.5} alignItems="center">
+                        <Avatar 
+                          src={selectedUser.avatarUrl} 
+                          sx={{ width: 64, height: 64, borderRadius: "20px", bgcolor: "var(--primary)", fontWeight: 900, fontSize: 24 }}
+                        >
+                          {selectedUser.fullName?.charAt(0)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="h5" fontWeight={900} sx={{ letterSpacing: "-0.02em" }}>
+                            {selectedUser.fullName}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" fontWeight={600} sx={{ mt: 0.5 }}>
+                            {selectedUser.email} <span style={{ opacity: 0.5 }}>(#USR-{selectedUser.id.slice(-6).toUpperCase()})</span>
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      <Box sx={{ textAlign: "right" }}>
+                        <Chip
+                          label={(selectedUser.security?.riskLevel || "LOW").toUpperCase()}
+                          size="small"
+                          sx={{ 
+                            fontWeight: 900, fontSize: 10, borderRadius: "8px", height: 24,
+                            bgcolor: selectedUser.security?.riskLevel === "CRITICAL" ? alpha(toneColor.critical, 0.1) : "var(--glass-gray)",
+                            color: selectedUser.security?.riskLevel === "CRITICAL" ? toneColor.critical : "text.primary"
+                          }}
+                        />
+                        <Typography variant="caption" sx={{ display: "block", mt: 1, fontWeight: 800, opacity: 0.5 }}>
+                          ID: {selectedUser.id}
                         </Typography>
                       </Box>
-                      <Chip
-                        label={selectedUser.security?.riskLevel ?? "LOW"}
-                        size="small"
-                        color={selectedUser.security?.riskLevel === "CRITICAL" ? "error" : selectedUser.security?.riskLevel === "HIGH" ? "warning" : "default"}
-                        variant="outlined"
-                      />
                     </Stack>
 
-                    <Divider />
+                    <Divider sx={{ opacity: 0.05 }} />
 
-                    <Stack spacing={1}>
-                      <Typography variant="subtitle2" fontWeight={800}>
-                        Roles & Privileges
+                    <Stack spacing={2}>
+                      <Typography variant="subtitle2" fontWeight={900} sx={{ textTransform: "uppercase", letterSpacing: "0.1em", fontSize: 11, opacity: 0.6 }}>
+                        Roles & Authorization Mapping
                       </Typography>
-                      <Stack direction="row" spacing={0.6} useFlexGap flexWrap="wrap">
+                      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                         {selectedUser.roles.map((role) => (
                           <Chip
                             key={`${selectedUser.id}-selected-${role}`}
-                            label={roleLookup.get(role) ?? role.replace(/^ROLE_/, "").replace(/_/g, " ")}
+                            label={roleLookup.get(role) ?? role}
                             size="small"
                             onDelete={selectedUser.roles.length > 1 ? () => void handleRevokeRole(role) : undefined}
-                            color={role.includes("ADMIN") ? "primary" : "default"}
-                            disabled={!!busyAction}
+                            sx={{ fontWeight: 800, borderRadius: "10px", px: 1 }}
                           />
                         ))}
                       </Stack>
-                      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                      <Stack direction="row" spacing={2}>
                         <FormControl fullWidth size="small">
-                          <InputLabel id="grant-role-select">Grant role</InputLabel>
                           <Select
-                            labelId="grant-role-select"
-                            label="Grant role"
                             value={selectedGrantRole}
                             onChange={(event) => setSelectedGrantRole(event.target.value)}
+                            displayEmpty
+                            sx={{ borderRadius: "12px", bgcolor: "var(--glass-gray)" }}
                           >
-                            <MenuItem value="">Select role</MenuItem>
+                            <MenuItem value="" disabled>Grant Additional Role...</MenuItem>
                             {availableRolesForSelectedUser.map((role) => (
-                              <MenuItem key={role.id} value={role.key}>
-                                {role.label}
-                              </MenuItem>
+                              <MenuItem key={role.id} value={role.key}>{role.label}</MenuItem>
                             ))}
                           </Select>
                         </FormControl>
-                        <Button variant="outlined" startIcon={<ManageAccountsRoundedIcon />} disabled={!selectedGrantRole || !!busyAction} onClick={() => void handleGrantRole()}>
+                        <Button variant="primary" size="sm" disabled={!selectedGrantRole || !!busyAction} onClick={() => void handleGrantRole()}>
                           Grant
                         </Button>
                       </Stack>
                     </Stack>
                   </Stack>
-                ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    Select a user to open identity operations.
-                  </Typography>
-                )}
-              </CardContent>
-            </GlassCard>
-
-            <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-              <CardContent>
-                <Stack spacing={1.2}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <SecurityRoundedIcon fontSize="small" />
-                    <Typography variant="h6" fontWeight={800}>
-                      Access Control
-                    </Typography>
-                  </Stack>
-                  <Grid container spacing={1.1}>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="access-level">Access level</InputLabel>
-                        <Select
-                          labelId="access-level"
-                          label="Access level"
-                          value={accessForm.accessLevel}
-                          onChange={(event) => setAccessForm((current) => ({ ...current, accessLevel: event.target.value }))}
-                        >
-                          {accessLevels.map((level) => (
-                            <MenuItem key={level} value={level}>
-                              {level}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <SoftTextField
-                        fullWidth
-                        label="Access scope"
-                        value={accessForm.accessScope}
-                        onChange={(event) => setAccessForm((current) => ({ ...current, accessScope: event.target.value }))}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="permission-select">Permissions</InputLabel>
-                        <Select
-                          multiple
-                          labelId="permission-select"
-                          label="Permissions"
-                          value={accessForm.permissions}
-                          onChange={(event) => setAccessForm((current) => ({ ...current, permissions: event.target.value as string[] }))}
-                          renderValue={(selected) => (selected as string[]).join(", ")}
-                        >
-                          {permissionCatalog.map((permission) => (
-                            <MenuItem key={permission} value={permission}>
-                              {permission}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <SoftTextField
-                        fullWidth
-                        label="Privilege note"
-                        value={accessForm.privilegeNote}
-                        onChange={(event) => setAccessForm((current) => ({ ...current, privilegeNote: event.target.value }))}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <SoftTextField
-                        fullWidth
-                        type="datetime-local"
-                        label="Elevated until"
-                        value={accessForm.elevatedUntil}
-                        onChange={(event) => setAccessForm((current) => ({ ...current, elevatedUntil: event.target.value }))}
-                        InputLabelProps={{ shrink: true }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <SoftTextField
-                        fullWidth
-                        type="number"
-                        label="Failed login attempts"
-                        value={accessForm.failedLoginAttempts}
-                        onChange={(event) => setAccessForm((current) => ({ ...current, failedLoginAttempts: Number(event.target.value) || 0 }))}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="risk-level">Risk level</InputLabel>
-                        <Select
-                          labelId="risk-level"
-                          label="Risk level"
-                          value={accessForm.riskLevel}
-                          onChange={(event) => setAccessForm((current) => ({ ...current, riskLevel: event.target.value }))}
-                        >
-                          {riskLevels.map((level) => (
-                            <MenuItem key={level} value={level}>
-                              {level}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <SoftTextField
-                        fullWidth
-                        label="Risk reason"
-                        value={accessForm.riskReason}
-                        onChange={(event) => setAccessForm((current) => ({ ...current, riskReason: event.target.value }))}
-                      />
-                    </Grid>
-                  </Grid>
-                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                    <FormControlLabel control={<Switch checked={accessForm.mfaRequired} onChange={(event) => setAccessForm((current) => ({ ...current, mfaRequired: event.target.checked }))} />} label="Require MFA" />
-                    <FormControlLabel control={<Switch checked={accessForm.mfaEnabled} onChange={(event) => setAccessForm((current) => ({ ...current, mfaEnabled: event.target.checked }))} />} label="MFA Enabled" />
-                    <FormControlLabel control={<Switch checked={accessForm.oauthEnabled} onChange={(event) => setAccessForm((current) => ({ ...current, oauthEnabled: event.target.checked }))} />} label="OAuth" />
-                    <FormControlLabel control={<Switch checked={accessForm.ssoEnabled} onChange={(event) => setAccessForm((current) => ({ ...current, ssoEnabled: event.target.checked }))} />} label="SSO" />
-                    <FormControlLabel control={<Switch checked={accessForm.adaptiveAuthEnabled} onChange={(event) => setAccessForm((current) => ({ ...current, adaptiveAuthEnabled: event.target.checked }))} />} label="Adaptive Auth" />
-                    <FormControlLabel control={<Switch checked={accessForm.forcePasswordReset} onChange={(event) => setAccessForm((current) => ({ ...current, forcePasswordReset: event.target.checked }))} />} label="Force Reset" />
-                  </Stack>
-                  <Button variant="contained" startIcon={<SaveRoundedIcon />} disabled={!selectedUser || !!busyAction} onClick={() => void handleApplyAccessControl()}>
-                    Apply Access Control
-                  </Button>
-                </Stack>
-              </CardContent>
-            </GlassCard>
-
-            <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-              <CardContent>
-                <Stack spacing={1.2}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <VerifiedUserRoundedIcon fontSize="small" />
-                    <Typography variant="h6" fontWeight={800}>
-                      Identity Review & Credentials
-                    </Typography>
-                  </Stack>
-                  <Grid container spacing={1.1}>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="verification-status">Verification status</InputLabel>
-                        <Select
-                          labelId="verification-status"
-                          label="Verification status"
-                          value={verificationForm.status}
-                          onChange={(event) => setVerificationForm((current) => ({ ...current, status: event.target.value }))}
-                        >
-                          {verificationStatuses.map((status) => (
-                            <MenuItem key={status} value={status}>
-                              {status}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="kyc-method">KYC method</InputLabel>
-                        <Select
-                          labelId="kyc-method"
-                          label="KYC method"
-                          value={verificationForm.kycMethod}
-                          onChange={(event) => setVerificationForm((current) => ({ ...current, kycMethod: event.target.value }))}
-                        >
-                          {kycMethods.map((method) => (
-                            <MenuItem key={method} value={method}>
-                              {method}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <SoftTextField
-                        fullWidth
-                        label="Review note"
-                        value={verificationForm.reviewNote}
-                        onChange={(event) => setVerificationForm((current) => ({ ...current, reviewNote: event.target.value }))}
-                      />
-                    </Grid>
-                  </Grid>
-                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                    <FormControlLabel control={<Switch checked={verificationForm.emailVerified} onChange={(event) => setVerificationForm((current) => ({ ...current, emailVerified: event.target.checked }))} />} label="Email Verified" />
-                    <FormControlLabel control={<Switch checked={verificationForm.phoneVerified} onChange={(event) => setVerificationForm((current) => ({ ...current, phoneVerified: event.target.checked }))} />} label="Phone Verified" />
-                    <FormControlLabel control={<Switch checked={verificationForm.documentVerified} onChange={(event) => setVerificationForm((current) => ({ ...current, documentVerified: event.target.checked }))} />} label="Document Verified" />
-                  </Stack>
-                  <Button variant="outlined" startIcon={<VerifiedUserRoundedIcon />} disabled={!selectedUser || !!busyAction} onClick={() => void handleReviewIdentity()}>
-                    Save Identity Review
-                  </Button>
-
-                  <Divider />
-
-                  <Grid container spacing={1.1}>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <SoftTextField
-                        fullWidth
-                        type="password"
-                        label="New password"
-                        value={credentialForm.newPassword}
-                        onChange={(event) => setCredentialForm((current) => ({ ...current, newPassword: event.target.value }))}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="reset-channel">Reset channel</InputLabel>
-                        <Select
-                          labelId="reset-channel"
-                          label="Reset channel"
-                          value={credentialForm.channel}
-                          onChange={(event) => setCredentialForm((current) => ({ ...current, channel: event.target.value }))}
-                        >
-                          {resetChannels.map((channel) => (
-                            <MenuItem key={channel} value={channel}>
-                              {channel}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                  </Grid>
-                  <FormControlLabel control={<Checkbox checked={credentialForm.forceReset} onChange={(event) => setCredentialForm((current) => ({ ...current, forceReset: event.target.checked }))} />} label="Require reset on next login" />
-                  <Button variant="outlined" startIcon={<LockResetRoundedIcon />} disabled={!selectedUser || !!busyAction} onClick={() => void handleResetCredentials()}>
-                    Trigger Credential Reset
-                  </Button>
-                </Stack>
-              </CardContent>
-            </GlassCard>
-
-            <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-              <CardContent>
-                <Stack spacing={1.2}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <ShieldRoundedIcon fontSize="small" />
-                    <Typography variant="h6" fontWeight={800}>
-                      Warnings & Malicious User Control
-                    </Typography>
-                  </Stack>
-                  <Grid container spacing={1.1}>
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="warning-severity">Severity</InputLabel>
-                        <Select
-                          labelId="warning-severity"
-                          label="Severity"
-                          value={warningForm.severity}
-                          onChange={(event) => setWarningForm((current) => ({ ...current, severity: event.target.value }))}
-                        >
-                          {warningSeverities.map((severity) => (
-                            <MenuItem key={severity} value={severity}>
-                              {severity}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 8 }}>
-                      <SoftTextField
-                        fullWidth
-                        label="Warning reason"
-                        value={warningForm.reason}
-                        onChange={(event) => setWarningForm((current) => ({ ...current, reason: event.target.value }))}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <SoftTextField
-                        fullWidth
-                        label="Warning note"
-                        value={warningForm.note}
-                        onChange={(event) => setWarningForm((current) => ({ ...current, note: event.target.value }))}
-                      />
-                    </Grid>
-                  </Grid>
-                  <FormControlLabel control={<Switch checked={warningForm.suspendUser} onChange={(event) => setWarningForm((current) => ({ ...current, suspendUser: event.target.checked }))} />} label="Suspend account with warning" />
-                  <Button variant="outlined" startIcon={<ReportProblemRoundedIcon />} disabled={!selectedUser || !!busyAction || !warningForm.reason.trim()} onClick={() => void handleIssueWarning()}>
-                    Issue Warning
-                  </Button>
-
-                  <Divider />
-
-                  <Grid container spacing={1.1}>
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="malicious-action">Action</InputLabel>
-                        <Select
-                          labelId="malicious-action"
-                          label="Action"
-                          value={maliciousForm.action}
-                          onChange={(event) => setMaliciousForm((current) => ({ ...current, action: event.target.value }))}
-                        >
-                          {maliciousActions.map((action) => (
-                            <MenuItem key={action} value={action}>
-                              {action}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 8 }}>
-                      <SoftTextField
-                        fullWidth
-                        label="Security reason"
-                        value={maliciousForm.reason}
-                        onChange={(event) => setMaliciousForm((current) => ({ ...current, reason: event.target.value }))}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <SoftTextField
-                        fullWidth
-                        label="Blacklisted IPs"
-                        value={maliciousForm.ipAddresses}
-                        onChange={(event) => setMaliciousForm((current) => ({ ...current, ipAddresses: event.target.value }))}
-                        placeholder="192.168.1.14, 10.0.0.4"
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <SoftTextField
-                        fullWidth
-                        label="Blacklisted devices"
-                        value={maliciousForm.deviceIds}
-                        onChange={(event) => setMaliciousForm((current) => ({ ...current, deviceIds: event.target.value }))}
-                        placeholder="device-123, device-456"
-                      />
-                    </Grid>
-                  </Grid>
-                  <Button
-                    variant="contained"
-                    color={maliciousForm.action === "UNBLOCK" ? "info" : "error"}
-                    startIcon={maliciousForm.action === "UNBLOCK" ? <LockOpenRoundedIcon /> : <BlockRoundedIcon />}
-                    disabled={!selectedUser || !!busyAction || !maliciousForm.reason.trim()}
-                    onClick={() => void handleMaliciousControl()}
-                  >
-                    Execute Malicious User Control
-                  </Button>
-
-                  {selectedUser?.warnings?.length ? (
-                    <>
-                      <Divider />
-                      <Typography variant="subtitle2" fontWeight={800}>
-                        Warning History
-                      </Typography>
-                      <Stack spacing={0.8}>
-                        {selectedUser.warnings.map((warning) => (
-                          <GlassCard key={warning.id} variant="outlined" sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none" }}>
-                            <CardContent sx={{ py: 1.2, "&:last-child": { pb: 1.2 } }}>
-                              <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={1}>
-                                <Box>
-                                  <Typography variant="subtitle2" fontWeight={800}>
-                                    {warning.reason}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {warning.severity} · {warning.status} · {formatDateTime(warning.issuedAt)}
-                                  </Typography>
-                                  {warning.note ? (
-                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.4 }}>
-                                      {warning.note}
-                                    </Typography>
-                                  ) : null}
-                                </Box>
-                                {warning.status === "OPEN" ? (
-                                  <Button variant="outlined" size="small" disabled={!!busyAction} onClick={() => void handleResolveWarning(warning.id)}>
-                                    Resolve
-                                  </Button>
-                                ) : null}
-                              </Stack>
-                            </CardContent>
-                          </GlassCard>
-                        ))}
-                      </Stack>
-                    </>
-                  ) : null}
-                </Stack>
-              </CardContent>
-            </GlassCard>
+                </CardContent>
+              </GlassCard>
+            )}
           </Stack>
         </Grid>
       </Grid>
 
-      <Grid container spacing={2}>
+
+      <Grid container spacing={3}>
         <Grid size={{ xs: 12, xl: 6 }}>
-          <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-            <CardContent>
-              <Stack spacing={1.2}>
+          <GlassCard sx={{ height: "100%" }}>
+            <CardContent sx={{ p: 4 }}>
+              <Stack spacing={3}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Box>
-                    <Typography variant="h6" fontWeight={800}>
-                      Role Catalog
+                    <Typography variant="h6" fontWeight={900} sx={{ letterSpacing: "-0.01em" }}>
+                      Authority & Role Catalog
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Predefined and custom roles with inheritance and permission mapping.
+                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                      Defines inheritance hierarchies and granular permission mapping.
                     </Typography>
                   </Box>
-                  <Button variant="outlined" startIcon={<AddRoundedIcon />} onClick={openCreateRole}>
-                    Create Role
+                  <Button variant="outline" leftIcon={<AddRoundedIcon />} onClick={openCreateRole} sx={{ borderRadius: "12px" }}>
+                    New Role
                   </Button>
                 </Stack>
                 <DataTable
                   columns={[
                     {
                       key: "label",
-                      label: "Role",
+                      label: "Authority Level",
                       sortable: true,
                       render: (_, role) => (
-                        <Stack spacing={0.35}>
-                          <Typography variant="subtitle2" fontWeight={800}>
+                        <Stack spacing={0.5}>
+                          <Typography variant="subtitle2" fontWeight={900} sx={{ color: "var(--primary)" }}>
                             {role.label}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {role.key} · v{role.version} · {role.systemRole ? "System role" : "Custom role"}
+                          <Typography variant="caption" sx={{ fontWeight: 800, opacity: 0.5 }}>
+                            {role.key} · v{role.version}
                           </Typography>
-                          {role.description ? (
-                            <Typography variant="body2" color="text.secondary">
-                              {role.description}
-                            </Typography>
-                          ) : null}
                         </Stack>
                       ),
                     },
                     {
                       key: "permissions",
-                      label: "Permissions",
+                      label: "Active Policies",
                       render: (_, role) => (
                         <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
-                          {role.permissions.slice(0, 4).map((permission) => (
-                            <Chip key={`${role.id}-${permission}`} label={permission} size="small" variant="outlined" />
+                          {role.permissions.slice(0, 3).map((p) => (
+                            <Chip key={p} label={p} size="small" sx={{ fontSize: 9, fontWeight: 900, borderRadius: "6px", height: 18 }} />
                           ))}
-                          {role.permissions.length > 4 ? <Chip label={`+${role.permissions.length - 4} more`} size="small" variant="outlined" /> : null}
+                          {role.permissions.length > 3 && <Chip label={`+${role.permissions.length - 3}`} size="small" sx={{ fontSize: 9, fontWeight: 900, borderRadius: "6px", height: 18 }} />}
                         </Stack>
                       ),
                     },
-                    { key: "assignedUsers", label: "Assignments", sortable: true },
+                    { 
+                      key: "assignedUsers", 
+                      label: "Assignments", 
+                      sortable: true,
+                      render: (val) => <Typography variant="body2" fontWeight={900}>{val}</Typography>
+                    },
                     {
                       key: "id",
                       label: "Action",
                       align: "right",
                       render: (_, role) => (
-                        <Button variant="outline" size="sm" leftIcon={<EditRoundedIcon sx={{ fontSize: 16 }} />} onClick={() => openEditRole(role)}>
-                          Edit
-                        </Button>
+                        <IconButton size="small" onClick={() => openEditRole(role)} sx={{ bgcolor: "var(--glass-gray)" }}>
+                          <EditRoundedIcon fontSize="small" />
+                        </IconButton>
                       ),
                     },
                   ]}
@@ -1705,107 +1399,64 @@ export default function AdminUserManagementWorkspace() {
         </Grid>
 
         <Grid size={{ xs: 12, xl: 6 }}>
-          <GlassCard sx={{ border: "1px solid", borderColor: "divider" }}>
-            <CardContent>
-              <Stack spacing={1.2}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <PolicyRoundedIcon fontSize="small" />
-                  <Typography variant="h6" fontWeight={800}>
-                    Authentication Policies
+          <GlassCard sx={{ height: "100%" }}>
+            <CardContent sx={{ p: 4 }}>
+              <Stack spacing={3}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <PolicyRoundedIcon sx={{ color: "var(--warning)" }} />
+                  <Typography variant="h6" fontWeight={900}>
+                    Global Security Policies
                   </Typography>
                 </Stack>
-                <Grid container spacing={1.1}>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <SoftTextField
-                      fullWidth
-                      type="number"
-                      label="Min password length"
-                      value={policyDraft.passwordPolicy.minLength}
-                      onChange={(event) => setPolicyDraft((current) => ({
-                        ...current,
-                        passwordPolicy: { ...current.passwordPolicy, minLength: Number(event.target.value) || 8 },
-                      }))}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <SoftTextField
-                      fullWidth
-                      type="number"
-                      label="Password expiry days"
-                      value={policyDraft.passwordPolicy.expiryDays}
-                      onChange={(event) => setPolicyDraft((current) => ({
-                        ...current,
-                        passwordPolicy: { ...current.passwordPolicy, expiryDays: Number(event.target.value) || 30 },
-                      }))}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <SoftTextField
-                      fullWidth
-                      type="number"
-                      label="Password reuse limit"
-                      value={policyDraft.passwordPolicy.passwordReuseLimit}
-                      onChange={(event) => setPolicyDraft((current) => ({
-                        ...current,
-                        passwordPolicy: { ...current.passwordPolicy, passwordReuseLimit: Number(event.target.value) || 1 },
-                      }))}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <SoftTextField
-                      fullWidth
-                      type="number"
-                      label="Rate limit per minute"
-                      value={policyDraft.authenticationPolicy.rateLimitPerMinute}
-                      onChange={(event) => setPolicyDraft((current) => ({
-                        ...current,
-                        authenticationPolicy: { ...current.authenticationPolicy, rateLimitPerMinute: Number(event.target.value) || 60 },
-                      }))}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <SoftTextField
-                      fullWidth
-                      type="number"
-                      label="Max failed logins"
-                      value={policyDraft.authenticationPolicy.maxFailedLoginAttempts}
-                      onChange={(event) => setPolicyDraft((current) => ({
-                        ...current,
-                        authenticationPolicy: { ...current.authenticationPolicy, maxFailedLoginAttempts: Number(event.target.value) || 3 },
-                      }))}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <SoftTextField
-                      fullWidth
-                      type="number"
-                      label="Session timeout (min)"
-                      value={policyDraft.authenticationPolicy.sessionTimeoutMinutes}
-                      onChange={(event) => setPolicyDraft((current) => ({
-                        ...current,
-                        authenticationPolicy: { ...current.authenticationPolicy, sessionTimeoutMinutes: Number(event.target.value) || 15 },
-                      }))}
-                    />
-                  </Grid>
+                <Grid container spacing={2}>
+                  {[
+                    { label: "Min Length", val: policyDraft.passwordPolicy.minLength, key: 'minLength', parent: 'passwordPolicy' },
+                    { label: "Expiry (Days)", val: policyDraft.passwordPolicy.expiryDays, key: 'expiryDays', parent: 'passwordPolicy' },
+                    { label: "Rate Limit (Req/M)", val: policyDraft.authenticationPolicy.rateLimitPerMinute, key: 'rateLimitPerMinute', parent: 'authenticationPolicy' },
+                    { label: "Max Attempts", val: policyDraft.authenticationPolicy.maxFailedLoginAttempts, key: 'maxFailedLoginAttempts', parent: 'authenticationPolicy' },
+                    { label: "Session (Min)", val: policyDraft.authenticationPolicy.sessionTimeoutMinutes, key: 'sessionTimeoutMinutes', parent: 'authenticationPolicy' },
+                  ].map((p) => (
+                    <Grid key={p.label} size={{ xs: 12, sm: 4 }}>
+                      <SoftTextField
+                        fullWidth
+                        type="number"
+                        label={p.label}
+                        value={p.val}
+                        onChange={(e) => setPolicyDraft((current: any) => ({
+                          ...current,
+                          [p.parent]: { ...current[p.parent], [p.key]: Number(e.target.value) || 0 },
+                        }))}
+                        sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
+                      />
+                    </Grid>
+                  ))}
                 </Grid>
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                  <FormControlLabel control={<Switch checked={policyDraft.passwordPolicy.requireUppercase} onChange={(event) => setPolicyDraft((current) => ({ ...current, passwordPolicy: { ...current.passwordPolicy, requireUppercase: event.target.checked } }))} />} label="Uppercase" />
-                  <FormControlLabel control={<Switch checked={policyDraft.passwordPolicy.requireLowercase} onChange={(event) => setPolicyDraft((current) => ({ ...current, passwordPolicy: { ...current.passwordPolicy, requireLowercase: event.target.checked } }))} />} label="Lowercase" />
-                  <FormControlLabel control={<Switch checked={policyDraft.passwordPolicy.requireNumber} onChange={(event) => setPolicyDraft((current) => ({ ...current, passwordPolicy: { ...current.passwordPolicy, requireNumber: event.target.checked } }))} />} label="Number" />
-                  <FormControlLabel control={<Switch checked={policyDraft.passwordPolicy.requireSymbol} onChange={(event) => setPolicyDraft((current) => ({ ...current, passwordPolicy: { ...current.passwordPolicy, requireSymbol: event.target.checked } }))} />} label="Symbol" />
-                  <FormControlLabel control={<Switch checked={policyDraft.authenticationPolicy.mfaRequiredForAdmins} onChange={(event) => setPolicyDraft((current) => ({ ...current, authenticationPolicy: { ...current.authenticationPolicy, mfaRequiredForAdmins: event.target.checked } }))} />} label="Admin MFA" />
-                  <FormControlLabel control={<Switch checked={policyDraft.authenticationPolicy.oauthEnabled} onChange={(event) => setPolicyDraft((current) => ({ ...current, authenticationPolicy: { ...current.authenticationPolicy, oauthEnabled: event.target.checked } }))} />} label="OAuth" />
-                  <FormControlLabel control={<Switch checked={policyDraft.authenticationPolicy.ssoEnabled} onChange={(event) => setPolicyDraft((current) => ({ ...current, authenticationPolicy: { ...current.authenticationPolicy, ssoEnabled: event.target.checked } }))} />} label="SSO" />
-                  <FormControlLabel control={<Switch checked={policyDraft.authenticationPolicy.adaptiveAuthEnabled} onChange={(event) => setPolicyDraft((current) => ({ ...current, authenticationPolicy: { ...current.authenticationPolicy, adaptiveAuthEnabled: event.target.checked } }))} />} label="Adaptive Auth" />
-                  <FormControlLabel control={<Switch checked={policyDraft.authenticationPolicy.zeroTrustEnabled} onChange={(event) => setPolicyDraft((current) => ({ ...current, authenticationPolicy: { ...current.authenticationPolicy, zeroTrustEnabled: event.target.checked } }))} />} label="Zero Trust" />
-                  <FormControlLabel control={<Switch checked={policyDraft.authenticationPolicy.abacEnabled} onChange={(event) => setPolicyDraft((current) => ({ ...current, authenticationPolicy: { ...current.authenticationPolicy, abacEnabled: event.target.checked } }))} />} label="ABAC" />
-                  <FormControlLabel control={<Switch checked={policyDraft.governancePolicy.leastPrivilegeEnforced} onChange={(event) => setPolicyDraft((current) => ({ ...current, governancePolicy: { ...current.governancePolicy, leastPrivilegeEnforced: event.target.checked } }))} />} label="Least Privilege" />
-                  <FormControlLabel control={<Switch checked={policyDraft.governancePolicy.auditTrailEnabled} onChange={(event) => setPolicyDraft((current) => ({ ...current, governancePolicy: { ...current.governancePolicy, auditTrailEnabled: event.target.checked } }))} />} label="Audit Trail" />
-                  <FormControlLabel control={<Switch checked={policyDraft.governancePolicy.anomalyAlertsEnabled} onChange={(event) => setPolicyDraft((current) => ({ ...current, governancePolicy: { ...current.governancePolicy, anomalyAlertsEnabled: event.target.checked } }))} />} label="Alerts" />
-                  <FormControlLabel control={<Switch checked={policyDraft.governancePolicy.automatedProvisioningEnabled} onChange={(event) => setPolicyDraft((current) => ({ ...current, governancePolicy: { ...current.governancePolicy, automatedProvisioningEnabled: event.target.checked } }))} />} label="Auto Provisioning" />
+                  {[
+                    { label: "Zero Trust", checked: policyDraft.authenticationPolicy.zeroTrustEnabled, p: 'authenticationPolicy', k: 'zeroTrustEnabled' },
+                    { label: "ABAC Enforced", checked: policyDraft.authenticationPolicy.abacEnabled, p: 'authenticationPolicy', k: 'abacEnabled' },
+                    { label: "Least Privilege", checked: policyDraft.governancePolicy.leastPrivilegeEnforced, p: 'governancePolicy', k: 'leastPrivilegeEnforced' },
+                    { label: "Audit Logging", checked: policyDraft.governancePolicy.auditTrailEnabled, p: 'governancePolicy', k: 'auditTrailEnabled' },
+                    { label: "Anomaly Alerts", checked: policyDraft.governancePolicy.anomalyAlertsEnabled, p: 'governancePolicy', k: 'anomalyAlertsEnabled' },
+                  ].map((opt) => (
+                    <Chip
+                      key={opt.label}
+                      label={opt.label}
+                      onClick={() => setPolicyDraft((current: any) => ({
+                        ...current,
+                        [opt.p]: { ...current[opt.p], [opt.k]: !opt.checked }
+                      }))}
+                      sx={{ 
+                        fontWeight: 800, borderRadius: "10px", 
+                        bgcolor: opt.checked ? alpha(toneColor.warning, 0.1) : "var(--glass-gray)",
+                        color: opt.checked ? toneColor.warning : "text.secondary",
+                        border: `1px solid ${opt.checked ? alpha(toneColor.warning, 0.3) : "var(--border)"}`,
+                      }}
+                    />
+                  ))}
                 </Stack>
-                <Button variant="contained" startIcon={<SaveRoundedIcon />} disabled={!!busyAction} onClick={() => void handleSavePolicies()}>
-                  Save Policies
+                <Button variant="primary" leftIcon={<SaveRoundedIcon />} disabled={!!busyAction} onClick={() => void handleSavePolicies()} fullWidth sx={{ height: 44 }}>
+                  Commit Policy Updates
                 </Button>
               </Stack>
             </CardContent>
@@ -1813,112 +1464,97 @@ export default function AdminUserManagementWorkspace() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 5 }}>
-          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
-            <CardContent>
-              <Stack spacing={1.2}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <GppMaybeRoundedIcon fontSize="small" />
-                  <Typography variant="h6" fontWeight={800}>
-                    Security Alerts
+          <GlassCard sx={{ height: "100%" }}>
+            <CardContent sx={{ p: 4 }}>
+              <Stack spacing={3}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <GppMaybeRoundedIcon sx={{ color: "var(--error)" }} />
+                  <Typography variant="h6" fontWeight={900}>
+                    Security Intelligence Alerts
                   </Typography>
                 </Stack>
-                <Stack spacing={0.9}>
+                <Stack spacing={1.5}>
                   {(workspace?.alerts ?? []).length ? (
                     (workspace?.alerts ?? []).map((alert) => (
-                      <GlassCard key={alert.key} variant="outlined" sx={{ border: "1px solid", borderColor: "divider", boxShadow: "none" }}>
-                        <CardContent sx={{ py: 1.1, "&:last-child": { pb: 1.1 } }}>
-                          <Stack spacing={0.35}>
-                            <Stack direction="row" justifyContent="space-between" gap={1}>
-                              <Typography variant="subtitle2" fontWeight={800}>
-                                {alert.title}
-                              </Typography>
-                              <Chip
-                                label={alert.severity.toUpperCase()}
-                                size="small"
-                                sx={{
-                                  bgcolor: `${toneColor[alert.severity] ?? toneColor.neutral}15`,
-                                  color: toneColor[alert.severity] ?? toneColor.neutral,
-                                  fontWeight: 700,
-                                }}
-                              />
-                            </Stack>
-                            <Typography variant="body2" color="text.secondary">
-                              {alert.detail}
-                            </Typography>
-                            {alert.userId ? (
-                              <Button
-                                variant="text"
-                                size="small"
-                                sx={{ alignSelf: "flex-start", px: 0 }}
-                                onClick={() => setSelectedUserId(alert.userId ?? null)}
-                              >
-                                {alert.actionHint ?? "Open user"}
-                              </Button>
-                            ) : null}
+                      <Box key={alert.key} sx={{ 
+                        p: 2, borderRadius: "18px", bgcolor: "var(--glass-gray)",
+                        border: `1px solid ${alpha(toneColor[alert.severity] || toneColor.neutral, 0.2)}`,
+                        borderLeft: `4px solid ${toneColor[alert.severity] || toneColor.neutral}`
+                      }}>
+                        <Stack spacing={1}>
+                          <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="subtitle2" fontWeight={900}>{alert.title}</Typography>
+                            <Chip label={alert.severity} size="small" sx={{ fontSize: 9, fontWeight: 900, borderRadius: "6px" }} />
                           </Stack>
-                        </CardContent>
-                      </GlassCard>
+                          <Typography variant="body2" color="text.secondary" fontWeight={500}>{alert.detail}</Typography>
+                          {alert.userId && (
+                            <Button 
+                              variant="text" size="sm" 
+                              onClick={() => setSelectedUserId(alert.userId ?? null)}
+                              sx={{ alignSelf: "flex-start", p: 0, fontWeight: 800, textTransform: "none", fontSize: 12, color: "var(--primary)" }}
+                            >
+                              {alert.actionHint || "Investigate"}: {getUserDisplay(alert.userId)}
+                            </Button>
+                          )}
+                        </Stack>
+                      </Box>
                     ))
                   ) : (
-                    <Typography variant="body2" color="text.secondary">
-                      No active identity alerts.
-                    </Typography>
+                    <Box sx={{ py: 6, textAlign: "center", opacity: 0.5 }}>
+                      <VerifiedUserRoundedIcon sx={{ fontSize: 48, mb: 2, opacity: 0.2 }} />
+                      <Typography variant="body2" fontWeight={700}>No active identity threats detected.</Typography>
+                    </Box>
                   )}
                 </Stack>
               </Stack>
             </CardContent>
           </GlassCard>
         </Grid>
+
         <Grid size={{ xs: 12, lg: 7 }}>
-          <GlassCard sx={{ border: "1px solid", borderColor: "divider", height: "100%" }}>
-            <CardContent>
-              <Stack spacing={1.2}>
-                <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} gap={1}>
+          <GlassCard sx={{ height: "100%" }}>
+            <CardContent sx={{ p: 4 }}>
+              <Stack spacing={3}>
+                <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} gap={2}>
                   <Box>
-                    <Typography variant="h6" fontWeight={800}>
-                      Audit Trail & Reports
+                    <Typography variant="h6" fontWeight={900}>
+                      Immutable Audit Trail
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Export audit logs and user activity reports directly from the live IAM dataset.
+                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                      Cryptographically signed orchestration events and operator logs.
                     </Typography>
                   </Box>
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                    <Button variant="outlined" startIcon={<HistoryRoundedIcon />} onClick={exportAuditCsv} disabled={!workspace}>
-                      Audit CSV
-                    </Button>
-                    <Button variant="outlined" startIcon={<HistoryRoundedIcon />} onClick={exportAuditJson} disabled={!workspace}>
-                      Audit JSON
-                    </Button>
-                    <Button variant="outlined" startIcon={<KeyRoundedIcon />} onClick={exportActivityReport} disabled={!workspace}>
-                      Activity Report
-                    </Button>
+                  <Stack direction="row" spacing={1.5}>
+                    <Button variant="outline" size="sm" leftIcon={<HistoryRoundedIcon />} onClick={exportAuditCsv} disabled={!workspace}>CSV</Button>
+                    <Button variant="outline" size="sm" leftIcon={<KeyRoundedIcon />} onClick={exportActivityReport} disabled={!workspace}>Report</Button>
                   </Stack>
                 </Stack>
                 <DataTable
                   columns={[
                     {
                       key: "action",
-                      label: "Action",
+                      label: "Orchestration Event",
                       sortable: true,
                       render: (val, entry) => (
-                        <Stack spacing={0.25}>
-                          <Typography variant="subtitle2" fontWeight={700}>
-                            {String(val)}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {entry.entityType} / {entry.entityId}
+                        <Stack spacing={0.5}>
+                          <Typography variant="subtitle2" fontWeight={900}>{String(val)}</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 800, opacity: 0.6 }}>
+                            {entry.entityType}: {entry.entityId ? (entry.entityType === 'USER' ? getUserDisplay(entry.entityId) : entry.entityId) : "Global System"}
                           </Typography>
                         </Stack>
                       ),
                     },
-                    { key: "actorUserId", label: "Actor", sortable: true },
+                    { 
+                      key: "actorUserId", 
+                      label: "Operator", 
+                      render: (val) => <Typography variant="body2" fontWeight={800} color="var(--primary)">{getUserDisplay(val as string)}</Typography>
+                    },
                     {
                       key: "createdAt",
-                      label: "Created",
-                      sortable: true,
-                      render: (val) => formatDateTime(val as string),
+                      label: "Telemetry",
+                      render: (val) => <Typography variant="caption" fontWeight={700} sx={{ opacity: 0.5 }}>{formatDateTime(val as string)}</Typography>
                     },
                   ]}
                   data={workspace?.auditTrail ?? []}
@@ -1926,22 +1562,6 @@ export default function AdminUserManagementWorkspace() {
                   loading={loading}
                   pageSize={5}
                   searchable={true}
-                  expandableContent={(entry) => (
-                    <Box
-                      component="pre"
-                      sx={{
-                        m: 0,
-                        p: 1.5,
-                        borderRadius: 2,
-                        bgcolor: "rgba(15, 23, 42, 0.6)",
-                        color: "#dbeafe",
-                        fontSize: 12,
-                        overflowX: "auto",
-                      }}
-                    >
-                      {JSON.stringify(entry.metadata ?? {}, null, 2)}
-                    </Box>
-                  )}
                 />
               </Stack>
             </CardContent>

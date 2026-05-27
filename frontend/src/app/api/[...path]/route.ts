@@ -64,7 +64,13 @@ async function proxy(request: Request, urls: string[]) {
       });
     } catch (error) {
       lastError = error;
-      console.error(`Proxy error for ${url}:`, error);
+      const errorMsg = `Proxy error for ${url}: ${error instanceof Error ? error.message : String(error)}\n`;
+      console.error(errorMsg);
+      // Log to a file we can read
+      try {
+        const fs = require("fs");
+        fs.appendFileSync("../proxy-errors.log", errorMsg);
+      } catch (e) {}
     }
   }
 
