@@ -16,6 +16,7 @@ import com.sabahub.service.WalletService;
 import com.sabahub.service.WalletCurrencyService;
 import com.sabahub.service.RateLimiter;
 import com.sabahub.config.RateLimitProperties;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -34,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 public class PaymentController {
@@ -284,8 +286,9 @@ public class PaymentController {
 
     @PostMapping("/payments/chapa/finalize")
     public ResponseEntity<Map<String, Object>> finalizeChapa(@RequestBody Map<String, Object> body) {
+        User me = null;
         try {
-            User me = currentUserService.requireUser();
+            me = currentUserService.requireUser();
             Transaction tx = resolveOwnedFundingTransaction(me, Transaction.Provider.CHAPA, body);
             if (tx.getStatus() == Transaction.Status.SUCCESS) {
                 return ResponseEntity.ok(Map.of(
@@ -316,6 +319,7 @@ public class PaymentController {
             Map<String, Object> result = settleInboundFundingTransaction(tx, amount, currency, verification);
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException ex) {
+            log.error("Chapa finalize failed (400) for user {}: {}", me != null ? me.getEmail() : "unknown", ex.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         } catch (IllegalStateException ex) {
             if ("forbidden".equals(ex.getMessage())) {
