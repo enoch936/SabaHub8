@@ -688,16 +688,17 @@ export default function AdminCommandCenter() {
   const jobsCreatedTrend = dailySeries.map((item) => item.jobs);
   const revenueTrend = dailySeries.map((item) => item.revenue);
 
+  const [now] = useState(() => Date.now());
   const openJobs = state.jobs.filter((job) => (job.status ?? "").toUpperCase() === "OPEN").length;
   const suspendedUsers = state.users.filter((user) => user.suspended).length;
   const verifiedUsers = state.users.filter((user) => user.documentsVerified).length;
-  const activeRecently = state.users.filter((user) => {
+  const activeRecently = useMemo(() => state.users.filter((user) => {
     if (!user.lastSeenAt) {
       return false;
     }
     const seen = Date.parse(user.lastSeenAt);
-    return !Number.isNaN(seen) && Date.now() - seen <= 7 * 24 * 60 * 60 * 1000;
-  }).length;
+    return !Number.isNaN(seen) && now - seen <= 7 * 24 * 60 * 60 * 1000;
+  }).length, [state.users, now]);
   const reviewedProposals = state.proposals.filter((proposal) =>
     ["ACCEPTED", "SHORTLISTED", "REJECTED"].includes((proposal.status ?? "").toUpperCase()),
   ).length;
@@ -825,29 +826,29 @@ export default function AdminCommandCenter() {
     [criticalAlerts, state.summary?.disputesOpen, state.totalPendingTopups, suspendedUsers],
   );
 
-  const usersCreatedLast7Days = state.users.filter((user) => {
+  const usersCreatedLast7Days = useMemo(() => state.users.filter((user) => {
     if (!user.createdAt) {
       return false;
     }
     const timestamp = Date.parse(user.createdAt);
-    return !Number.isNaN(timestamp) && Date.now() - timestamp <= 7 * 24 * 60 * 60 * 1000;
-  }).length;
-  const staleOpenJobs = state.jobs.filter((job) => {
+    return !Number.isNaN(timestamp) && now - timestamp <= 7 * 24 * 60 * 60 * 1000;
+  }).length, [state.users, now]);
+  const staleOpenJobs = useMemo(() => state.jobs.filter((job) => {
     if ((job.status ?? "").toUpperCase() !== "OPEN" || !job.createdAt) {
       return false;
     }
     const timestamp = Date.parse(job.createdAt);
-    return !Number.isNaN(timestamp) && Date.now() - timestamp > 21 * 24 * 60 * 60 * 1000;
-  }).length;
-  const jobsClosingSoon = state.jobs.filter((job) => {
+    return !Number.isNaN(timestamp) && now - timestamp > 21 * 24 * 60 * 60 * 1000;
+  }).length, [state.jobs, now]);
+  const jobsClosingSoon = useMemo(() => state.jobs.filter((job) => {
     if ((job.status ?? "").toUpperCase() !== "OPEN" || !job.closingDate) {
       return false;
     }
     const timestamp = Date.parse(job.closingDate);
-    return !Number.isNaN(timestamp) && timestamp >= Date.now() && timestamp - Date.now() <= 7 * 24 * 60 * 60 * 1000;
-  }).length;
+    return !Number.isNaN(timestamp) && timestamp >= now && timestamp - now <= 7 * 24 * 60 * 60 * 1000;
+  }).length, [state.jobs, now]);
   const degradedDomains = (state.overview?.domains ?? []).filter((domain) => domain.status !== "operational");
-  const oldestPendingTopupAgeDays = state.pendingTopups.reduce((oldest, topup) => {
+  const oldestPendingTopupAgeDays = useMemo(() => state.pendingTopups.reduce((oldest, topup) => {
     if (!topup.createdAt) {
       return oldest;
     }
@@ -855,9 +856,9 @@ export default function AdminCommandCenter() {
     if (Number.isNaN(timestamp)) {
       return oldest;
     }
-    const ageDays = Math.max(0, Math.round((Date.now() - timestamp) / (24 * 60 * 60 * 1000)));
+    const ageDays = Math.max(0, Math.round((now - timestamp) / (24 * 60 * 60 * 1000)));
     return Math.max(oldest, ageDays);
-  }, 0);
+  }, 0), [state.pendingTopups, now]);
 
   const recentJobs = useMemo(() => sortByCreatedAtDesc(state.jobs).slice(0, 5), [state.jobs]);
   const pendingTopupPreview = useMemo(() => sortByCreatedAtDesc(state.pendingTopups).slice(0, 5), [state.pendingTopups]);
@@ -895,13 +896,13 @@ export default function AdminCommandCenter() {
             (job.status ?? "").toUpperCase() === "OPEN" &&
             Boolean(job.createdAt) &&
             !Number.isNaN(Date.parse(job.createdAt ?? "")) &&
-            Date.now() - Date.parse(job.createdAt ?? "") > 21 * 24 * 60 * 60 * 1000;
+            now - Date.parse(job.createdAt ?? "") > 21 * 24 * 60 * 60 * 1000;
           const closingSoon =
             (job.status ?? "").toUpperCase() === "OPEN" &&
             Boolean(job.closingDate) &&
             !Number.isNaN(Date.parse(job.closingDate ?? "")) &&
-            Date.parse(job.closingDate ?? "") - Date.now() <= 7 * 24 * 60 * 60 * 1000 &&
-            Date.parse(job.closingDate ?? "") >= Date.now();
+            Date.parse(job.closingDate ?? "") - now <= 7 * 24 * 60 * 60 * 1000 &&
+            Date.parse(job.closingDate ?? "") >= now;
           return {
             title: job.title || "Untitled job",
             helper: `${formatJobBudget(job)} • ${job.createdAt ? `Created ${formatRelativeTime(job.createdAt)}` : "No creation date"}`,
@@ -909,7 +910,7 @@ export default function AdminCommandCenter() {
             tone: isStale ? "warning" : closingSoon ? "attention" : (job.status ?? "").toUpperCase() === "OPEN" ? "info" : "neutral",
           };
         }),
-    [state.jobs],
+    [state.jobs, now],
   );
   const paymentOversightItems = useMemo<DrilldownItem[]>(
     () =>

@@ -7,6 +7,7 @@ import ShieldRoundedIcon from "@mui/icons-material/ShieldRounded";
 import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
 import ApartmentRoundedIcon from "@mui/icons-material/ApartmentRounded";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
 import VideoLibraryRoundedIcon from "@mui/icons-material/VideoLibraryRounded";
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
@@ -23,6 +24,7 @@ import HubRoundedIcon from "@mui/icons-material/HubRounded";
 import ApiRoundedIcon from "@mui/icons-material/ApiRounded";
 import StorageRoundedIcon from "@mui/icons-material/StorageRounded";
 import ManageAccountsRoundedIcon from "@mui/icons-material/ManageAccountsRounded";
+import ModelTrainingRoundedIcon from "@mui/icons-material/ModelTrainingRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
@@ -353,6 +355,22 @@ export const adminNavigationGroups: AdminNavigationGroup[] = [
     icon: <PsychologyRoundedIcon sx={primaryIconSx} />,
     summary: "AI governance, audit trails, and platform compliance systems.",
     items: [
+      {
+        key: "ai-service",
+        label: "AI Service",
+        href: "/admin/ai-service",
+        icon: <AutoAwesomeRoundedIcon sx={primaryIconSx} />,
+        description: "Live recommendations, freelancer matching, fraud scoring, chatbot assistance, and model operations.",
+        children: [
+          {
+            key: "ai-service-model-ops",
+            label: "Model Ops",
+            href: "/admin/ai-service",
+            section: "models",
+            icon: <ModelTrainingRoundedIcon sx={secondaryIconSx} />,
+          },
+        ],
+      },
       {
         key: "ai-operations",
         label: "AI Operations",

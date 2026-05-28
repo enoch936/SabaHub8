@@ -4367,6 +4367,14 @@ export type AIChatbotResponse = {
   contextId?: string;
   suggestedActions: string[];
   confidence: number;
+  answerSource?: string;
+  pythonConfidence?: number;
+  intent?: string;
+  reasoningSummary?: string[];
+  safeguards?: string[];
+  collaborationMode?: string;
+  springLocalAnswer?: string;
+  modelStatus?: Record<string, unknown>;
   engine?: string;
   engineVersion?: string;
   inferenceMode?: string;
@@ -4381,6 +4389,18 @@ export type AIEngineStatus = {
   externalAiApiUsed: boolean;
   dataSource: string;
   message: string;
+  mode?: string;
+  pythonEnabled?: boolean;
+  pythonBridgeConfigured?: boolean;
+  pythonBridgeReachable?: boolean;
+  pythonJobsEnabled?: boolean;
+  pythonFreelancersEnabled?: boolean;
+  pythonFraudEnabled?: boolean;
+  pythonChatEnabled?: boolean;
+  blendJobs?: number;
+  blendFreelancers?: number;
+  blendFraud?: number;
+  blendChat?: number;
 };
 
 export type AIModelRelease = {

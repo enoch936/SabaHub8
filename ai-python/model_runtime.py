@@ -122,6 +122,51 @@ class LocalModelRuntime:
         confidence = float(np.max(probs))
         return {"intent": str(pred), "confidence": confidence}
 
+    def collaborative_chat_assist(
+        self,
+        prompt: str,
+        context_type: Optional[str] = None,
+        context_id: Optional[str] = None,
+        local_answer: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        normalized_prompt = (prompt or "").strip()
+        prompt_l = normalized_prompt.lower()
+        context = (context_type or "GENERAL").strip().upper() or "GENERAL"
+        intent_prediction = self.classify_intent(normalized_prompt)
+        inferred_intent = self._infer_platform_intent(prompt_l, intent_prediction)
+        playbook = self._chat_playbook(inferred_intent)
+
+        reasoning_summary = self._build_reasoning_summary(
+            prompt_l=prompt_l,
+            context=context,
+            context_id=context_id,
+            inferred_intent=inferred_intent,
+            local_answer=local_answer,
+        )
+        answer = self._compose_collaborative_answer(
+            prompt=normalized_prompt,
+            local_answer=local_answer,
+            playbook=playbook,
+            reasoning_summary=reasoning_summary,
+        )
+
+        confidence = self._chat_confidence(prompt_l, intent_prediction, local_answer, inferred_intent)
+        return {
+            "answer": answer,
+            "suggestedActions": playbook["actions"],
+            "confidence": confidence,
+            "intent": inferred_intent,
+            "contextType": context,
+            "contextId": context_id,
+            "reasoningSummary": reasoning_summary,
+            "safeguards": playbook["safeguards"],
+            "collaborationMode": "SPRING_LOCAL_PLUS_PYTHON_REASONER",
+            "springLocalAnswer": local_answer,
+            "modelStatus": self.status(),
+            "engine": "python-local-collaborative-reasoner",
+            "externalAiApiUsed": False,
+        }
+
     def admin_assist(self, command: str, data: Dict[str, Any]) -> Dict[str, Any]:
         command_l = command.lower().strip()
         
@@ -232,6 +277,210 @@ class LocalModelRuntime:
 
     def taxonomy_learning_summary(self) -> Dict[str, Any]:
         return self.taxonomy_engine.learning_summary()
+
+    def _infer_platform_intent(self, prompt_l: str, intent_prediction: Optional[Dict[str, Any]]) -> str:
+        predicted = str((intent_prediction or {}).get("intent", "")).strip().lower()
+        if predicted:
+            if "proposal" in predicted:
+                return "proposal"
+            if "payment" in predicted or "invoice" in predicted:
+                return "payment"
+            if "job" in predicted or "match" in predicted:
+                return "matching"
+
+        intent_terms = [
+            ("model_ops", ["model", "train", "rollback", "activate", "reload", "dataset", "python", "hybrid"]),
+            ("fraud", ["fraud", "risk", "suspicious", "scam", "chargeback", "verify"]),
+            ("payment", ["payment", "wallet", "invoice", "escrow", "payout", "withdraw", "stripe", "chapa"]),
+            ("proposal", ["proposal", "cover letter", "bid", "apply", "client"]),
+            ("matching", ["job", "match", "recommend", "skill", "freelancer", "talent", "candidate"]),
+            ("contract", ["contract", "milestone", "deliverable", "release", "agreement"]),
+            ("admin", ["admin", "audit", "governance", "moderation", "monitoring", "incident"]),
+            ("streaming", ["stream", "live", "webrtc", "hls", "presence", "chat"]),
+            ("profile", ["profile", "portfolio", "availability", "category", "skill"]),
+        ]
+        for intent, terms in intent_terms:
+            if any(term in prompt_l for term in terms):
+                return intent
+        return "general"
+
+    def _chat_playbook(self, intent: str) -> Dict[str, List[str] | str]:
+        playbooks: Dict[str, Dict[str, List[str] | str]] = {
+            "proposal": {
+                "decision": "Treat the proposal as a fit proof, not a generic message.",
+                "steps": [
+                    "Mirror the exact job outcomes in the first sentence.",
+                    "Show two skill matches and one similar delivery example.",
+                    "Add a short milestone plan with measurable acceptance criteria.",
+                    "Close with one low-friction next step for the employer.",
+                ],
+                "actions": ["Open proposals page", "Attach portfolio evidence", "Run job recommendation check"],
+                "safeguards": ["Avoid copied templates", "Do not promise timelines without scoped milestones"],
+            },
+            "payment": {
+                "decision": "Keep money movement inside wallet, escrow, and verified provider callbacks.",
+                "steps": [
+                    "Confirm the transaction source and expected currency.",
+                    "Use escrow milestones before work starts.",
+                    "Wait for webhook verification before treating checkout as paid.",
+                    "Keep invoice, delivery, and release evidence attached to the contract.",
+                ],
+                "actions": ["Open wallet", "Review escrow milestones", "Run fraud risk check"],
+                "safeguards": ["Do not release escrow before acceptance", "Do not trust frontend redirects as payment proof"],
+            },
+            "matching": {
+                "decision": "Improve match quality by aligning skills, category, budget, and availability signals.",
+                "steps": [
+                    "Normalize required skills and compare them to profile skills.",
+                    "Prioritize jobs or candidates with clear overlap reasons.",
+                    "Use Python reranking when hybrid mode is reachable.",
+                    "Review low-score results for missing profile data before rejecting them.",
+                ],
+                "actions": ["Refresh AI recommendations", "Run freelancer matching", "Update profile skills"],
+                "safeguards": ["Do not rank by score alone", "Check whether profile data is incomplete"],
+            },
+            "fraud": {
+                "decision": "Classify risk before settlement and escalate high-risk transfers.",
+                "steps": [
+                    "Score amount, verification state, account age, method, and country signals.",
+                    "Compare Spring rule score with Python model or heuristic score.",
+                    "Use LOW for normal processing, MEDIUM for step-up checks, HIGH for manual review.",
+                    "Record the reason flags in audit metadata.",
+                ],
+                "actions": ["Run fraud risk check", "Review identity verification", "Open audit logs"],
+                "safeguards": ["Do not auto-approve high-risk payments", "Watch repeated medium-risk transfers"],
+            },
+            "model_ops": {
+                "decision": "Operate AI models through versioned releases and reversible activation.",
+                "steps": [
+                    "Import or refresh the dataset before training.",
+                    "Train in Python and create a versioned release.",
+                    "Activate only after checking health and summary output.",
+                    "Rollback immediately if live quality drops.",
+                ],
+                "actions": ["Open model ops", "Train and activate", "Reload model runtime"],
+                "safeguards": ["Keep strict Python off during demos", "Keep a known-good active version"],
+            },
+            "contract": {
+                "decision": "Use contracts and milestones as the shared source of truth.",
+                "steps": [
+                    "Define deliverables and acceptance criteria before funding.",
+                    "Lock required escrow before agreement is established.",
+                    "Submit evidence per milestone.",
+                    "Release only the approved amount and fees.",
+                ],
+                "actions": ["Open contracts", "Review milestones", "Check escrow balance"],
+                "safeguards": ["Do not change payment scope without contract update", "Keep dispute evidence attached"],
+            },
+            "admin": {
+                "decision": "Use admin AI as a governance copilot, not an automatic enforcement actor.",
+                "steps": [
+                    "Summarize the operational signal.",
+                    "Identify the affected users, payments, streams, or content.",
+                    "Choose a reversible runbook action first.",
+                    "Record the decision in audit logs.",
+                ],
+                "actions": ["Open admin AI service", "Review audit logs", "Run dry-run operation"],
+                "safeguards": ["Do not take destructive action without review", "Prefer dry runs for uncertain cases"],
+            },
+            "streaming": {
+                "decision": "Separate control-plane decisions from media-plane delivery.",
+                "steps": [
+                    "Authorize stream access in Spring.",
+                    "Use WebSocket/STOMP for chat, presence, and signaling.",
+                    "Use HLS/WebRTC media infrastructure for production playback.",
+                    "Escalate moderation events through admin controls.",
+                ],
+                "actions": ["Open streaming workspace", "Check stream presence", "Review moderation"],
+                "safeguards": ["Do not expose private streams without access checks", "Keep media diagnostics separate from user chat"],
+            },
+            "profile": {
+                "decision": "Profile completeness directly improves AI recommendations and match quality.",
+                "steps": [
+                    "Fill skills with specific technologies and services.",
+                    "Add portfolio evidence that maps to target categories.",
+                    "Keep availability and preferred categories current.",
+                    "Verify email, phone, and identity where possible.",
+                ],
+                "actions": ["Open profile", "Update skills", "Verify identity"],
+                "safeguards": ["Avoid vague skill names", "Do not overstate availability"],
+            },
+            "general": {
+                "decision": "Start with the workflow, then choose the smallest safe action.",
+                "steps": [
+                    "Identify whether this is matching, payment, contract, chat, admin, or model work.",
+                    "Use the relevant SabaHub workspace instead of leaving the task in chat.",
+                    "Check security and audit impact before acting.",
+                    "Use AI output as guidance and verify with live platform data.",
+                ],
+                "actions": ["Open AI service", "Ask a more specific question", "Review platform workflow"],
+                "safeguards": ["Do not treat AI advice as final approval", "Confirm live data before acting"],
+            },
+        }
+        return playbooks.get(intent, playbooks["general"])
+
+    def _build_reasoning_summary(
+        self,
+        prompt_l: str,
+        context: str,
+        context_id: Optional[str],
+        inferred_intent: str,
+        local_answer: Optional[str],
+    ) -> List[str]:
+        summary = [
+            f"Intent classified as {inferred_intent}.",
+            f"Context scope is {context}{f' for {context_id}' if context_id else ''}.",
+        ]
+        if local_answer:
+            summary.append("Spring local answer was used as the first-pass platform workflow signal.")
+        if any(term in prompt_l for term in ["risk", "fraud", "payment", "escrow", "security"]):
+            summary.append("Risk and verification signals were prioritized before action advice.")
+        if any(term in prompt_l for term in ["job", "match", "proposal", "profile", "skill"]):
+            summary.append("Marketplace fit signals were prioritized: skills, categories, evidence, and availability.")
+        if inferred_intent == "model_ops":
+            summary.append("Model lifecycle safety was prioritized: train, activate, health-check, rollback.")
+        return summary
+
+    def _compose_collaborative_answer(
+        self,
+        prompt: str,
+        local_answer: Optional[str],
+        playbook: Dict[str, List[str] | str],
+        reasoning_summary: List[str],
+    ) -> str:
+        decision = str(playbook["decision"])
+        steps = playbook["steps"]
+        safeguards = playbook["safeguards"]
+        step_lines = "\n".join(f"{idx + 1}. {step}" for idx, step in enumerate(steps))
+        safeguard_text = "; ".join(str(item) for item in safeguards)
+        local_text = f"\n\nSpring first-pass signal: {local_answer}" if local_answer else ""
+        reasoning_text = " ".join(reasoning_summary)
+        prompt_text = f" For your question, \"{prompt}\"," if prompt else ""
+        return (
+            f"{prompt_text} the collaborative AI recommendation is: {decision}\n\n"
+            f"Reasoning summary: {reasoning_text}\n\n"
+            f"Recommended path:\n{step_lines}\n\n"
+            f"Safety checks: {safeguard_text}."
+            f"{local_text}"
+        )
+
+    def _chat_confidence(
+        self,
+        prompt_l: str,
+        intent_prediction: Optional[Dict[str, Any]],
+        local_answer: Optional[str],
+        inferred_intent: str,
+    ) -> float:
+        confidence = 0.72
+        if inferred_intent != "general":
+            confidence += 0.08
+        if local_answer:
+            confidence += 0.05
+        if len(prompt_l.split()) >= 5:
+            confidence += 0.04
+        if intent_prediction:
+            confidence = max(confidence, float(intent_prediction.get("confidence", 0.0)))
+        return round(min(0.94, confidence), 4)
 
     def _build_fraud_vector(self, payload: Dict[str, Any]) -> List[float]:
         amt = float(payload.get("amount", 0) or 0)

@@ -368,6 +368,14 @@ public class AIInsightsService {
         if (remote.get("answer") instanceof String answer && !answer.isBlank() && remoteConfidence >= (localConfidence * 0.9)) {
             local.put("answer", answer);
         }
+        local.put("answerSource", "SPRING_PYTHON_COLLABORATIVE");
+        local.put("pythonConfidence", remoteConfidence);
+        copyIfPresent(remote, local, "intent");
+        copyIfPresent(remote, local, "reasoningSummary");
+        copyIfPresent(remote, local, "safeguards");
+        copyIfPresent(remote, local, "collaborationMode");
+        copyIfPresent(remote, local, "springLocalAnswer");
+        copyIfPresent(remote, local, "modelStatus");
         local.put("confidence", Math.round(blendedConfidence * 10000.0) / 10000.0);
         Object remoteActions = remote.get("suggestedActions");
         if (remoteActions instanceof List<?> actions && !actions.isEmpty()) {
@@ -381,6 +389,12 @@ public class AIInsightsService {
                 if (!merged.contains(val)) merged.add(val);
             }
             local.put("suggestedActions", merged);
+        }
+    }
+
+    private void copyIfPresent(Map<String, Object> source, Map<String, Object> target, String key) {
+        if (source.containsKey(key)) {
+            target.put(key, source.get(key));
         }
     }
 

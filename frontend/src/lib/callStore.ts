@@ -1,8 +1,3 @@
-declare module "simple-peer" {
-  const SimplePeer: any;
-  export default SimplePeer;
-}
-
 import { create } from "zustand";
 import SimplePeer from "simple-peer";
 

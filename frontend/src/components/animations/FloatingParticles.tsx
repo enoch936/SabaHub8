@@ -163,6 +163,8 @@ interface DOMParticleProps {
   id: number;
   x: number;
   y: number;
+  targetX: number;
+  targetY: number;
   color: string;
   size: number;
   duration: number;
@@ -194,6 +196,8 @@ export const DOMParticles: React.FC<DOMParticlesProps> = ({
         id: Math.random(),
         x: Math.random() * 100,
         y: Math.random() * 100,
+        targetX: (Math.random() - 0.5) * 100,
+        targetY: -100 - Math.random() * 100,
         color: colors[Math.floor(Math.random() * colors.length)],
         size: Math.random() * 8 + 4,
         duration: Math.random() * 3 + 2,
@@ -223,8 +227,8 @@ export const DOMParticles: React.FC<DOMParticlesProps> = ({
             scale: 0.5,
           }}
           animate={{
-            x: particle.x + (Math.random() - 0.5) * 100,
-            y: particle.y - 100 - Math.random() * 100,
+            x: particle.x + particle.targetX,
+            y: particle.y + particle.targetY,
             opacity: 0,
             scale: 1,
           }}

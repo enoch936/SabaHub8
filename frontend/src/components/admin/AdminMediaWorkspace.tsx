@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Avatar,
 } from "@mui/material";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
@@ -35,6 +36,7 @@ import { GlassCard } from "./GlassCard";
 import { DataTable, type TableColumn } from "./DataTable";
 import { adminGetStorageAnalytics, listAssets, type Asset, deleteAsset } from "@/lib/api";
 import { ModernDonutChart } from "./ModernCharts";
+import NoSsrResponsiveContainer from "@/components/charts/NoSsrResponsiveContainer";
 import Uploader from "../Uploader";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";

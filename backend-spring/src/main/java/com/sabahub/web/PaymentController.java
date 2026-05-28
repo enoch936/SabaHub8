@@ -181,18 +181,21 @@ public class PaymentController {
             var existing = transactionRepository.findByUserIdAndIdempotencyKey(me.getId(), idemKey);
             if (existing.isPresent()) {
                 var tx0 = existing.get();
-                Object checkoutUrl = tx0.getMetadata() == null ? null : tx0.getMetadata().get("checkoutUrl");
-                Object providerRef = tx0.getProviderRef();
-                Map<String, Object> response = new LinkedHashMap<>();
-                response.put("transactionId", tx0.getId());
-                response.put("idempotent", true);
-                if (providerRef != null) {
-                    response.put("providerRef", providerRef);
+                if (tx0.getStatus() != Transaction.Status.FAILED) {
+                    Object checkoutUrl = tx0.getMetadata() == null ? null : tx0.getMetadata().get("checkoutUrl");
+                    Object providerRef = tx0.getProviderRef();
+                    Map<String, Object> response = new LinkedHashMap<>();
+                    response.put("transactionId", tx0.getId());
+                    response.put("idempotent", true);
+                    response.put("status", tx0.getStatus());
+                    if (providerRef != null) {
+                        response.put("providerRef", providerRef);
+                    }
+                    if (checkoutUrl != null) {
+                        response.put("checkoutUrl", checkoutUrl);
+                    }
+                    return ResponseEntity.ok(response);
                 }
-                if (checkoutUrl != null) {
-                    response.put("checkoutUrl", checkoutUrl);
-                }
-                return ResponseEntity.ok(response);
             }
         }
 

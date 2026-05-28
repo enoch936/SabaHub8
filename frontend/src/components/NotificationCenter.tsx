@@ -227,6 +227,7 @@ export function NotificationCenter({
   maxVisible = 10,
 }: NotificationCenterProps) {
   const theme = useTheme();
+  const [now] = useState(() => Date.now());
   const [filterCategory, setFilterCategory] = useState<NotificationCategory | null>(null);
   const [showOnlyUnread, setShowOnlyUnread] = useState(false);
 
@@ -237,11 +238,11 @@ export function NotificationCenter({
       message: (n.payload?.message as string) || "",
       category: (n.payload?.category as NotificationCategory) || "system",
       priority: (n.payload?.priority as NotificationPriority) || "medium",
-      timestamp: new Date(n.createdAt || Date.now()),
+      timestamp: new Date(n.createdAt || now),
       read: n.read,
       actionUrl: n.payload?.route as string,
     } as MappedNotification));
-  }, [notifications]);
+  }, [notifications, now]);
 
   const filteredNotifications = useMemo(() => {
     let result = mappedNotifications;

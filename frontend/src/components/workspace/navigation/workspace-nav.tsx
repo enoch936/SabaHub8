@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import {
   Activity,
   BadgeCheck,
+  BrainCircuit,
   BriefcaseBusiness,
   ClipboardList,
   FilePlus2,
@@ -76,6 +77,12 @@ export const WORKSPACE_NAV_SECTIONS: WorkspaceNavSection[] = [
         label: "Streaming",
         href: workspaceRoutes.stream,
         icon: <Radio size={18} />,
+      },
+      {
+        id: "ai-service",
+        label: "AI Service",
+        href: workspaceRoutes.assistant,
+        icon: <BrainCircuit size={18} />,
       },
       {
         id: "proposals",
@@ -168,6 +175,9 @@ export function getWorkspaceSurfaceLabel(pathname: string) {
   if (pathname === "/chat") return "Messages";
   if (pathname === workspaceRoutes.stream || pathname.startsWith(`${workspaceRoutes.stream}/`)) {
     return "Streaming";
+  }
+  if (pathname === workspaceRoutes.assistant || pathname.startsWith(`${workspaceRoutes.assistant}/`)) {
+    return "AI Service";
   }
   if (pathname === workspaceRoutes.proposals || pathname.startsWith(`${workspaceRoutes.proposals}/`)) {
     return "Proposals";
