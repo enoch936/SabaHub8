@@ -22,7 +22,7 @@ import ClearRoundedIcon from "@mui/icons-material/ClearRounded";
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import { motion, AnimatePresence } from "framer-motion";
-import { GlassCard } from "./GlassCard";
+import { GlassCard } from "./admin/GlassCard";
 import { type AppNotification } from "@/lib/api";
 
 export type NotificationCategory = "payment" | "security" | "system" | "user" | "deployment" | "ai";
@@ -410,5 +410,3 @@ export function NotificationCenter({
     </Box>
   );
 }
-
-import { Tooltip } from "@mui/material";
