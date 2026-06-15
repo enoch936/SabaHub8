@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import SimplePeer from "simple-peer";
+import { sendCallSignal } from "./ws";
 
 export type CallType = "audio" | "video";
 export type CallStatus = "idle" | "ringing" | "active" | "ended";
@@ -11,6 +12,7 @@ export interface CallState {
   status: CallStatus;
   participantId: string | null;
   participantName: string | null;
+  isInitiator: boolean;
 
   // WebRTC
   peerConnection: SimplePeer.Instance | null;
@@ -20,17 +22,23 @@ export interface CallState {
   // UI state
   isMuted: boolean;
   isVideoOn: boolean;
+  remoteIsMuted: boolean;
+  remoteIsVideoOn: boolean;
   duration: number;
+  mediaError: string | null;
 
   // Actions
-  initiatCall: (participantId: string, participantName: string, type: CallType) => Promise<void>;
+  initiateCall: (participantId: string, participantName: string, type: CallType) => Promise<void>;
+  handleIncomingCall: (participantId: string, participantName: string, type: CallType, callId: string) => void;
   acceptCall: () => Promise<void>;
   rejectCall: () => void;
   endCall: () => void;
+  handleSignal: (signal: any) => void;
   toggleMute: () => void;
   toggleVideo: () => void;
+  updateRemoteStatus: (isMuted: boolean, isVideoOn: boolean) => void;
   setRemoteStream: (stream: MediaStream) => void;
-  setDuration: (duration: number) => void;
+  tickDuration: () => void;
   reset: () => void;
 }
 
@@ -41,53 +49,56 @@ const useCallStore = create<CallState>((set, get) => ({
   status: "idle",
   participantId: null,
   participantName: null,
+  isInitiator: false,
   peerConnection: null,
   localStream: null,
   remoteStream: null,
   isMuted: false,
   isVideoOn: true,
+  remoteIsMuted: false,
+  remoteIsVideoOn: true,
   duration: 0,
+  mediaError: null,
 
   // Initiate a call
-  initiatCall: async (participantId, participantName, type) => {
+  initiateCall: async (participantId, participantName, type) => {
     try {
-      // Check if we're in the browser and media devices are available
-      if (typeof window === "undefined") {
-        throw new Error("Media API not available - browser context required");
-      }
+      if (typeof window === "undefined") return;
 
-      if (!navigator?.mediaDevices?.getUserMedia) {
-        throw new Error("Camera/Microphone access not supported in this browser");
-      }
+      const callId = `call_${Date.now()}`;
+      const constraints = {
+        video: type === "video",
+        audio: true
+      };
 
-      // Generate call ID
-      const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      // Get local media stream
-      const constraints =
-        type === "video" ? { video: true, audio: true } : { audio: true };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      // Create peer connection
       const peer = new SimplePeer({
         initiator: true,
         trickle: false,
         stream,
         config: {
-          iceServers: [
-            { urls: ["stun:stun.l.google.com:19302"] },
-            { urls: ["stun:stun1.l.google.com:19302"] },
-          ],
-        },
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+        }
       });
 
-      // Handle peer events
+      peer.on("signal", (data) => {
+        sendCallSignal({
+          targetUserId: participantId,
+          type: "ringing",
+          callId,
+          callType: type,
+          fromUserName: "User", // Should ideally be from session
+          signal: data
+        });
+      });
+
+      peer.on("stream", (remoteStream) => {
+        set({ remoteStream, status: "active" });
+      });
+
       peer.on("error", (err) => {
-        console.error("Peer connection error:", err);
-        get().endCall();
-      });
-
-      peer.on("close", () => {
+        console.error("Peer error:", err);
         get().endCall();
       });
 
@@ -97,151 +108,191 @@ const useCallStore = create<CallState>((set, get) => ({
         status: "ringing",
         participantId,
         participantName,
-        peerConnection: peer,
+        isInitiator: true,
         localStream: stream,
+        peerConnection: peer,
         isVideoOn: type === "video",
+        mediaError: null
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to initiate call:", error);
-      set({ status: "idle" });
+      set({ mediaError: error.message || "Failed to access camera/mic" });
     }
   },
 
-  // Accept a call
+  handleIncomingCall: (participantId, participantName, type, callId) => {
+    set({
+      callId,
+      callType: type,
+      status: "ringing",
+      participantId,
+      participantName,
+      isInitiator: false,
+      mediaError: null
+    });
+  },
+
   acceptCall: async () => {
-    const state = get();
-    if (state.status !== "ringing") return;
+    const { callId, participantId, callType } = get();
+    if (!callId || !participantId) return;
 
     try {
-      // Check if we're in the browser and media devices are available
-      if (typeof window === "undefined") {
-        throw new Error("Media API not available - browser context required");
-      }
+      const constraints = {
+        video: callType === "video",
+        audio: true
+      };
 
-      if (!navigator?.mediaDevices?.getUserMedia) {
-        throw new Error("Camera/Microphone access not supported in this browser");
-      }
-
-      const constraints =
-        state.callType === "video" ? { video: true, audio: true } : { audio: true };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      // Update local stream
-      if (state.peerConnection) {
-        stream.getTracks().forEach((track) => {
-          state.peerConnection!.addTrack(track, stream);
+      const peer = new SimplePeer({
+        initiator: false,
+        trickle: false,
+        stream,
+        config: {
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+        }
+      });
+
+      peer.on("signal", (data) => {
+        sendCallSignal({
+          targetUserId: participantId,
+          type: "signal",
+          callId,
+          signal: data
         });
+      });
+
+      peer.on("stream", (remoteStream) => {
+        set({ remoteStream, status: "active" });
+      });
+
+      // If we have a pending signal (offer), apply it now
+      const { pendingSignal } = get();
+      if (pendingSignal) {
+        peer.signal(pendingSignal);
       }
+
+      sendCallSignal({
+        targetUserId: participantId,
+        type: "accept",
+        callId
+      });
 
       set({
         status: "active",
         localStream: stream,
+        peerConnection: peer,
+        isVideoOn: callType === "video",
+        pendingSignal: null
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to accept call:", error);
-      get().rejectCall();
+      set({ mediaError: error.message || "Failed to access camera/mic" });
     }
   },
 
-  // Reject/decline call
+  handleSignal: (signal) => {
+    const { peerConnection } = get();
+    if (peerConnection) {
+      peerConnection.signal(signal);
+    }
+  },
+
   rejectCall: () => {
-    const state = get();
-    if (state.peerConnection) {
-      state.peerConnection.destroy();
+    const { callId, participantId } = get();
+    if (callId && participantId) {
+      sendCallSignal({
+        targetUserId: participantId,
+        type: "reject",
+        callId
+      });
     }
-    if (state.localStream) {
-      state.localStream.getTracks().forEach((track) => track.stop());
-    }
-    set({
-      callId: null,
-      callType: null,
-      status: "idle",
-      participantId: null,
-      participantName: null,
-      peerConnection: null,
-      localStream: null,
-      remoteStream: null,
-      duration: 0,
-    });
+    get().reset();
   },
 
-  // End call
   endCall: () => {
-    const state = get();
-    if (state.peerConnection) {
-      state.peerConnection.destroy();
+    const { callId, participantId } = get();
+    if (callId && participantId) {
+      sendCallSignal({
+        targetUserId: participantId,
+        type: "end",
+        callId
+      });
     }
-    if (state.localStream) {
-      state.localStream.getTracks().forEach((track) => track.stop());
-    }
-    set({
-      callId: null,
-      callType: null,
-      status: "ended",
-      participantId: null,
-      participantName: null,
-      peerConnection: null,
-      localStream: null,
-      remoteStream: null,
-      duration: 0,
-    });
+    get().reset();
   },
 
-  // Toggle mute
   toggleMute: () => {
-    const state = get();
-    if (state.localStream) {
-      state.localStream.getAudioTracks().forEach((track) => {
-        track.enabled = !track.enabled;
-      });
+    const { localStream, isMuted, participantId, callId, isVideoOn } = get();
+    if (localStream) {
+      localStream.getAudioTracks().forEach(t => t.enabled = isMuted);
+      set({ isMuted: !isMuted });
+      
+      if (participantId && callId) {
+        sendCallSignal({
+          targetUserId: participantId,
+          type: "mute-status",
+          callId,
+          isMuted: !isMuted,
+          isVideoOn
+        });
+      }
     }
-    set({ isMuted: !state.isMuted });
   },
 
-  // Toggle video
   toggleVideo: () => {
-    const state = get();
-    if (state.localStream && state.callType === "video") {
-      state.localStream.getVideoTracks().forEach((track) => {
-        track.enabled = !track.enabled;
-      });
+    const { localStream, isVideoOn, participantId, callId, isMuted } = get();
+    if (localStream) {
+      localStream.getVideoTracks().forEach(t => t.enabled = !isVideoOn);
+      set({ isVideoOn: !isVideoOn });
+
+      if (participantId && callId) {
+        sendCallSignal({
+          targetUserId: participantId,
+          type: "mute-status",
+          callId,
+          isMuted,
+          isVideoOn: !isVideoOn
+        });
+      }
     }
-    set({ isVideoOn: !state.isVideoOn });
   },
 
-  // Set remote stream
-  setRemoteStream: (stream: MediaStream) => {
-    set({ remoteStream: stream, status: "active" });
+  updateRemoteStatus: (remoteIsMuted, remoteIsVideoOn) => {
+    set({ remoteIsMuted, remoteIsVideoOn });
   },
 
-  // Set call duration
-  setDuration: (duration: number) => {
-    set({ duration });
+  setRemoteStream: (remoteStream) => {
+    set({ remoteStream, status: "active" });
   },
 
-  // Reset store
+  tickDuration: () => {
+    set(state => ({ duration: state.duration + 1 }));
+  },
+
   reset: () => {
-    const state = get();
-    if (state.peerConnection) {
-      state.peerConnection.destroy();
-    }
-    if (state.localStream) {
-      state.localStream.getTracks().forEach((track) => track.stop());
-    }
+    const { peerConnection, localStream } = get();
+    if (peerConnection) peerConnection.destroy();
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+
     set({
       callId: null,
       callType: null,
       status: "idle",
       participantId: null,
       participantName: null,
+      isInitiator: false,
       peerConnection: null,
       localStream: null,
       remoteStream: null,
       isMuted: false,
       isVideoOn: true,
+      remoteIsMuted: false,
+      remoteIsVideoOn: true,
       duration: 0,
+      mediaError: null
     });
-  },
+  }
 }));
 
 export default useCallStore;

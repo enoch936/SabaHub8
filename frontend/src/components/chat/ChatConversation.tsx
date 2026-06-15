@@ -15,8 +15,6 @@ import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
 import { TypingIndicator } from "./TypingIndicator";
 import { ChatSearchInput, chatUi } from "./chat-ui";
-import { VideoCallModal } from "@/components/call/VideoCallModal";
-import { AudioCallOverlay } from "@/components/call/AudioCallOverlay";
 import useCallStore from "@/lib/callStore";
 
 interface ChatConversationProps {
@@ -215,38 +213,65 @@ export function ChatConversation({
       : null;
 
   const initiateAudioCall = async () => {
-    const initiatCall = useCallStore.getState().initiatCall;
+    const initiateCall = useCallStore.getState().initiateCall;
 
-    // Get participant ID from thread type
-    if (threadType === "DIRECT" && participantIds && participantIds.length > 0) {
-      const participantId = participantIds[0];
-      const participantName = title;
+    if (participantIds && participantIds.length > 0) {
+      // In a group, we call the first other participant as a fallback for 1:1 store
+      // but we indicate it's a room session.
+      const participantId = threadType === "DIRECT" 
+        ? (participantIds.find(id => id !== currentUserId) || participantIds[0])
+        : participantIds.find(id => id !== currentUserId) || participantIds[0];
+        
+      const participantName = threadType === "DIRECT" ? title : `${title} (Group)`;
+      
       try {
-        await initiatCall(participantId, participantName, "audio");
-        toast.success("Initiating audio call...");
-      } catch (error) {
-        toast.error("Failed to initiate call");
+        // Request microphone access explicitly
+        await initiateCall(participantId, participantName, "audio");
+        toast.success(threadType === "DIRECT" ? "Initiating audio call..." : "Initiating group audio session...");
+      } catch (error: any) {
+        console.error("Call initiation error:", error);
+        if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+          toast.error("Microphone access blocked. Click the lock icon in your browser address bar to allow microphone access and try again.", {
+            duration: 6000,
+          });
+        } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+          toast.error("No microphone found. Please connect a microphone and try again.");
+        } else {
+          toast.error(`Failed to start call: ${error.message || "Unknown error"}`);
+        }
       }
     } else {
-      toast.error("Audio calls only available in direct messages");
+      toast.error("No participants available for call");
     }
   };
 
   const initiateVideoCall = async () => {
-    const initiatCall = useCallStore.getState().initiatCall;
+    const initiateCall = useCallStore.getState().initiateCall;
 
-    // Get participant ID from thread type
-    if (threadType === "DIRECT" && participantIds && participantIds.length > 0) {
-      const participantId = participantIds[0];
-      const participantName = title;
+    if (participantIds && participantIds.length > 0) {
+      const participantId = threadType === "DIRECT" 
+        ? (participantIds.find(id => id !== currentUserId) || participantIds[0])
+        : participantIds.find(id => id !== currentUserId) || participantIds[0];
+        
+      const participantName = threadType === "DIRECT" ? title : `${title} (Group)`;
+
       try {
-        await initiatCall(participantId, participantName, "video");
-        toast.success("Initiating video call...");
-      } catch (error) {
-        toast.error("Failed to initiate call");
+        await initiateCall(participantId, participantName, "video");
+        toast.success(threadType === "DIRECT" ? "Initiating video call..." : "Initiating group video session...");
+      } catch (error: any) {
+        console.error("Video call initiation error:", error);
+        if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+          toast.error("Camera/Microphone access blocked. Click the lock icon in your browser address bar to allow access and try again.", {
+            duration: 6000,
+          });
+        } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+          toast.error("Camera or microphone not found. Please ensure they are connected.");
+        } else {
+          toast.error(`Failed to start video call: ${error.message || "Unknown error"}`);
+        }
       }
     } else {
-      toast.error("Video calls only available in direct messages");
+      toast.error("No participants available for call");
     }
   };
 
@@ -316,15 +341,15 @@ export function ChatConversation({
           <div className="flex items-center gap-1.5 sm:gap-3">
             <div className="flex items-center gap-1.5 mr-2 pr-2 border-r border-white/10">
               <HeaderActionButton
-                label="Voice Call"
+                label={threadType === "CHANNEL" ? "Start Audio Live" : "Voice Call"}
                 onClick={initiateAudioCall}
-                icon={<Phone className="h-4.5 w-4.5" />}
+                icon={threadType === "CHANNEL" ? <Radio className="h-4.5 w-4.5" /> : <Phone className="h-4.5 w-4.5" />}
                 tone="primary"
               />
               <HeaderActionButton
-                label="Video Call"
+                label={threadType === "CHANNEL" ? "Start Video Live" : "Video Call"}
                 onClick={initiateVideoCall}
-                icon={<Video className="h-4.5 w-4.5" />}
+                icon={threadType === "CHANNEL" ? <Radio className="h-4.5 w-4.5" /> : <Video className="h-4.5 w-4.5" />}
                 tone="primary"
               />
             </div>
@@ -459,10 +484,6 @@ export function ChatConversation({
           }}
         />
       </div>
-
-      {/* Call modals */}
-      <VideoCallModal />
-      <AudioCallOverlay />
     </div>
   );
 }

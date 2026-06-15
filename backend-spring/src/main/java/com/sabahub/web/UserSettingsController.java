@@ -15,6 +15,7 @@ import com.sabahub.service.SessionTrackingService;
 import com.sabahub.service.SMSService;
 import com.sabahub.service.TwoFactorAuthService;
 import com.sabahub.service.TwoFactorMethodNormalizer;
+import com.sabahub.service.SocialService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -48,6 +49,9 @@ public class UserSettingsController {
 
     @Autowired
     private OTPService otpService;
+
+    @Autowired
+    private SocialService socialService;
 
     @Autowired
     private EmailService emailService;
@@ -706,10 +710,10 @@ public class UserSettingsController {
     }
 
     /**
-     * GET /api/user/profile/{userId} - Get public profile (for viewing other users)
+     * GET /api/user/profile/public/{userId} - Get public profile (for viewing other users)
      */
     @GetMapping("/public/{userId}")
-    public ResponseEntity<UserProfile> getPublicProfile(@PathVariable String userId) {
+    public ResponseEntity<PublicProfileResponse> getPublicProfile(@PathVariable String userId) {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             return ResponseEntity.notFound().build();
@@ -720,7 +724,31 @@ public class UserSettingsController {
             return ResponseEntity.notFound().build();
         }
         
-        return ResponseEntity.ok(profile);
+        String currentUserId = null;
+        try {
+            currentUserId = currentUserService.getCurrentUserId();
+        } catch (Exception ignored) {}
+
+        boolean isFollowing = currentUserId != null && socialService.isFollowing(currentUserId, userId);
+        boolean hasStories = !socialService.getUserStories(userId).isEmpty();
+        
+        PublicProfileResponse response = PublicProfileResponse.builder()
+                .userId(user.getId())
+                .username(user.getUsername())
+                .fullName(user.getFullName())
+                .profilePictureUrl(profile.getProfilePictureUrl())
+                .bio(profile.getBio())
+                .location(profile.getLocation())
+                .isFollowing(isFollowing)
+                .hasActiveStories(hasStories)
+                .stats(PublicProfileResponse.ProfileStats.builder()
+                        .followerCount(socialService.getFollowerCount(userId))
+                        .followingCount(socialService.getFollowingCount(userId))
+                        .totalLikes(socialService.getTotalLikesByAuthor(userId))
+                        .build())
+                .build();
+        
+        return ResponseEntity.ok(response);
     }
 
     private UserProfile ensureProfile(User user) {
@@ -847,6 +875,12 @@ public class UserSettingsController {
 
     private String extractBearerToken(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return "";
+        }
+        return authHeader.substring(7);
+    }
+}
+.startsWith("Bearer ")) {
             return "";
         }
         return authHeader.substring(7);

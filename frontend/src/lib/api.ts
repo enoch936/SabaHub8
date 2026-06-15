@@ -4127,6 +4127,21 @@ export async function adminBroadcast(message: string) {
   return data as { ok: boolean };
 }
 
+export type AdminAnnouncement = {
+  id: string;
+  title: string;
+  message: string;
+  sentBy: string;
+  sentAt: string;
+  recipients: string;
+  status: "DELIVERED" | "FAILED";
+};
+
+export async function adminListAnnouncements() {
+  const { data } = await api.get(`/admin/announcements`);
+  return data as AdminAnnouncement[];
+}
+
 // Enterprise Admin Command Center
 export type AdminCommandCenterMetricCard = {
   id: string;
@@ -4843,4 +4858,173 @@ export type AdminBootstrapStatus = {
   systemStatus: "INITIALIZED" | "AWAITING_INITIALIZATION";
   message: string;
   lastUpdated: string;
+};
+
+// Discovery API
+export const getDiscoveryFeed = async (category?: string, limit = 20, offset = 0) => {
+  const r = await api.get("/discovery/feed", { params: { category, limit, offset } });
+  return r.data?.items || [];
+};
+
+// Reels API
+export const getReelsFeed = async (offset = 0, limit = 20) => {
+  const r = await api.get("/reels", { params: { limit, offset } });
+  return { items: r.data || [] };
+};
+
+export const getReel = async (id: string) => {
+  const r = await api.get(`/reels/${id}`);
+  return r.data;
+};
+
+export const createReel = async (data: any) => {
+  const r = await api.post("/reels", data);
+  return r.data;
+};
+
+export const likeReel = async (id: string) => {
+  const r = await api.post(`/reels/${id}/like`);
+  return r.data;
+};
+
+export const unlikeReel = async (id: string) => {
+  const r = await api.post(`/reels/${id}/unlike`);
+  return r.data;
+};
+
+export const addReelComment = async (id: string, body: string) => {
+  const r = await api.post(`/reels/${id}/comment`, { body });
+  return r.data;
+};
+
+export const saveReel = async (id: string) => {
+  const r = await api.post(`/reels/${id}/save`);
+  return r.data;
+};
+
+export const trackReelView = async (id: string) => {
+  const r = await api.post(`/reels/${id}/view`);
+  return r.data;
+};
+
+export const getUserReels = async (authorId: string, limit = 20) => {
+  const r = await api.get(`/reels/user/${authorId}`, { params: { limit } });
+  return { items: r.data || [] };
+};
+
+// Social API
+export const getActiveStories = async () => {
+  const r = await api.get("/social/stories");
+  const data = r.data;
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") {
+    return data.items || data.users || data.content || [];
+  }
+  return [];
+};
+
+export const getUserStories = async (userId: string) => {
+  const r = await api.get(`/social/users/${userId}/stories`);
+  return r.data || [];
+};
+
+export const getSocialFeed = async (page = 0, size = 20) => {
+  const r = await api.get("/social/feed", { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const getGlobalFeed = async (page = 0, size = 20) => {
+  const r = await api.get("/social/feed/global", { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const getUserPosts = async (userId: string, page = 0, size = 20) => {
+  const r = await api.get(`/social/users/${userId}/posts`, { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const getLikedPosts = async (userId: string, page = 0, size = 20) => {
+  const r = await api.get(`/social/users/${userId}/posts/liked`, { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const getSavedPosts = async (userId: string, page = 0, size = 20) => {
+  const r = await api.get(`/social/users/${userId}/posts/saved`, { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const getMediaGallery = async (userId: string) => {
+  const r = await api.get(`/social/users/${userId}/gallery`);
+  return r.data || [];
+};
+
+export const followUser = async (userId: string) => {
+  const r = await api.post("/social/follow", { userId });
+  return r.data;
+};
+
+export const unfollowUser = async (userId: string) => {
+  const r = await api.post("/social/unfollow", { userId });
+  return r.data;
+};
+
+export const likePost = async (postId: string) => {
+  const r = await api.post(`/social/posts/${postId}/like`);
+  return r.data;
+};
+
+export const unlikePost = async (postId: string) => {
+  const r = await api.post(`/social/posts/${postId}/unlike`);
+  return r.data;
+};
+
+export const savePost = async (postId: string) => {
+  const r = await api.post(`/social/posts/${postId}/save`);
+  return r.data;
+};
+
+export const unsavePost = async (postId: string) => {
+  const r = await api.post(`/social/posts/${postId}/unsave`);
+  return r.data;
+};
+
+export const addComment = async (postId: string, content: string) => {
+  const r = await api.post(`/social/posts/${postId}/comments`, { content });
+  return r.data;
+};
+
+export const createSocialPost = async (data: { content: string; mediaAssetIds?: string[]; tags?: string[]; category?: string; type?: string }) => {
+  const r = await api.post("/social/posts", data);
+  return r.data;
+};
+
+export const getComments = async (postId: string, page = 0, size = 50) => {
+  const r = await api.get(`/social/posts/${postId}/comments`, { params: { page, size } });
+  return r.data;
+};
+
+
+export type DiscoveryFeedItem = {
+  id: string;
+  type: string;
+  title?: string;
+  name?: string;
+  description?: string;
+  thumbnailUrl?: string;
+  [key: string]: any;
 };
