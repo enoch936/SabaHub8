@@ -37,6 +37,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/lib/session";
 import { workspaceRoutes } from "@/lib/workspace-routes";
 import { formatCurrencyRange, formatPrice } from "@/lib/utils";
+import { searchMarketplace, bootstrapWorkspaceDemoData } from "@/lib/api";
 import type { 
   MarketplaceSearchResponse, 
   MarketplaceSearchTalent, 
@@ -588,11 +589,11 @@ export default function TalentWorkspace() {
   const deferredQuery = useDeferredValue(query);
 
   const boards: { id: BoardId; label: string; count: number }[] = [
-    { id: "all", label: "All", count: (results?.talents.length || 0) + (results?.projectPosts.length || 0) + (results?.gigs.length || 0) + (results?.stories.length || 0) },
-    { id: "talents", label: "Talent", count: results?.talents.length || 0 },
-    { id: "projects", label: "Projects", count: results?.projectPosts.length || 0 },
-    { id: "gigs", label: "Gigs", count: results?.gigs.length || 0 },
-    { id: "stories", label: "Stories", count: results?.stories.length || 0 },
+    { id: "all", label: "All", count: results?.counts ? (results.counts.talents + results.counts.projectPosts + results.counts.gigs + results.counts.stories) : 0 },
+    { id: "talents", label: "Talent", count: results?.counts?.talents || 0 },
+    { id: "projects", label: "Projects", count: results?.counts?.projectPosts || 0 },
+    { id: "gigs", label: "Gigs", count: results?.counts?.gigs || 0 },
+    { id: "stories", label: "Stories", count: results?.counts?.stories || 0 },
   ];
 
   const featuredSkills = useMemo(() => {
@@ -608,28 +609,30 @@ export default function TalentWorkspace() {
   }, [results]);
 
   useEffect(() => {
-    setIsLoading(true);
-    // Mock search for now
-    setTimeout(() => {
-      const mockResults: MarketplaceSearchResponse = {
-        talents: [
-          { freelancerId: "1", userId: "u1", name: "Abebe Kebede", professionalTitle: "Fullstack Developer", hourlyRate: 45, rating: 4.8, reviewCount: 12, successRate: 98, skills: ["React", "Node.js", "PostgreSQL"], languages: ["English", "Amharic"], timezone: "UTC+3", availability: "AVAILABLE" },
-          { freelancerId: "2", userId: "u2", name: "Sara Tadesse", professionalTitle: "UI/UX Designer", hourlyRate: 35, rating: 4.9, reviewCount: 8, successRate: 100, skills: ["Figma", "Tailwind", "Motion"], languages: ["English", "Amharic"], timezone: "UTC+3", availability: "AVAILABLE" },
-        ],
-        projectPosts: [
-          { id: "p1", title: "E-commerce App Redesign", freelancerId: "2", freelancerName: "Sara T.", category: "Design", budgetMin: 1000, budgetMax: 2500, currency: "USD", deliveryDays: 14, skills: ["Figma", "UI Design"], status: "OPEN", postedAt: new Date().toISOString() },
-        ],
-        gigs: [
-          { id: "g1", title: "Landing Page Development", freelancerId: "1", freelancerName: "Abebe K.", price: 500, currency: "USD", deliveryDays: 3, skills: ["Next.js", "Vercel"], status: "OPEN" },
-        ],
-        stories: [
-          { id: "s1", title: "Fintech App Success Story", freelancerId: "1", freelancerName: "Abebe K.", description: "Helping a local bank digitize their payment systems.", imageUrls: ["/api/placeholder/400/400"], technologies: ["Java", "Spring Boot"], completedAt: new Date().toISOString() },
-        ],
-      };
-      setResults(mockResults);
-      setIsLoading(false);
-    }, 1000);
-  }, [deferredQuery, activeBoard, mediaFilter, sortBy, minBudget, maxBudget, minPrice, maxPrice]);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const data = await searchMarketplace({
+          q: deferredQuery,
+          limit: 20,
+          skill: activeSkill,
+          category: categoryFilter,
+          minBudget: minBudget ? parseFloat(minBudget) : undefined,
+          maxBudget: maxBudget ? parseFloat(maxBudget) : undefined,
+          minPrice: minPrice ? parseFloat(minPrice) : undefined,
+          maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
+          mediaFilter
+        });
+        setResults(data);
+      } catch (err) {
+        console.error("Failed to fetch marketplace data:", err);
+        toast.error("Discovery synchronization delayed. Showing partial network state.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [deferredQuery, activeBoard, activeSkill, categoryFilter, mediaFilter, sortBy, minBudget, maxBudget, minPrice, maxPrice]);
 
   return (
     <div className="space-y-1.5 p-4">
@@ -741,7 +744,7 @@ export default function TalentWorkspace() {
           </div>
         ) : (
           <>
-            {results?.talents.length ? (
+            {(activeBoard === "all" || activeBoard === "talents") && results?.talents?.length ? (
               <section>
                 <div className="flex items-center gap-2 mb-4 px-2">
                   <User className="h-4 w-4 text-gray-400" />
@@ -755,7 +758,7 @@ export default function TalentWorkspace() {
               </section>
             ) : null}
 
-            {results?.projectPosts.length ? (
+            {(activeBoard === "all" || activeBoard === "projects") && results?.projectPosts?.length ? (
               <section>
                 <div className="flex items-center gap-2 mb-4 px-2">
                   <Target className="h-4 w-4 text-purple-400" />
@@ -763,11 +766,47 @@ export default function TalentWorkspace() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {results.projectPosts.map(post => (
-                    <ProjectPostCard key={post.id} post={post} viewMode={viewMode} />
+                    <ProjectPostCard key={post.projectPostId || post.id} post={post} viewMode={viewMode} />
                   ))}
                 </div>
               </section>
             ) : null}
+
+            {(activeBoard === "all" || activeBoard === "gigs") && results?.gigs?.length ? (
+              <section>
+                <div className="flex items-center gap-2 mb-4 px-2">
+                  <Zap className="h-4 w-4 text-emerald-400" />
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Service Micro-nodes</h2>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {results.gigs.map(gig => (
+                    <GigCard key={gig.gigId || gig.id} gig={gig} viewMode={viewMode} />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {(activeBoard === "all" || activeBoard === "stories") && results?.stories?.length ? (
+              <section>
+                <div className="flex items-center gap-2 mb-4 px-2">
+                  <Sparkles className="h-4 w-4 text-amber-400" />
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Network Stories</h2>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {results.stories.map(story => (
+                    <StoryCard key={story.storyId || story.id} story={story} viewMode={viewMode} />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {!isLoading && results && results.talents.length === 0 && results.projectPosts.length === 0 && results.gigs.length === 0 && results.stories.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 opacity-40">
+                <Search className="h-12 w-12 mb-4" />
+                <Typography variant="h6" fontWeight={900} className="uppercase tracking-widest text-gray-950">No assets found</Typography>
+                <p className="text-xs font-bold mt-1 text-gray-500">Try adjusting your filters or search query</p>
+              </div>
+            )}
           </>
         )}
       </div>

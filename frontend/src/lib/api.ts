@@ -1437,87 +1437,6 @@ export type FreelancerProjectPost = {
   updatedAt?: string;
 };
 
-export type MarketplaceSearchTalent = {
-  freelancerId?: string;
-  userId?: string;
-  name?: string;
-  professionalTitle?: string;
-  rating?: number;
-  skills?: string[];
-  profilePicture?: string;
-  coverImage?: string;
-  portfolioThumbnailUrl?: string;
-  portfolioImageUrls?: string[];
-};
-
-export type MarketplaceSearchProjectPost = {
-  projectPostId?: string;
-  status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-  title?: string;
-  description?: string;
-  category?: string;
-  skills?: string[];
-  budgetMin?: number;
-  budgetMax?: number;
-  currency?: string;
-  deliveryDays?: number;
-  thumbnailUrl?: string;
-  sampleImageUrls?: string[];
-  sampleVideoUrls?: string[];
-  sampleDocumentUrls?: string[];
-  freelancerId?: string;
-  freelancerUserId?: string;
-  freelancerName?: string;
-};
-
-export type MarketplaceSearchGig = {
-  gigId?: string;
-  status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-  title?: string;
-  description?: string;
-  skills?: string[];
-  price?: number;
-  currency?: string;
-  deliveryDays?: number;
-  thumbnailUrl?: string;
-  sampleImageUrls?: string[];
-  sampleVideoUrls?: string[];
-  sampleDocumentUrls?: string[];
-  freelancerId?: string;
-  freelancerUserId?: string;
-  freelancerName?: string;
-};
-
-export type MarketplaceSearchStory = {
-  storyId?: string;
-  status?: "PUBLISHED";
-  title?: string;
-  description?: string;
-  category?: string;
-  technologies?: string[];
-  imageUrls?: string[];
-  projectUrl?: string;
-  completedAt?: string;
-  freelancerId?: string;
-  freelancerUserId?: string;
-  freelancerName?: string;
-  profilePicture?: string;
-};
-
-export type MarketplaceSearchResponse = {
-  query: string;
-  talents: MarketplaceSearchTalent[];
-  projectPosts: MarketplaceSearchProjectPost[];
-  gigs: MarketplaceSearchGig[];
-  stories: MarketplaceSearchStory[];
-  counts: {
-    talents: number;
-    projectPosts: number;
-    gigs: number;
-    stories: number;
-  };
-};
-
 export async function listMyGigs() {
   const { data } = await api.get("/gigs/mine");
   return Array.isArray(data) ? (data as Gig[]) : ([] as Gig[]);
@@ -4864,6 +4783,21 @@ export type AdminBootstrapStatus = {
 export const getDiscoveryFeed = async (category?: string, limit = 20, offset = 0) => {
   const r = await api.get("/discovery/feed", { params: { category, limit, offset } });
   return r.data?.items || [];
+};
+
+export const searchMarketplace = async (params: {
+  q?: string;
+  limit?: number;
+  skill?: string;
+  category?: string;
+  minBudget?: number;
+  maxBudget?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  mediaFilter?: string;
+}) => {
+  const r = await api.get("/employer/marketplace/search", { params });
+  return r.data as MarketplaceSearchResponse;
 };
 
 // Reels API

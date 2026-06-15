@@ -491,3 +491,98 @@ export interface Team {
   members: TeamMember[]
   createdAt: string
 }
+
+// ─── Marketplace Search ──────────────────────────────────────────────────────
+export type MarketplaceSort = 'relevance' | 'date' | 'budget' | 'rating'
+export type MarketplaceMediaFilter = 'ALL' | 'VISUAL' | 'VIDEO' | 'DOCUMENT'
+
+export type MarketplaceSearchTalent = {
+  freelancerId: string
+  userId: string
+  name: string
+  professionalTitle?: string
+  rating?: number
+  reviewCount?: number
+  successRate?: number
+  skills?: string[]
+  profilePicture?: string
+  coverImage?: string
+  portfolioThumbnailUrl?: string
+  portfolioImageUrls?: string[]
+  availability?: string
+  languages?: string[]
+  timezone?: string
+}
+
+export type MarketplaceSearchProjectPost = {
+  projectPostId?: string
+  id?: string // legacy
+  status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'OPEN'
+  title: string
+  description?: string
+  category?: string
+  skills?: string[]
+  budgetMin: number
+  budgetMax?: number
+  currency: string
+  deliveryDays?: number
+  thumbnailUrl?: string
+  sampleImageUrls?: string[]
+  sampleVideoUrls?: string[]
+  sampleDocumentUrls?: string[]
+  freelancerId?: string
+  freelancerUserId?: string
+  freelancerName?: string
+  postedAt?: string
+}
+
+export type MarketplaceSearchGig = {
+  gigId?: string
+  id?: string // legacy
+  status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'OPEN'
+  title: string
+  description?: string
+  skills?: string[]
+  price: number
+  currency: string
+  deliveryDays?: number
+  thumbnailUrl?: string
+  sampleImageUrls?: string[]
+  sampleVideoUrls?: string[]
+  sampleDocumentUrls?: string[]
+  freelancerId?: string
+  freelancerUserId?: string
+  freelancerName?: string
+}
+
+export type MarketplaceSearchStory = {
+  storyId?: string
+  id?: string // legacy
+  status?: 'PUBLISHED'
+  title: string
+  description?: string
+  category?: string
+  technologies?: string[]
+  imageUrls?: string[]
+  projectUrl?: string
+  completedAt?: string
+  freelancerId?: string
+  freelancerUserId?: string
+  freelancerName?: string
+  profilePicture?: string
+}
+
+export type MarketplaceSearchResponse = {
+  query: string
+  talents: MarketplaceSearchTalent[]
+  projectPosts: MarketplaceSearchProjectPost[]
+  gigs: MarketplaceSearchGig[]
+  stories: MarketplaceSearchStory[]
+  counts: {
+    talents: number
+    projectPosts: number
+    gigs: number
+    stories: number
+  }
+}
+
