@@ -104,7 +104,15 @@ export default function WorkspaceProfileView({
           ? `${rating.toFixed(1)}${typeof reviewCount === "number" ? ` · ${reviewCount} reviews` : ""}`
           : "No reviews yet",
     },
-  ].filter((item) => item.value);
+    {
+      label: "Followers",
+      value: formatCompact(profile.stats?.followerCount || 0),
+    },
+    {
+      label: "Following",
+      value: formatCompact(profile.stats?.followingCount || 0),
+    },
+  ].filter((item) => item.value !== null);
 
   const detailChips = [
     profile.location ? <DetailChip key="location" icon={<MapPin className="h-3.5 w-3.5" />} label={profile.location} /> : null,

@@ -48,4 +48,27 @@ public class LiveActivityService {
                 .build();
         broadcast(event);
     }
+
+    public void notifyFeedUpdate(String category) {
+        messagingTemplate.convertAndSend("/topic/feed-updates", Map.of(
+            "category", category,
+            "timestamp", Instant.now().toString(),
+            "action", "REFRESH"
+        ));
+    }
+
+    public void broadcastLike(String contentType, String contentId, String userId, String username) {
+        broadcast("LIKE", username + " liked your " + contentType, userId, username, null, null, Map.of(
+            "contentType", contentType,
+            "contentId", contentId
+        ));
+    }
+
+    public void broadcastComment(String contentType, String contentId, String userId, String username, String text) {
+        broadcast("COMMENT", username + " commented: " + text, userId, username, null, null, Map.of(
+            "contentType", contentType,
+            "contentId", contentId,
+            "commentText", text
+        ));
+    }
 }

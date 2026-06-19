@@ -16,6 +16,7 @@ import com.sabahub.service.SMSService;
 import com.sabahub.service.TwoFactorAuthService;
 import com.sabahub.service.TwoFactorMethodNormalizer;
 import com.sabahub.service.SocialService;
+import com.sabahub.web.dto.PublicProfileResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -875,12 +876,6 @@ public class UserSettingsController {
 
     private String extractBearerToken(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return "";
-        }
-        return authHeader.substring(7);
-    }
-}
-.startsWith("Bearer ")) {
             return "";
         }
         return authHeader.substring(7);

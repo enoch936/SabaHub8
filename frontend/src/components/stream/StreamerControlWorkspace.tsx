@@ -33,6 +33,7 @@ import {
   subscribeStreamSignals,
   type Subscription,
 } from "@/lib/ws";
+import { registerGlobalStream } from "@/lib/callStore";
 import { StreamVideoStage } from "./StreamVideoStage";
 import {
   STREAM_VISIBILITY_OPTIONS,
@@ -288,6 +289,7 @@ export function StreamerControlWorkspace() {
           }
         : false,
     });
+    registerGlobalStream(media);
     localMediaRef.current = media;
     setLocalMedia(media);
     setBrowserRunnerStatus("ready");

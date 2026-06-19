@@ -119,9 +119,9 @@ function AdminSidebarItem({
           border: selected ? `1px solid ${alpha(selectionColor, 0.3)}` : "1px solid transparent",
           transition: "all 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
           "&:hover": { 
-            bgcolor: "var(--glass-gray-hover)",
-            transform: collapsed ? "scale(1.1)" : "translateX(8px)",
-            "& .MuiListItemIcon-root": { color: selectionColor, transform: "scale(1.1)" }
+            bgcolor: isDark ? alpha(theme.palette.text.primary, 0.08) : alpha(theme.palette.text.primary, 0.05),
+            cursor: "pointer",
+            boxShadow: `0 4px 12px ${alpha("#000", isDark ? 0.3 : 0.08)}`,
           },
         }}
       >
@@ -194,21 +194,27 @@ export default function AdminSidebar({
       {/* Header: Logo & Workspace */}
       <Box sx={{ p: 3, mb: 2 }}>
         <Stack direction="row" alignItems="center" spacing={collapsed ? 0 : 2} justifyContent={collapsed ? "center" : "flex-start"}>
-          <Box sx={{ 
-            width: 44, 
-            height: 44, 
-            borderRadius: "14px", 
-            background: "linear-gradient(135deg, #4F46E5, #7C3AED)",
-            display: "grid",
-            placeItems: "center",
-            color: "#fff",
-            fontWeight: 900,
-            fontSize: 24,
-            flexShrink: 0,
-            boxShadow: "0 8px 20px rgba(79, 70, 229, 0.3)"
-          }}>
-            S
-          </Box>
+          <Avatar
+            src={user?.avatar || undefined}
+            alt={user?.name || "SabaHub user"}
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: "14px",
+              objectFit: "cover",
+              flexShrink: 0,
+              boxShadow: "0 8px 20px rgba(15, 23, 42, 0.22)",
+              "& img": { objectFit: "cover" },
+              ...(!user?.avatar?.trim() ? {
+                bgcolor: isDark ? "rgba(15, 23, 42, 0.92)" : "rgba(59, 130, 246, 0.16)",
+                color: "#fff",
+                fontWeight: 900,
+                fontSize: 18,
+              } : {}),
+            }}
+          >
+            {!user?.avatar?.trim() && (user?.name || "S").charAt(0)}
+          </Avatar>
           {!collapsed && (
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="h6" fontWeight={900} noWrap sx={{ letterSpacing: "-0.04em" }}>SabaHub</Typography>

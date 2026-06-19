@@ -84,7 +84,7 @@ export function DataTable<TData, TValue>({ columns, data, title, onBulkAction }:
           </TableHead>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} hover sx={{ '&:hover': { bgcolor: 'var(--background)' }, transition: 'background 0.2s' }}>
+              <TableRow key={row.id} hover sx={{ '&:hover': { bgcolor: 'var(--glass-gray-hover)', boxShadow: 'inset 0 0 0 1px var(--border)' }, transition: 'background 0.2s, box-shadow 0.2s' }}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

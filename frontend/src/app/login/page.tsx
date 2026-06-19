@@ -170,7 +170,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="mt-8 text-sm leading-7 text-slate-500">
+        <p className="mt-8 text-sm leading-7 [color:var(--foreground-muted)]">
           New to SabaHub?{" "}
           <Link href="/register" className={authFlowStyles.textLink}>
             Create an account

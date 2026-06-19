@@ -19,6 +19,8 @@ interface GlassCardProps extends Omit<CardProps, "ref"> {
   premium?: boolean;
   gradient?: boolean;
   depth?: boolean;
+  whileHover?: Record<string, any>;
+  component?: React.ElementType;
 }
 
 export function GlassCard({
@@ -51,9 +53,9 @@ export function GlassCard({
     overflow: "hidden",
     borderRadius: "24px",
     border: `1px solid var(--border)`,
-    background: "var(--surface)",
+    background: isDark ? "rgba(15, 23, 42, 0.8)" : "var(--surface)",
     backdropFilter: glass ? "blur(var(--glass-blur))" : "none",
-    boxShadow: "var(--glass-shadow)",
+    boxShadow: isDark ? "0 20px 50px -12px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.06)" : "var(--glass-shadow)",
     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
 
     ...(hover && {

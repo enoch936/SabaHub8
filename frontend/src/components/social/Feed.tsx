@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { PostCard, type SocialPost } from "./PostCard";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui";
-import { getSocialFeed, getGlobalFeed, getUserPosts, getLikedPosts, getSavedPosts, bootstrapWorkspaceDemoData } from "@/lib/api";
+import { getSocialFeed, getGlobalFeed, getUserPosts, getLikedPosts, getSavedPosts, bootstrapWorkspaceDemoData, sharePost } from "@/lib/api";
+import { ShareModal } from "@/components/social/ShareModal";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ export function Feed({ mode = "personal", userId, filter = "all" }: FeedProps) {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [shareTarget, setShareTarget] = useState<SocialPost | null>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -97,9 +99,23 @@ export function Feed({ mode = "personal", userId, filter = "all" }: FeedProps) {
           className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
           style={{ animationDelay: `${index * 100}ms` }}
         >
-          <PostCard post={post} />
+          <PostCard post={post} onShare={(id) => setShareTarget(posts.find(p => p.id === id) || null)} />
         </div>
       ))}
+
+      <ShareModal
+        open={!!shareTarget}
+        onClose={() => setShareTarget(null)}
+        url={shareTarget ? `${window.location.origin}/social/feed` : ""}
+        title={shareTarget?.content || "Check out this post!"}
+        onShareInternal={() => {
+          if (shareTarget) {
+            sharePost(shareTarget.id).catch(() => {});
+            toast.success("Shared!");
+            setShareTarget(null);
+          }
+        }}
+      />
     </div>
   );
 }

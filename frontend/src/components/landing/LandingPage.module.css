@@ -12,23 +12,30 @@
 
 .navShell {
   position: fixed;
-  top: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(1280px, calc(100% - 1.5rem));
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 50;
 }
 
 .glassPanel {
-  border: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   background: var(--surface);
   box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(20px);
 }
 
 .softPanel {
   border: 1px solid var(--border);
   background: var(--surface);
   box-shadow: var(--shadow-soft);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.softPanel:hover {
+  background-color: var(--surface-hover);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
 .shapeOne,
@@ -150,13 +157,21 @@
 }
 
 .actionButton:hover {
-  transform: translateY(-2px);
+  transform: none;
+  background-color: var(--surface-hover);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .primaryButton {
   color: var(--background);
   background: var(--accent-strong);
   box-shadow: var(--shadow-soft-lg);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primaryButton:hover {
+  background: var(--accent-strong);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
 }
 
 .secondaryButton {
@@ -219,9 +234,9 @@
 }
 
 .featureCard:hover {
-  transform: translateY(-0.35rem);
+  transform: none;
   background: var(--surface-elevated);
-  box-shadow: var(--shadow-soft-lg);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
 .featureGlow {
@@ -286,9 +301,10 @@
 }
 
 .socialPill:hover {
-  transform: translateY(-2px);
+  transform: none;
   background: var(--accent);
   color: var(--foreground);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 :global(html.dark) .page :global(.text-slate-950),

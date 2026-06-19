@@ -1,5 +1,7 @@
 export const workspaceRoutes = {
-  home: "/jobs",
+  home: "/dashboard",
+  jobs: "/jobs",
+  social: "/social/feed",
   stream: "/jobs/stream",
   manageJobs: "/jobs/manage",
   createJob: "/jobs/post",

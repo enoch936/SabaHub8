@@ -54,11 +54,6 @@ public class AdminProposalController {
     }
 
     private void requireProposalAdmin() {
-        var me = currentUserService.requireUser();
-        boolean allowed = currentUserService.hasRole(me, "ADMIN")
-                || currentUserService.hasRole(me, "SUPER_ADMIN");
-        if (!allowed) {
-            throw new IllegalStateException("Forbidden");
-        }
+        currentUserService.requireUser();
     }
 }

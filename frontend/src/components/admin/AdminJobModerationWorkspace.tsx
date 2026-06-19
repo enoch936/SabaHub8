@@ -76,10 +76,25 @@ function statusTone(status?: string): "default" | "success" | "warning" | "error
   }
 }
 
+const CURRENCY_ALIASES: Record<string, string> = {
+  BIRR: "ETB",
+};
+
+function toValidCurrency(code: string): string {
+  const normalized = code.toUpperCase();
+  const mapped = CURRENCY_ALIASES[normalized] || normalized;
+  try {
+    new Intl.NumberFormat("en-US", { style: "currency", currency: mapped });
+    return mapped;
+  } catch {
+    return "USD";
+  }
+}
+
 function formatBudget(job: Job) {
   const min = job.budgetMin ?? job.budget?.min;
   const max = job.budgetMax ?? job.budget?.max;
-  const currency = job.currency ?? job.budget?.currency ?? "USD";
+  const currency = toValidCurrency(job.currency ?? job.budget?.currency ?? "USD");
   if (typeof min !== "number" && typeof max !== "number") return "Negotiable";
   
   const formatter = new Intl.NumberFormat("en-US", {

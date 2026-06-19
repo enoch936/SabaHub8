@@ -667,6 +667,7 @@ export type Job = {
   overviewText?: string;
   employerId?: string;
   employerName?: string;
+  employerAvatar?: string;
   budget?: { min?: number; max?: number; currency?: string };
   budgetMin?: number;
   budgetMax?: number;
@@ -1658,6 +1659,7 @@ export type DirectoryUser = {
   email?: string;
   username?: string;
   fullName?: string;
+  profilePictureUrl?: string;
   roles: string[];
   online?: boolean;
   createdAt?: string | null;
@@ -2850,6 +2852,8 @@ export type Asset = {
   resourceType: string;
   mimeType?: string;
   size?: number;
+  ownerId?: string;
+  ownerName?: string;
 };
 
 export async function listAssets() {
@@ -2875,6 +2879,11 @@ export async function saveAssetMetadata(body: { scope: string; title?: string; s
 export async function deleteAsset(id: string) {
   const { data } = await api.delete(`/assets/${id}`);
   return data as { ok: boolean };
+}
+
+export async function getStorageUsage() {
+  const { data } = await api.get(`/assets/usage`);
+  return data as { totalSize: number; storageTotal: number };
 }
 
 // Chat
@@ -4952,6 +4961,49 @@ export const getComments = async (postId: string, page = 0, size = 50) => {
   return r.data;
 };
 
+export const getFollowers = async (userId: string) => {
+  const r = await api.get(`/social/followers/${userId}`);
+  return r.data || [];
+};
+
+export const getFollowing = async (userId: string) => {
+  const r = await api.get(`/social/following/${userId}`);
+  return r.data || [];
+};
+
+export const getTrendingPosts = async (page = 0, size = 20) => {
+  const r = await api.get("/social/trending", { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const sharePost = async (postId: string) => {
+  const r = await api.post(`/social/posts/${postId}/share`);
+  return r.data;
+};
+
+export const shareReel = async (reelId: string) => {
+  const r = await api.post(`/reels/${reelId}/share`);
+  return r.data;
+};
+
+export const deletePost = async (postId: string) => {
+  const r = await api.delete(`/social/posts/${postId}`);
+  return r.data;
+};
+
+export const deleteComment = async (postId: string, commentId: string) => {
+  const r = await api.delete(`/social/posts/${postId}/comments/${commentId}`);
+  return r.data;
+};
+
+export const getActivity = async () => {
+  const r = await api.get("/social/activity");
+  const data = r.data;
+  return Array.isArray(data) ? data : [];
+};
 
 export type DiscoveryFeedItem = {
   id: string;

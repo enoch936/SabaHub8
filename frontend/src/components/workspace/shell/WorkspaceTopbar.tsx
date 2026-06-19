@@ -33,6 +33,7 @@ import {
   Notifications,
   Search,
   Settings,
+  VideoCameraFront,
   Wallet,
 } from "@mui/icons-material";
 import RoleModeSwitch from "@/components/RoleModeSwitch";
@@ -265,6 +266,25 @@ export default function WorkspaceTopbar({
                 "&:hover": { bgcolor: "var(--accent)" },
               }}
             />
+
+            <Tooltip title="Create Reel">
+              <IconButton
+                component={Link}
+                href="/social/reels"
+                className="soft-click"
+                sx={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: "14px",
+                  bgcolor: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  color: "#ec4899",
+                  "&:hover": { bgcolor: "rgba(236,72,153,0.1)" },
+                }}
+              >
+                <VideoCameraFront />
+              </IconButton>
+            </Tooltip>
 
             <Tooltip title="Messages">
               <IconButton

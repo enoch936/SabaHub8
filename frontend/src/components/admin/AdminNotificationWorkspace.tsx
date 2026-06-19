@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Box,
   CardContent,
@@ -24,30 +24,27 @@ import { DataTable, type TableColumn } from "./DataTable";
 import SoftButton from "@/components/mui/SoftButton";
 import SoftTextField from "@/components/mui/SoftTextField";
 import { MetricCard } from "./MetricCard";
-import { adminBroadcast } from "@/lib/api";
-
-// Mock history data
-type Broadcast = {
-  id: string;
-  message: string;
-  sentBy: string;
-  sentAt: string;
-  recipients: string;
-  status: "DELIVERED" | "FAILED";
-};
-
-const MOCK_HISTORY: Broadcast[] = [
-  { id: "b-1", message: "System maintenance scheduled for Sunday at 2 AM UTC.", sentBy: "admin@sabahub.com", sentAt: "2024-05-20T10:00:00Z", recipients: "All Users", status: "DELIVERED" },
-  { id: "b-2", message: "New AI model 'Nexus-v2' is now live for all Enterprise users.", sentBy: "enoch@sabahub.com", sentAt: "2024-05-18T14:30:00Z", recipients: "Enterprise Tier", status: "DELIVERED" },
-  { id: "b-3", message: "Security update: Please enable MFA for enhanced protection.", sentBy: "system@sabahub.com", sentAt: "2024-05-15T09:00:00Z", recipients: "All Users", status: "DELIVERED" },
-];
+import { adminBroadcast, adminListAnnouncements, type AdminAnnouncement } from "@/lib/api";
 
 export default function AdminNotificationWorkspace() {
   const theme = useTheme();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [history, setHistory] = useState<Broadcast[]>(MOCK_HISTORY);
+  const [history, setHistory] = useState<AdminAnnouncement[]>([]);
   const [broadcastStatus, setBroadcastStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const loadHistory = useCallback(async () => {
+    try {
+      setFetchError(null);
+      const data = await adminListAnnouncements();
+      setHistory(data);
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : "Failed to load announcement history");
+    }
+  }, []);
+
+  useEffect(() => { void loadHistory(); }, [loadHistory]);
 
   const handleBroadcast = async () => {
     if (!message.trim()) return;
@@ -57,18 +54,8 @@ export default function AdminNotificationWorkspace() {
     try {
       await adminBroadcast(message);
       setBroadcastStatus({ type: 'success', message: 'Broadcast sent successfully to all active sessions.' });
-      
-      // Update local history mock
-      const newBroadcast: Broadcast = {
-        id: `b-${Date.now()}`,
-        message,
-        sentBy: "Admin User",
-        sentAt: new Date().toISOString(),
-        recipients: "All Users",
-        status: "DELIVERED"
-      };
-      setHistory([newBroadcast, ...history]);
       setMessage("");
+      void loadHistory();
     } catch (err) {
       setBroadcastStatus({ type: 'error', message: err instanceof Error ? err.message : 'Failed to send broadcast.' });
     } finally {
@@ -76,7 +63,7 @@ export default function AdminNotificationWorkspace() {
     }
   };
 
-  const columns: TableColumn<Broadcast>[] = [
+  const columns: TableColumn<AdminAnnouncement>[] = [
     {
       key: "message",
       label: "Message Content",

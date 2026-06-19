@@ -14,6 +14,7 @@ import {
 export type Role = AppRole | undefined;
 
 type SessionState = {
+  id?: string;
   token?: string | null;
   email?: string;
   username?: string;
@@ -23,8 +24,17 @@ type SessionState = {
   roles?: string[];
   role?: Role;
   workspaceRoles: Array<"EMPLOYER" | "FREELANCER">;
+  user?: {
+    id?: string;
+    email?: string;
+    username?: string;
+    fullName?: string;
+    profilePictureUrl?: string;
+    roles?: string[];
+  } | null;
   setToken: (token: string | null) => void;
   hydrateFromUser: (user: {
+    id: string;
     email: string;
     username?: string;
     fullName?: string;
@@ -38,6 +48,7 @@ type SessionState = {
 };
 
 export const useSession = create<SessionState>((set) => ({
+  id: undefined,
   token: undefined,
   email: undefined,
   username: undefined,
@@ -49,11 +60,13 @@ export const useSession = create<SessionState>((set) => ({
   roles: undefined,
   role: undefined,
   workspaceRoles: [],
+  user: null,
   setToken: (token) => {
     if (typeof window !== "undefined") {
       if (token) localStorage.setItem("auth_token", token);
       else localStorage.removeItem("auth_token");
     }
+    let id: string | undefined;
     let email: string | undefined;
     let username: string | undefined;
     let role: Role;
@@ -61,6 +74,7 @@ export const useSession = create<SessionState>((set) => ({
     try {
       if (token) {
         const payload = decodeToken(token) as any;
+        id = payload?.id || payload?.uid || payload?.userId;
         email = payload?.sub ?? payload?.email;
         username = payload?.username;
         const extractedRoles = normalizeRoleList([
@@ -78,12 +92,14 @@ export const useSession = create<SessionState>((set) => ({
       }
     } catch {}
     set({
+      id,
       token,
       email,
       username,
       roles,
       role,
       workspaceRoles: getWorkspaceRoles((roles as AppRole[] | undefined) ?? []),
+      user: token ? { id, email, username, roles } : null,
     });
   },
   hydrateFromUser: (user) => {
@@ -104,7 +120,17 @@ export const useSession = create<SessionState>((set) => ({
       persistActiveRole(role);
     }
 
+    const userData = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      fullName: user.fullName,
+      profilePictureUrl,
+      roles: normalizedRoles,
+    };
+
     set({
+      id: user.id,
       email: user.email,
       username: user.username,
       fullName: user.fullName,
@@ -112,6 +138,7 @@ export const useSession = create<SessionState>((set) => ({
       roles: normalizedRoles,
       role,
       workspaceRoles: getWorkspaceRoles(normalizedRoles),
+      user: userData,
     });
   },
   setRole: (nextRole) => {
@@ -144,7 +171,10 @@ export const useSession = create<SessionState>((set) => ({
       if (url) localStorage.setItem("profile_picture_url", url);
       else localStorage.removeItem("profile_picture_url");
     }
-    set({ profilePictureUrl: url ?? undefined });
+    set((state) => ({
+      profilePictureUrl: url ?? undefined,
+      user: state.user ? { ...state.user, profilePictureUrl: url ?? undefined } : null
+    }));
   },
   setEmailVerified: (verified) => {
     if (typeof window !== "undefined") {
@@ -164,6 +194,7 @@ export const useSession = create<SessionState>((set) => ({
     }
     persistActiveRole(undefined);
     set({
+      id: undefined,
       token: null,
       email: undefined,
       username: undefined,
@@ -173,6 +204,7 @@ export const useSession = create<SessionState>((set) => ({
       workspaceRoles: [],
       profilePictureUrl: undefined,
       emailVerified: undefined,
+      user: null,
     });
   },
 }));

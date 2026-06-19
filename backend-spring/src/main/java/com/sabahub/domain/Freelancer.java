@@ -71,6 +71,7 @@ public class Freelancer {
     private Double rating;
     private Integer reviewCount;
     private Integer jobSuccessScore; // 0-100
+    private Integer talentRatingScore; // 0-1000
     
     // Verification
     private String verificationStatus; // PENDING, VERIFIED, REJECTED

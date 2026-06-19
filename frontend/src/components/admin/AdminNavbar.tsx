@@ -5,7 +5,8 @@
 
 "use client";
 
-import { useState } from "react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import {
   AppBar,
   Box,
@@ -19,6 +20,8 @@ import {
   Typography,
   Avatar,
   Tooltip,
+  Chip,
+  InputAdornment,
   useTheme,
   alpha,
   Popover,
@@ -33,6 +36,7 @@ import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import { HealthIndicator } from "./SystemStatus";
 import { NotificationCenter } from "../NotificationCenter";
+import { aiChatbotAssist } from "@/lib/api";
 import { useNotifications } from "@/lib/notifications";
 
 interface NavbarProps {
@@ -55,13 +59,84 @@ export function AdminNavbar({
   systemStatus = "operational",
 }: NavbarProps) {
   const theme = useTheme();
+  const searchBoxRef = useRef<HTMLDivElement | null>(null);
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [notificationAnchor, setNotificationAnchor] = useState<null | HTMLElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchResult, setSearchResult] = useState<{
+    answer: string;
+    confidence?: number;
+    engine?: string;
+    suggestedActions?: string[];
+  } | null>(null);
+  const [searchAnchor, setSearchAnchor] = useState<HTMLElement | null>(null);
+  const searchRequestIdRef = useRef(0);
   
   const notifications = useNotifications((s) => s.items);
   const markRead = useNotifications((s) => s.markRead);
   const markAllRead = useNotifications((s) => s.markAllRead);
   const dismiss = useNotifications((s) => s.dismiss);
+
+  const runAiSearch = async (query: string, requestId: number) => {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery) {
+      return;
+    }
+
+    if (requestId === searchRequestIdRef.current) {
+      setSearchAnchor(searchBoxRef.current);
+      setSearchLoading(true);
+      setSearchError(null);
+    }
+    try {
+      const response = await aiChatbotAssist({
+        prompt: `Search SabaHub AI for: ${normalizedQuery}`,
+        contextType: "ADMIN_NAVBAR",
+        contextId: "admin-navbar",
+      });
+      if (requestId !== searchRequestIdRef.current) {
+        return;
+      }
+      setSearchResult(response ?? null);
+    } catch (error) {
+      if (requestId !== searchRequestIdRef.current) {
+        return;
+      }
+      setSearchResult(null);
+      setSearchError(error instanceof Error && error.message ? error.message : "AI search failed.");
+    } finally {
+      if (requestId !== searchRequestIdRef.current) {
+        return;
+      }
+      setSearchLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const normalizedQuery = searchQuery.trim();
+
+    if (!normalizedQuery) {
+      searchRequestIdRef.current += 1;
+      setSearchAnchor(null);
+      setSearchLoading(false);
+      setSearchError(null);
+      setSearchResult(null);
+      return;
+    }
+
+    const requestId = ++searchRequestIdRef.current;
+    setSearchAnchor(searchBoxRef.current);
+    setSearchLoading(true);
+    setSearchError(null);
+
+    const timer = window.setTimeout(() => {
+      void runAiSearch(normalizedQuery, requestId);
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   return (
     <Box sx={{ width: "100%", height: "var(--navbar-height)" }}>
@@ -87,16 +162,66 @@ export function AdminNavbar({
           }}
         >
           {/* Left section - Context/Search */}
-          <Stack direction="row" spacing={4} alignItems="center" flex={1}>
-            <Box sx={{ maxWidth: 520, width: "100%", display: { xs: "none", sm: "block" } }}>
+          <Stack direction="row" spacing={2.5} alignItems="center" flex={1} sx={{ minWidth: 0 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexShrink: 0 }}>
+              <Image src="/logo.png" alt="SabaHub" width={40} height={40} priority className="rounded-[14px] object-cover shadow-[0_10px_24px_rgba(15,23,42,0.18)]" />
+              <Box sx={{ display: { xs: "none", md: "block" }, minWidth: 0 }}>
+                <Typography variant="subtitle2" fontWeight={900} sx={{ lineHeight: 1.1 }} noWrap>
+                  SabaHub
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ opacity: 0.65, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }} noWrap>
+                  Enterprise AI
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box ref={searchBoxRef} sx={{ maxWidth: 600, width: "100%", display: { xs: "none", sm: "block" }, minWidth: 0 }}>
               <TextField
                 fullWidth
-                placeholder="Search resources, users, or commands... (⌘K)"
+                value={searchQuery}
+                placeholder="Search SabaHub AI..."
                 size="small"
-                onChange={(e) => onSearch?.(e.target.value)}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value);
+                  onSearch?.(event.target.value);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    const requestId = ++searchRequestIdRef.current;
+                    void runAiSearch(searchQuery, requestId);
+                  }
+                }}
                 InputProps={{
                   startAdornment: (
-                    <SearchRoundedIcon sx={{ mr: 2, color: "var(--primary)", fontSize: 22, opacity: 0.8 }} />
+                    <InputAdornment position="start">
+                      <SearchRoundedIcon sx={{ color: "var(--primary)", fontSize: 22, opacity: 0.8 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Chip
+                        label="AI"
+                        size="small"
+                        clickable
+                        onClick={() => {
+                          const requestId = ++searchRequestIdRef.current;
+                          void runAiSearch(searchQuery, requestId);
+                        }}
+                        sx={{
+                          height: 22,
+                          fontWeight: 900,
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          bgcolor: alpha(theme.palette.secondary.main, 0.12),
+                          color: "var(--secondary)",
+                          cursor: "pointer",
+                          "&:hover": {
+                            bgcolor: alpha(theme.palette.secondary.main, 0.2),
+                          },
+                        }}
+                      />
+                    </InputAdornment>
                   ),
                 }}
                 sx={{
@@ -148,6 +273,66 @@ export function AdminNavbar({
                 <SmartToyRoundedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+
+            <Popover
+              open={Boolean(searchAnchor)}
+              anchorEl={searchAnchor}
+              onClose={() => setSearchAnchor(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+              transformOrigin={{ vertical: "top", horizontal: "left" }}
+              slotProps={{
+                paper: {
+                  sx: {
+                    mt: 1.5,
+                    width: 420,
+                    borderRadius: "22px",
+                    border: "1px solid var(--border)",
+                    boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
+                    p: 2,
+                  },
+                },
+              }}
+            >
+              <Stack spacing={1.25}>
+                <Typography variant="overline" sx={{ letterSpacing: "0.18em", opacity: 0.6 }}>
+                  Spring + Python AI Search
+                </Typography>
+                {searchLoading ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Searching via the hybrid AI engine...
+                  </Typography>
+                ) : searchError ? (
+                  <Typography variant="body2" color="error.main">
+                    {searchError}
+                  </Typography>
+                ) : searchResult ? (
+                  <>
+                    <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>
+                      {searchResult.answer}
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                      {typeof searchResult.confidence === "number" ? (
+                        <Chip label={`Confidence ${Math.round(searchResult.confidence * 100)}%`} size="small" />
+                      ) : null}
+                      {searchResult.engine ? <Chip label={searchResult.engine} size="small" /> : null}
+                    </Stack>
+                    {searchResult.suggestedActions?.length ? (
+                      <Stack spacing={0.75}>
+                        {searchResult.suggestedActions.map((action) => (
+                          <Typography key={action} variant="caption" sx={{ fontWeight: 700, opacity: 0.8 }}>
+                            • {action}
+                          </Typography>
+                        ))}
+                      </Stack>
+                    ) : null}
+                  </>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Type a query and press Enter to search with the hybrid AI engine.
+                  </Typography>
+                )}
+              </Stack>
+            </Popover>
 
             {/* Notifications */}
             <Tooltip title="Intelligence Center">

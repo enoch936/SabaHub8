@@ -12,7 +12,7 @@ import { useSession } from "@/lib/session";
 
 export function AdminChatSupportWorkspace() {
   const theme = useTheme();
-  const currentUserId = useSession((s) => s.user?.id) || null;
+  const currentUserId = useSession((s) => s.email) || null;
 
   const [users, setUsers] = useState<DirectoryUser[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -103,7 +103,7 @@ export function AdminChatSupportWorkspace() {
 
       setSendingMessage(true);
       try {
-        await sendMessage(threadId, { content: content.trim() });
+        await sendMessage(threadId, { type: "TEXT", text: content.trim() });
         const msgs = await listMessages(threadId);
         setMessages(msgs || []);
       } catch (err) {
@@ -185,7 +185,7 @@ export function AdminChatSupportWorkspace() {
               >
                 <Stack direction="row" spacing={1.5} alignItems="center">
                   <Avatar
-                    src={user.avatar}
+                    src={user.profilePictureUrl}
                     sx={{
                       width: 40,
                       height: 40,

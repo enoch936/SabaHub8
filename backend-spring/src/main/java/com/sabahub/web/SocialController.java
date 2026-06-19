@@ -2,6 +2,7 @@ package com.sabahub.web;
 
 import com.sabahub.domain.SocialComment;
 import com.sabahub.domain.SocialPost;
+import com.sabahub.domain.User;
 import com.sabahub.service.SocialService;
 import com.sabahub.web.dto.SocialDTOs.*;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -33,6 +35,16 @@ public class SocialController {
         return ResponseEntity.ok(Map.of("success", true, "message", "Unfollowed successfully"));
     }
 
+    @GetMapping("/followers/{userId}")
+    public ResponseEntity<List<User>> getFollowers(@PathVariable String userId) {
+        return ResponseEntity.ok(socialService.getFollowers(userId));
+    }
+
+    @GetMapping("/following/{userId}")
+    public ResponseEntity<List<User>> getFollowing(@PathVariable String userId) {
+        return ResponseEntity.ok(socialService.getFollowing(userId));
+    }
+
     // --- Posts ---
 
     @PostMapping("/posts")
@@ -45,6 +57,18 @@ public class SocialController {
                 request.getType()
         );
         return ResponseEntity.ok(post);
+    }
+
+    @PutMapping("/posts/{postId}")
+    public ResponseEntity<SocialPost> editPost(@PathVariable String postId, @RequestBody CreatePostRequest request) {
+        SocialPost post = socialService.editPost(postId, request.getContent(), request.getMediaAssetIds(), request.getTags());
+        return ResponseEntity.ok(post);
+    }
+
+    @DeleteMapping("/posts/{postId}")
+    public ResponseEntity<?> deletePost(@PathVariable String postId) {
+        socialService.deletePost(postId);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Post deleted"));
     }
 
     @GetMapping("/stories")
@@ -65,6 +89,11 @@ public class SocialController {
     @GetMapping("/feed/global")
     public ResponseEntity<Page<SocialPostResponse>> getGlobalFeed(Pageable pageable) {
         return ResponseEntity.ok(socialService.getGlobalFeed(pageable));
+    }
+
+    @GetMapping("/trending")
+    public ResponseEntity<Page<SocialPostResponse>> getTrending(Pageable pageable) {
+        return ResponseEntity.ok(socialService.getTrending(pageable));
     }
 
     @GetMapping("/users/{userId}/posts")
@@ -126,5 +155,26 @@ public class SocialController {
     @GetMapping("/posts/{postId}/comments")
     public ResponseEntity<Page<SocialComment>> getComments(@PathVariable String postId, Pageable pageable) {
         return ResponseEntity.ok(socialService.getComments(postId, pageable));
+    }
+
+    @DeleteMapping("/posts/{postId}/comments/{commentId}")
+    public ResponseEntity<?> deleteComment(@PathVariable String postId, @PathVariable String commentId) {
+        socialService.deleteComment(postId, commentId);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Comment deleted"));
+    }
+
+    // --- Shares ---
+
+    @PostMapping("/posts/{postId}/share")
+    public ResponseEntity<?> sharePost(@PathVariable String postId) {
+        socialService.sharePost(postId);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Post shared"));
+    }
+
+    // --- Activity ---
+
+    @GetMapping("/activity")
+    public ResponseEntity<List<Map<String, Object>>> getActivity() {
+        return ResponseEntity.ok(socialService.getActivity());
     }
 }

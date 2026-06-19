@@ -42,9 +42,10 @@ interface ReelPlayerProps {
   onComment: (id: string) => void;
   onShare: (id: string) => void;
   onSave: (id: string) => void;
+  onFollow?: (authorId: string) => void;
 }
 
-export function ReelPlayer({ reel, isActive, onLike, onComment, onShare, onSave }: ReelPlayerProps) {
+export function ReelPlayer({ reel, isActive, onLike, onComment, onShare, onSave, onFollow }: ReelPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [playing, setPlaying] = useState(false);
@@ -145,7 +146,12 @@ export function ReelPlayer({ reel, isActive, onLike, onComment, onShare, onSave 
               </Typography>
               <CheckCircle2 size={14} fill="currentColor" className="text-blue-400" />
               <span className="text-white/60 text-xs">•</span>
-              <button className="text-white font-bold text-[14px] hover:text-primary transition-colors">Follow</button>
+              <button
+                className="text-white font-bold text-[14px] hover:text-primary transition-colors"
+                onClick={(e) => { e.stopPropagation(); onFollow?.(reel.authorId); }}
+              >
+                Follow
+              </button>
             </div>
           </div>
         </div>

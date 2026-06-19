@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, Box, CardContent, Chip, Divider, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import TopicRoundedIcon from "@mui/icons-material/TopicRounded";
 import TaskAltRoundedIcon from "@mui/icons-material/TaskAltRounded";

@@ -67,6 +67,7 @@ import {
   type AdminIdentityPolicySummary,
   type AdminIdentityRoleDefinition,
   type AdminIdentityWorkspace,
+  type AdminCreateUserInput,
   type AdminUpdateUserInput,
   type AppUser,
   adminApplyUserAccessControl,
@@ -297,7 +298,7 @@ export function UserTableColumns(
       render: (_, user) => (
         <Stack direction="row" spacing={2.5} alignItems="center">
           <Avatar 
-            src={user.avatarUrl} 
+            src={user.avatarUrl || undefined} 
             sx={{ 
               width: 48, height: 48, borderRadius: "16px", 
               bgcolor: "var(--primary)",
@@ -1248,7 +1249,7 @@ export default function AdminUserManagementWorkspace() {
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                       <Stack direction="row" spacing={2.5} alignItems="center">
                         <Avatar 
-                          src={selectedUser.avatarUrl} 
+                          src={selectedUser.avatarUrl || undefined} 
                           sx={{ width: 64, height: 64, borderRadius: "20px", bgcolor: "var(--primary)", fontWeight: 900, fontSize: 24 }}
                         >
                           {selectedUser.fullName?.charAt(0)}

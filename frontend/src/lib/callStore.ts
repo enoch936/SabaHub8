@@ -295,4 +295,8 @@ const useCallStore = create<CallState>((set, get) => ({
   }
 }));
 
+export const registerGlobalStream = (stream: MediaStream | null) => {
+  useCallStore.setState({ localStream: stream });
+};
+
 export default useCallStore;

@@ -16,6 +16,7 @@ import {
   Film, 
   User, 
   Settings,
+  Activity,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -27,6 +28,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@mui/material/styles";
 import { CreatePostModal } from "../CreatePostModal";
+import { CreateReelModal } from "../reels/CreateReelModal";
 
 export function SocialSidebar() {
   const pathname = usePathname();
@@ -38,6 +40,7 @@ export function SocialSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreateReelOpen, setIsCreateReelOpen] = useState(false);
 
   // Auto-collapse on smaller screens
   useEffect(() => {
@@ -58,8 +61,10 @@ export function SocialSidebar() {
     { icon: Search, label: "Explore", href: "/social/explore" },
     { icon: PlaySquare, label: "Reels", href: "/social/reels" },
     { icon: PlusSquare, label: "Create Post", action: "create" },
+    { icon: Film, label: "Create Reel", action: "create_reel" },
     { icon: Bell, label: "Notifications", href: "/social/notifications" },
     { icon: MessageCircle, label: "Messages", href: "/chat" },
+    { icon: Activity, label: "Activity", href: "/social/activity" },
     { icon: Users, label: "Following", href: "/social/following" },
     { icon: UserPlus, label: "Followers", href: "/social/followers" },
     { icon: Bookmark, label: "Saved Posts", href: "/social/saved" },
@@ -131,6 +136,14 @@ export function SocialSidebar() {
     if (item.action === "create") {
       return (
         <button key={item.label} onClick={() => setIsCreateModalOpen(true)} className="w-full text-left">
+          {content}
+        </button>
+      );
+    }
+
+    if (item.action === "create_reel") {
+      return (
+        <button key={item.label} onClick={() => setIsCreateReelOpen(true)} className="w-full text-left">
           {content}
         </button>
       );
@@ -243,6 +256,7 @@ export function SocialSidebar() {
            // For now, toast will suffice.
         }}
       />
+      <CreateReelModal open={isCreateReelOpen} onClose={() => setIsCreateReelOpen(false)} />
     </>
   );
 }

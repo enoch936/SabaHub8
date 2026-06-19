@@ -16,7 +16,9 @@ import {
   alpha, 
   Grid as MuiGrid, 
   Skeleton, 
-  Alert
+  Alert,
+  CardContent,
+  Chip
 } from "@mui/material";
 const Grid = MuiGrid as any;
 import { motion } from "framer-motion";
@@ -51,6 +53,7 @@ import { useAdminDashboard } from "@/lib/hooks/useAdminDashboard";
 
 export function ModernAdminDashboard() {
   const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const { data: dashboardData, isLoading, error, refetch } = useAdminDashboard(30);
   
   const data = dashboardData?.analytics;
@@ -143,13 +146,13 @@ export function ModernAdminDashboard() {
             <Stack direction="row" spacing={3} alignItems="center">
               <Box sx={{ textAlign: 'right', display: { xs: 'none', md: 'block' } }}>
                 <Typography sx={{ fontSize: '10px', fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', opacity: 0.5, letterSpacing: "0.1em" }}>Telemetry Stream</Typography>
-                <Typography sx={{ fontSize: '16px', fontWeight: 900, color: "var(--success)" }}>LIVE SYNC</Typography>
+                <Typography sx={{ fontSize: '16px', fontWeight: 900, color: isDark ? "#34d399" : "var(--success)" }}>LIVE SYNC</Typography>
               </Box>
               <Button
                 variant="primary"
                 onClick={handleRefresh}
                 leftIcon={<RefreshRoundedIcon />}
-                sx={{ height: 52, px: 4, borderRadius: "16px", fontWeight: 900, boxShadow: "0 10px 25px var(--primary-glow)" }}
+                sx={{ height: 52, px: 4, borderRadius: "16px", fontWeight: 900, boxShadow: isDark ? "0 10px 25px rgba(129, 140, 248, 0.15)" : "0 10px 25px var(--primary-glow)" }}
               >
                 Sync Operations
               </Button>
@@ -159,7 +162,7 @@ export function ModernAdminDashboard() {
 
         <Grid container spacing={3} mb={6}>
           {data.headlineMetrics.map((metric, idx) => (
-            <Grid item xs={12} sm={6} lg={3} key={metric.id}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={metric.id}>
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: idx * 0.1 }}>
                 <MetricCard
                   icon={getMetricIcon(metric.id)}
@@ -176,7 +179,7 @@ export function ModernAdminDashboard() {
         </Grid>
 
         <Grid container spacing={4} mb={6}>
-          <Grid item xs={12} lg={8}>
+          <Grid size={{ xs: 12, lg: 8 }}>
             <ChartContainer 
               title="Global Flow & Interoperability" 
               subtitle="Real-time stream of platform engagement and financial velocity"
@@ -194,7 +197,7 @@ export function ModernAdminDashboard() {
             </ChartContainer>
           </Grid>
 
-          <Grid item xs={12} lg={4}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             <GlassCard sx={{ height: '100%', border: "1px solid var(--border)" }}>
               <GlassCardHeader title="AI Intelligence Stream" subtitle="Neural operational insights" />
               <Stack spacing={2.5} p={3}>
@@ -203,14 +206,14 @@ export function ModernAdminDashboard() {
                     key={idx}
                     sx={{ 
                       p: 2.5, borderRadius: "20px", 
-                      bgcolor: "var(--glass-gray)",
+                      bgcolor: isDark ? "rgba(255, 255, 255, 0.06)" : "var(--glass-gray)",
                       border: `1px solid ${alpha(insight.tone === 'positive' ? '#10B981' : '#6366F1', 0.15)}`,
                       borderLeft: `5px solid ${insight.tone === 'positive' ? '#10B981' : insight.tone === 'negative' ? '#EF4444' : '#6366F1'}`,
                       transition: "all 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
-                      "&:hover": { transform: "translateX(6px)", bgcolor: "var(--glass-gray-hover)" }
+                      "&:hover": { transform: "translateX(6px)", bgcolor: isDark ? "rgba(255, 255, 255, 0.1)" : "var(--glass-gray-hover)" }
                     }}
                   >
-                    <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1, letterSpacing: "-0.01em" }}>{insight.title}</Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1, letterSpacing: "-0.01em", color: isDark ? "#e2e8f0" : undefined }}>{insight.title}</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '14px', lineHeight: 1.6, fontWeight: 500 }}>{insight.detail}</Typography>
                   </Box>
                 ))}
@@ -221,7 +224,7 @@ export function ModernAdminDashboard() {
 
         <Box mb={6}>
           <SystemStatus
-            overallStatus={platformData?.alerts?.some(a => a.severity === 'CRITICAL') ? 'critical' : 'operational'}
+            overallStatus={platformData?.alerts?.some(a => a.level === 'CRITICAL') ? 'critical' : 'operational'}
             metrics={platformData?.metrics?.map(m => ({
               label: m.label,
               value: parseFloat(m.value.replace(/[^0-9.]/g, '')),
@@ -234,19 +237,19 @@ export function ModernAdminDashboard() {
         </Box>
 
         <Grid container spacing={4}>
-          <Grid item xs={12} md={5}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <ActivityFeed maxItems={12} />
           </Grid>
 
-          <Grid item xs={12} md={7}>
+          <Grid size={{ xs: 12, md: 7 }}>
             <Stack spacing={4}>
               <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <ChartContainer title="Principal Distribution" height={320}>
                      <ModernDonutChart data={roleDistribution} height={240} innerRadius={70} outerRadius={100} />
                   </ChartContainer>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <ChartContainer title="Neural Performance" height={320}>
                      <ModernRadarChart
                        data={[{ name: "Logic", logic: 92, speed: 88, accuracy: 96, security: 98, ux: 94 }]}
@@ -264,7 +267,7 @@ export function ModernAdminDashboard() {
               </Grid>
 
               <GlassCard>
-                {/* <CardContent sx={{ p: 4 }}>
+                <CardContent sx={{ p: 4 }}>
                   <Typography variant="h6" fontWeight={900} sx={{ mb: 3 }}>Regional Market Intelligence</Typography>
                   <DataTable
                     columns={[
@@ -272,11 +275,11 @@ export function ModernAdminDashboard() {
                       { key: "value", label: "Session Volume", sortable: true, align: "right", render: (v) => <Typography variant="body2" fontWeight={900} color="var(--primary)">{String(v)}</Typography> },
                       { key: "helper", label: "Market Dominance", align: "right", render: (v) => <Chip label={String(v)} size="small" sx={{ fontWeight: 800, fontSize: 10, borderRadius: "6px" }} /> }
                     ]}
-                    data={data.topCategories}
+                    data={data.topCategories as any[]}
                     rowKey="label"
                     pageSize={5}
                   />
-                </CardContent> */}
+                </CardContent>
               </GlassCard>
             </Stack>
           </Grid>

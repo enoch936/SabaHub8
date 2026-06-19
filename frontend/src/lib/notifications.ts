@@ -14,6 +14,7 @@ type State = {
   refresh: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
+  dismiss: (id: string) => void;
   connect: () => Promise<void>;
 };
 
@@ -54,6 +55,9 @@ export const useNotifications = create<State>((set, get) => ({
     }
 
     set((s) => syncState(s.items.map((item) => ({ ...item, read: true }))));
+  },
+  dismiss: (id) => {
+    set((s) => syncState(s.items.filter((item) => item.id !== id)));
   },
   connect: async () => {
     if (!hasAuthToken()) {

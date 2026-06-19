@@ -103,6 +103,10 @@ export function subscribeLiveActivities(onMessage: (body: Record<string, unknown
   return registerSubscription(`/topic/live-activities`, onMessage);
 }
 
+export function subscribeCallSignals(onMessage: (body: Record<string, unknown>) => void): Subscription | null {
+  return registerSubscription(`/user/queue/calls`, onMessage);
+}
+
 export function sendStreamChat(streamId: string, payload: Record<string, unknown>) {
   if (!client || !connected) return;
   client.publish({ destination: `/app/streams/${streamId}/chat.send`, body: JSON.stringify(payload) });
@@ -121,6 +125,11 @@ export function sendStreamPresenceLeave(streamId: string) {
 export function sendStreamSignal(streamId: string, payload: Record<string, unknown>) {
   if (!client || !connected) return;
   client.publish({ destination: `/app/streams/${streamId}/signal.publish`, body: JSON.stringify(payload) });
+}
+
+export function sendCallSignal(payload: Record<string, unknown>) {
+  if (!client || !connected) return;
+  client.publish({ destination: `/app/calls/signal`, body: JSON.stringify(payload) });
 }
 
 function ensureClient(token?: string) {

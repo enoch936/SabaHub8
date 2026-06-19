@@ -36,6 +36,7 @@ public class WorkspaceDemoDataService {
     private final ProposalRepository proposalRepository;
     private final ContractRepository contractRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SocialService socialService;
 
     public WorkspaceDemoDataService(CurrentUserService currentUserService,
                                     UserRepository userRepository,
@@ -44,7 +45,8 @@ public class WorkspaceDemoDataService {
                                     JobRepository jobRepository,
                                     ProposalRepository proposalRepository,
                                     ContractRepository contractRepository,
-                                    PasswordEncoder passwordEncoder) {
+                                    PasswordEncoder passwordEncoder,
+                                    SocialService socialService) {
         this.currentUserService = currentUserService;
         this.userRepository = userRepository;
         this.employerRepository = employerRepository;
@@ -53,12 +55,16 @@ public class WorkspaceDemoDataService {
         this.proposalRepository = proposalRepository;
         this.contractRepository = contractRepository;
         this.passwordEncoder = passwordEncoder;
+        this.socialService = socialService;
     }
 
     public BootstrapResult bootstrapCurrentUserWorkspace() {
         User currentUser = currentUserService.requireUser();
         String activeRole = currentUserService.getActiveWorkspaceRole();
         SeedStats stats = new SeedStats();
+
+        // Seed global social content first
+        socialService.seedData();
 
         boolean seedEmployer = shouldSeedRole(currentUser, activeRole, "EMPLOYER");
         boolean seedFreelancer = shouldSeedRole(currentUser, activeRole, "FREELANCER");

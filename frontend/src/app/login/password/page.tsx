@@ -241,11 +241,11 @@ export default function LoginPasswordPage() {
               suffix={
                 <button
                   type="button"
-                  className="inline-flex items-center justify-center rounded-full p-1 text-slate-500 transition-colors hover:text-slate-900"
+                  className="inline-flex items-center justify-center rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 active:bg-slate-200"
                   onClick={() => setShowPassword((current) => !current)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               }
             />

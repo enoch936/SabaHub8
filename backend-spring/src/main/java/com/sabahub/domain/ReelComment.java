@@ -1,11 +1,19 @@
 package com.sabahub.domain;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Document(collection = "reel_comments")
 public class ReelComment {
 
@@ -20,25 +28,4 @@ public class ReelComment {
 
     @CreatedDate
     private Instant createdAt;
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getReelId() { return reelId; }
-    public void setReelId(String reelId) { this.reelId = reelId; }
-
-    public String getAuthorId() { return authorId; }
-    public void setAuthorId(String authorId) { this.authorId = authorId; }
-
-    public String getAuthorName() { return authorName; }
-    public void setAuthorName(String authorName) { this.authorName = authorName; }
-
-    public String getAuthorProfilePicture() { return authorProfilePicture; }
-    public void setAuthorProfilePicture(String authorProfilePicture) { this.authorProfilePicture = authorProfilePicture; }
-
-    public String getBody() { return body; }
-    public void setBody(String body) { this.body = body; }
-
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

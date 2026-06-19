@@ -16,9 +16,12 @@ import java.time.Instant;
 @Builder
 @Document(collection = "social_saves")
 public class SocialSave {
+
     @Id
     private String id;
+
     private String postId;
+
     private String userId;
 
     @CreatedDate

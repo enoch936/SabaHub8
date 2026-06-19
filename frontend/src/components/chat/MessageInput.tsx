@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import EmojiPicker, { Theme, type EmojiClickData } from "emoji-picker-react";
-import { Loader2, Mic, Paperclip, SendHorizontal, Smile, Square, X } from "lucide-react";
+import { Loader2, Mic, Paperclip, SendHorizontal, Smile, Square, X, XCircle } from "lucide-react";
 import { saveAssetMetadata, uploadSignature } from "@/lib/api";
+import { registerGlobalStream } from "@/lib/callStore";
 import { VoiceMessageUI } from "./VoiceMessageUI";
 import { ChatPrimaryButton, ChatSecondaryButton } from "./chat-ui";
 
@@ -192,6 +194,7 @@ export function MessageInput({
       setUploadError(null);
       setUploadStatus(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      registerGlobalStream(stream);
       const recorder = new MediaRecorder(stream);
       recordedChunksRef.current = [];
       mediaStreamRef.current = stream;
@@ -229,9 +232,16 @@ export function MessageInput({
       recordingTimerRef.current = window.setInterval(() => {
         setRecordingSeconds((current) => current + 1);
       }, 1000);
-    } catch (error) {
+    } catch (error: any) {
       stopMediaStream();
-      setUploadError(error instanceof Error ? error.message : "Microphone access was not granted.");
+      console.error("Voice recording permission error:", error);
+      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+        setUploadError("Microphone access blocked. Click the lock icon in your browser address bar to allow microphone access and try again.");
+      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+        setUploadError("No microphone found. Please connect a microphone and try again.");
+      } else {
+        setUploadError(error.message || "Failed to access microphone.");
+      }
     }
   };
 
@@ -244,161 +254,134 @@ export function MessageInput({
     recorder.stop();
   };
 
+  const handleTyping = () => {
+    onTyping?.();
+  };
+
   return (
-    <div className="px-4 py-4">
-      {contextLabel ? (
-        <div className="mb-3 flex items-center justify-between gap-3 rounded-[20px] border border-[#d6e4d3] bg-[#eef4ec] px-3 py-2 text-xs text-[#315447] shadow-[0_14px_24px_rgba(38,67,56,0.04)]">
-          <span className="truncate font-medium">{contextLabel}</span>
-          {onClearContext ? (
+    <div className="relative">
+      <AnimatePresence>
+        {uploadError && (
+          <div className="absolute bottom-full left-0 right-0 mb-4 flex items-center gap-3 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-400 backdrop-blur-xl">
+            <XCircle className="h-5 w-5 shrink-0" />
+            <p className="flex-1 font-medium">{uploadError}</p>
             <button
-              type="button"
-              onClick={onClearContext}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[#315447] transition hover:bg-white/70"
-              aria-label="Clear message context"
+              onClick={() => setUploadError(null)}
+              className="rounded-lg p-1 hover:bg-rose-500/20"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-4 w-4" />
             </button>
-          ) : null}
-        </div>
-      ) : null}
-
-      {uploadError ? (
-        <div className="mb-3 rounded-[20px] border border-[#f1cbc1] bg-[#fff5f2] px-3 py-2 text-xs font-medium text-[#b45a4b]">
-          {uploadError}
-        </div>
-      ) : null}
-
-      {uploadStatus ? (
-        <div className="mb-3 rounded-[20px] border border-[#d8e0d6] bg-white/80 px-3 py-2 text-xs font-medium text-[#5f6d65]">
-          {uploadStatus}
-        </div>
-      ) : null}
-
-      {isRecording ? (
-        <div className="mb-3 flex items-center justify-between gap-3 rounded-[24px] border border-[#f4d3c7] bg-[#fff4f0] px-4 py-3">
-          <VoiceMessageUI isRecording />
-          <div className="text-sm font-semibold text-[#b45a4b]">{formatRecordingSeconds(recordingSeconds)}</div>
-        </div>
-      ) : null}
-
-      <div className="relative rounded-[28px] border border-[#d8e0d6] bg-white/92 px-3 py-3 shadow-[0_20px_36px_rgba(38,67,56,0.07)] backdrop-blur-sm">
-        {emojiOpen ? (
-          <div className="absolute bottom-[calc(100%+12px)] right-0 z-20 overflow-hidden rounded-[24px] border border-[#d8e0d6] bg-white shadow-[0_28px_60px_rgba(38,67,56,0.14)]">
-            <EmojiPicker
-              width={320}
-              height={380}
-              theme={Theme.LIGHT}
-              lazyLoadEmojis
-              onEmojiClick={(emojiData: EmojiClickData) => {
-                setValue(`${value}${emojiData.emoji}`);
-                setEmojiOpen(false);
-              }}
-            />
           </div>
-        ) : null}
+        )}
+      </AnimatePresence>
 
-        <div className="flex items-end gap-2">
-          {onSendAsset ? (
-            <>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
-                multiple
-                hidden
-                onChange={(event) => void handleFileSelection(event.target.files)}
-              />
+      <div className="flex items-end gap-3">
+        <div className="relative flex-1">
+          <div className="flex min-h-[56px] items-end gap-2 rounded-[28px] border border-white/10 bg-white/5 p-2 pr-4 backdrop-blur-xl transition-all focus-within:border-indigo-500/50 focus-within:bg-white/10">
+            <div className="flex h-10 w-10 items-center justify-center">
               <ChatSecondaryButton
-                onClick={() => fileInputRef.current?.click()}
-                disabled={disabled || isUploading || isRecording}
-                className="h-11 w-11 flex-shrink-0 rounded-2xl border-0 bg-[#f4f7f2] p-0 text-[#5f6d65] hover:bg-[#ecf3eb]"
-                aria-label="Attach file"
+                onClick={() => setEmojiOpen(!emojiOpen)}
+                className={emojiOpen ? "text-indigo-400" : ""}
+                title="Emojis"
               >
-                <Paperclip className="h-4.5 w-4.5" />
+                <Smile className="h-5 w-5" />
               </ChatSecondaryButton>
-            </>
-          ) : null}
+            </div>
 
-          <ChatSecondaryButton
-            onClick={() => setEmojiOpen((current) => !current)}
-            disabled={disabled || isRecording}
-            className="h-11 w-11 flex-shrink-0 rounded-2xl border-0 bg-[#f4f7f2] p-0 text-[#5f6d65] hover:bg-[#ecf3eb]"
-            aria-label="Open emoji picker"
-          >
-            <Smile className="h-4.5 w-4.5" />
-          </ChatSecondaryButton>
-
-          <div className="flex-1 rounded-[22px] bg-[#f7faf6] px-2 py-1">
             <textarea
               value={value}
-              onChange={(event) => {
-                setValue(event.target.value);
-                onTyping?.();
+              onChange={(e) => {
+                setValue(e.target.value);
+                handleTyping();
               }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
                   handleSubmit();
                 }
               }}
+              placeholder="Send an encrypted signal..."
+              className="max-h-32 flex-1 resize-none bg-transparent py-3 text-sm text-white outline-none placeholder:text-slate-600"
               rows={1}
               disabled={disabled || isRecording}
-              placeholder={
-                disabled
-                  ? "Posting is disabled in this conversation"
-                  : isUploading
-                    ? "Uploading…"
-                    : isRecording
-                      ? "Recording voice note…"
-                      : "Write a message"
-              }
-              className="max-h-40 min-h-[48px] w-full resize-y bg-transparent px-3 py-2.5 text-sm text-[#20332d] outline-none placeholder:text-[#94a198] disabled:cursor-not-allowed"
             />
+
+            <div className="flex h-10 items-center gap-1">
+              <ChatSecondaryButton
+                onClick={() => fileInputRef.current?.click()}
+                disabled={disabled || isRecording || isUploading}
+                title="Attach file"
+              >
+                <Paperclip className="h-5 w-5" />
+              </ChatSecondaryButton>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={(e) => handleFileSelection(e.target.files)}
+                className="hidden"
+                accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
+              />
+            </div>
           </div>
 
-          {onSendAsset ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (isRecording) {
-                  stopVoiceRecording();
-                  return;
-                }
-                void startVoiceRecording();
-              }}
-              disabled={disabled || isUploading}
-              className={`inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl transition disabled:cursor-not-allowed disabled:opacity-40 ${
-                isRecording
-                  ? "bg-[#c96a57] text-white hover:bg-[#b45a4b]"
-                  : "bg-[#f4f7f2] text-[#5f6d65] hover:bg-[#27463b] hover:text-white"
-              }`}
-              aria-label={isRecording ? "Stop voice recording" : "Record voice note"}
-            >
-              {isUploading ? (
-                <Loader2 className="h-4.5 w-4.5 animate-spin" />
-              ) : isRecording ? (
-                <Square className="h-4.5 w-4.5" />
-              ) : (
-                <Mic className="h-4.5 w-4.5" />
-              )}
-            </button>
-          ) : null}
-
-          <ChatPrimaryButton
-            onClick={handleSubmit}
-            disabled={disabled || isUploading || isRecording || !value.trim()}
-            className="h-11 w-11 flex-shrink-0 rounded-2xl p-0"
-            aria-label="Send message"
-          >
-            <SendHorizontal className="h-4.5 w-4.5" />
-          </ChatPrimaryButton>
+          <AnimatePresence>
+            {emojiOpen && (
+              <div className="absolute bottom-full left-0 mb-4 z-50">
+                <div className="rounded-2xl border border-white/10 bg-slate-900 shadow-2xl overflow-hidden">
+                  <EmojiPicker
+                    onEmojiClick={(data: EmojiClickData) => {
+                      setValue(value + data.emoji);
+                    }}
+                    theme={Theme.DARK}
+                    width={320}
+                    height={400}
+                  />
+                </div>
+              </div>
+            )}
+          </AnimatePresence>
         </div>
 
-        <div className="mt-3 flex items-center justify-between gap-3 px-1">
-          <p className="text-[11px] text-[#87958d]">Message composer</p>
-          <p className="text-[11px] font-medium text-[#9aa69f]">{value.trim().length > 0 ? `${value.trim().length} chars` : "Ready"}</p>
+        <div className="flex h-[56px] items-center gap-2">
+          {isRecording ? (
+            <VoiceMessageUI
+              seconds={recordingSeconds}
+              onCancel={stopMediaStream}
+              onStop={stopVoiceRecording}
+            />
+          ) : (
+            <>
+              <button
+                onClick={startVoiceRecording}
+                disabled={disabled || isUploading}
+                className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-400 transition hover:bg-white/10 hover:text-white"
+                title="Voice message"
+              >
+                <Mic className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={disabled || !value.trim() || isUploading}
+                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/20 transition active:scale-95 disabled:opacity-50 disabled:grayscale"
+                title="Send"
+              >
+                {isUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <SendHorizontal className="h-5 w-5" />
+                )}
+              </button>
+            </>
+          )}
         </div>
       </div>
+
+      {uploadStatus && (
+        <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 animate-pulse">
+          {uploadStatus}
+        </div>
+      )}
     </div>
   );
 }

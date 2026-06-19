@@ -23,6 +23,7 @@ import {
   createGig,
   createProjectPost,
   getMyFreelancerProfile,
+  getStorageUsage,
   listMyGigs,
   listMyProjectPosts,
   suggestFreelancerProfileTaxonomy,
@@ -416,14 +417,16 @@ export default function FreelancerContentStudio() {
   });
   const [gigMedia, setGigMedia] = useState<MediaDraft>(EMPTY_MEDIA_DRAFT);
   const [isGigSubmitting, setIsGigSubmitting] = useState(false);
+  const [storageUsage, setStorageUsage] = useState<{ totalSize: number; storageTotal: number } | null>(null);
 
   const refreshStudio = async () => {
     setIsLoading(true);
     try {
-      const [profileResult, gigsResult, projectPostsResult] = await Promise.allSettled([
+      const [profileResult, gigsResult, projectPostsResult, storageResult] = await Promise.allSettled([
         getMyFreelancerProfile(),
         listMyGigs(),
         listMyProjectPosts(),
+        getStorageUsage(),
       ]);
 
       const profileData =
@@ -438,6 +441,7 @@ export default function FreelancerContentStudio() {
       setProfileForm(toProfileForm(profileData));
       setGigs(gigsResult.status === "fulfilled" ? gigsResult.value : []);
       setProjectPosts(projectPostsResult.status === "fulfilled" ? projectPostsResult.value : []);
+      setStorageUsage(storageResult.status === "fulfilled" ? storageResult.value : null);
 
       if (gigsResult.status !== "fulfilled" || projectPostsResult.status !== "fulfilled") {
         toast("Your studio loaded, but some published content could not be refreshed yet.");
@@ -479,8 +483,15 @@ export default function FreelancerContentStudio() {
         value: profile?.hourlyRate ? `${profile.currency ?? "USD"} ${profile.hourlyRate}/hr` : "Add pricing",
         icon: <WalletCards className="h-4 w-4 text-gray-600" />,
       },
+      {
+        label: "Storage used",
+        value: storageUsage 
+          ? `${(storageUsage.totalSize / (1024 * 1024)).toFixed(1)} MB` 
+          : "0 MB",
+        icon: <Upload className="h-4 w-4 text-gray-600" />,
+      },
     ],
-    [gigs, profile?.currency, profile?.hourlyRate, profile?.portfolio?.length, projectPosts.length],
+    [gigs, profile?.currency, profile?.hourlyRate, profile?.portfolio?.length, projectPosts.length, storageUsage],
   );
 
   const readinessItems = useMemo(() => getStudioReadiness(profile), [profile]);
@@ -641,6 +652,16 @@ export default function FreelancerContentStudio() {
     }
     if (!hasSupportingMedia(draft)) {
       throw new Error("Add at least one image, video, or file.");
+    }
+
+    // Storage quota check
+    if (storageUsage) {
+      const draftSize = [draft.thumbnail, ...draft.images, ...draft.videos, ...draft.documents]
+        .reduce((acc, file) => acc + (file?.size || 0), 0);
+      
+      if (storageUsage.totalSize + draftSize > storageUsage.storageTotal) {
+        throw new Error("Storage quota exceeded. Please delete existing assets or upgrade your plan.");
+      }
     }
 
     const [thumbnailUrls, imageUrls, videoUrls, documentUrls] = await Promise.all([
@@ -826,6 +847,28 @@ export default function FreelancerContentStudio() {
                 </div>
               ) : null}
             </div>
+
+            {storageUsage && (
+              <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-sky-100/80">Vault Storage Quota</p>
+                  <p className="text-[10px] font-bold text-white">
+                    {Math.round((storageUsage.totalSize / storageUsage.storageTotal) * 100)}% Used
+                  </p>
+                </div>
+                <div className="h-1.5 rounded-full bg-white/10">
+                  <div 
+                    className={`h-full rounded-full transition-all ${
+                      (storageUsage.totalSize / storageUsage.storageTotal) > 0.9 ? "bg-amber-400" : "bg-sky-400"
+                    }`}
+                    style={{ width: `${Math.min(100, Math.round((storageUsage.totalSize / storageUsage.storageTotal) * 100))}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[10px] text-slate-400">
+                  {(storageUsage.totalSize / (1024 * 1024)).toFixed(1)} MB used of {(storageUsage.storageTotal / (1024 * 1024 * 1024)).toFixed(0)} GB limit.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

@@ -724,17 +724,17 @@ export default function AdminFinanceWorkspace() {
                   return (
                     <Stack direction="row" spacing={0.8} justifyContent="flex-end">
                       <SoftButton
-                        variant="outline"
-                        size="sm"
-                        color="danger"
+                        variant="outlined"
+                        size="small"
+                        color="error"
                         onClick={() => void approveOrRejectInternalTransfer(item, false)}
                         disabled={busy}
                       >
                         Reject
                       </SoftButton>
                       <SoftButton
-                        variant="outline"
-                        size="sm"
+                        variant="outlined"
+                        size="small"
                         color="success"
                         onClick={() => void approveOrRejectInternalTransfer(item, true)}
                         disabled={busy}
@@ -1106,8 +1106,8 @@ export default function AdminFinanceWorkspace() {
                     render: (_, item) => (
                       <Stack direction="row" spacing={0.8} justifyContent="flex-end">
                         <SoftButton
-                          variant="outline"
-                          size="sm"
+                          variant="outlined"
+                          size="small"
                           onClick={() => {
                             setSelectedTopup(item);
                             setReviewNote("");
@@ -1117,8 +1117,8 @@ export default function AdminFinanceWorkspace() {
                           Review
                         </SoftButton>
                         <SoftButton
-                          variant="outline"
-                          size="sm"
+                          variant="outlined"
+                          size="small"
                           color="success"
                           leftIcon={<CheckCircleRoundedIcon sx={{ fontSize: 16 }} />}
                           onClick={() => void approveOrRejectTopup(item, true)}
@@ -1193,8 +1193,8 @@ export default function AdminFinanceWorkspace() {
                       return (
                         <Stack direction="row" spacing={0.8} justifyContent="flex-end">
                           <SoftButton
-                            variant="outline"
-                            size="sm"
+                            variant="outlined"
+                            size="small"
                             onClick={() => {
                               setSelectedWithdrawal(item);
                               setWithdrawalNextStatus(status === "PENDING" ? "PROCESSING" : status);
@@ -1205,8 +1205,8 @@ export default function AdminFinanceWorkspace() {
                             Review
                           </SoftButton>
                           <SoftButton
-                            variant="outline"
-                            size="sm"
+                            variant="outlined"
+                            size="small"
                             color="info"
                             onClick={() => void applyWithdrawalUpdate(item, "PROCESSING", item.notes || "")}
                             disabled={busy || status === "PROCESSING"}

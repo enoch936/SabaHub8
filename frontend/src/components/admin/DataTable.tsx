@@ -41,8 +41,9 @@ import {
   flexRender,
   SortingState,
   ColumnFiltersState,
+  Row,
 } from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer, VirtualItem } from "@tanstack/react-virtual";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
@@ -74,7 +75,7 @@ export interface TableColumn<T> {
 }
 
 export interface DataTableProps<T> {
-  columns: any[];
+  columns: TableColumn<T>[];
   data: T[];
   rowKey: keyof T;
   loading?: boolean;
@@ -129,7 +130,7 @@ export function DataTable<T extends Record<string, any>>({
   const tableColumns = useMemo<ColumnDef<T>[]>(() => {
     return userColumns.map((col, index) => ({
       id: `${String(col.key)}-${index}`,
-      accessorKey: col.key,
+      accessorKey: col.key as string,
       header: col.label,
       cell: (info) => {
         const value = info.getValue();
@@ -267,8 +268,7 @@ export function DataTable<T extends Record<string, any>>({
                     <Button
                       key={action.value}
                       size="sm"
-                      variant="outline"
-                      color={action.color as any || "primary"}
+                      variant={action.color === "danger" || action.color === "error" ? "danger" : "outline"}
                       leftIcon={action.icon}
                       onClick={() => onBulkAction?.(action.value, table.getSelectedRowModel().flatRows.map(r => r.original))}
                       sx={{ borderRadius: "10px", fontWeight: 700 }}
@@ -394,8 +394,8 @@ export function DataTable<T extends Record<string, any>>({
               </TableRow>
             )}
             
-            {(virtualized ? virtualRows : rows).map((virtualRowOrRow, idx) => {
-              const row = virtualized ? rows[virtualRowOrRow.index] : virtualRowOrRow;
+            {(virtualized ? virtualRows : rows).map((item, idx) => {
+              const row = (virtualized ? rows[(item as VirtualItem).index] : item) as Row<T>;
               const isExpanded = expandedRows.has(row.original[rowKey]);
               const isSelected = row.getIsSelected();
               

@@ -10,6 +10,7 @@ import {
   Grid,
   Stack,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { motion } from "framer-motion";
@@ -34,6 +35,7 @@ import { GlassCard, GlassCardHeader } from "./GlassCard";
 import { DataTable } from "./DataTable";
 
 export default function AdminChatOperationsWorkspace() {
+  const theme = useTheme();
   const {
     conversations,
     messages,
@@ -134,7 +136,8 @@ export default function AdminChatOperationsWorkspace() {
           { label: "Unread Pressure", value: metrics.unread, icon: <MarkChatUnreadRoundedIcon />, color: "error" },
           { label: "Enterprise Groups", value: metrics.groupCount, icon: <GroupsRoundedIcon />, color: "accent" },
         ].map((metric) => (
-          <Grid key={metric.label} item xs={12} md={4}>
+          <Grid 
+          key={metric.label} size={{ xs: 12, md: 4 }}>
             <MetricCard
               icon={metric.icon}
               label={metric.label}
@@ -147,7 +150,7 @@ export default function AdminChatOperationsWorkspace() {
       </Grid>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <GlassCard sx={{ height: '700px', display: 'flex', flexDirection: 'column' }}>
             <GlassCardHeader 
               title="Conversation Queue" 
@@ -168,7 +171,7 @@ export default function AdminChatOperationsWorkspace() {
           </GlassCard>
         </Grid>
 
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <GlassCard sx={{ height: '700px', display: 'flex', flexDirection: 'column' }}>
             {activeConversation ? (
               <>

@@ -29,9 +29,20 @@ export default function BottomNavigation() {
             <Link
               key={item.label}
               href={item.href}
-              className={`flex min-w-[56px] flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 transition-colors ${
-                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              className={`flex min-w-[56px] flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 transition-[background-color,box-shadow,color] ${
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
               }`}
+              style={!isActive ? {} : undefined}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = "var(--glass-gray-hover)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }
+              }}
             >
               <Icon className={`h-5 w-5 ${isActive ? "stroke-[2.5]" : ""}`} />
               <span className="text-[10px] font-medium">{item.label}</span>

@@ -18,16 +18,16 @@ export function AudioCallOverlay() {
     status,
     participantName,
     callType,
+    isInitiator,
     localStream,
     remoteStream,
     isMuted,
     duration,
     toggleMute,
     endCall,
-    setDuration,
+    tickDuration,
   } = useCallStore();
 
-  const [callDuration, setCallDuration] = useState(0);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
@@ -36,22 +36,18 @@ export function AudioCallOverlay() {
     if (remoteStream && remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = remoteStream;
     }
-  }, [remoteStream]);
+  }, [remoteStream, status]);
 
   // Call duration timer
   useEffect(() => {
     if (status !== "active") return;
 
     const interval = setInterval(() => {
-      setCallDuration((prev) => {
-        const newDuration = prev + 1;
-        setDuration(newDuration);
-        return newDuration;
-      });
+      tickDuration();
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [status, setDuration]);
+  }, [status, tickDuration]);
 
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -105,9 +101,18 @@ export function AudioCallOverlay() {
                   transition={{ duration: 1.5, repeat: Infinity }}
                   className="h-2 w-2 rounded-full bg-green-500"
                 />
-                <p className="text-sm text-white/60">
-                  {status === "ringing" ? "Calling" : "In call"}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-white/60">
+                    {status === "ringing" ? (isInitiator ? "Calling" : "Ringing") : "In call"}
+                  </p>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
+                    isInitiator 
+                      ? "bg-blue-500/20 border-blue-500/30 text-blue-400" 
+                      : "bg-purple-500/20 border-purple-500/30 text-purple-400"
+                  }`}>
+                    {isInitiator ? "Outgoing" : "Incoming"}
+                  </span>
+                </div>
               </div>
 
               {/* Participant name */}
@@ -116,66 +121,45 @@ export function AudioCallOverlay() {
                   {participantName}
                 </h3>
                 <p className="mt-1 text-sm font-mono text-white/40">
-                  {formatDuration(callDuration)}
+                  {formatDuration(duration)}
                 </p>
               </div>
 
               {/* Control buttons */}
               <div className="flex items-center justify-center gap-3">
-                {/* Volume toggle */}
                 <motion.button
                   whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-                  className={`flex h-12 w-12 items-center justify-center rounded-full transition-all ${
-                    !isSpeakerOn
-                      ? "bg-red-500/20 border border-red-500/50 hover:bg-red-500/30"
-                      : "bg-white/20 border border-white/30 hover:bg-white/30"
-                  }`}
-                  title={isSpeakerOn ? "Turn off speaker" : "Turn on speaker"}
-                >
-                  {isSpeakerOn ? (
-                    <Volume2 className="h-5 w-5 text-white" />
-                  ) : (
-                    <VolumeX className="h-5 w-5 text-red-400" />
-                  )}
-                </motion.button>
-
-                {/* Mute button */}
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={toggleMute}
-                  className={`flex h-12 w-12 items-center justify-center rounded-full transition-all ${
+                  className={`h-12 w-12 flex items-center justify-center rounded-2xl border transition-all ${
                     isMuted
-                      ? "bg-red-500/20 border border-red-500/50 hover:bg-red-500/30"
-                      : "bg-white/20 border border-white/30 hover:bg-white/30"
+                      ? "bg-red-500/20 border-red-500/30 text-red-400"
+                      : "bg-white/10 border-white/20 text-white hover:bg-white/20"
                   }`}
                   title={isMuted ? "Unmute" : "Mute"}
                 >
-                  {isMuted ? (
-                    <MicOff className="h-5 w-5 text-red-400" />
-                  ) : (
-                    <Mic className="h-5 w-5 text-white" />
-                  )}
+                  {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                 </motion.button>
 
-                {/* More options */}
                 <motion.button
                   whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 border border-white/30 hover:bg-white/30 transition-all"
-                  title="More options"
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setIsSpeakerOn(!isSpeakerOn)}
+                  className={`h-12 w-12 flex items-center justify-center rounded-2xl border transition-all ${
+                    !isSpeakerOn
+                      ? "bg-amber-500/20 border-amber-500/30 text-amber-400"
+                      : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  }`}
+                  title={isSpeakerOn ? "Speaker on" : "Speaker off"}
                 >
-                  <MoreVertical className="h-5 w-5 text-white" />
+                  {isSpeakerOn ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
                 </motion.button>
 
-                {/* End call button */}
                 <motion.button
                   whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={endCall}
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all shadow-lg shadow-red-500/40"
+                  className="h-12 w-12 flex items-center justify-center rounded-2xl bg-gradient-to-r from-red-500 to-red-600 border border-red-500/50 shadow-lg shadow-red-500/20"
                   title="End call"
                 >
                   <PhoneOff className="h-5 w-5 text-white" />

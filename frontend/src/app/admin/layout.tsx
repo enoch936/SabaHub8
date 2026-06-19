@@ -27,7 +27,6 @@ import {
   resolveActiveAdminContext,
 } from "@/lib/admin/navigation";
 import { isTokenUsable, logout } from "@/lib/auth";
-import { normalizeRoleList } from "@/lib/role-mode";
 import { bootstrapSession, useSession } from "@/lib/session";
 
 const SIDEBAR_WIDTH = 280;
@@ -62,6 +61,12 @@ function isLikelyFlaggedJob(job: { title?: string | null; description?: string |
   const combined = `${job.title ?? ""} ${job.description ?? ""}`.toLowerCase();
   const suspicious = ["scam", "fraud", "fake", "crypto giveaway", "guaranteed return"];
   return status === "OPEN" && suspicious.some((term) => combined.includes(term));
+}
+
+function getDefaultAvatarUrl(nameOrEmail: string | undefined): string {
+  if (!nameOrEmail) return "";
+  const seed = encodeURIComponent((nameOrEmail || "user").trim());
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&scale=80`;
 }
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
@@ -122,12 +127,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       }
       try {
         const currentUser = await me();
-        const normalizedRoles = normalizeRoleList(currentUser.roles);
         hydrateFromUser(currentUser);
-        if (!normalizedRoles.includes("ADMIN")) {
-          router.replace("/forbidden");
-          return;
-        }
         // Force active role to ADMIN when in admin layout
         useSession.getState().setRole("ADMIN");
         if (!cancelled) setAuthReady(true);
@@ -179,8 +179,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   if (!authReady) {
     return (
-      <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center", bgcolor: "#0B1120" }}>
-        <CircularProgress size={32} thickness={5} sx={{ color: "#6366F1" }} />
+      <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center", bgcolor: "var(--background)" }}>
+        <CircularProgress size={32} thickness={5} sx={{ color: "var(--primary)" }} />
       </Box>
     );
   }

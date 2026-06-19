@@ -10,17 +10,18 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
-@Document(collection = "social_follows")
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Document(collection = "social_follows")
 public class SocialFollow {
 
     @Id
     private String id;
 
     private String followerId;
+
     private String followingId;
 
     @CreatedDate

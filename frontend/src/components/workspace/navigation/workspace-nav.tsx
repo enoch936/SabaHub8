@@ -14,6 +14,7 @@ import {
   OctagonAlert,
   Radio,
   Settings,
+  Share2,
   UserRound,
   UsersRound,
   WalletCards,
@@ -47,17 +48,23 @@ export const WORKSPACE_NAV_SECTIONS: WorkspaceNavSection[] = [
         icon: <LayoutDashboard size={18} />,
       },
       {
-        id: "post-job",
-        label: "Post Job",
-        href: workspaceRoutes.createJob,
-        icon: <FilePlus2 size={18} />,
-        roles: ["EMPLOYER"],
+        id: "jobs",
+        label: "Jobs",
+        href: workspaceRoutes.jobs,
+        icon: <BriefcaseBusiness size={18} />,
       },
       {
         id: "talent",
         label: "Talent",
         href: workspaceRoutes.talent,
         icon: <UsersRound size={18} />,
+      },
+      {
+        id: "post-job",
+        label: "Post Job",
+        href: workspaceRoutes.createJob,
+        icon: <FilePlus2 size={18} />,
+        roles: ["EMPLOYER"],
       },
       {
         id: "projects",
@@ -77,6 +84,12 @@ export const WORKSPACE_NAV_SECTIONS: WorkspaceNavSection[] = [
         label: "Streaming",
         href: workspaceRoutes.stream,
         icon: <Radio size={18} />,
+      },
+      {
+        id: "social",
+        label: "Social",
+        href: workspaceRoutes.social,
+        icon: <Share2 size={18} />,
       },
       {
         id: "ai-service",
@@ -163,6 +176,7 @@ export function getWorkspaceSections(role: WorkspaceRole) {
 }
 
 export function isWorkspaceNavItemActive(pathname: string, href: string) {
+  if (!href) return false;
   if (href === workspaceRoutes.home) {
     return pathname === href;
   }
@@ -178,6 +192,9 @@ export function getWorkspaceSurfaceLabel(pathname: string) {
   }
   if (pathname === workspaceRoutes.assistant || pathname.startsWith(`${workspaceRoutes.assistant}/`)) {
     return "AI Service";
+  }
+  if (pathname === workspaceRoutes.social || pathname.startsWith(`${workspaceRoutes.social}/`)) {
+    return "Social";
   }
   if (pathname === workspaceRoutes.proposals || pathname.startsWith(`${workspaceRoutes.proposals}/`)) {
     return "Proposals";
@@ -195,7 +212,8 @@ export function getWorkspaceSurfaceLabel(pathname: string) {
   const segments = pathname.split("/").filter(Boolean);
   const tail = segments.at(-1);
 
-  if (!tail || tail === "jobs") return "Home";
+  if (!tail) return "Home";
+  if (tail === "jobs") return "Jobs";
 
   return tail
     .split("-")

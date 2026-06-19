@@ -154,11 +154,15 @@ export default function WorkspaceSidebar({
                 return (
                   <Box key={item.id}>
                     <Link
-                      href={item.href}
-                      onClick={() => {
+                      href={item.href || "#"}
+                      onClick={(e) => {
+                        if (!item.href) {
+                          e.preventDefault();
+                          return;
+                        }
                         if (!isDesktop) onClose();
                       }}
-                      aria-label={item.label}
+                      aria-label={item.label || "Navigation link"}
                       className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition ${
                         active
                           ? "bg-[linear-gradient(135deg,rgba(56,189,248,0.35),rgba(139,92,246,0.28))] text-white shadow-[0_18px_44px_rgba(56,189,248,0.2)] ring-1 ring-white/20"

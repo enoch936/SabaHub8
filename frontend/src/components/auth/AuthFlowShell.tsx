@@ -61,7 +61,7 @@ export function AuthFlowShell({
 
       <div className={styles.navShell}>
         <motion.nav
-          className={clsx(styles.glassPanel, "rounded-[1.65rem] px-4 py-4 md:px-6")}
+          className={clsx(styles.glassPanel, "px-4 py-4 md:px-6")}
           initial={{ y: -90 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.42 }}
@@ -78,20 +78,30 @@ export function AuthFlowShell({
                   border: "1px solid var(--border)",
                   bgcolor: "var(--surface)",
                   color: "var(--foreground)",
-                  "&:hover": { bgcolor: "var(--accent)" },
+                  backdropFilter: "blur(12px)",
+                  transition: "all 0.25s ease",
+                  "&:hover": {
+                    bgcolor: "var(--surface-hover)",
+                    borderColor: "var(--primary)",
+                    boxShadow: "0 0 0 3px var(--primary-glow)",
+                    transform: "scale(1.05)",
+                  },
+                  "&:active": {
+                    transform: "scale(0.95)",
+                  },
                 }}
               />
 
               <div className="hidden items-center gap-6 md:flex">
                 <Link
                   href="/"
-                  className="text-sm font-semibold text-slate-600 transition-colors hover:text-slate-950 dark:text-slate-300 dark:hover:text-slate-100"
+                  className="text-sm font-semibold [color:var(--foreground-muted)] transition-colors hover:[color:var(--foreground)]"
                 >
                   Home
                 </Link>
                 <Link
                   href="/login"
-                  className="text-sm font-semibold text-slate-600 transition-colors hover:text-slate-950 dark:text-slate-300 dark:hover:text-slate-100"
+                  className="text-sm font-semibold [color:var(--foreground-muted)] transition-colors hover:[color:var(--foreground)]"
                 >
                   Log In
                 </Link>

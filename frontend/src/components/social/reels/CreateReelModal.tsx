@@ -24,6 +24,7 @@ import {
   Plus
 } from "lucide-react";
 import { toast } from "sonner";
+import { createReel } from "@/lib/api";
 
 export function CreateReelModal({ open, onClose }: { open: boolean, onClose: () => void }) {
   const [step, setStep] = useState(1);
@@ -52,19 +53,42 @@ export function CreateReelModal({ open, onClose }: { open: boolean, onClose: () 
   };
 
   const handlePublish = async () => {
+    if (!video) {
+      toast.error("Please select a video first");
+      return;
+    }
     setIsUploading(true);
-    // Simulate upload
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setUploadProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-        toast.success("Reel published successfully!");
-        onClose();
-        setIsUploading(false);
-      }
-    }, 500);
+    setUploadProgress(30);
+    try {
+      // Upload video to asset service (simplified — use the video preview URL as placeholder)
+      const videoUrl = videoPreview || "";
+
+      setUploadProgress(60);
+      await createReel({
+        title,
+        description: description || title,
+        videoUrl,
+        thumbnailUrl: "",
+        audioId: null,
+        tags: hashtags.length > 0 ? hashtags : [],
+      });
+
+      setUploadProgress(100);
+      toast.success("Reel published successfully!");
+      setVideo(null);
+      setVideoPreview(null);
+      setTitle("");
+      setDescription("");
+      setLocation("");
+      setHashtags([]);
+      setStep(1);
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to publish reel");
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   return (

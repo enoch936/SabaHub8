@@ -1,21 +1,31 @@
 package com.sabahub.service;
 
+import com.sabahub.domain.ContentItem;
 import com.sabahub.domain.Freelancer;
 import com.sabahub.domain.FreelancerProjectPost;
 import com.sabahub.domain.Gig;
+import com.sabahub.domain.Job;
 import com.sabahub.domain.User;
+import com.sabahub.domain.SocialPost;
+import com.sabahub.repository.ContentRepository;
 import com.sabahub.repository.FreelancerProjectPostRepository;
 import com.sabahub.repository.FreelancerRepository;
 import com.sabahub.repository.GigRepository;
+import com.sabahub.repository.JobRepository;
+import com.sabahub.repository.SocialPostRepository;
 import com.sabahub.repository.UserRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -27,21 +37,93 @@ public class MarketplaceSearchService {
     private final FreelancerRepository freelancerRepository;
     private final GigRepository gigRepository;
     private final FreelancerProjectPostRepository projectPostRepository;
+    private final SocialPostRepository socialPostRepository;
     private final UserRepository userRepository;
+    private final JobRepository jobRepository;
+    private final ContentRepository contentRepository;
+    private final PythonAiBridgeService aiBridgeService;
     private final FreelancerProfileCompletionService profileCompletionService;
 
     public MarketplaceSearchService(CurrentUserService currentUserService,
                                     FreelancerRepository freelancerRepository,
                                     GigRepository gigRepository,
                                     FreelancerProjectPostRepository projectPostRepository,
+                                    SocialPostRepository socialPostRepository,
                                     UserRepository userRepository,
+                                    JobRepository jobRepository,
+                                    ContentRepository contentRepository,
+                                    PythonAiBridgeService aiBridgeService,
                                     FreelancerProfileCompletionService profileCompletionService) {
         this.currentUserService = currentUserService;
         this.freelancerRepository = freelancerRepository;
         this.gigRepository = gigRepository;
         this.projectPostRepository = projectPostRepository;
+        this.socialPostRepository = socialPostRepository;
         this.userRepository = userRepository;
+        this.jobRepository = jobRepository;
+        this.contentRepository = contentRepository;
+        this.aiBridgeService = aiBridgeService;
         this.profileCompletionService = profileCompletionService;
+    }
+
+    public Map<String, Object> globalSearch(String query, int limit) {
+        String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        int safeLimit = Math.min(Math.max(limit, 1), 20);
+
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        // 1. AI Intent Understanding
+        Optional<Map<String, Object>> aiResult = aiBridgeService.assistChatbot(Map.of("prompt", query, "contextType", "GLOBAL_SEARCH"));
+        String aiIntent = aiResult.map(r -> (String) r.get("intent")).orElse("general");
+
+        // 2. Search Talents
+        freelancerRepository.findAll().stream()
+                .filter(f -> Boolean.TRUE.equals(f.getIsActive()))
+                .filter(f -> matchesFreelancer(normalizedQuery, f, null))
+                .limit(safeLimit)
+                .forEach(f -> {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("id", f.getId());
+                    item.put("type", "Talent");
+                    item.put("title", f.getProfessionalTitle());
+                    item.put("description", f.getBio());
+                    results.add(item);
+                });
+
+        // 3. Search Jobs
+        jobRepository.findAll().stream()
+                .filter(j -> j.getStatus() == Job.Status.OPEN)
+                .filter(j -> j.getTitle().toLowerCase().contains(normalizedQuery) || j.getDescription().toLowerCase().contains(normalizedQuery))
+                .limit(safeLimit)
+                .forEach(j -> {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("id", j.getId());
+                    item.put("type", "Job");
+                    item.put("title", j.getTitle());
+                    item.put("description", j.getDescription());
+                    results.add(item);
+                });
+
+        // 4. Search Content (Announcements, etc.)
+        contentRepository.findAll().stream()
+                .filter(c -> c.getStatus() == ContentItem.Status.PUBLISHED)
+                .filter(c -> c.getTitle().toLowerCase().contains(normalizedQuery) || c.getBody().toLowerCase().contains(normalizedQuery))
+                .limit(safeLimit)
+                .forEach(c -> {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("id", c.getId());
+                    item.put("type", c.getType().name());
+                    item.put("title", c.getTitle());
+                    item.put("description", c.getBody());
+                    results.add(item);
+                });
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("query", query);
+        response.put("intent", aiIntent);
+        response.put("results", results);
+        response.put("count", results.size());
+        return response;
     }
 
     public Map<String, Object> searchMarketplace(String query,
@@ -66,18 +148,17 @@ public class MarketplaceSearchService {
         String normalizedMediaFilter = mediaFilter == null ? "ALL" : mediaFilter.trim().toUpperCase(Locale.ROOT);
         int safeLimit = Math.min(Math.max(limit, 1), 50);
 
-        List<Freelancer> completeFreelancers = freelancerRepository.findAll().stream()
+        List<Freelancer> activeFreelancers = freelancerRepository.findAll().stream()
                 .filter(f -> Boolean.TRUE.equals(f.getIsActive()))
-                .filter(profileCompletionService::isProfileComplete)
                 .toList();
 
-        Set<String> freelancerUserIds = completeFreelancers.stream()
+        Set<String> freelancerUserIds = activeFreelancers.stream()
                 .map(Freelancer::getUserId)
                 .filter(this::hasText)
                 .collect(Collectors.toSet());
 
         Map<String, User> usersByReference = new LinkedHashMap<>();
-        for (Freelancer freelancer : completeFreelancers) {
+        for (Freelancer freelancer : activeFreelancers) {
             String userReference = normalizeReference(freelancer.getUserId());
             if (userReference == null || usersByReference.containsKey(userReference)) {
                 continue;
@@ -89,7 +170,7 @@ public class MarketplaceSearchService {
             }
         }
 
-        List<Map<String, Object>> talents = completeFreelancers.stream()
+        List<Map<String, Object>> talents = activeFreelancers.stream()
                 .filter(f -> matchesFreelancer(normalizedQuery, f, usersByReference.get(normalizeReference(f.getUserId()))))
                 .limit(safeLimit)
                 .map(f -> {
@@ -112,7 +193,7 @@ public class MarketplaceSearchService {
                 .toList();
 
         Map<String, Freelancer> freelancerByReference = new LinkedHashMap<>();
-        for (Freelancer freelancer : completeFreelancers) {
+        for (Freelancer freelancer : activeFreelancers) {
             addFreelancerReference(freelancerByReference, freelancer.getId(), freelancer);
             addFreelancerReference(freelancerByReference, freelancer.getUserId(), freelancer);
         }
@@ -178,7 +259,31 @@ public class MarketplaceSearchService {
                 .toList();
 
         List<Map<String, Object>> stories = new ArrayList<>();
-        for (Freelancer freelancer : completeFreelancers) {
+        // 1. Add Social Stories (last 24h)
+        Instant last24h = Instant.now().minus(java.time.Duration.ofHours(24));
+        List<SocialPost> recentStories = socialPostRepository.findAllByTypeOrderByCreatedAtDesc(SocialPost.PostType.STORY, PageRequest.of(0, safeLimit))
+                .getContent()
+                .stream()
+                .filter(p -> p.getCreatedAt().isAfter(last24h))
+                .filter(p -> !hasText(normalizedQuery) || (p.getContent() != null && p.getContent().toLowerCase().contains(normalizedQuery)))
+                .toList();
+
+        for (SocialPost post : recentStories) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("storyId", post.getId());
+            item.put("status", "PUBLISHED");
+            item.put("title", "Social Story");
+            item.put("description", post.getContent());
+            item.put("imageUrls", post.getMediaAssetIds() != null ? post.getMediaAssetIds() : List.of());
+            item.put("freelancerId", post.getAuthorId());
+            item.put("freelancerUserId", post.getAuthorId());
+            item.put("freelancerName", post.getAuthorName());
+            item.put("profilePicture", post.getAuthorProfilePicture());
+            stories.add(item);
+        }
+
+        // 2. Add Portfolio Stories (User's original logic)
+        for (Freelancer freelancer : activeFreelancers) {
             if (freelancer.getPortfolio() == null || freelancer.getPortfolio().isEmpty()) {
                 continue;
             }
@@ -206,6 +311,11 @@ public class MarketplaceSearchService {
                                 firstNonBlank(portfolioItem.getDescription(), "")
                         ))
                 );
+
+                // Avoid duplicates if a user has both a social story and a portfolio story
+                if (stories.stream().anyMatch(s -> storyId.equals(s.get("storyId")))) {
+                    continue;
+                }
 
                 Map<String, Object> item = new LinkedHashMap<>();
                 item.put("storyId", storyId);

@@ -223,15 +223,23 @@ export default function LandingPage() {
                   "&:hover": { bgcolor: "var(--accent)" },
                 }}
               />
-              <Link
-                href="/login"
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950 dark:text-slate-200 dark:hover:text-slate-100"
-              >
-                Log In
-              </Link>
-              <ActionLink href="/register" variant="primary" className="px-5 py-3 text-sm">
-                Sign Up
-              </ActionLink>
+              {isLoggedIn ? (
+                <ActionLink href="/dashboard" variant="primary" className="px-5 py-3 text-sm font-black uppercase tracking-widest">
+                  Dashboard
+                </ActionLink>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950 dark:text-slate-200 dark:hover:text-slate-100"
+                  >
+                    Log In
+                  </Link>
+                  <ActionLink href="/register" variant="primary" className="px-5 py-3 text-sm">
+                    Sign Up
+                  </ActionLink>
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-2 md:hidden">
@@ -281,12 +289,20 @@ export default function LandingPage() {
                 ))}
 
                 <div className="flex flex-col gap-3 pt-2">
-                  <ActionLink href="/login" variant="secondary" className="w-full justify-center">
-                    Log In
-                  </ActionLink>
-                  <ActionLink href="/register" variant="primary" className="w-full justify-center">
-                    Sign Up
-                  </ActionLink>
+                  {isLoggedIn ? (
+                    <ActionLink href="/dashboard" variant="primary" className="w-full justify-center font-black uppercase tracking-widest">
+                      Go to Dashboard
+                    </ActionLink>
+                  ) : (
+                    <>
+                      <ActionLink href="/login" variant="secondary" className="w-full justify-center">
+                        Log In
+                      </ActionLink>
+                      <ActionLink href="/register" variant="primary" className="w-full justify-center">
+                        Sign Up
+                      </ActionLink>
+                    </>
+                  )}
                 </div>
               </motion.div>
             ) : null}
@@ -534,9 +550,9 @@ export default function LandingPage() {
                 <div className="space-y-4">
                   {displayJobs.map((job) => (
                     <Link
-                      key={job.id ?? job.title}
+                      key={job.title}
                       href="/jobs"
-                      className="block rounded-[1.45rem] border border-white/15 bg-white/10 p-5 transition-all hover:-translate-y-1 hover:bg-white/20"
+                      className="block rounded-[1.45rem] border border-white/15 bg-white/10 p-5 transition-[background-color,box-shadow] hover:bg-white/20 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)]"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -576,9 +592,9 @@ export default function LandingPage() {
                 <div className="space-y-4">
                   {displayFreelancers.map((person) => (
                     <Link
-                      key={person.id ?? person.name}
+                      key={person.name}
                       href="/register"
-                      className="block rounded-[1.45rem] border border-white/15 bg-white/10 p-5 transition-all hover:-translate-y-1 hover:bg-white/20"
+                      className="block rounded-[1.45rem] border border-white/15 bg-white/10 p-5 transition-[background-color,box-shadow] hover:bg-white/20 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)]"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>

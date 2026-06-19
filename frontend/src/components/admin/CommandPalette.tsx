@@ -101,7 +101,7 @@ export function CommandPalette() {
             }}
             PaperProps={{
                 component: motion.div,
-                // @ts-expect-error
+                // @ts-expect-error: motion.div props are not recognized by PaperProps
                 initial: { opacity: 0, scale: 0.9, y: -20 },
                 animate: { opacity: 1, scale: 1, y: 0 },
                 exit: { opacity: 0, scale: 0.9, y: -20 },

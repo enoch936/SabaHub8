@@ -15,13 +15,16 @@ import {
   Typography, 
   IconButton,
   alpha,
-  useTheme
+  useTheme,
+  LinearProgress
 } from "@mui/material";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import InsertDriveFileRoundedIcon from "@mui/icons-material/InsertDriveFileRounded";
-import { saveAssetMetadata, uploadSignature } from "@/lib/api";
+import StorageRoundedIcon from "@mui/icons-material/StorageRounded";
+import { saveAssetMetadata, uploadSignature, getStorageUsage } from "@/lib/api";
+import { useEffect } from "react";
 
 type Props = {
   scope: "PROFILE" | "PORTFOLIO" | "JOB" | "CHAT" | "DISPUTE" | "CONTENT";
@@ -30,9 +33,18 @@ type Props = {
   maxSizeMb?: number;
   folder?: string;
   onUploaded?: (asset: { id: string; url: string }) => void;
+  showStorageInfo?: boolean;
 };
 
-export default function Uploader({ scope, title = "", accept, maxSizeMb = 20, folder = "sabahub", onUploaded }: Props) {
+export default function Uploader({ 
+  scope, 
+  title = "", 
+  accept, 
+  maxSizeMb = 20, 
+  folder = "sabahub", 
+  onUploaded,
+  showStorageInfo = false
+}: Props) {
   const theme = useTheme();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setDragging] = useState(false);
@@ -43,8 +55,24 @@ export default function Uploader({ scope, title = "", accept, maxSizeMb = 20, fo
   const [fileName, setFileName] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileType, setFileType] = useState<string | null>(null);
+  const [usage, setUsage] = useState<{ totalSize: number; storageTotal: number } | null>(null);
 
   const maxBytes = useMemo(() => maxSizeMb * 1024 * 1024, [maxSizeMb]);
+
+  useEffect(() => {
+    if (showStorageInfo) {
+      void refreshUsage();
+    }
+  }, [showStorageInfo]);
+
+  const refreshUsage = async () => {
+    try {
+      const data = await getStorageUsage();
+      setUsage(data);
+    } catch (err) {
+      console.error("Failed to fetch storage usage", err);
+    }
+  };
 
   const onPick = useCallback(() => inputRef.current?.click(), []);
 
@@ -65,6 +93,11 @@ export default function Uploader({ scope, title = "", accept, maxSizeMb = 20, fo
 
     if (file.size > maxBytes) {
       setError(`Telemetry: File volume exceeds threshold. Max ${maxSizeMb} MB permitted.`);
+      return;
+    }
+
+    if (usage && usage.totalSize + file.size > usage.storageTotal) {
+      setError(`Orchestration: Insufficient storage quota. Please upgrade or delete existing assets.`);
       return;
     }
 
@@ -114,6 +147,7 @@ export default function Uploader({ scope, title = "", accept, maxSizeMb = 20, fo
       onUploaded?.(saved as { id: string; url: string });
       setSuccess(true);
       setProgress(100);
+      void refreshUsage();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Asset synchronization failed.");
     } finally {
@@ -121,8 +155,46 @@ export default function Uploader({ scope, title = "", accept, maxSizeMb = 20, fo
     }
   };
 
+  const usagePercent = usage ? Math.round((usage.totalSize / usage.storageTotal) * 100) : 0;
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  };
+
   return (
     <Stack spacing={2}>
+      {showStorageInfo && usage && (
+        <Box sx={{ p: 2, bgcolor: "var(--glass-gray)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <StorageRoundedIcon sx={{ fontSize: 16, color: usagePercent > 90 ? "var(--error)" : "var(--primary)" }} />
+              <Typography variant="caption" fontWeight={800} sx={{ color: "var(--foreground-muted)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Storage Vault Status
+              </Typography>
+            </Stack>
+            <Typography variant="caption" fontWeight={900}>
+              {formatBytes(usage.totalSize)} / {formatBytes(usage.storageTotal)}
+            </Typography>
+          </Stack>
+          <LinearProgress 
+            variant="determinate" 
+            value={usagePercent} 
+            sx={{ 
+              height: 4, 
+              borderRadius: 2, 
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              "& .MuiLinearProgress-bar": {
+                bgcolor: usagePercent > 90 ? "var(--error)" : "var(--primary)",
+                boxShadow: usagePercent > 90 ? "0 0 10px var(--error-glow)" : "0 0 10px var(--primary-glow)"
+              }
+            }} 
+          />
+        </Box>
+      )}
+
       <Paper
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}

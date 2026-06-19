@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { VideoCallModal } from "@/components/call/VideoCallModal";
 import { AudioCallOverlay } from "@/components/call/AudioCallOverlay";
 import { IncomingCallModal } from "@/components/call/IncomingCallModal";
+import { CallSignaling } from "@/components/call/CallSignaling";
 
 interface CallProviderProps {
   children: ReactNode;
@@ -17,6 +18,7 @@ export function CallProvider({ children }: CallProviderProps) {
   return (
     <>
       {children}
+      <CallSignaling />
       <VideoCallModal />
       <AudioCallOverlay />
       <IncomingCallModal />

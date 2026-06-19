@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ReelPlayer } from "./ReelPlayer";
-import { Typography, Button, cn } from "@/components/ui";
-import { getReelsFeed, getUserReels, likeReel, unlikeReel, saveReel } from "@/lib/api";
+import { Typography, Button, cn, EmptyState } from "@/components/ui";
+import { getReelsFeed, getUserReels, likeReel, unlikeReel, saveReel, shareReel, followUser, unfollowUser } from "@/lib/api";
 import { CreateReelModal } from "../CreateReelModal";
-import { Plus, ChevronUp, ChevronDown, Play, LayoutGrid } from "lucide-react";
+import { ShareModal } from "@/components/social/ShareModal";
+import { Plus, ChevronUp, ChevronDown, Play, LayoutGrid, Film } from "lucide-react";
 import { toast } from "sonner";
+import { useSession } from "@/lib/session";
 
 interface ReelsContainerProps {
   userId?: string;
@@ -17,7 +19,9 @@ export function ReelsContainer({ userId }: ReelsContainerProps) {
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [shareTarget, setShareTarget] = useState<any | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const currentUser = useSession((s) => s.user);
 
   // Intersection Observer for autoplay/pause
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -30,20 +34,11 @@ export function ReelsContainer({ userId }: ReelsContainerProps) {
     try {
       setLoading(true);
       const data = userId ? await getUserReels(userId) : await getReelsFeed();
-      const items = data.content || data.items || [];
-      
-      if (items.length === 0 && !userId) {
-        setReels(MOCK_REELS);
-      } else {
-        setReels(items);
-      }
+      const items = Array.isArray(data) ? data : data?.items || [];
+      setReels(items);
     } catch (err) {
       console.error("Failed to fetch reels:", err);
-      if (!userId) {
-        setReels(MOCK_REELS);
-      } else {
-        setReels([]);
-      }
+      setReels([]);
     } finally {
       setLoading(false);
     }
@@ -83,6 +78,20 @@ export function ReelsContainer({ userId }: ReelsContainerProps) {
     }
   };
 
+  const handleFollow = async (authorId: string) => {
+    try {
+      await followUser(authorId);
+      toast.success("Followed!");
+    } catch { toast.error("Failed to follow"); }
+  };
+
+  const handleShare = (reelId: string) => {
+    const reel = reels.find(r => r.id === reelId);
+    if (reel) {
+      setShareTarget(reel);
+    }
+  };
+
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
     const { scrollTop, clientHeight } = containerRef.current;
@@ -112,10 +121,34 @@ export function ReelsContainer({ userId }: ReelsContainerProps) {
 
   if (loading) return <div className="h-full w-full flex items-center justify-center bg-black text-white">Loading immersive experience...</div>;
 
+  if (!loading && reels.length === 0) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-inherit">
+        <div className="text-center space-y-6">
+          <EmptyState
+            icon={<Film className="h-12 w-12 text-white/60" />}
+            title="No reels yet"
+            hint="Be the first to share a reel with the community!"
+            action={{ label: "Create Reel", onClick: () => setIsCreateModalOpen(true) }}
+          />
+        </div>
+        <CreateReelModal open={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false); fetchReels(); }} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full bg-inherit text-white overflow-hidden justify-center relative">
       {/* Main Reels Area */}
       <div className="flex-1 flex items-center justify-center relative bg-inherit">
+        {/* Create Reel FAB */}
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="absolute top-4 right-4 z-50 h-12 w-12 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 flex items-center justify-center shadow-lg shadow-purple-900/50 transition-all"
+        >
+          <Plus size={24} />
+        </button>
+
         {/* Navigation Buttons (Desktop) */}
         <div className="absolute right-4 md:right-10 top-1/2 -translate-y-1/2 flex flex-col gap-6 z-40 hidden lg:flex">
           <button 
@@ -148,57 +181,31 @@ export function ReelsContainer({ userId }: ReelsContainerProps) {
                 isActive={index === activeIndex}
                 onLike={handleLike}
                 onComment={(id) => console.log("Comment", id)}
-                onShare={(id) => console.log("Share", id)}
+                onShare={handleShare}
                 onSave={handleSave}
+                onFollow={handleFollow}
               />
             </div>
           ))}
         </div>
       </div>
+
+      {/* Create Reel Modal */}
+      <CreateReelModal open={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false); fetchReels(); }} />
+
+      <ShareModal
+        open={!!shareTarget}
+        onClose={() => setShareTarget(null)}
+        url={shareTarget ? `${window.location.origin}/social/reels` : ""}
+        title={shareTarget?.description || "Check out this reel!"}
+        onShareInternal={() => {
+          if (shareTarget) {
+            shareReel(shareTarget.id).catch(() => {});
+            toast.success("Shared!");
+            setShareTarget(null);
+          }
+        }}
+      />
     </div>
   );
 }
-
-function NavItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
-  return (
-    <div className={cn(
-      "flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all font-bold",
-      active ? "bg-primary/10 text-primary border border-primary/20" : "text-white/60 hover:bg-white/5"
-    )}>
-      {icon}
-      <Typography variant="body1" fontWeight={700}>{label}</Typography>
-    </div>
-  );
-}
-
-const MOCK_REELS = [
-  {
-    id: "1",
-    authorId: "user1",
-    authorName: "Alex Rivera",
-    authorProfilePicture: "https://i.pravatar.cc/150?u=1",
-    description: "Building the future of decentralized professional networking with #SabaHub 🚀 #Web3 #Development",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-software-developer-working-on-code-screen-in-office-22709-large.mp4",
-    audioTitle: "Innovation Vibes",
-    audioArtist: "Deep House Collective",
-    likeCount: 12500,
-    commentCount: 450,
-    shareCount: 890,
-    saveCount: 3400,
-    isLiked: true
-  },
-  {
-    id: "2",
-    authorId: "user2",
-    authorName: "Sarah Chen",
-    authorProfilePicture: "https://i.pravatar.cc/150?u=2",
-    description: "Morning routine for high-performance designers. Stay inspired! ✨ #DesignLife #Creativity",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-young-woman-working-at-laptop-in-creative-office-40011-large.mp4",
-    audioTitle: "Morning Sunshine",
-    audioArtist: "Lofi Beats",
-    likeCount: 8900,
-    commentCount: 230,
-    shareCount: 450,
-    saveCount: 1200
-  }
-];

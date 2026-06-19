@@ -38,7 +38,7 @@ export const HERO_STATS = [
   { label: "Active Freelancers", value: "10+" },
   { label: "Jobs Posted", value: "15+" },
   { label: "Paid to Freelancers", value: "$9+" },
-] as const;
+];
 
 export const HERO_AUDIENCES = {
   employer: {

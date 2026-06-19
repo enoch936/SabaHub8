@@ -175,6 +175,8 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   const desktopSidebarWidth = isDesktop && sidebarOpen ? WORKSPACE_SIDEBAR_WIDTH : 0;
   const desktopRightRailWidth = showRightRail && rightRailOpen ? WORKSPACE_RIGHT_RAIL_WIDTH : 0;
 
+  const isSocialPath = pathname.startsWith("/social") || pathname.includes("/jobs/social");
+
   if (!authReady) {
     return (
       <Box
@@ -188,6 +190,10 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
         <CircularProgress size={28} />
       </Box>
     );
+  }
+
+  if (isSocialPath) {
+    return <div className="h-screen w-screen overflow-hidden">{children}</div>;
   }
 
   return (

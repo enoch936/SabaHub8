@@ -3,6 +3,7 @@ package com.sabahub.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sabahub.domain.*;
 import com.sabahub.repository.*;
+import com.sabahub.web.dto.SocialDTOs.SocialPostResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -22,9 +23,11 @@ public class SocialService {
     private final SocialLikeRepository likeRepository;
     private final SocialCommentRepository commentRepository;
     private final SocialFollowRepository followRepository;
+    private final SocialSaveRepository saveRepository;
     private final CurrentUserService currentUserService;
     private final UserRepository userRepository;
     private final FreelancerRepository freelancerRepository;
+    private final NotificationService notificationService;
     private final PythonAiBridgeService aiBridgeService;
     private final ObjectMapper objectMapper;
 
@@ -236,6 +239,8 @@ public class SocialService {
                     .followingId(userId)
                     .createdAt(Instant.now())
                     .build());
+            notificationService.createNotification(userId, "FOLLOW",
+                    Map.of("followerId", currentUserId, "type", "follow"));
         }
     }
 
@@ -245,7 +250,148 @@ public class SocialService {
                 .ifPresent(followRepository::delete);
     }
 
+    public List<User> getFollowers(String userId) {
+        List<String> followerIds = followRepository.findAllByFollowingId(userId)
+                .stream()
+                .map(SocialFollow::getFollowerId)
+                .collect(Collectors.toList());
+        return userRepository.findAllById(followerIds);
+    }
+
+    public List<User> getFollowing(String userId) {
+        List<String> followingIds = followRepository.findAllByFollowerId(userId)
+                .stream()
+                .map(SocialFollow::getFollowingId)
+                .collect(Collectors.toList());
+        return userRepository.findAllById(followingIds);
+    }
+
     // --- Likes ---
+
+    public SocialPost editPost(String postId, String content, List<String> mediaAssetIds, List<String> tags) {
+        String currentUserId = currentUserService.getCurrentUserId();
+        SocialPost post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        if (!post.getAuthorId().equals(currentUserId)) {
+            throw new SecurityException("You can only edit your own posts");
+        }
+        if (content != null) post.setContent(content);
+        if (mediaAssetIds != null) post.setMediaAssetIds(mediaAssetIds);
+        if (tags != null) post.setTags(tags);
+        return postRepository.save(post);
+    }
+
+    public void deletePost(String postId) {
+        String currentUserId = currentUserService.getCurrentUserId();
+        SocialPost post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        if (!post.getAuthorId().equals(currentUserId)) {
+            throw new SecurityException("You can only delete your own posts");
+        }
+        likeRepository.findAllByUserId(currentUserId).stream()
+                .filter(l -> l.getPostId().equals(postId))
+                .findFirst().ifPresent(likeRepository::delete);
+        postRepository.delete(post);
+    }
+
+    public Page<SocialPostResponse> getTrending(Pageable pageable) {
+        String currentUserId = currentUserService.getCurrentUserId();
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                Sort.by("likeCount").descending().and(Sort.by("createdAt").descending()));
+        Page<SocialPost> posts = postRepository.findGlobalFeedPosts(SocialPost.PostType.FEED, sortedPageable);
+        if (posts.isEmpty() && pageable.getPageNumber() == 0) {
+            seedData();
+            posts = postRepository.findGlobalFeedPosts(SocialPost.PostType.FEED, sortedPageable);
+        }
+        return posts.map(post -> toResponse(post, currentUserId));
+    }
+
+    public void sharePost(String postId) {
+        String currentUserId = currentUserService.getCurrentUserId();
+        postRepository.findById(postId).ifPresent(post -> {
+            post.setShareCount(post.getShareCount() + 1);
+            postRepository.save(post);
+            notificationService.createNotification(post.getAuthorId(), "SHARE",
+                    Map.of("userId", currentUserId, "postId", postId, "type", "share"));
+        });
+    }
+
+    public void deleteComment(String postId, String commentId) {
+        String currentUserId = currentUserService.getCurrentUserId();
+        SocialComment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
+        if (!comment.getAuthorId().equals(currentUserId)) {
+            throw new SecurityException("You can only delete your own comments");
+        }
+        commentRepository.delete(comment);
+        updatePostCounts(postId);
+    }
+
+    public List<Map<String, Object>> getActivity() {
+        String currentUserId = currentUserService.getCurrentUserId();
+        List<Map<String, Object>> activities = new ArrayList<>();
+
+        // New followers
+        List<SocialFollow> newFollowers = followRepository.findAllByFollowingId(currentUserId);
+        for (SocialFollow f : newFollowers) {
+            userRepository.findById(f.getFollowerId()).ifPresent(u -> {
+                activities.add(Map.of(
+                    "type", "follow",
+                    "userId", u.getId(),
+                    "userName", u.getFullName(),
+                    "userProfilePicture", u.getProfile() != null ? u.getProfile().getProfilePictureUrl() : null,
+                    "timestamp", f.getCreatedAt() != null ? f.getCreatedAt().toString() : Instant.now().toString()
+                ));
+            });
+        }
+
+        // Likes received
+        List<SocialPost> userPosts = postRepository.findAllByAuthorId(currentUserId, Pageable.unpaged()).getContent();
+        for (SocialPost p : userPosts) {
+            List<SocialLike> likes = likeRepository.findAllByUserId(currentUserId).stream()
+                    .filter(l -> l.getPostId().equals(p.getId()))
+                    .collect(Collectors.toList());
+            for (SocialLike l : likes) {
+                userRepository.findById(l.getUserId()).ifPresent(u -> {
+                    activities.add(Map.of(
+                        "type", "like",
+                        "postId", p.getId(),
+                        "postContent", p.getContent(),
+                        "userId", u.getId(),
+                        "userName", u.getFullName(),
+                        "timestamp", l.getCreatedAt() != null ? l.getCreatedAt().toString() : Instant.now().toString()
+                    ));
+                });
+            }
+        }
+
+        // Comments received
+        for (SocialPost p : userPosts) {
+            List<SocialComment> comments = commentRepository.findAllByPostIdOrderByCreatedAtAsc(p.getId(), Pageable.unpaged()).getContent();
+            for (SocialComment c : comments) {
+                if (!c.getAuthorId().equals(currentUserId)) {
+                    activities.add(Map.of(
+                        "type", "comment",
+                        "postId", p.getId(),
+                        "postContent", p.getContent(),
+                        "commentId", c.getId(),
+                        "commentContent", c.getContent(),
+                        "userId", c.getAuthorId(),
+                        "userName", c.getAuthorName(),
+                        "timestamp", c.getCreatedAt() != null ? c.getCreatedAt().toString() : Instant.now().toString()
+                    ));
+                }
+            }
+        }
+
+        activities.sort((a, b) -> {
+            String ta = (String) a.get("timestamp");
+            String tb = (String) b.get("timestamp");
+            return tb.compareTo(ta);
+        });
+
+        return activities;
+    }
 
     public void likePost(String postId) {
         String currentUserId = currentUserService.getCurrentUserId();
@@ -255,7 +401,10 @@ public class SocialService {
                     .userId(currentUserId)
                     .createdAt(Instant.now())
                     .build());
-            
+            postRepository.findById(postId).ifPresent(post ->
+                notificationService.createNotification(post.getAuthorId(), "LIKE",
+                        Map.of("userId", currentUserId, "postId", postId, "type", "like"))
+            );
             updatePostCounts(postId);
         }
     }
@@ -279,6 +428,10 @@ public class SocialService {
                     .userId(currentUserId)
                     .createdAt(Instant.now())
                     .build());
+            postRepository.findById(postId).ifPresent(post ->
+                notificationService.createNotification(post.getAuthorId(), "SAVE",
+                        Map.of("userId", currentUserId, "postId", postId, "type", "save"))
+            );
             updatePostCounts(postId);
         }
     }
@@ -305,6 +458,10 @@ public class SocialService {
                 .createdAt(Instant.now())
                 .build());
         
+        postRepository.findById(postId).ifPresent(post ->
+            notificationService.createNotification(post.getAuthorId(), "COMMENT",
+                    Map.of("userId", user.getId(), "postId", postId, "commentId", comment.getId(), "type", "comment"))
+        );
         updatePostCounts(postId);
         return comment;
     }

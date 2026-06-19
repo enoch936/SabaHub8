@@ -17,6 +17,14 @@ public class CurrentUserService {
         this.userRepository = userRepository;
     }
 
+    public java.util.Optional<User> getCurrentUser() {
+        try {
+            return java.util.Optional.of(requireUser());
+        } catch (Exception e) {
+            return java.util.Optional.empty();
+        }
+    }
+
     public User requireUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getName() == null) {

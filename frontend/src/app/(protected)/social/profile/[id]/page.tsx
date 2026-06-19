@@ -143,7 +143,7 @@ export default function SocialProfilePage() {
                     <Button 
                       onClick={handleFollowToggle}
                       disabled={followLoading}
-                      variant={profile?.isFollowing ? "outline" : "default"}
+                      variant={profile?.isFollowing ? "outline" : "primary"}
                       className={cn(
                         "rounded-xl shadow-lg px-8 font-black uppercase tracking-widest text-[11px]",
                         profile?.isFollowing ? "border-primary text-primary" : "shadow-primary/20"

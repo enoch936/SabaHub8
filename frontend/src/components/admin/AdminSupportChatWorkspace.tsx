@@ -129,7 +129,7 @@ export default function AdminSupportChatWorkspace() {
             <Stack spacing={1}>
               <Button size="sm" variant="outline" fullWidth sx={{ justifyContent: 'flex-start' }}>Flag Conversation</Button>
               <Button size="sm" variant="outline" fullWidth sx={{ justifyContent: 'flex-start' }}>Export Transcript</Button>
-              <Button size="sm" variant="outline" fullWidth sx={{ justifyContent: 'flex-start' }} color="danger">Suspend Users</Button>
+              <Button size="sm" variant="danger" fullWidth sx={{ justifyContent: 'flex-start' }}>Suspend Users</Button>
             </Stack>
           </GlassCard>
         </Box>

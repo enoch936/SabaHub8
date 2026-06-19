@@ -73,15 +73,15 @@
 
 .navShell {
   position: fixed;
-  top: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(1280px, calc(100% - 1.5rem));
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 40;
 }
 
 .glassPanel {
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.88));
   box-shadow:
     0 20px 60px rgba(15, 23, 42, 0.08),
@@ -278,7 +278,8 @@
   color: var(--foreground-muted);
 }
 
-:global(html.dark) .page :global(.bg-white) {
+:global(html.dark) .page :global(.bg-white),
+:global(html.dark) .page :global(.bg-white\/80) {
   background-color: var(--surface);
 }
 
@@ -356,15 +357,124 @@
 
 :global(html.dark) .page {
   background:
-    radial-gradient(circle at 18% 12%, rgba(56, 189, 248, 0.12), transparent 28rem),
-    radial-gradient(circle at 84% 8%, rgba(148, 163, 184, 0.12), transparent 30rem),
-    linear-gradient(135deg, #0b1020 0%, #111827 52%, #1f2937 100%);
+    radial-gradient(circle at 18% 12%, rgba(56, 189, 248, 0.1), transparent 28rem),
+    radial-gradient(circle at 84% 8%, rgba(129, 140, 248, 0.08), transparent 30rem),
+    linear-gradient(135deg, #030712 0%, #0B1120 52%, #111827 100%);
+}
+
+:global(html.dark) .page::before {
+  background:
+    linear-gradient(115deg, transparent 0%, rgba(255, 255, 255, 0.04) 38%, transparent 54%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 240% 240%, 58px 58px, 58px 58px;
+  opacity: 0.6;
 }
 
 :global(html.dark) .metricCard,
 :global(html.dark) .featureCard,
 :global(html.dark) .quoteCard {
   background: var(--surface-muted);
+  border-color: var(--border);
+}
+
+:global(html.dark) .stepCard {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+
+:global(html.dark) .stepCurrent {
+  border-color: rgba(125, 211, 252, 0.3);
+  box-shadow: 0 18px 44px rgba(56, 189, 248, 0.08);
+}
+
+:global(html.dark) .summaryCard {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+
+:global(html.dark) .featureIcon {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+
+:global(html.dark) .featureIcon:hover {
+  background: var(--surface-hover);
+}
+
+:global(html.dark) .stepComplete {
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+:global(html.dark) .stepComplete .stepDot {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+}
+
+:global(html.dark) .stepDot {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--foreground-muted);
+}
+
+:global(html.dark) .stepCurrent .stepDot {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+:global(html.dark) .secondaryButton {
+  background: var(--surface-muted);
+  border-color: var(--border);
+  color: var(--foreground-muted);
+}
+
+:global(html.dark) .secondaryButton:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-light);
+  color: var(--foreground);
+}
+
+:global(html.dark) .ghostButton {
+  color: var(--foreground-muted);
+}
+
+:global(html.dark) .ghostButton:hover {
+  color: var(--foreground);
+}
+
+:global(html.dark) .statusError {
+  background: var(--error-bg);
+  color: #FCA5A5;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+:global(html.dark) .statusSuccess {
+  background: var(--success-bg);
+  color: #6EE7B7;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+:global(html.dark) .statusInfo {
+  background: rgba(56, 189, 248, 0.1);
+  color: #7DD3FC;
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+:global(html.dark) .input::placeholder {
+  color: #475569;
+}
+
+:global(html.dark) .inputSuffix button {
+  color: var(--foreground-muted);
+}
+
+:global(html.dark) .inputSuffix button:hover {
+  color: var(--foreground);
+}
+
+:global(html.dark) .stageBadge {
+  border-color: var(--border);
+  background: var(--surface-muted);
+  color: var(--foreground-muted);
 }
 
 .summaryGrid {
@@ -419,7 +529,8 @@
 }
 
 .inputSuffix {
-  right: 0.8rem;
+  right: 0.65rem;
+  z-index: 2;
 }
 
 .input {

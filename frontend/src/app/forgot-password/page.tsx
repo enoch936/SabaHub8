@@ -9,10 +9,13 @@ import {
   Card,
   CardContent,
   Container,
+  IconButton,
+  InputAdornment,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import { Eye, EyeOff } from "lucide-react";
 
 type Step = "email" | "otp-email" | "otp-sms" | "reset" | "success";
 
@@ -23,6 +26,8 @@ export default function ForgotPasswordPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [emailOTP, setEmailOTP] = useState("");
   const [smsOTP, setSmsOTP] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -127,12 +132,21 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", py: 8, background: "transparent" }}>
+    <Box sx={{ minHeight: "100vh", py: 8, bgcolor: "var(--background)" }}>
       <Container maxWidth="sm">
-        <Card sx={{ borderRadius: 4 }}>
+        <Card
+          sx={{
+            borderRadius: 4,
+            bgcolor: "var(--surface-solid)",
+            border: "1px solid var(--border)",
+            boxShadow: "var(--glass-shadow)",
+            backdropFilter: "blur(24px)",
+            color: "var(--foreground)",
+          }}
+        >
           <CardContent>
-            <Typography variant="h4" fontWeight={800}>Reset Password</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography variant="h4" fontWeight={800} sx={{ color: "var(--foreground)" }}>Reset Password</Typography>
+            <Typography variant="body2" sx={{ mb: 2, color: "var(--foreground-muted)" }}>
               Verify your code, then choose a new password.
             </Typography>
 
@@ -160,8 +174,52 @@ export default function ForgotPasswordPage() {
 
             {step === "reset" ? (
               <Stack spacing={2} component="form" onSubmit={resetPassword}>
-                <TextField type="password" label="New password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required fullWidth />
-                <TextField type="password" label="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required fullWidth />
+                <TextField
+                  type={showNewPassword ? "text" : "password"}
+                  label="New password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  fullWidth
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowNewPassword((c) => !c)}
+                            edge="end"
+                            size="small"
+                          >
+                            {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+                <TextField
+                  type={showConfirmPassword ? "text" : "password"}
+                  label="Confirm password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  fullWidth
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowConfirmPassword((c) => !c)}
+                            edge="end"
+                            size="small"
+                          >
+                            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
                 <Button type="submit" variant="contained" color="success" disabled={loading}>{loading ? "Resetting..." : "Reset Password"}</Button>
               </Stack>
             ) : null}

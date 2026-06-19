@@ -252,7 +252,7 @@ export default function AdminMediaWorkspace() {
       </GlassCard>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <GlassCard sx={{ height: '100%' }}>
             <CardContent sx={{ p: 4 }}>
               <Stack spacing={3}>
@@ -279,13 +279,13 @@ export default function AdminMediaWorkspace() {
                 </Box>
 
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Box sx={{ p: 2, borderRadius: "16px", bgcolor: "var(--glass-gray)", border: "1px solid var(--border)" }}>
                       <Typography variant="caption" color="text.secondary" fontWeight={900} sx={{ textTransform: "uppercase", fontSize: 9 }}>Total Objects</Typography>
                       <Typography variant="h5" fontWeight={900} sx={{ mt: 0.5 }}>{analytics?.totalCount || 0}</Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Box sx={{ p: 2, borderRadius: "16px", bgcolor: "var(--glass-gray)", border: "1px solid var(--border)" }}>
                       <Typography variant="caption" color="text.secondary" fontWeight={900} sx={{ textTransform: "uppercase", fontSize: 9 }}>Providers</Typography>
                       <Typography variant="h5" fontWeight={900} sx={{ mt: 0.5 }}>Cloudinary</Typography>
@@ -297,7 +297,7 @@ export default function AdminMediaWorkspace() {
           </GlassCard>
         </Grid>
 
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <GlassCard sx={{ height: '100%' }}>
             <CardContent sx={{ p: 4 }}>
               <Stack spacing={3}>

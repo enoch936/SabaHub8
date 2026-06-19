@@ -6,21 +6,21 @@ import { Phone, PhoneOff, Video, Mic } from "lucide-react";
 import useCallStore from "@/lib/callStore";
 
 export function IncomingCallModal() {
-  const { status, participantName, callType, acceptCall, rejectCall } =
+  const { status, participantName, callType, acceptCall, rejectCall, isInitiator } =
     useCallStore();
 
   // Auto-reject after 30 seconds if not answered
   useEffect(() => {
-    if (status !== "ringing") return;
+    if (status !== "ringing" || isInitiator) return;
 
     const timeout = setTimeout(() => {
       rejectCall();
     }, 30000);
 
     return () => clearTimeout(timeout);
-  }, [status, rejectCall]);
+  }, [status, rejectCall, isInitiator]);
 
-  if (status !== "ringing") {
+  if (status !== "ringing" || isInitiator) {
     return null;
   }
 

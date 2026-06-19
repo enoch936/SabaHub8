@@ -286,8 +286,8 @@ export default function AdminAIModelOperationsWorkspace() {
                   const active = release.version === versions?.activeVersion;
                   return (
                     <SoftButton
-                      variant="outline"
-                      size="sm"
+                      variant="outlined"
+                      size="small"
                       color="success"
                       leftIcon={<PublishedWithChangesRoundedIcon sx={{ fontSize: 16 }} />}
                       onClick={() =>

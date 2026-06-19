@@ -19,11 +19,11 @@ import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import { Button } from "../ui";
 import { GlassCard } from "./GlassCard";
 import { DataTable, type TableColumn, type BulkAction } from "./DataTable";
-import { adminListProjects, type Project } from "@/lib/api";
+import { adminListProjects, type Job } from "@/lib/api";
 
 export default function AdminProjectWorkspace() {
   const theme = useTheme();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,7 +55,7 @@ export default function AdminProjectWorkspace() {
     };
   }, [projects]);
 
-  const columns: TableColumn<Project>[] = [
+  const columns: TableColumn<Job>[] = [
     {
       key: "title",
       label: "Project",
@@ -104,12 +104,12 @@ export default function AdminProjectWorkspace() {
     }
   ];
 
-  const bulkActions: BulkAction<Project>[] = [
+  const bulkActions: BulkAction<Job>[] = [
     { label: "Approve Selected", value: "approve", color: "success", icon: <CheckCircleRoundedIcon sx={{ fontSize: 16 }} /> },
-    { label: "Cancel Selected", value: "cancel", color: "danger", icon: <ErrorOutlineRoundedIcon sx={{ fontSize: 16 }} /> }
+    { label: "Cancel Selected", value: "cancel", color: "error", icon: <ErrorOutlineRoundedIcon sx={{ fontSize: 16 }} /> }
   ];
 
-  const handleBulkAction = (action: string, selected: Project[]) => {
+  const handleBulkAction = (action: string, selected: Job[]) => {
     console.log(`Executing ${action} on`, selected);
     // Implementation for bulk actions
   };

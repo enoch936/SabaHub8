@@ -17,33 +17,39 @@ import java.util.List;
 @Builder
 @Document(collection = "social_posts")
 public class SocialPost {
+
+    public enum PostType {
+        FEED,
+        STORY
+    }
+
     @Id
     private String id;
 
-    public enum PostType {
-        FEED, STORY
-    }
-
-    private String authorId;
-    private String authorName;
-    private String authorProfilePicture;
-
-    @Builder.Default
-    private PostType type = PostType.FEED;
+    private PostType type;
 
     private String content;
-    private List<String> mediaAssetIds; // IDs from Asset collection
 
-    private int likeCount;
-    private int commentCount;
-    private int saveCount;
-    private int shareCount;
-    private int viewCount;
+    private List<String> mediaAssetIds;
 
     private List<String> tags;
-    private String category; // e.g., "Design", "Development"
+
+    private String category;
+
+    private String authorId;
+
+    private String authorName;
+
+    private String authorProfilePicture;
+
+    private Integer likeCount = 0;
+
+    private Integer commentCount = 0;
+
+    private Integer saveCount = 0;
+
+    private Integer shareCount = 0;
 
     @CreatedDate
     private Instant createdAt;
-    private Instant updatedAt;
 }

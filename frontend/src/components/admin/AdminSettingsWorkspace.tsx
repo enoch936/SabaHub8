@@ -297,8 +297,7 @@ export default function AdminSettingsWorkspace() {
                       cascading shutdown of all public entry points.
                     </Typography>
                     <Button 
-                      variant="contained" 
-                      color="error" 
+                      variant="danger" 
                       fullWidth 
                       sx={{ mt: 3, height: 48, borderRadius: "14px", fontWeight: 900, boxShadow: `0 8px 20px ${alpha(theme.palette.error.main, 0.3)}` }}
                     >
