@@ -243,7 +243,7 @@ export function ConversationDetailsRail({
                   Allow all members to post in this channel
                 </label>
               </>
-            ) : null}
+            ) : null} 
 
             {canManageConversation ? (
               <button

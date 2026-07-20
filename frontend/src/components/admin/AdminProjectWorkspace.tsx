@@ -19,7 +19,7 @@ import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import { Button } from "../ui";
 import { GlassCard } from "./GlassCard";
 import { DataTable, type TableColumn, type BulkAction } from "./DataTable";
-import { adminListProjects, type Project } from "@/lib/api";
+import { adminListJobs as adminListProjects, type Project } from "@/lib/api";
 
 export default function AdminProjectWorkspace() {
   const theme = useTheme();
