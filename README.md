@@ -96,6 +96,10 @@ Edit frontend/.env.local and set:
 
 - NEXT_PUBLIC_API_BASE — backend base URL (e.g. <http://localhost:8080>)
 
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
 ## Key Endpoints
 
 ### Health
