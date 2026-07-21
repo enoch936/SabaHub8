@@ -85,4 +85,4 @@ enterprise-documentation/
 
 # Ignore lockfiles if you prefer a package manager lock to be present, keep tracked if wanted
 # (pnpm lock is present in repo; remove the next line if you want to keep it tracked)
-# pnpm-lock.yaml
+pnpm-lock.yaml
