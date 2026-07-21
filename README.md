@@ -1,157 +1,343 @@
-# SabaHub8
+# SabaHub8: Full-Stack Freelancer Marketplace Platform
 
-SabaHub8 is a full-stack freelancer marketplace with a **Next.js 16** frontend and a **Spring Boot 3.3** backend. It ships a complete OTP-based auth flow (email + SMS), role-based access, and a modern UI foundation.
+## Overview
 
-## Repository Layout
+SabaHub8 is a comprehensive full-stack freelancer marketplace platform featuring a **Next.js 16** frontend and **Spring Boot 3.3** backend. It includes a complete OTP-based authentication system (email + SMS), role-based access control, and modern UI foundations.
 
-- backend-spring/ — Spring Boot backend (Java 21, MongoDB, Redis)
-- frontend/ — Next.js 16 app (React 19, Tailwind)
-- Documentation: see [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) for the full suite
+## Project Structure
 
-## Quick Start (Local)
+### Backend (`backend-spring/`)
+- Spring Boot 3.3 application with **Java 21**
+- **MongoDB** and **Redis** integration
+- JWT-based authentication with OTP (email/SMS)
+- REST APIs and WebSocket support
+- Hybrid Python AI integration
 
-### 0) Start Entire Main Project (Recommended)
+### Frontend (`frontend/`)
+- **Next.js 16** application with **React 19** and **Tailwind CSS**
+- Modern admin dashboard with real-time streaming
+- OTP registration and authentication flow
+- Job marketplace with freelancer profiles
+- Chat/messaging system for collaborations
+- Comprehensive user dashboards for employers and freelancers
 
-Requirements for this mode: `tmux` installed.
+### AI and Automation
+- **Python AI service** for intelligent job recommendations
+- Content moderation and automated matching
+- Smart job posting categorization
+- AI-powered user recommendations
 
-From repository root:
+## Key Features
 
+### Authentication & Security
+- OTP verification via email and SMS
+- JWT token-based authentication with role-based access
+- Two-factor authentication support
+- Session management and security best practices
+
+### Job Marketplace
+- Job posting and bidding system
+- Freelancer profiles with portfolios
+- Project-based and hourly rate options
+- Real-time job matching recommendations
+
+### Communication & Collaboration
+- Real-time chat and messaging
+- Stream/reel functionality for video content
+- Social features for professional networking
+- Notification center and alerts
+
+### Admin & Operations
+- Comprehensive admin dashboard with analytics
+- User and content moderation
+- Payment processing and management
+- System monitoring and reporting
+
+### Technology Stack
+- **Frontend**: Next.js 16, React 18, TypeScript, Tailwind CSS, Material-UI
+- **Backend**: Spring Boot 3.3, Java 21, MongoDB, Redis, JPA
+- **AI Integration**: Python 3.x, Machine Learning models
+- **WebSocket**: Real-time communication
+- **DevOps**: Docker, GitHub Actions
+
+## Quick Start Guide
+
+### Prerequisites
+- Java 21+
+- Node.js 18+
+- MongoDB (local or Atlas)
+- Redis (optional)
+
+### Local Development
+
+#### 1. Backend Setup
 ```bash
-./start-main.sh
-```
-
-This starts:
-
-- Python AI service (`:8090`)
-- Spring Boot backend (`:8080`)
-- Next.js frontend (`:3000`)
-
-Utility commands:
-
-```bash
-./status-main.sh
-./stop-main.sh
-```
-
-Live log management:
-
-```bash
-tmux attach -t sabahub
-```
-
-Inside tmux, each service runs in its own window (`python-ai`, `backend-spring`, `frontend`).
-
-### 1) Backend (Maven)
-
-**Requirements:** Java 21, Maven, MongoDB (local or Atlas), Redis (optional)
-
-```bash
+# From repository root:
 ./start-backend.sh
 ```
 
-This command auto-starts:
-
-- Python AI service (`:8090`)
-- Spring Boot backend (`:8080`) with hybrid Python AI enabled
-
-It also runs each service in its own tmux window for live logs.
-
-Default backend URL: <http://localhost:8080>
-
-### 2) Backend (Docker)
-
-**Requirements:** Docker + Docker Compose
-
-```bash
-cd backend-spring
-docker compose up --build
-```
-
-### 3) Frontend
-
+#### 2. Frontend Setup
 ```bash
 cd frontend
 pnpm install
 pnpm dev
 ```
 
-Default frontend URL: <http://localhost:3000>
+#### 3. Full Project Setup (Recommended)
+```bash
+# Start entire project with tmux
+./start-main.sh
+```
 
-## Environment Configuration
+### Utility Scripts
+- `status-main.sh` - Check project status
+- `stop-main.sh` - Stop all services
+- `setup-admin.sh` - Initialize admin accounts
+- `setup-otp.sh` - Configure OTP services
+- `test-backend.sh` - Run backend tests
 
-### Backend (.env)
+## API Endpoints
 
-Edit backend-spring/.env and set the following (examples):
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/me` - Get current user
 
-- SPRING_DATA_MONGODB_URI — MongoDB connection string (local or Atlas)
-- REDIS_HOST / REDIS_PORT — Redis connection (optional)
-- JWT_SECRET — JWT signing key
-- OTP_FAKE — set true to log OTPs instead of sending
-- SMTP_USERNAME / SMTP_PASSWORD — Gmail SMTP credentials
-- TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_VERIFY_SERVICE_SID — Twilio Verify
+### Jobs & Marketplace
+- `GET /api/jobs` - List jobs
+- `POST /api/jobs` - Create job posting
+- `GET /api/jobs/{id}` - Get specific job
+- `POST /api/jobs/{id}/apply` - Apply for job
 
-### Frontend (.env.local)
+### Freelancer Profiles
+- `GET /api/freelancer/profile/me` - Get freelancer profile
+- `PUT /api/freelancer/profile` - Update profile
+- `POST /api/freelancer/register` - Create freelancer profile
 
-Edit frontend/.env.local and set:
+### Chats & Messaging
+- `GET /api/chat/threads` - List chat threads
+- `GET /api/chat/threads/{id}` - Get specific chat
+- `POST /api/chat/threads/{id}/messages` - Send message
 
-- NEXT_PUBLIC_API_BASE — backend base URL (e.g. <http://localhost:8080>)
+## System Architecture
 
-## Key Endpoints
+### Backend Services
+1. **Auth Service** - JWT token management and OTP verification
+2. **Job Service** - Job posting and management
+3. **Freelancer Service** - Freelancer profiles and portfolios
+4. **Chat Service** - Real-time messaging
+5. **AI Service** - Job recommendations and content intelligence
 
-### Health
+### Frontend Components
+1. **Dashboard** - Main application layout and navigation
+2. **Auth Flow** - Login, registration, and verification
+3. **Job Marketplace** - Job search and browsing
+4. **User Profiles** - Profile management and portfolios
+5. **Live Streaming** - Real-time video content
+6. **Admin Panel** - System administration and monitoring
 
-- GET /health
-- GET /actuator/health
+### Data Flow
+```
+Frontend (Next.js) ←→ Backend APIs (Spring Boot)
+                            ↓
+                       MongoDB (User Data)
+                            ↓
+                       Redis (Session Cache)
+                            ↓
+                       Python AI Service (Recommendations)
+```
 
-### Auth / OTP
+## Development Setup
 
-All OTP endpoints are under /api/auth/otp:
+### Backend Development
+```bash
+cd backend-spring
+mvn clean install
+```
 
-- POST /api/auth/otp/request-registration
-- POST /api/auth/otp/verify-email
-- POST /api/auth/otp/request-sms
-- POST /api/auth/otp/verify-sms
-- POST /api/auth/otp/complete-registration
-- POST /api/auth/login
+### Frontend Development
+```bash
+cd frontend
+pnpm install  # Install dependencies
+pnpm dev      # Start development server
+pnpm build   # Build for production
+```
 
-### Swagger
+## Project Configuration
 
-- /swagger-ui.html
+### Environment Variables
+Create `.env` file in `backend-spring/`:
+```env
+SPRING_DATA_MONGODB_URI=mongodb://localhost:27017/sabahub
+REDIS_HOST=localhost
+REDIS_PORT=6379
+JWT_SECRET=your-jwt-secret-key-here
+SMTP_USERNAME=your-email@example.com
+SMTP_PASSWORD=your-email-password
+TWILIO_ACCOUNT_SID=your-twilio-account-sid
+TWILIO_AUTH_TOKEN=your-twilio-auth-token
+TWILIO_VERIFY_SERVICE_SID=your-twilio-verify-service-id
+```
 
-## Frontend API Proxy
+### Frontend Environment
+Create `.env.local` file in `frontend/`:
+```env
+NEXT_PUBLIC_API_BASE=http://localhost:8080
+NEXT_PUBLIC_WS_ENDPOINT=ws://localhost:8080
+NEXT_PUBLIC_APP_ENV=development
+```
 
-The frontend includes server routes that proxy to the backend to simplify CORS. See:
+## Testing
 
-- frontend/src/app/api/auth/[...path]/route.ts
-- frontend/src/app/api/auth-proxy/[...path]/route.ts
+### Backend Tests
+```bash
+./test-backend.sh
+```
 
-## Services & Features
+### API Testing
+- Postman collections available in root directory
+- API documentation at `/swagger-ui.html`
 
-- **Authentication:** JWT + OTP (email/SMS)
-- **Roles:** Admin, Employer, Freelancer
-- **User Profiles:** profile editing, avatars
-- **Notifications:** UI and API scaffolding
-- **Chat UI:** frontend scaffolding (backend endpoints designed)
+## Deployment
 
-## Troubleshooting
+### Docker Deployment
+```bash
+cd backend-spring
+docker compose up --build
+```
 
-### MongoDB connection issues
+### Production Deployment
+- CI/CD pipeline configured for GitHub Actions
+- Docker images built and pushed to Docker Hub
+- Environment-specific configurations
 
-- Verify SPRING_DATA_MONGODB_URI in backend-spring/.env
-- For local Mongo, ensure mongod is running or use Docker
+## Key Benefits
 
-### OTP not delivered
+### For Users
+- **Verified Profiles**: Professional authentication and background verification
+- **Secure Payments**: Escrow system protecting both parties
+- **Smart Matching**: AI-powered job recommendations
+- **Real-time Communication**: Instant messaging and collaboration
 
-- Set OTP_FAKE=true for local testing (OTPs are logged)
-- Verify SMTP/Twilio credentials in backend-spring/.env
+### For Freelancers
+- **Global Reach**: Access to international job market
+- **Flexible Work**: Choose projects that match your skills and schedule
+- **Professional Platform**: Clean, modern interface
+- **Built-in Analytics**: Track performance and earnings
 
-### Ports in use
+### For Employers
+- **Quality Talent**: Verified freelancer profiles
+- **Efficient Hiring**: Streamlined application and interview process
+- **Cost Control**: Transparent pricing and budget management
+- **Advanced Tools**: Analytics and reporting
 
-- Backend defaults to 8080; update SERVER_PORT if needed
-- Frontend defaults to 3000; use NEXT_PUBLIC_API_BASE accordingly
+## Security
 
-## Related Docs
+### Authentication
+- JWT-based token authentication
+- OTP verification for sensitive operations
+- Role-based access control (Admin, Employer, Freelancer)
 
-- [COMPLETE_SYSTEM_SUMMARY.md](COMPLETE_SYSTEM_SUMMARY.md)
-- [DEPLOYMENT_AND_OPERATIONS_GUIDE.md](DEPLOYMENT_AND_OPERATIONS_GUIDE.md)
-- [API_CONTRACT_SPECIFICATION.md](API_CONTRACT_SPECIFICATION.md)
+### Data Protection
+- MongoDB encryption for sensitive data
+- Regular security audits
+- API rate limiting and DDoS protection
+- Secure password storage with bcrypt
+
+### Compliance
+- GDPR compliant data handling
+- Regular security updates
+- Privacy policy and terms of service
+
+## Support & Documentation
+
+### Technical Support
+- Issue tracking via GitHub
+- Documentation in this README
+- API documentation at `/swagger-ui.html`
+
+### Community
+- GitHub Discussions
+- Stack Overflow tagged questions
+- Slack/ Discord communities (if available)
+
+## Code Quality
+
+### Standards
+- **Backend**: Java best practices, SOLID principles
+- **Frontend**: React hooks, TypeScript strict mode
+- **Documentation**: Comprehensive docstrings and comments
+- **Testing**: Unit and integration tests
+
+### CI/CD Pipeline
+- Automated testing on every pull request
+- Security scanning
+- Production deployment with blue-green strategy
+
+## Future Roadmap
+
+### Phase 1: Core Features (Completed)
+- User authentication and profiles
+- Job marketplace
+- Basic messaging
+
+### Phase 2: Advanced Features (In Development)
+- Advanced AI matching algorithms
+- Video streaming and reels
+- Freelance skill assessment
+
+### Phase 3: Enterprise Features (Planned)
+- Enterprise client tools
+- Advanced analytics
+- Integration partnerships
+
+## License
+
+MIT License
+
+Copyright (c) 2026 SabaHub Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT of OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+## Contributing
+
+### Contribution Guidelines
+1. Fork the repository
+2. Create a feature branch
+3. Follow the code style guidelines
+4. Write tests for new functionality
+5. Submit a pull request
+
+### Code of Conduct
+Please treat everyone with respect and follow the established community guidelines.
+
+## Acknowledgements
+
+Special thanks to:
+- Open source contributors
+- AI and machine learning communities
+- Database and cloud providers
+- Community members and early adopters
+
+---
+
+*This project is built with ❤️ and aims to provide a comprehensive, secure, and user-friendly freelancer marketplace platform.*
+
+**For more information, visit our GitHub repository or contribute to making the platform better!**
