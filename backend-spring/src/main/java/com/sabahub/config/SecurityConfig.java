@@ -32,7 +32,7 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/", "/health", "/actuator/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/auth/**", "/api/auth/**", "/ws/**").permitAll()
+                .requestMatchers("/", "/health", "/actuator/health", "/actuator/health/**", "/actuator/info", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/auth/**", "/api/auth/**", "/ws/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/assets/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/jobs/**").permitAll() // Development: allow unauthenticated job browse (v1)

@@ -141,19 +141,17 @@ function ensureClient(token?: string) {
      localStorage.getItem("token") ||
      sessionStorage.getItem("token")) : null);
 
-  // Use the same hostname as the frontend, but connect to port 8080
-  // This ensures the browser can reach the backend regardless of network setup
-  const protocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss" : "ws";
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
-  
+  const params = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+  const configuredWsUrl = process.env.NEXT_PUBLIC_WS_URL?.trim();
+
   let wsUrl: string;
-  if (hostname) {
-    // Pass token as query parameter for handshake authentication
-    const params = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
-    wsUrl = `${protocol}://${hostname}:8080/ws${params}`;
+  if (configuredWsUrl) {
+    wsUrl = `${configuredWsUrl.replace(/\/$/, "")}${params}`;
   } else {
-    // Fallback for SSR context
-    wsUrl = `${protocol}://localhost:8080/ws`;
+    // Local development: backend runs on port 8080 on the same host.
+    const protocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss" : "ws";
+    const hostname = typeof window !== "undefined" ? window.location.hostname : "localhost";
+    wsUrl = `${protocol}://${hostname}:8080/ws${params}`;
   }
 
   client = new Client({
