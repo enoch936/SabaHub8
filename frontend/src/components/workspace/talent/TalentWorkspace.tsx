@@ -49,8 +49,8 @@ import type {
   ExperienceLevel
 } from "@/lib/types";
 import { toast } from "sonner";
-import { LoadingSkeleton } from "@/components/LoadingSkeleton";
-import { useTheme, alpha } from "@mui/material";
+import LoadingSkeleton from "@/components/LoadingSkeleton";
+import { useTheme, alpha, Typography } from "@mui/material";
 
 const TALENT_PRESETS_STORAGE_KEY = "sabahub_talent_presets";
 
@@ -381,7 +381,7 @@ function ProjectPostCard({
         <div className="absolute bottom-0 left-0 right-0 h-1/4 z-20 flex items-center justify-center p-4 opacity-0 translate-y-full group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 bg-white/40 backdrop-blur-xl border-t border-white/40 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pointer-events-none group-hover:pointer-events-auto">
           <div className="w-full flex gap-2 px-2">
             <Link
-              href={workspaceRoutes.publicProfile("freelancer", post.freelancerId)}
+              href={workspaceRoutes.publicProfile("freelancer", post.freelancerId ?? "")}
               onClick={(e) => e.stopPropagation()}
               className="h-10 w-10 rounded-2xl bg-white/80 text-gray-950 border border-gray-200 flex items-center justify-center shadow-xl hover:bg-white transition-all active:scale-95"
               title="View Profile"
@@ -473,7 +473,7 @@ function GigCard({
         <div className="absolute bottom-0 left-0 right-0 h-1/4 z-20 flex items-center justify-center p-4 opacity-0 translate-y-full group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 bg-white/40 backdrop-blur-xl border-t border-white/40 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pointer-events-none group-hover:pointer-events-auto">
           <div className="w-full flex gap-2 px-2">
             <Link
-              href={workspaceRoutes.publicProfile("freelancer", gig.freelancerId)}
+              href={workspaceRoutes.publicProfile("freelancer", gig.freelancerId ?? "")}
               onClick={(e) => e.stopPropagation()}
               className="h-10 w-10 rounded-2xl bg-white/80 text-gray-950 border border-gray-200 flex items-center justify-center shadow-xl hover:bg-white transition-all active:scale-95"
               title="View Profile"
@@ -547,7 +547,7 @@ function StoryCard({
       <div className="absolute bottom-0 left-0 right-0 h-1/4 z-20 flex items-center justify-center p-4 opacity-0 translate-y-full group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 bg-white/40 backdrop-blur-xl border-t border-white/40 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] pointer-events-none group-hover:pointer-events-auto">
         <div className="w-full flex gap-2 px-2">
           <Link
-            href={workspaceRoutes.publicProfile("freelancer", story.freelancerId)}
+            href={workspaceRoutes.publicProfile("freelancer", story.freelancerId ?? "")}
             className="h-10 w-10 rounded-2xl bg-white/80 text-gray-950 border border-gray-200 flex items-center justify-center shadow-xl hover:bg-white transition-all active:scale-95"
             title="View Profile"
           >

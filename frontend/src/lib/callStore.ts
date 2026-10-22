@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import SimplePeer from "simple-peer";
+import SimplePeer, { type Instance as SimplePeerInstance } from "simple-peer";
 import { sendCallSignal } from "./ws";
 
 export type CallType = "audio" | "video";
@@ -15,9 +15,10 @@ export interface CallState {
   isInitiator: boolean;
 
   // WebRTC
-  peerConnection: SimplePeer.Instance | null;
+  peerConnection: SimplePeerInstance | null;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
+  pendingSignal?: any;
 
   // UI state
   isMuted: boolean;

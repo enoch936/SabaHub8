@@ -501,6 +501,7 @@ export type MarketplaceSearchTalent = {
   userId: string
   name: string
   professionalTitle?: string
+  hourlyRate?: number
   rating?: number
   reviewCount?: number
   successRate?: number

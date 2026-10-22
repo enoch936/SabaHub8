@@ -84,7 +84,7 @@ export default function DashboardWorkspace() {
                  <h2 className="text-3xl font-black uppercase mb-4 tracking-tight" style={{ color: "var(--foreground)" }}>Marketplace Intelligence</h2>
                  <p className="font-medium max-w-sm mx-auto" style={{ color: "var(--foreground-muted)" }}>Access 10k+ open jobs and projects with AI matching and instant proposals.</p>
                  <button 
-                   onClick={() => router.push(workspaceRoutes.browseJobs || "/dashboard/jobs")}
+                   onClick={() => router.push(workspaceRoutes.jobs)}
                    className="mt-10 px-12 py-5 text-white rounded-[24px] text-xs font-black uppercase tracking-widest transition-all shadow-xl dashboard-cta-button"
                  >
                    Enter Marketplace

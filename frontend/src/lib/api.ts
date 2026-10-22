@@ -1,7 +1,7 @@
 import axios, { type AxiosResponse } from "axios";
 import { ACTIVE_ROLE_STORAGE_KEY } from "./role-mode";
 import { getSessionContextHeaders } from "./session-context";
-import type { WalletCurrencyCode } from "./types";
+import type { MarketplaceSearchResponse, WalletCurrencyCode } from "./types";
 
 // Use Next.js API proxy for all environments
 // The proxy is configured in route.ts to forward to backend at localhost:8080
@@ -287,6 +287,8 @@ export type WorkspaceProfileStats = {
   totalEarnings?: number | null;
   successRate?: number | null;
   jobSuccessScore?: number | null;
+  followerCount?: number | null;
+  followingCount?: number | null;
 };
 
 export type WorkspaceProfilePortfolioItem = {
@@ -1476,6 +1478,73 @@ export async function deleteProjectPost(id: string) {
   await api.delete(`/freelancer/project-posts/${id}`);
 }
 
+type MarketplaceSearchTalent = {
+  freelancerId?: string;
+  userId?: string;
+  name?: string;
+  professionalTitle?: string;
+  rating?: number;
+  skills: string[];
+  profilePicture?: string;
+  coverImage?: string;
+  portfolioThumbnailUrl?: string;
+  portfolioImageUrls: string[];
+};
+
+type MarketplaceSearchProjectPost = {
+  projectPostId?: string;
+  status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  title?: string;
+  description?: string;
+  category?: string;
+  skills: string[];
+  budgetMin?: number;
+  budgetMax?: number;
+  currency?: string;
+  deliveryDays?: number;
+  thumbnailUrl?: string;
+  sampleImageUrls: string[];
+  sampleVideoUrls: string[];
+  sampleDocumentUrls: string[];
+  freelancerId?: string;
+  freelancerUserId?: string;
+  freelancerName?: string;
+};
+
+type MarketplaceSearchGig = {
+  gigId?: string;
+  status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  title?: string;
+  description?: string;
+  skills: string[];
+  price?: number;
+  currency?: string;
+  deliveryDays?: number;
+  thumbnailUrl?: string;
+  sampleImageUrls: string[];
+  sampleVideoUrls: string[];
+  sampleDocumentUrls: string[];
+  freelancerId?: string;
+  freelancerUserId?: string;
+  freelancerName?: string;
+};
+
+type MarketplaceSearchStory = {
+  storyId?: string;
+  status?: "PUBLISHED";
+  title?: string;
+  description?: string;
+  category?: string;
+  technologies: string[];
+  imageUrls: string[];
+  projectUrl?: string;
+  completedAt?: string;
+  freelancerId?: string;
+  freelancerUserId?: string;
+  freelancerName?: string;
+  profilePicture?: string;
+};
+
 export async function searchEmployerMarketplace(params?: {
   q?: string;
   limit?: number;
@@ -1760,6 +1829,7 @@ export type Contract = {
   autoReleaseDays?: number;
   requiresEscrow?: boolean;
   adminReviewRequired?: boolean;
+  available?: boolean;
   startDate?: string;
   endDate?: string;
   terms?: string | Record<string, unknown>;
@@ -3272,6 +3342,7 @@ export type AppUser = {
   email: string;
   username?: string;
   fullName: string;
+  avatarUrl?: string | null;
   roles: string[];
   suspended?: boolean;
   documentsVerified?: boolean;
@@ -4789,7 +4860,7 @@ export type AdminBootstrapStatus = {
 };
 
 // Discovery API
-export const getDiscoveryFeed = async (category?: string, limit = 20, offset = 0) => {
+export const getDiscoveryFeed = async (category?: string, limit = 20, offset = 0): Promise<DiscoveryFeedItem[]> => {
   const r = await api.get("/discovery/feed", { params: { category, limit, offset } });
   return r.data?.items || [];
 };

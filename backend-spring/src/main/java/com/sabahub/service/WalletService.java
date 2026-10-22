@@ -6,7 +6,7 @@ import com.sabahub.domain.WalletLedgerEntry;
 import com.sabahub.domain.Withdrawal;
 import com.sabahub.repository.TransactionRepository;
 import com.sabahub.repository.UserRepository;
-import com.sabahub.repository.WalletLedgerRepository;
+import com.sabahub.repository.WalletLedgerStore;
 import com.sabahub.repository.WithdrawalRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 @Service
 public class WalletService {
 
-    private final WalletLedgerRepository walletLedgerRepository;
+    private final WalletLedgerStore walletLedgerStore;
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final WithdrawalRepository withdrawalRepository;
@@ -42,7 +42,7 @@ public class WalletService {
     private final LiveActivityService liveActivityService;
     private final Map<String, ReentrantLock> walletLocks = new ConcurrentHashMap<>();
 
-    public WalletService(WalletLedgerRepository walletLedgerRepository,
+    public WalletService(WalletLedgerStore walletLedgerStore,
                          TransactionRepository transactionRepository,
                          UserRepository userRepository,
                          WithdrawalRepository withdrawalRepository,
@@ -50,7 +50,7 @@ public class WalletService {
                          AuditService auditService,
                          WalletCurrencyService walletCurrencyService,
                          LiveActivityService liveActivityService) {
-        this.walletLedgerRepository = walletLedgerRepository;
+        this.walletLedgerStore = walletLedgerStore;
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
         this.withdrawalRepository = withdrawalRepository;
@@ -68,8 +68,8 @@ public class WalletService {
 
     @Transactional(readOnly = true)
     public Map<String, Object> getWalletByUserId(String userId) {
-        List<WalletLedgerEntry> entriesAsc = walletLedgerRepository.findByUserIdOrderByCreatedAtAsc(userId);
-        List<WalletLedgerEntry> entriesDesc = walletLedgerRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<WalletLedgerEntry> entriesAsc = walletLedgerStore.findByUserIdOrderByCreatedAtAsc(userId);
+        List<WalletLedgerEntry> entriesDesc = walletLedgerStore.findByUserIdOrderByCreatedAtDesc(userId);
         List<Withdrawal> withdrawals = withdrawalRepository.findByUserId(userId);
 
         String currency = resolveWalletCurrency(entriesDesc);
@@ -131,7 +131,7 @@ public class WalletService {
 
         String currency = walletCurrencyService.normalizeSupportedCurrency(
                 preferredCurrency,
-                resolveWalletCurrency(walletLedgerRepository.findByUserIdOrderByCreatedAtDesc(userId))
+                resolveWalletCurrency(walletLedgerStore.findByUserIdOrderByCreatedAtDesc(userId))
         );
         List<Transaction> transactions = transactionRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .filter(tx -> transactionMatchesCurrency(tx, currency))
@@ -196,7 +196,7 @@ public class WalletService {
     @Transactional(readOnly = true)
     public double getBalanceByUserIdAndCurrency(String userId, String currency) {
         return computeBalance(
-                walletLedgerRepository.findByUserIdOrderByCreatedAtAsc(userId),
+                walletLedgerStore.findByUserIdOrderByCreatedAtAsc(userId),
                 walletCurrencyService.normalizeSupportedCurrency(currency, WalletCurrencyService.ETB)
         );
     }
@@ -204,7 +204,7 @@ public class WalletService {
     @Transactional(readOnly = true)
     public double getEscrowHeldByUserIdAndCurrency(String userId, String currency) {
         return computeEscrowHeld(
-                walletLedgerRepository.findByUserIdOrderByCreatedAtAsc(userId),
+                walletLedgerStore.findByUserIdOrderByCreatedAtAsc(userId),
                 walletCurrencyService.normalizeSupportedCurrency(currency, WalletCurrencyService.ETB)
         );
     }
@@ -266,7 +266,7 @@ public class WalletService {
 
         String transferCurrency = walletCurrencyService.normalizeSupportedCurrency(
                 currency,
-                resolveWalletCurrency(walletLedgerRepository.findByUserIdOrderByCreatedAtDesc(senderId))
+                resolveWalletCurrency(walletLedgerStore.findByUserIdOrderByCreatedAtDesc(senderId))
         );
         double normalizedAmount = walletCurrencyService.round2(amount);
 
@@ -363,7 +363,7 @@ public class WalletService {
                     senderLedger.setCurrency(transferCurrency);
                     senderLedger.setReferenceId(transferReference);
                     senderLedger.setBalanceAfter(senderBalanceAfter);
-                    walletLedgerRepository.save(senderLedger);
+                    walletLedgerStore.save(senderLedger);
 
                     WalletLedgerEntry recipientLedger = new WalletLedgerEntry();
                     recipientLedger.setUserId(recipient.getId());
@@ -373,7 +373,7 @@ public class WalletService {
                     recipientLedger.setCurrency(transferCurrency);
                     recipientLedger.setReferenceId(transferReference);
                     recipientLedger.setBalanceAfter(recipientBalanceAfter);
-                    walletLedgerRepository.save(recipientLedger);
+                    walletLedgerStore.save(recipientLedger);
 
                     User senderUser = userRepository.findById(senderId).orElse(null);
                     Map<String, Object> recipientMetadata = new HashMap<>();
@@ -583,7 +583,7 @@ public class WalletService {
                     senderLedger.setCurrency(transferCurrency);
                     senderLedger.setReferenceId(transferReference);
                     senderLedger.setBalanceAfter(senderBalanceAfter);
-                    walletLedgerRepository.save(senderLedger);
+                    walletLedgerStore.save(senderLedger);
 
                     WalletLedgerEntry recipientLedger = new WalletLedgerEntry();
                     recipientLedger.setUserId(recipientId);
@@ -593,7 +593,7 @@ public class WalletService {
                     recipientLedger.setCurrency(transferCurrency);
                     recipientLedger.setReferenceId(transferReference);
                     recipientLedger.setBalanceAfter(recipientBalanceAfter);
-                    walletLedgerRepository.save(recipientLedger);
+                    walletLedgerStore.save(recipientLedger);
 
                     User senderUser = userRepository.findById(senderId).orElse(null);
                     Map<String, Object> recipientMetadata = new HashMap<>();
@@ -651,7 +651,7 @@ public class WalletService {
     // Helper: compute current balance from ledger entries
     private double computeBalance(String userId, String currency) {
         return computeBalance(
-                walletLedgerRepository.findByUserIdOrderByCreatedAtAsc(userId),
+                walletLedgerStore.findByUserIdOrderByCreatedAtAsc(userId),
                 walletCurrencyService.normalizeSupportedCurrency(currency, WalletCurrencyService.ETB)
         );
     }
@@ -708,7 +708,7 @@ public class WalletService {
 
     private double computeEscrowHeld(String userId, String currency) {
         return computeEscrowHeld(
-                walletLedgerRepository.findByUserIdOrderByCreatedAtAsc(userId),
+                walletLedgerStore.findByUserIdOrderByCreatedAtAsc(userId),
                 walletCurrencyService.normalizeSupportedCurrency(currency, WalletCurrencyService.ETB)
         );
     }
@@ -897,7 +897,7 @@ public class WalletService {
         }
         final String settlementReference = reference;
 
-        Optional<WalletLedgerEntry> existing = walletLedgerRepository.findByUserIdAndReferenceId(withdrawal.getUserId(), settlementReference);
+        Optional<WalletLedgerEntry> existing = walletLedgerStore.findByUserIdAndReferenceId(withdrawal.getUserId(), settlementReference);
         if (existing.isPresent()) {
             WalletLedgerEntry entry = existing.get();
             if (withdrawal.getSettlementReference() == null || withdrawal.getSettlementReference().isBlank()) {
@@ -940,7 +940,7 @@ public class WalletService {
                     entry.setCurrency(withdrawalCurrency);
                     entry.setReferenceId(settlementReference);
                     entry.setBalanceAfter(walletCurrencyService.round2(currentBalance - amount));
-                    walletLedgerRepository.save(entry);
+                    walletLedgerStore.save(entry);
 
                     withdrawal.setSettlementReference(settlementReference);
                     withdrawal.setSettledLedgerEntryId(entry.getId());
@@ -1001,7 +1001,7 @@ public class WalletService {
                     entry.setCurrency(adjustedCurrency);
                     entry.setReferenceId(reference);
                     entry.setBalanceAfter(walletCurrencyService.round2(rollback ? currentBalance - amount : currentBalance + amount));
-                    walletLedgerRepository.save(entry);
+                    walletLedgerStore.save(entry);
 
                     Map<String, Object> metadata = new HashMap<>();
                     metadata.put("actorUserId", adminId);
@@ -1215,7 +1215,7 @@ public class WalletService {
         if (userId == null || userId.isBlank()) throw new IllegalArgumentException("userId is required");
         if (referenceId == null || referenceId.isBlank()) throw new IllegalArgumentException("referenceId is required");
 
-        Optional<WalletLedgerEntry> existing = walletLedgerRepository.findByUserIdAndReferenceId(userId, referenceId);
+        Optional<WalletLedgerEntry> existing = walletLedgerStore.findByUserIdAndReferenceId(userId, referenceId);
         if (existing.isPresent()) {
             return existing.get();
         }
@@ -1225,7 +1225,7 @@ public class WalletService {
         return withWalletLocks(
                 List.of(lockKey(userId, normalizedCurrency)),
                 () -> {
-                    Optional<WalletLedgerEntry> duplicate = walletLedgerRepository.findByUserIdAndReferenceId(userId, referenceId);
+                    Optional<WalletLedgerEntry> duplicate = walletLedgerStore.findByUserIdAndReferenceId(userId, referenceId);
                     if (duplicate.isPresent()) {
                         return duplicate.get();
                     }
@@ -1240,7 +1240,7 @@ public class WalletService {
                     credit.setCurrency(normalizedCurrency);
                     credit.setReferenceId(referenceId);
                     credit.setBalanceAfter(walletCurrencyService.round2(balance + amount));
-                    walletLedgerRepository.save(credit);
+                    walletLedgerStore.save(credit);
 
                     Map<String, Object> auditPayload = new HashMap<>();
                     auditPayload.put("userId", userId);

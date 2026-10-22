@@ -88,7 +88,7 @@ export const performanceUtils = {
     callback: FrameRequestCallback,
     delay: number = 16
   ) => {
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout> | number;
     return () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(callback, delay);
@@ -267,21 +267,29 @@ export const memoryOptimization = {
 
   // Monitor animation memory usage
   getAnimationMemoryUsage: () => {
-    if (
-      typeof performance === "undefined" ||
-      !performance.memory
-    ) {
+    if (typeof performance === "undefined") {
+      return null;
+    }
+
+    const memory = (
+      performance as Performance & {
+        memory?: {
+          usedJSHeapSize: number;
+          totalJSHeapSize: number;
+          jsHeapSizeLimit: number;
+        };
+      }
+    ).memory;
+
+    if (!memory) {
       return null;
     }
 
     return {
-      usedJSHeapSize: performance.memory.usedJSHeapSize,
-      totalJSHeapSize: performance.memory.totalJSHeapSize,
-      jsHeapSizeLimit: performance.memory.jsHeapSizeLimit,
-      percentUsed:
-        (performance.memory.usedJSHeapSize /
-          performance.memory.jsHeapSizeLimit) *
-        100,
+      usedJSHeapSize: memory.usedJSHeapSize,
+      totalJSHeapSize: memory.totalJSHeapSize,
+      jsHeapSizeLimit: memory.jsHeapSizeLimit,
+      percentUsed: (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100,
     };
   },
 };

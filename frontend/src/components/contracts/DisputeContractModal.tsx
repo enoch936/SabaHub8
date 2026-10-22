@@ -87,10 +87,11 @@ export function DisputeContractModal({
 
     try {
       await openDispute({
-        contractId: contract.id,
+        contract,
         reason,
-        description: description.trim(),
+        details: description.trim(),
         openedByRole,
+        evidenceAssetIds: assets.map((asset) => asset.id),
       });
       handleClose();
     } catch (err) {

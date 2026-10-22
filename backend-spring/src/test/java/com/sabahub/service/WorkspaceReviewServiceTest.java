@@ -7,7 +7,6 @@ import com.sabahub.domain.User;
 import com.sabahub.repository.ContractRepository;
 import com.sabahub.repository.EmployerRepository;
 import com.sabahub.repository.FreelancerRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -22,7 +21,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,13 +45,6 @@ class WorkspaceReviewServiceTest {
 
     @InjectMocks
     private WorkspaceReviewService workspaceReviewService;
-
-    @BeforeEach
-    void setUp() {
-        when(employerRepository.findByUserId(anyString())).thenReturn(Optional.empty());
-        when(freelancerRepository.findByUserId(anyString())).thenReturn(Optional.empty());
-        when(freelancerRepository.findById(anyString())).thenReturn(Optional.empty());
-    }
 
     @Test
     void addReview_rejectsContractThatIsNotCompleted() {

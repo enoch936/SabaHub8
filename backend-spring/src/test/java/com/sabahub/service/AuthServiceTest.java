@@ -63,6 +63,12 @@ class AuthServiceTest {
     @Mock
     private VerificationChallengeService verificationChallengeService;
 
+    @Mock
+    private TwoFactorAuthService twoFactorAuthService;
+
+    @Mock
+    private LiveActivityService liveActivityService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -79,16 +85,16 @@ class AuthServiceTest {
         when(smsService.isConfigured()).thenReturn(true);
         when(smsService.isValidPhoneNumber("+251911223344")).thenReturn(true);
         when(otpService.generateOTP(user.getEmail(), OTP.OTPType.EMAIL, OTP.OTPPurpose.LOGIN)).thenReturn(emailOtp);
-        when(verificationChallengeService.createLoginChallenge(user.getEmail(), "BOTH")).thenReturn("challenge-1");
+        when(verificationChallengeService.createLoginChallenge(user.getEmail(), "EMAIL+PHONE")).thenReturn("challenge-1");
 
         LoginResponse response = authService.login(new AuthRequest("builder", "password123"));
 
         assertThat(response.requiresTwoFactor()).isTrue();
         assertThat(response.challengeId()).isEqualTo("challenge-1");
-        assertThat(response.twoFactorMethod()).isEqualTo("BOTH");
+        assertThat(response.twoFactorMethod()).isEqualTo("EMAIL+PHONE");
 
         InOrder inOrder = inOrder(verificationChallengeService, smsService, emailService);
-        inOrder.verify(verificationChallengeService).createLoginChallenge(user.getEmail(), "BOTH");
+        inOrder.verify(verificationChallengeService).createLoginChallenge(user.getEmail(), "EMAIL+PHONE");
         inOrder.verify(smsService).sendVerificationCode("+251911223344");
         inOrder.verify(emailService).sendOTPEmail(user.getEmail(), "123456", user.getFullName());
     }
@@ -101,7 +107,7 @@ class AuthServiceTest {
         when(authenticationManager.authenticate(any()))
                 .thenReturn(new UsernamePasswordAuthenticationToken(user.getEmail(), null));
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-        when(verificationChallengeService.createLoginChallenge(user.getEmail(), "BOTH"))
+        when(verificationChallengeService.createLoginChallenge(user.getEmail(), "EMAIL+PHONE"))
                 .thenThrow(new IllegalStateException("Unable to persist verification challenge"));
 
         assertThatThrownBy(() -> authService.login(new AuthRequest("builder", "password123")))
@@ -166,7 +172,7 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.login(new AuthRequest("builder", "password123")))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("2-step verification is enabled but no verified email or phone is available");
+                .hasMessage("2-step verification is enabled but no verified factor is available");
 
         verify(verificationChallengeService, never()).createLoginChallenge(anyString(), anyString());
         verify(smsService, never()).sendVerificationCode(anyString());

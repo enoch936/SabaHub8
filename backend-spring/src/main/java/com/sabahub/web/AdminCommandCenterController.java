@@ -92,10 +92,17 @@ public class AdminCommandCenterController {
     }
 
     private User requireAdmin() {
+        User user;
         try {
-            return currentUserService.requireUser();
+            user = currentUserService.requireUser();
         } catch (IllegalStateException ex) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required", ex);
         }
+        boolean allowed = currentUserService.hasRole(user, "ADMIN")
+                || currentUserService.hasRole(user, "SUPER_ADMIN");
+        if (!allowed) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
+        }
+        return user;
     }
 }

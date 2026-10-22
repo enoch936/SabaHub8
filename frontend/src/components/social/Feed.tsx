@@ -72,7 +72,7 @@ export function Feed({ mode = "personal", userId, filter = "all" }: FeedProps) {
   if (error) return <ErrorState message={error} />;
   
   if (posts.length === 0) {
-    let emptyHint = mode === "global" 
+    const emptyHint = mode === "global" 
       ? "Be the first to share a professional moment with the world!" 
       : mode === "user" 
         ? (filter === "liked" ? "This user hasn't liked any posts yet." : filter === "saved" ? "This user hasn't saved any posts yet." : "This user hasn't posted anything yet.")

@@ -34,7 +34,7 @@ export function SocialRightPanel() {
         setSuggestedExperts(experts.slice(0, 5));
         
         setTrendingTopics(discoveryData.filter(item => item.type === "Post" || item.type === "Opportunity"));
-        setTrendingReels(reelsData.content || reelsData.items || []);
+        setTrendingReels(reelsData.items || []);
       } catch (err) {
         console.error("Failed to fetch right panel data:", err);
       } finally {

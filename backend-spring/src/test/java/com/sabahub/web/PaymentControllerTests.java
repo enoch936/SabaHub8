@@ -3,6 +3,7 @@ package com.sabahub.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sabahub.domain.Transaction;
 import com.sabahub.domain.User;
+import com.sabahub.domain.WalletLedgerEntry;
 import com.sabahub.repository.TransactionRepository;
 import com.sabahub.service.CurrentUserService;
 import com.sabahub.service.PaymentService;
@@ -59,9 +60,26 @@ class PaymentControllerTests {
         );
         String body = mapper.writeValueAsString(payload);
 
-        given(paymentService.verifyChapaSignature(eq(payload), anyString())).willReturn(true);
+        Transaction tx = new Transaction();
+        tx.setId("t-chapa");
+        tx.setUserId("u1");
+        tx.setProvider(Transaction.Provider.CHAPA);
+        tx.setDirection(Transaction.Direction.IN);
+        tx.setAmount(100.0);
+        tx.setCurrency("ETB");
+        tx.setStatus(Transaction.Status.PENDING);
+        tx.setProviderRef("ref123");
+
+        WalletLedgerEntry ledgerEntry = new WalletLedgerEntry();
+        ledgerEntry.setId("ledger-1");
+
+        given(paymentService.verifyChapaSignature(eq(body), anyString())).willReturn(true);
+        given(paymentService.parseJsonMap(body)).willReturn(payload);
+        given(paymentService.verifyChapaTransaction("ref123"))
+                .willReturn(Map.of("verified", true, "amount", "100.0", "currency", "ETB"));
         given(transactionRepository.findByProviderAndProviderRef(Transaction.Provider.CHAPA, "ref123"))
-                .willReturn(Optional.empty());
+                .willReturn(Optional.of(tx));
+        given(walletService.creditTopUpChapa("u1", 100.0, "ETB", "ref123")).willReturn(ledgerEntry);
 
         mvc.perform(post("/api/payments/chapa/webhook")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -82,7 +100,7 @@ class PaymentControllerTests {
         );
         String body = mapper.writeValueAsString(payload);
 
-        given(paymentService.verifyChapaSignature(eq(payload), anyString())).willReturn(false);
+        given(paymentService.verifyChapaSignature(eq(body), anyString())).willReturn(false);
 
         mvc.perform(post("/api/payments/chapa/webhook")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -97,7 +115,7 @@ class PaymentControllerTests {
         User admin = new User();
         admin.setId("admin1");
         given(currentUserService.requireUser()).willReturn(admin);
-        // requireRole will be called; leave default behavior
+        given(currentUserService.hasRole(admin, "ADMIN")).willReturn(true);
 
         Transaction tx = new Transaction();
         tx.setId("t1");
@@ -131,18 +149,25 @@ class PaymentControllerTests {
         existing.setId("tx-abc");
         existing.setUserId("u100");
         existing.setProvider(Transaction.Provider.CHAPA);
+        existing.setAmount(10.0);
+        existing.setCurrency("ETB");
+        existing.setStatus(Transaction.Status.PENDING);
+        existing.setMetadata(Map.of("checkoutUrl", "https://checkout.example/abc"));
 
         // First call: not found; Second call: found
-        given(transactionRepository.findByIdempotencyKey("idem-1"))
+        given(transactionRepository.findByUserIdAndIdempotencyKey("u100", "idem-1"))
                 .willReturn(Optional.empty(), Optional.of(existing));
 
-                // Save returns entity with generated id
-                given(transactionRepository.save(any(Transaction.class)))
-                                .willAnswer(invocation -> {
-                                        Transaction t = invocation.getArgument(0);
-                                        t.setId("tx-abc");
-                                        return t;
-                                });
+        given(paymentService.initializeChapaPayment(anyString(), any(), eq("ETB"), any(), any(), anyString()))
+                .willReturn(Map.of("providerRef", "ref-1", "checkoutUrl", "https://checkout.example/abc"));
+
+        // Save returns entity with generated id
+        given(transactionRepository.save(any(Transaction.class)))
+                .willAnswer(invocation -> {
+                    Transaction t = invocation.getArgument(0);
+                    t.setId("tx-abc");
+                    return t;
+                });
 
         String body = mapper.writeValueAsString(Map.of("amount", 10.0, "currency", "ETB"));
 
@@ -174,7 +199,7 @@ class PaymentControllerTests {
         existing.setUserId("u200");
         existing.setProvider(Transaction.Provider.LOCAL);
 
-        given(transactionRepository.findByIdempotencyKey("idem-2"))
+        given(transactionRepository.findByUserIdAndIdempotencyKey("u200", "idem-2"))
                 .willReturn(Optional.empty(), Optional.of(existing));
 
         given(transactionRepository.save(any(Transaction.class)))
@@ -190,7 +215,7 @@ class PaymentControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Idempotency-Key", "idem-2")
                         .content(body))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         mvc.perform(post("/api/payments/local/request")
                         .contentType(MediaType.APPLICATION_JSON)

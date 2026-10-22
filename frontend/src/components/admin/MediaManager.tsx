@@ -306,7 +306,7 @@ export function MediaManager({
                     </Typography>
                   </Box>
                   <Stack direction="row" spacing={2}>
-                    <SoftButton variant="outline" sx={{ color: "white", borderColor: "rgba(255,255,255,0.3)" }} startIcon={<DeleteRoundedIcon />}>Delete</SoftButton>
+                    <SoftButton variant="outlined" sx={{ color: "white", borderColor: "rgba(255,255,255,0.3)" }} startIcon={<DeleteRoundedIcon />}>Delete</SoftButton>
                     <SoftButton variant="contained" color="primary" startIcon={<DownloadRoundedIcon />}>Download Asset</SoftButton>
                   </Stack>
                 </Stack>

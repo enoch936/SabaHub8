@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play } from "lucide-react";
+import { Check, Pause, Play, X } from "lucide-react";
 
 interface VoiceMessageUIProps {
   audioUrl?: string;
   isRecording?: boolean;
   duration?: number;
+  seconds?: number;
+  onCancel?: () => void;
+  onStop?: () => void;
 }
 
 const WAVEFORM_BAR_HEIGHTS = [8, 14, 11, 16, 10, 18, 12, 9, 15, 13, 17, 11, 8, 14, 10];
@@ -18,7 +21,7 @@ function formatDuration(seconds: number) {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
-export function VoiceMessageUI({ audioUrl, isRecording = false, duration }: VoiceMessageUIProps) {
+export function VoiceMessageUI({ audioUrl, isRecording = false, duration, seconds, onCancel, onStop }: VoiceMessageUIProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [resolvedDuration, setResolvedDuration] = useState<number>(duration ?? 0);
@@ -104,7 +107,27 @@ export function VoiceMessageUI({ audioUrl, isRecording = false, duration }: Voic
   return (
     <div className="flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">
       <span className={`inline-flex h-2.5 w-2.5 rounded-full ${isRecording ? "animate-pulse bg-rose-500" : "bg-rose-300"}`} />
-      Recording voice note
+      <span>{formatDuration(seconds ?? duration ?? 0)}</span>
+      {onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="ml-1 inline-flex h-7 w-7 items-center justify-center rounded-full text-rose-600 transition hover:bg-rose-100"
+          aria-label="Cancel voice recording"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+      {onStop && (
+        <button
+          type="button"
+          onClick={onStop}
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-600 text-white transition hover:bg-rose-700"
+          aria-label="Finish voice recording"
+        >
+          <Check className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }

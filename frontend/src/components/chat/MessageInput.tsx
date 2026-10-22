@@ -346,6 +346,7 @@ export function MessageInput({
         <div className="flex h-[56px] items-center gap-2">
           {isRecording ? (
             <VoiceMessageUI
+              isRecording
               seconds={recordingSeconds}
               onCancel={stopMediaStream}
               onStop={stopVoiceRecording}

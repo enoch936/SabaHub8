@@ -264,11 +264,7 @@ export function VideoCallModal() {
                   >
                     <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 blur-2xl opacity-50" />
                     <div className="relative h-24 w-24 rounded-full border-2 border-white/30 bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-md flex items-center justify-center">
-                      {status === "active" ? (
-                        <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Video className="h-10 w-10 text-white" />
-                      )}
+                      <Video className="h-10 w-10 text-white" />
                     </div>
                   </motion.div>
 
@@ -283,10 +279,10 @@ export function VideoCallModal() {
                       </span>
                     </div>
                     <p className="text-xl font-semibold text-white">
-                      {status === "ringing" ? (isInitiator ? "Calling" : "Ringing") : "Establishing Connection"} {participantName}
+                      {isInitiator ? "Calling" : "Ringing"} {participantName}
                     </p>
                     <p className="mt-1 text-sm text-white/60">
-                      {status === "active" ? "Waiting for video stream..." : "Waiting for response..."}
+                      Waiting for response...
                     </p>
                   </div>
                 </div>

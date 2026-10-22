@@ -258,7 +258,7 @@ function DiscoveryCard({ item }: { item: DiscoveryFeedItem }) {
 
         {item.skills && item.skills.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-2">
-            {item.skills.slice(0, 4).map((skill) => (
+            {item.skills.slice(0, 4).map((skill: string) => (
               <span key={skill} className="px-3 py-1.5 bg-gray-50 text-gray-500 text-[9px] font-black uppercase tracking-widest rounded-xl border border-gray-100 hover:bg-white hover:border-indigo-200 hover:text-indigo-600 transition-all">
                 {skill}
               </span>

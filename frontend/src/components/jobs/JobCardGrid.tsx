@@ -17,7 +17,7 @@ export function JobCardGrid({ jobs, viewMode, onApply, onSave, onDelete, onMessa
   if (jobs.length === 0) {
     return (
       <EmptyState
-        emoji="🔍"
+        icon="🔍"
         title="No jobs"
         description="Try different filters."
       />

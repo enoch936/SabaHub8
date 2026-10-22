@@ -11,7 +11,13 @@ import java.time.Instant;
 import java.util.Map;
 
 @Document(collection = "transactions")
-@CompoundIndex(name = "uniq_user_idem", def = "{ 'userId': 1, 'idempotencyKey': 1 }", unique = true)
+@CompoundIndex(
+        name = "uniq_user_idem",
+        def = "{ 'userId': 1, 'idempotencyKey': 1 }",
+        unique = true,
+        partialFilter = "{ 'idempotencyKey': { '$exists': true, '$type': 'string' } }"
+)
+@CompoundIndex(name = "provider_ref_lookup", def = "{ 'provider': 1, 'providerRef': 1 }")
 public class Transaction {
 
     public enum Provider {

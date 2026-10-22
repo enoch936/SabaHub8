@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface WalletLedgerRepository extends MongoRepository<WalletLedgerEntry, String> {
     List<WalletLedgerEntry> findByUserIdOrderByCreatedAtAsc(String userId);
     List<WalletLedgerEntry> findByUserIdOrderByCreatedAtDesc(String userId);
+
+    List<WalletLedgerEntry> findAllByOrderByCreatedAtAsc();
     
     Page<WalletLedgerEntry> findByUserId(String userId, Pageable pageable);
     

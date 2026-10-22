@@ -33,14 +33,14 @@ const METHOD_COPY: Record<
   },
   STRIPE: {
     label: "Stripe",
-    hint: "Open a hosted Stripe checkout popup, fund your wallet, then optionally auto-send.",
+    hint: "Hosted Stripe checkout in USD, then optionally auto-send.",
     icon: <CreditCard className="h-6 w-6 text-violet-700" />,
     tone: "bg-violet-100",
     processing: "Waiting for Stripe checkout...",
   },
   CHAPA: {
     label: "Chapa",
-    hint: "Open a hosted Chapa checkout popup, fund your wallet, then optionally auto-send.",
+    hint: "Hosted Chapa checkout in ETB, then optionally auto-send.",
     icon: <Smartphone className="h-6 w-6 text-emerald-700" />,
     tone: "bg-emerald-100",
     processing: "Waiting for Chapa checkout...",
@@ -102,6 +102,14 @@ export function SendMoney() {
     }
     if (method === "SABAHUB" && !recipient.trim()) {
       toast.error("Recipient is required for a SabaHub wallet transfer.");
+      return;
+    }
+    if (method === "STRIPE" && currency !== "USD") {
+      toast.error("Stripe funding supports USD only. Select USD or use Chapa for ETB.");
+      return;
+    }
+    if (method === "CHAPA" && currency !== "ETB") {
+      toast.error("Chapa funding supports ETB only. Select ETB or use Stripe for USD.");
       return;
     }
 
@@ -291,7 +299,14 @@ export function SendMoney() {
                         <button
                           key={option}
                           type="button"
-                          onClick={() => setMethod(option)}
+                          onClick={() => {
+                            setMethod(option);
+                            if (option === "STRIPE") {
+                              setSelectedCurrency("USD");
+                            } else if (option === "CHAPA") {
+                              setSelectedCurrency("ETB");
+                            }
+                          }}
                           className={`flex flex-col items-center gap-3 rounded-xl border-2 p-4 text-center transition-all ${
                             method === option
                               ? "border-primary bg-primary/5"
