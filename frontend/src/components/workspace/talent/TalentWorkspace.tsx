@@ -48,7 +48,7 @@ import type {
   ExperienceLevel
 } from "@/lib/types";
 import { toast } from "sonner";
-import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import LoadingSkeleton from "@/components/LoadingSkeleton";
 import { useTheme, alpha } from "@mui/material";
 
 const TALENT_PRESETS_STORAGE_KEY = "sabahub_talent_presets";
