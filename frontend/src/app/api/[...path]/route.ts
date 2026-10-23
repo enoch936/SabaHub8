@@ -10,10 +10,16 @@ export const dynamic = "force-dynamic";
 
 // Backend base URL. Can be overridden via NEXT_PUBLIC_BACKEND_URL or BACKEND_URL.
 const CONFIGURED_API_BASE = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "";
-const DEFAULT_CANDIDATES = ["http://127.0.0.1:8080", "http://localhost:8080"];
-const API_BASE_CANDIDATES = CONFIGURED_API_BASE
-  ? [CONFIGURED_API_BASE, ...DEFAULT_CANDIDATES.filter(c => c !== CONFIGURED_API_BASE)]
-  : DEFAULT_CANDIDATES;
+const API_BASE_CANDIDATES = Array.from(
+  new Set(
+    [
+      CONFIGURED_API_BASE,
+      "https://sabahub-api.onrender.com",
+      "http://127.0.0.1:8080",
+      "http://localhost:8080",
+    ].filter(Boolean),
+  ),
+);
 
 function buildTargetUrl(apiBase: string, pathParts?: string[], search = "") {
   const path = Array.isArray(pathParts) ? pathParts.join("/") : "";

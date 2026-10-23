@@ -12,7 +12,12 @@ const CONFIGURED_API_BASE =
 
 const API_BASE_CANDIDATES = Array.from(
   new Set(
-    [CONFIGURED_API_BASE, "http://127.0.0.1:8080", "http://localhost:8080"].filter(Boolean),
+    [
+      CONFIGURED_API_BASE,
+      "https://sabahub-api.onrender.com",
+      "http://127.0.0.1:8080",
+      "http://localhost:8080",
+    ].filter(Boolean),
   ),
 );
 
