@@ -1,0 +1,33 @@
+{
+	admin off
+	email {$SABAHUB_TLS_EMAIL:admin@sabahub.local}
+}
+
+{$SABAHUB_SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(self), microphone=(self), geolocation=(self), payment=(self)"
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy {$SABAHUB_BACKEND:host.docker.internal:8080}
+	}
+
+	handle /ws/* {
+		reverse_proxy {$SABAHUB_BACKEND:host.docker.internal:8080}
+	}
+
+	handle /hls/* {
+		reverse_proxy {$SABAHUB_BACKEND:host.docker.internal:8080}
+	}
+
+	handle {
+		reverse_proxy {$SABAHUB_FRONTEND:host.docker.internal:3000}
+	}
+}

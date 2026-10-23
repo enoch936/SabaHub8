@@ -10,10 +10,12 @@ import com.stripe.model.Account;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.stripe.exception.StripeException;
+import com.stripe.net.RequestOptions;
 import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.stripe.param.TransferCreateParams;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Slf4j
 @Service
 public class PaymentService {
 
@@ -43,9 +46,11 @@ public class PaymentService {
     private final ObjectMapper mapper;
     private final String chapaWebhookSecret;
     private final String chapaSecretKey;
+    private final String chapaPublicKey;
     private final String chapaBaseUrl;
     private final String chapaCallbackUrl;
     private final String chapaReturnUrl;
+    private final String chapaDefaultCurrency;
     private final String stripeWebhookSecret;
     private final String stripeReturnUrl;
     private final String stripeCancelUrl;
@@ -60,9 +65,11 @@ public class PaymentService {
 
     public PaymentService(@Value("${chapa.webhook.secret:}") String chapaWebhookSecret,
                           @Value("${chapa.secret.key:}") String chapaSecretKey,
+                          @Value("${chapa.public.key:}") String chapaPublicKey,
                           @Value("${chapa.base.url:https://api.chapa.co/v1}") String chapaBaseUrl,
                           @Value("${chapa.callback.url:}") String chapaCallbackUrl,
                           @Value("${chapa.return.url:}") String chapaReturnUrl,
+                          @Value("${chapa.default.currency:ETB}") String chapaDefaultCurrency,
                           @Value("${stripe.webhook.secret:}") String stripeWebhookSecret,
                           @Value("${stripe.return.url:}") String stripeReturnUrl,
                           @Value("${stripe.cancel.url:}") String stripeCancelUrl,
@@ -72,9 +79,11 @@ public class PaymentService {
             .build();
         this.chapaWebhookSecret = chapaWebhookSecret;
         this.chapaSecretKey = chapaSecretKey;
+        this.chapaPublicKey = chapaPublicKey;
         this.chapaBaseUrl = chapaBaseUrl;
         this.chapaCallbackUrl = chapaCallbackUrl;
         this.chapaReturnUrl = chapaReturnUrl;
+        this.chapaDefaultCurrency = chapaDefaultCurrency;
         this.stripeWebhookSecret = stripeWebhookSecret;
         this.stripeReturnUrl = stripeReturnUrl;
         this.stripeCancelUrl = stripeCancelUrl;
@@ -90,8 +99,21 @@ public class PaymentService {
     @PostConstruct
     private void initializeStripe() {
         if (stripeApiKey != null && !stripeApiKey.isBlank()) {
-            Stripe.apiKey = stripeApiKey;
+            String key = stripeApiKey.trim();
+            if (!key.startsWith("sk_test_") && !key.startsWith("rk_test_")
+                    && !key.startsWith("sk_live_") && !key.startsWith("rk_live_")) {
+                log.warn("STRIPE_API_KEY does not look like a valid Stripe secret key; Stripe calls will fail");
+            }
+            Stripe.apiKey = key;
+            Stripe.setMaxNetworkRetries(2);
         }
+        if (stripeWebhookSecret != null && stripeWebhookSecret.contains("your_webhook_secret")) {
+            log.warn("STRIPE_WEBHOOK_SECRET is still a placeholder; Stripe webhooks will be rejected");
+        }
+    }
+
+    public boolean isStripeLiveMode() {
+        return stripeApiKey != null && stripeApiKey.trim().startsWith("sk_live_");
     }
 
     public Map<String, Object> initializeStripeCheckoutSession(String sessionReference,
@@ -118,6 +140,7 @@ public class PaymentService {
 
             SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.PAYMENT)
+                    .setExpiresAt(java.time.Instant.now().plusSeconds(31 * 60).getEpochSecond())
                     .setSuccessUrl(successUrl + "&session_id={CHECKOUT_SESSION_ID}")
                     .setCancelUrl(cancelUrl)
                     .putMetadata("transactionId", transactionId)
@@ -142,7 +165,10 @@ public class PaymentService {
 
             SessionCreateParams params = paramsBuilder.build();
 
-            Session session = Session.create(params);
+            RequestOptions requestOptions = RequestOptions.builder()
+                    .setIdempotencyKey("sabahub-checkout-" + sessionReference)
+                    .build();
+            Session session = Session.create(params, requestOptions);
             if (session.getUrl() == null || session.getUrl().isBlank()) {
                 throw new IllegalStateException("Stripe checkout session did not include a hosted URL");
             }
@@ -166,9 +192,18 @@ public class PaymentService {
             throw new IllegalArgumentException("Missing Stripe-Signature header");
         }
         try {
-            return Webhook.constructEvent(payload, signatureHeader, stripeWebhookSecret);
+            Event event = Webhook.constructEvent(payload, signatureHeader, stripeWebhookSecret);
+            assertStripeEventMode(event);
+            return event;
         } catch (SignatureVerificationException e) {
             throw new IllegalArgumentException("Invalid Stripe signature", e);
+        }
+    }
+
+    public void assertStripeEventMode(Event event) {
+        boolean liveEvent = Boolean.TRUE.equals(event.getLivemode());
+        if (isStripeLiveMode() != liveEvent) {
+            throw new IllegalArgumentException("Stripe event livemode does not match the configured API key");
         }
     }
 
@@ -205,7 +240,7 @@ public class PaymentService {
             throw new IllegalStateException("CHAPA_SECRET_KEY is not configured");
         }
 
-        String normalizedCurrency = (currency == null || currency.isBlank()) ? "ETB" : currency.trim().toUpperCase();
+        String normalizedCurrency = (currency == null || currency.isBlank()) ? chapaDefaultCurrency : currency.trim().toUpperCase();
         String amountAsString = amount.stripTrailingZeros().toPlainString();
         String safeEmail = (email == null || email.isBlank()) ? "payments@sabahub.local" : email.trim();
         String firstName = extractFirstName(fullName);
@@ -227,7 +262,7 @@ public class PaymentService {
             requestPayload.put("return_url", returnUrl);
         }
         requestPayload.put("customization", Map.of(
-                "title", "SabaHub Wallet Top-up",
+                "title", "SabaHub Top-up",
                 "description", "Add funds to your SabaHub wallet"
         ));
         requestPayload.put("meta", Map.of("transactionId", transactionId));
@@ -243,6 +278,7 @@ public class PaymentService {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                log.error("Chapa initialize failed with HTTP status {}", response.statusCode());
                 throw new IllegalStateException("Chapa initialize failed with HTTP " + response.statusCode());
             }
 
@@ -325,19 +361,26 @@ public class PaymentService {
         return Boolean.TRUE.equals(verified);
     }
 
-    public boolean verifyChapaSignature(Map<String, Object> payload, String signatureHeader) {
+    public boolean verifyChapaSignature(String rawPayload, String signatureHeader) {
         if (chapaWebhookSecret == null || chapaWebhookSecret.isBlank()) {
             return false; // fail-closed if secret not configured
         }
-        if (signatureHeader == null || signatureHeader.isBlank()) {
+        if (rawPayload == null || signatureHeader == null || signatureHeader.isBlank()) {
             return false;
         }
         try {
-            String body = mapper.writeValueAsString(payload);
-            String computed = hmacSha256Hex(body, chapaWebhookSecret);
-            return constantTimeEquals(computed, signatureHeader);
+            String computed = hmacSha256Hex(rawPayload, chapaWebhookSecret);
+            return constantTimeEquals(computed, signatureHeader.trim());
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    public Map<String, Object> parseJsonMap(String rawPayload) {
+        try {
+            return asMap(mapper.readValue(rawPayload, Map.class));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("invalid_json_payload", e);
         }
     }
 
@@ -387,7 +430,7 @@ public class PaymentService {
     }
 
     private String resolveChapaCallbackUrl() {
-        return chapaCallbackUrl == null || chapaCallbackUrl.isBlank() ? null : chapaCallbackUrl.trim();
+        return chapaCallbackUrl == null || chapaCallbackUrl.isBlank() ? null : requireSafeRedirectUrl(chapaCallbackUrl.trim());
     }
 
     private String resolveChapaReturnUrl(String transactionId, String providerRef) {
@@ -400,14 +443,33 @@ public class PaymentService {
 
     private String normalizePublicUrl(String configuredUrl, String defaultPath) {
         if (configuredUrl != null && !configuredUrl.isBlank()) {
-            return configuredUrl.trim();
+            return requireSafeRedirectUrl(configuredUrl.trim());
         }
         String base = appPublicUrl == null || appPublicUrl.isBlank() ? "http://localhost:3000" : appPublicUrl.trim();
         String normalizedBase = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
-        if (defaultPath.startsWith("/")) {
-            return normalizedBase + defaultPath;
+        String url = defaultPath.startsWith("/") ? normalizedBase + defaultPath : normalizedBase + "/" + defaultPath;
+        return requireSafeRedirectUrl(url);
+    }
+
+    private String requireSafeRedirectUrl(String url) {
+        final URI uri;
+        try {
+            uri = URI.create(url);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalStateException("Invalid payment redirect URL", ex);
         }
-        return normalizedBase + "/" + defaultPath;
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+        if (scheme == null || host == null || uri.getUserInfo() != null) {
+            throw new IllegalStateException("Invalid payment redirect URL");
+        }
+        boolean https = "https".equalsIgnoreCase(scheme);
+        boolean localHttp = "http".equalsIgnoreCase(scheme)
+                && ("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host) || "::1".equals(host));
+        if (!https && !localHttp) {
+            throw new IllegalStateException("Payment redirect URLs must use HTTPS (HTTP is allowed only on localhost)");
+        }
+        return url;
     }
 
     private String encode(String value) {
@@ -421,7 +483,7 @@ public class PaymentService {
         return currency.trim().toUpperCase();
     }
 
-    private long toMinorUnits(BigDecimal amount, String currency) {
+    public long toMinorUnits(BigDecimal amount, String currency) {
         int scale = ZERO_DECIMAL_CURRENCIES.contains(currency.toUpperCase()) ? 0 : 2;
         return amount.movePointRight(scale).setScale(0, RoundingMode.HALF_UP).longValueExact();
     }
@@ -472,12 +534,19 @@ public class PaymentService {
         if (stripeApiKey == null || stripeApiKey.isBlank()) {
             throw new RuntimeException("Stripe API key not configured");
         }
-        
+        if (freelancerConnectedAccountId == null || freelancerConnectedAccountId.isBlank()) {
+            throw new IllegalArgumentException("Freelancer connected account id is required");
+        }
+        if (amount == null || amount.signum() <= 0) {
+            throw new IllegalArgumentException("Escrow amount must be greater than zero");
+        }
+
+        String normalizedCurrency = normalizeCurrency(currency, "USD");
         try {
             // Create transfer to freelancer's connected account
             TransferCreateParams params = TransferCreateParams.builder()
-                .setAmount(amount.multiply(new BigDecimal(100)).longValue()) // Amount in cents
-                .setCurrency(currency.toLowerCase())
+                .setAmount(toMinorUnits(amount, normalizedCurrency))
+                .setCurrency(normalizedCurrency.toLowerCase())
                 .setDestination(freelancerConnectedAccountId)
                 .putMetadata("contract_id", contractId)
                 .putMetadata("type", "milestone_payment")

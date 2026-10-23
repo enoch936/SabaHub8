@@ -46,6 +46,10 @@ public class User {
 
     private SecurityProfile securityProfile;
 
+    private ReputationProfile reputationProfile;
+
+    private VerificationProfile verificationProfile;
+
     private List<WarningRecord> warningRecords;
 
     @CreatedDate
@@ -66,6 +70,36 @@ public class User {
         this.fullName = fullName;
         this.passwordHash = passwordHash;
         this.roles = roles;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ReputationProfile {
+        private Integer globalScore; // 0-1000
+        private Integer creatorInfluenceScore;
+        private Integer professionalCredibilityScore;
+        private Integer communityTrustScore;
+        private Integer engagementQualityScore;
+        private Long followerCount;
+        private Long followingCount;
+        private Double averageRating;
+        private Integer verifiedAchievementsCount;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class VerificationProfile {
+        private boolean verifiedTalent;
+        private boolean verifiedRecruiter;
+        private boolean verifiedOrganization;
+        private boolean verifiedCreator;
+        private String badgeLevel; // SILVER, GOLD, PLATINUM
+        private Instant verifiedAt;
+        private String verificationMethod;
     }
 
     @Data

@@ -98,6 +98,9 @@ public class Contract {
 
     private EscrowRefundRequest refundRequest;
 
+    @Builder.Default
+    private Boolean available = Boolean.TRUE;
+
     @CreatedDate
     private Instant createdAt;
 

@@ -35,10 +35,10 @@ export const NAV_ITEMS = [
 ] as const;
 
 export const HERO_STATS = [
-  { label: "Active Freelancers", value: "500K+" },
-  { label: "Jobs Posted", value: "2M+" },
-  { label: "Paid to Freelancers", value: "$5B+" },
-] as const;
+  { label: "Active Freelancers", value: "10+" },
+  { label: "Jobs Posted", value: "15+" },
+  { label: "Paid to Freelancers", value: "$9+" },
+];
 
 export const HERO_AUDIENCES = {
   employer: {

@@ -46,7 +46,7 @@ export function MilestoneCard({ milestone, canApprove, canSubmit, onSubmit, onAp
     ) : null;
 
   return (
-    <div className="flex items-start gap-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+    <div className="flex items-start gap-4 rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] p-4">
       <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${status.color}`}>
         {status.icon}
       </div>

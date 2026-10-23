@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Box,
   Stack,
@@ -68,7 +68,7 @@ export function AIAssistantPanel({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [localMessages]);
 
-  const handleSendMessage = async (msgOverride?: string) => {
+  const handleSendMessage = useCallback(async (msgOverride?: string) => {
     const text = msgOverride || input;
     if (!text.trim()) return;
 
@@ -105,7 +105,7 @@ export function AIAssistantPanel({
     } finally {
         setLoading(false);
     }
-  };
+  }, [input, onSendMessage]);
 
   const handleSuggestedQuery = (query: string) => {
     handleSendMessage(query);

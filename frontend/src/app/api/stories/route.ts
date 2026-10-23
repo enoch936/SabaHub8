@@ -28,6 +28,6 @@ export async function GET() {
     }
   }
 
-  // No upstream data found — return 502 so frontend doesn't render fallback
-  return NextResponse.json({ error: "no upstream data" }, { status: 502 });
+  // Fall back to local video stories data
+  return NextResponse.json(VIDEO_STORIES);
 }

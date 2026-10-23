@@ -45,6 +45,7 @@ import SettingsEthernetRoundedIcon from "@mui/icons-material/SettingsEthernetRou
 import ShieldRoundedIcon from "@mui/icons-material/ShieldRounded";
 import StorageRoundedIcon from "@mui/icons-material/StorageRounded";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
+import { GlassCard, GlassCardHeader } from "./GlassCard";
 import {
   Bar,
   BarChart,
@@ -461,6 +462,17 @@ function noticeSeverity(notice: Notice) {
 
 export default function AdminTenantManagementWorkspace() {
   const [workspace, setWorkspace] = useState<AdminTenantOperationsWorkspace | null>(null);
+
+  const getOwnerDisplay = (tenant: AdminTenantSummary) => {
+    if (!tenant.ownerName) return "Service Principal";
+    return `${tenant.ownerName} (#USR-${tenant.userId?.slice(-6).toUpperCase() || "ADMIN"})`;
+  };
+
+  const getActorDisplay = (actorId?: string | null) => {
+    if (!actorId) return "Orchestration Engine";
+    return `Identity (#${actorId.slice(-6).toUpperCase()})`;
+  };
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
@@ -863,45 +875,39 @@ export default function AdminTenantManagementWorkspace() {
 
   return (
     <Stack spacing={2.2}>
-      <SoftCard
+      <GlassCard
         sx={{
-          border: "1px solid",
-          borderColor: "rgba(18,38,57,0.14)",
+          border: "1px solid var(--border)",
           background: "linear-gradient(135deg, #102033 0%, #1c3551 54%, #38566d 100%)",
           color: "common.white",
+          p: 0
         }}
       >
-        <CardContent>
-          <Stack spacing={1.4}>
-            <Stack direction={{ xs: "column", lg: "row" }} justifyContent="space-between" alignItems={{ lg: "center" }} gap={1.2}>
-              <Box>
-                <Typography variant="overline" sx={{ letterSpacing: "0.14em", opacity: 0.82 }}>
-                  MULTI-TENANT PLATFORM OPERATIONS
-                </Typography>
-                <Typography variant="h4" fontWeight={900} sx={{ lineHeight: 1.04 }}>
-                  Tenant isolation, billing, lifecycle, and environment control
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.9, maxWidth: 980 }}>
-                  Run real tenant operations: create and delete tenant accounts, provision environments, configure quotas and hard limits,
-                  manage subscriptions and billing models, enforce isolation policies, suspend or archive tenants, refresh usage telemetry,
-                  migrate data across regions, and export operational reports.
-                </Typography>
-              </Box>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                <SoftButton variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.5)" }}>
-                  Refresh
-                </SoftButton>
-                <SoftButton variant="outlined" startIcon={<PaidRoundedIcon />} onClick={exportTenantCsv} sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.5)" }}>
-                  Export CSV
-                </SoftButton>
-                <SoftButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} sx={{ bgcolor: "#fff", color: "#14304b" }}>
-                  Create Tenant
-                </SoftButton>
-              </Stack>
+        <CardContent sx={{ p: 4 }}>
+          <Stack direction={{ xs: "column", lg: "row" }} justifyContent="space-between" alignItems={{ lg: "center" }} gap={3}>
+            <Box>
+              <Typography variant="overline" fontWeight={900} sx={{ letterSpacing: "0.15em", opacity: 0.8 }}>
+                PLATFORM ISOLATION & WORLD MANAGEMENT
+              </Typography>
+              <Typography variant="h3" fontWeight={900} sx={{ lineHeight: 1, mt: 1 }}>
+                Tenant Orchestration
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 1.5, opacity: 0.9, maxWidth: 880, fontWeight: 600 }}>
+                Manage domain-isolated environments, lifecycle pipelines, and multi-region data residency. 
+                Full enforcement of subscription quotas and telemetry guardrails.
+              </Typography>
+            </Box>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+              <SoftButton variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.4)" }}>
+                Sync
+              </SoftButton>
+              <SoftButton variant="contained" color="primary" startIcon={<AddRoundedIcon />} onClick={openCreate} sx={{ bgcolor: "white", color: "#102033", "&:hover": { bgcolor: "rgba(255,255,255,0.9)" } }}>
+                Provision New World
+              </SoftButton>
             </Stack>
           </Stack>
         </CardContent>
-      </SoftCard>
+      </GlassCard>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
       {notice ? <Alert severity={noticeSeverity(notice)}>{notice.message}</Alert> : null}
@@ -1087,16 +1093,15 @@ export default function AdminTenantManagementWorkspace() {
                         <TableRow key={tenant.id} hover selected={tenant.id === selectedTenant?.id} onClick={() => setSelectedTenantId(tenant.id)} sx={{ cursor: "pointer" }}>
                           <TableCell sx={{ minWidth: 230 }}>
                             <Stack spacing={0.4}>
-                              <Typography variant="subtitle2" fontWeight={800}>
+                              <Typography variant="subtitle2" fontWeight={900}>
                                 {tenant.companyName}
                               </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {tenant.ownerName} · {tenant.ownerEmail ?? "No owner email"}
+                              <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.5, letterSpacing: "0.05em" }}>
+                                ID: #WORLD-{tenant.id.slice(-6).toUpperCase()} · {tenant.tier}
                               </Typography>
-                              <Stack direction="row" spacing={0.6} useFlexGap flexWrap="wrap">
-                                <Chip label={tenant.active ? "Active" : tenant.suspension?.status ?? "Suspended"} size="small" color={tenant.active ? "success" : "warning"} variant="outlined" />
-                                <Chip label={tenant.tier ?? "STARTER"} size="small" variant="outlined" />
-                              </Stack>
+                              <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                                {getOwnerDisplay(tenant)}
+                              </Typography>
                             </Stack>
                           </TableCell>
                           <TableCell sx={{ minWidth: 180 }}>
@@ -1620,9 +1625,9 @@ export default function AdminTenantManagementWorkspace() {
                               {entry.action}
                             </Typography>
                           </TableCell>
-                          <TableCell>{entry.entityType ?? "--"} {entry.entityId ? `· ${entry.entityId}` : ""}</TableCell>
-                          <TableCell>{entry.actorUserId ?? "--"}</TableCell>
-                          <TableCell>{formatDateTime(entry.createdAt)}</TableCell>
+                          <TableCell>{entry.entityType ?? "--"} {entry.entityId ? `· #ID-${entry.entityId.slice(-6).toUpperCase()}` : ""}</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>{getActorDisplay(entry.actorUserId)}</TableCell>
+                          <TableCell sx={{ fontWeight: 600, opacity: 0.7 }}>{formatDateTime(entry.createdAt)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

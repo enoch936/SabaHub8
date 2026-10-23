@@ -1,7 +1,7 @@
 import axios, { type AxiosResponse } from "axios";
 import { ACTIVE_ROLE_STORAGE_KEY } from "./role-mode";
 import { getSessionContextHeaders } from "./session-context";
-import type { WalletCurrencyCode } from "./types";
+import type { MarketplaceSearchResponse, WalletCurrencyCode } from "./types";
 
 // Use Next.js API proxy for all environments
 // The proxy is configured in route.ts to forward to backend at localhost:8080
@@ -80,7 +80,8 @@ api.interceptors.response.use(
 
     // Optionally handle 401 navigation without throwing
     if (status === 401 && typeof window !== "undefined") {
-      // window.location.href = "/login";
+      localStorage.removeItem("auth_token");
+      window.location.href = "/login";
     }
 
     return Promise.resolve(emptyResponse);
@@ -286,6 +287,8 @@ export type WorkspaceProfileStats = {
   totalEarnings?: number | null;
   successRate?: number | null;
   jobSuccessScore?: number | null;
+  followerCount?: number | null;
+  followingCount?: number | null;
 };
 
 export type WorkspaceProfilePortfolioItem = {
@@ -666,6 +669,7 @@ export type Job = {
   overviewText?: string;
   employerId?: string;
   employerName?: string;
+  employerAvatar?: string;
   budget?: { min?: number; max?: number; currency?: string };
   budgetMin?: number;
   budgetMax?: number;
@@ -1436,87 +1440,6 @@ export type FreelancerProjectPost = {
   updatedAt?: string;
 };
 
-export type MarketplaceSearchTalent = {
-  freelancerId?: string;
-  userId?: string;
-  name?: string;
-  professionalTitle?: string;
-  rating?: number;
-  skills?: string[];
-  profilePicture?: string;
-  coverImage?: string;
-  portfolioThumbnailUrl?: string;
-  portfolioImageUrls?: string[];
-};
-
-export type MarketplaceSearchProjectPost = {
-  projectPostId?: string;
-  status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-  title?: string;
-  description?: string;
-  category?: string;
-  skills?: string[];
-  budgetMin?: number;
-  budgetMax?: number;
-  currency?: string;
-  deliveryDays?: number;
-  thumbnailUrl?: string;
-  sampleImageUrls?: string[];
-  sampleVideoUrls?: string[];
-  sampleDocumentUrls?: string[];
-  freelancerId?: string;
-  freelancerUserId?: string;
-  freelancerName?: string;
-};
-
-export type MarketplaceSearchGig = {
-  gigId?: string;
-  status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-  title?: string;
-  description?: string;
-  skills?: string[];
-  price?: number;
-  currency?: string;
-  deliveryDays?: number;
-  thumbnailUrl?: string;
-  sampleImageUrls?: string[];
-  sampleVideoUrls?: string[];
-  sampleDocumentUrls?: string[];
-  freelancerId?: string;
-  freelancerUserId?: string;
-  freelancerName?: string;
-};
-
-export type MarketplaceSearchStory = {
-  storyId?: string;
-  status?: "PUBLISHED";
-  title?: string;
-  description?: string;
-  category?: string;
-  technologies?: string[];
-  imageUrls?: string[];
-  projectUrl?: string;
-  completedAt?: string;
-  freelancerId?: string;
-  freelancerUserId?: string;
-  freelancerName?: string;
-  profilePicture?: string;
-};
-
-export type MarketplaceSearchResponse = {
-  query: string;
-  talents: MarketplaceSearchTalent[];
-  projectPosts: MarketplaceSearchProjectPost[];
-  gigs: MarketplaceSearchGig[];
-  stories: MarketplaceSearchStory[];
-  counts: {
-    talents: number;
-    projectPosts: number;
-    gigs: number;
-    stories: number;
-  };
-};
-
 export async function listMyGigs() {
   const { data } = await api.get("/gigs/mine");
   return Array.isArray(data) ? (data as Gig[]) : ([] as Gig[]);
@@ -1554,6 +1477,73 @@ export async function updateProjectPost(id: string, input: Partial<FreelancerPro
 export async function deleteProjectPost(id: string) {
   await api.delete(`/freelancer/project-posts/${id}`);
 }
+
+type MarketplaceSearchTalent = {
+  freelancerId?: string;
+  userId?: string;
+  name?: string;
+  professionalTitle?: string;
+  rating?: number;
+  skills: string[];
+  profilePicture?: string;
+  coverImage?: string;
+  portfolioThumbnailUrl?: string;
+  portfolioImageUrls: string[];
+};
+
+type MarketplaceSearchProjectPost = {
+  projectPostId?: string;
+  status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  title?: string;
+  description?: string;
+  category?: string;
+  skills: string[];
+  budgetMin?: number;
+  budgetMax?: number;
+  currency?: string;
+  deliveryDays?: number;
+  thumbnailUrl?: string;
+  sampleImageUrls: string[];
+  sampleVideoUrls: string[];
+  sampleDocumentUrls: string[];
+  freelancerId?: string;
+  freelancerUserId?: string;
+  freelancerName?: string;
+};
+
+type MarketplaceSearchGig = {
+  gigId?: string;
+  status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  title?: string;
+  description?: string;
+  skills: string[];
+  price?: number;
+  currency?: string;
+  deliveryDays?: number;
+  thumbnailUrl?: string;
+  sampleImageUrls: string[];
+  sampleVideoUrls: string[];
+  sampleDocumentUrls: string[];
+  freelancerId?: string;
+  freelancerUserId?: string;
+  freelancerName?: string;
+};
+
+type MarketplaceSearchStory = {
+  storyId?: string;
+  status?: "PUBLISHED";
+  title?: string;
+  description?: string;
+  category?: string;
+  technologies: string[];
+  imageUrls: string[];
+  projectUrl?: string;
+  completedAt?: string;
+  freelancerId?: string;
+  freelancerUserId?: string;
+  freelancerName?: string;
+  profilePicture?: string;
+};
 
 export async function searchEmployerMarketplace(params?: {
   q?: string;
@@ -1738,6 +1728,7 @@ export type DirectoryUser = {
   email?: string;
   username?: string;
   fullName?: string;
+  profilePictureUrl?: string;
   roles: string[];
   online?: boolean;
   createdAt?: string | null;
@@ -1838,6 +1829,7 @@ export type Contract = {
   autoReleaseDays?: number;
   requiresEscrow?: boolean;
   adminReviewRequired?: boolean;
+  available?: boolean;
   startDate?: string;
   endDate?: string;
   terms?: string | Record<string, unknown>;
@@ -2930,6 +2922,8 @@ export type Asset = {
   resourceType: string;
   mimeType?: string;
   size?: number;
+  ownerId?: string;
+  ownerName?: string;
 };
 
 export async function listAssets() {
@@ -2955,6 +2949,11 @@ export async function saveAssetMetadata(body: { scope: string; title?: string; s
 export async function deleteAsset(id: string) {
   const { data } = await api.delete(`/assets/${id}`);
   return data as { ok: boolean };
+}
+
+export async function getStorageUsage() {
+  const { data } = await api.get(`/assets/usage`);
+  return data as { totalSize: number; storageTotal: number };
 }
 
 // Chat
@@ -3343,6 +3342,7 @@ export type AppUser = {
   email: string;
   username?: string;
   fullName: string;
+  avatarUrl?: string | null;
   roles: string[];
   suspended?: boolean;
   documentsVerified?: boolean;
@@ -3977,7 +3977,6 @@ export async function adminListJobs(status?: string) {
 }
 
 export const adminListProjects = adminListJobs;
-export type Project = Job;
 
 export async function adminPatchJob(id: string, patch: Partial<Job>) {
   const { data } = await api.patch(`/admin/jobs/${id}`, patch);
@@ -4125,6 +4124,21 @@ export async function adminAnalyticsExportCsv(days = 30) {
 export async function adminBroadcast(message: string) {
   const { data } = await api.post(`/admin/announcements`, { message });
   return data as { ok: boolean };
+}
+
+export type AdminAnnouncement = {
+  id: string;
+  title: string;
+  message: string;
+  sentBy: string;
+  sentAt: string;
+  recipients: string;
+  status: "DELIVERED" | "FAILED";
+};
+
+export async function adminListAnnouncements() {
+  const { data } = await api.get(`/admin/announcements`);
+  return data as AdminAnnouncement[];
 }
 
 // Enterprise Admin Command Center
@@ -4367,6 +4381,14 @@ export type AIChatbotResponse = {
   contextId?: string;
   suggestedActions: string[];
   confidence: number;
+  answerSource?: string;
+  pythonConfidence?: number;
+  intent?: string;
+  reasoningSummary?: string[];
+  safeguards?: string[];
+  collaborationMode?: string;
+  springLocalAnswer?: string;
+  modelStatus?: Record<string, unknown>;
   engine?: string;
   engineVersion?: string;
   inferenceMode?: string;
@@ -4381,6 +4403,18 @@ export type AIEngineStatus = {
   externalAiApiUsed: boolean;
   dataSource: string;
   message: string;
+  mode?: string;
+  pythonEnabled?: boolean;
+  pythonBridgeConfigured?: boolean;
+  pythonBridgeReachable?: boolean;
+  pythonJobsEnabled?: boolean;
+  pythonFreelancersEnabled?: boolean;
+  pythonFraudEnabled?: boolean;
+  pythonChatEnabled?: boolean;
+  blendJobs?: number;
+  blendFreelancers?: number;
+  blendFraud?: number;
+  blendChat?: number;
 };
 
 export type AIModelRelease = {
@@ -4823,4 +4857,231 @@ export type AdminBootstrapStatus = {
   systemStatus: "INITIALIZED" | "AWAITING_INITIALIZATION";
   message: string;
   lastUpdated: string;
+};
+
+// Discovery API
+export const getDiscoveryFeed = async (category?: string, limit = 20, offset = 0): Promise<DiscoveryFeedItem[]> => {
+  const r = await api.get("/discovery/feed", { params: { category, limit, offset } });
+  return r.data?.items || [];
+};
+
+export const searchMarketplace = async (params: {
+  q?: string;
+  limit?: number;
+  skill?: string;
+  category?: string;
+  minBudget?: number;
+  maxBudget?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  mediaFilter?: string;
+}) => {
+  const r = await api.get("/employer/marketplace/search", { params });
+  return r.data as MarketplaceSearchResponse;
+};
+
+// Reels API
+export const getReelsFeed = async (offset = 0, limit = 20) => {
+  const r = await api.get("/reels", { params: { limit, offset } });
+  return { items: r.data || [] };
+};
+
+export const getReel = async (id: string) => {
+  const r = await api.get(`/reels/${id}`);
+  return r.data;
+};
+
+export const createReel = async (data: any) => {
+  const r = await api.post("/reels", data);
+  return r.data;
+};
+
+export const likeReel = async (id: string) => {
+  const r = await api.post(`/reels/${id}/like`);
+  return r.data;
+};
+
+export const unlikeReel = async (id: string) => {
+  const r = await api.post(`/reels/${id}/unlike`);
+  return r.data;
+};
+
+export const addReelComment = async (id: string, body: string) => {
+  const r = await api.post(`/reels/${id}/comment`, { body });
+  return r.data;
+};
+
+export const saveReel = async (id: string) => {
+  const r = await api.post(`/reels/${id}/save`);
+  return r.data;
+};
+
+export const trackReelView = async (id: string) => {
+  const r = await api.post(`/reels/${id}/view`);
+  return r.data;
+};
+
+export const getUserReels = async (authorId: string, limit = 20) => {
+  const r = await api.get(`/reels/user/${authorId}`, { params: { limit } });
+  return { items: r.data || [] };
+};
+
+// Social API
+export const getActiveStories = async () => {
+  const r = await api.get("/social/stories");
+  const data = r.data;
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") {
+    return data.items || data.users || data.content || [];
+  }
+  return [];
+};
+
+export const getUserStories = async (userId: string) => {
+  const r = await api.get(`/social/users/${userId}/stories`);
+  return r.data || [];
+};
+
+export const getSocialFeed = async (page = 0, size = 20) => {
+  const r = await api.get("/social/feed", { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const getGlobalFeed = async (page = 0, size = 20) => {
+  const r = await api.get("/social/feed/global", { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const getUserPosts = async (userId: string, page = 0, size = 20) => {
+  const r = await api.get(`/social/users/${userId}/posts`, { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const getLikedPosts = async (userId: string, page = 0, size = 20) => {
+  const r = await api.get(`/social/users/${userId}/posts/liked`, { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const getSavedPosts = async (userId: string, page = 0, size = 20) => {
+  const r = await api.get(`/social/users/${userId}/posts/saved`, { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const getMediaGallery = async (userId: string) => {
+  const r = await api.get(`/social/users/${userId}/gallery`);
+  return r.data || [];
+};
+
+export const followUser = async (userId: string) => {
+  const r = await api.post("/social/follow", { userId });
+  return r.data;
+};
+
+export const unfollowUser = async (userId: string) => {
+  const r = await api.post("/social/unfollow", { userId });
+  return r.data;
+};
+
+export const likePost = async (postId: string) => {
+  const r = await api.post(`/social/posts/${postId}/like`);
+  return r.data;
+};
+
+export const unlikePost = async (postId: string) => {
+  const r = await api.post(`/social/posts/${postId}/unlike`);
+  return r.data;
+};
+
+export const savePost = async (postId: string) => {
+  const r = await api.post(`/social/posts/${postId}/save`);
+  return r.data;
+};
+
+export const unsavePost = async (postId: string) => {
+  const r = await api.post(`/social/posts/${postId}/unsave`);
+  return r.data;
+};
+
+export const addComment = async (postId: string, content: string) => {
+  const r = await api.post(`/social/posts/${postId}/comments`, { content });
+  return r.data;
+};
+
+export const createSocialPost = async (data: { content: string; mediaAssetIds?: string[]; tags?: string[]; category?: string; type?: string }) => {
+  const r = await api.post("/social/posts", data);
+  return r.data;
+};
+
+export const getComments = async (postId: string, page = 0, size = 50) => {
+  const r = await api.get(`/social/posts/${postId}/comments`, { params: { page, size } });
+  return r.data;
+};
+
+export const getFollowers = async (userId: string) => {
+  const r = await api.get(`/social/followers/${userId}`);
+  return r.data || [];
+};
+
+export const getFollowing = async (userId: string) => {
+  const r = await api.get(`/social/following/${userId}`);
+  return r.data || [];
+};
+
+export const getTrendingPosts = async (page = 0, size = 20) => {
+  const r = await api.get("/social/trending", { params: { page, size } });
+  const data = r.data || {};
+  if (data.content && !data.items) data.items = data.content;
+  if (!data.items) data.items = [];
+  return data;
+};
+
+export const sharePost = async (postId: string) => {
+  const r = await api.post(`/social/posts/${postId}/share`);
+  return r.data;
+};
+
+export const shareReel = async (reelId: string) => {
+  const r = await api.post(`/reels/${reelId}/share`);
+  return r.data;
+};
+
+export const deletePost = async (postId: string) => {
+  const r = await api.delete(`/social/posts/${postId}`);
+  return r.data;
+};
+
+export const deleteComment = async (postId: string, commentId: string) => {
+  const r = await api.delete(`/social/posts/${postId}/comments/${commentId}`);
+  return r.data;
+};
+
+export const getActivity = async () => {
+  const r = await api.get("/social/activity");
+  const data = r.data;
+  return Array.isArray(data) ? data : [];
+};
+
+export type DiscoveryFeedItem = {
+  id: string;
+  type: string;
+  title?: string;
+  name?: string;
+  description?: string;
+  thumbnailUrl?: string;
+  [key: string]: any;
 };

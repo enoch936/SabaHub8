@@ -1,7 +1,7 @@
 "use client";
 
-import AdminJobModerationWorkspace from "@/components/admin/AdminJobModerationWorkspace";
+import AdminMarketplaceOrchestrationWorkspace from "@/components/admin/AdminJobModerationWorkspace";
 
 export default function AdminJobsPage() {
-  return <AdminJobModerationWorkspace />;
+  return <AdminMarketplaceOrchestrationWorkspace />;
 }

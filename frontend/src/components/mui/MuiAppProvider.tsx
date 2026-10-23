@@ -107,8 +107,8 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
               textUnderlineOffset: 3,
               transition,
               "&:hover": {
-                color: secondary,
                 textDecorationColor: alpha(secondary, 0.72),
+                backgroundColor: alpha(secondary, 0.04),
               },
             },
           },
@@ -197,6 +197,10 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
               minHeight: 40,
               borderRadius: 12,
               transition,
+              "&:hover": {
+                transform: "none",
+                boxShadow: isDark ? "0 8px 24px rgba(0, 0, 0, 0.4)" : "0 8px 20px rgba(15, 23, 42, 0.1)",
+              },
             },
             contained: {
               color: contrastText,
@@ -205,7 +209,8 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
               boxShadow: isDark ? "0 10px 22px rgba(0, 0, 0, 0.35)" : "0 10px 22px rgba(15, 23, 42, 0.12)",
               "&:hover": {
                 backgroundImage: "none",
-                backgroundColor: isDark ? "#60a5fa" : "#0f172a",
+                backgroundColor: primary,
+                boxShadow: isDark ? "0 12px 30px rgba(0, 0, 0, 0.5)" : "0 12px 28px rgba(15, 23, 42, 0.2)",
               },
             },
             outlined: {
@@ -213,11 +218,13 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
               "&:hover": {
                 borderColor: alpha(primary, 0.28),
                 backgroundColor: isDark ? alpha("#ffffff", 0.06) : "rgba(248, 250, 252, 1)",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
               },
             },
             text: {
               "&:hover": {
                 backgroundColor: alpha(primary, 0.04),
+                boxShadow: "none",
               },
             },
           },
@@ -229,6 +236,8 @@ export default function MuiAppProvider({ children }: { children: ReactNode }) {
               transition,
               "&:hover": {
                 backgroundColor: alpha(primary, isDark ? 0.12 : 0.05),
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                transform: "none",
               },
             },
           },

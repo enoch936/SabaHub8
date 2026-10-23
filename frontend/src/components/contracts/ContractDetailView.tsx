@@ -22,10 +22,18 @@ import { DisputeContractModal } from "./DisputeContractModal";
 import { MilestoneCard } from "./MilestoneCard";
 import { SubmitMilestoneModal } from "./SubmitMilestoneModal";
 import { AnimatedStarRating } from "@/components/reviews/AnimatedStarRating";
-import { getMilestoneDeadlineStatus, useContractStore } from "@/lib/contractStore";
+import {
+  getMilestoneDeadlineStatus,
+  useContractStore,
+} from "@/lib/contractStore";
 import { useDisputeStore } from "@/lib/disputeStore";
 import { useReviewStore } from "@/lib/reviewStore";
-import type { ContractStatus, Milestone, MilestoneStatus, PlatformContract } from "@/lib/types";
+import type {
+  ContractStatus,
+  Milestone,
+  MilestoneStatus,
+  PlatformContract,
+} from "@/lib/types";
 import { useWalletStore } from "@/lib/walletStore";
 import CounterpartyProfileCard from "@/components/workspace/profile/CounterpartyProfileCard";
 
@@ -37,7 +45,10 @@ interface ContractDetailViewProps {
 
 const STATUS_CONFIG: Record<ContractStatus, { label: string; color: string }> = {
   ACTIVE: { label: "Active", color: "bg-green-100 text-green-700" },
-  IN_PROGRESS: { label: "In Progress", color: "bg-emerald-100 text-emerald-700" },
+  IN_PROGRESS: {
+    label: "In Progress",
+    color: "bg-emerald-100 text-emerald-700",
+  },
   DELIVERED: { label: "Delivered", color: "bg-sky-100 text-sky-700" },
   DRAFT: { label: "Draft", color: "bg-gray-100 text-gray-600" },
   COMPLETED: { label: "Completed", color: "bg-blue-100 text-blue-700" },
@@ -68,63 +79,93 @@ export function ContractDetailView({
   onClose,
   userRole = "EMPLOYER",
 }: ContractDetailViewProps) {
-  const { acceptTerms, fundEscrowFromWallet, requestContractRefund, decideContractRefund } = useContractStore();
+  const {
+    acceptTerms,
+    fundEscrowFromWallet,
+    requestContractRefund,
+    decideContractRefund,
+  } = useContractStore();
   const fetchDisputes = useDisputeStore((state) => state.fetchDisputes);
-  const linkedDispute = useDisputeStore((state) => state.getByContractId(contract.id));
+  const linkedDispute = useDisputeStore((state) =>
+    state.getByContractId(contract.id),
+  );
   const reviews = useReviewStore((state) => state.reviews);
   const fetchReviews = useReviewStore((state) => state.fetchReviews);
   const submitReview = useReviewStore((state) => state.submitReview);
   const walletBalance = useWalletStore((state) => state.balance);
   const fetchWalletBalance = useWalletStore((state) => state.fetchBalance);
   const [showAddMilestone, setShowAddMilestone] = useState(false);
-  const [submitMilestoneTarget, setSubmitMilestoneTarget] = useState<Milestone | null>(null);
-  const [approveMilestoneTarget, setApproveMilestoneTarget] = useState<Milestone | null>(null);
+  const [submitMilestoneTarget, setSubmitMilestoneTarget] =
+    useState<Milestone | null>(null);
+  const [approveMilestoneTarget, setApproveMilestoneTarget] =
+    useState<Milestone | null>(null);
   const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [refundNote, setRefundNote] = useState("");
-  const [escrowAction, setEscrowAction] = useState<"fund" | "request" | "approve" | "reject" | null>(null);
+  const [escrowAction, setEscrowAction] = useState<
+    "fund" | "request" | "approve" | "reject" | null
+  >(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const status = STATUS_CONFIG[contract.status];
-  const approvedCount = contract.milestones.filter((item) => item.status === "APPROVED").length;
+  const approvedCount = contract.milestones.filter(
+    (item) => item.status === "APPROVED",
+  ).length;
   const totalCount = contract.milestones.length;
   const progressPct = totalCount > 0 ? (approvedCount / totalCount) * 100 : 0;
-  const overdueCount = contract.milestones.filter((item) => getMilestoneDeadlineStatus(item) === "overdue").length;
+  const overdueCount = contract.milestones.filter(
+    (item) => getMilestoneDeadlineStatus(item) === "overdue",
+  ).length;
   const isEmployer = userRole === "EMPLOYER";
   const isFreelancer = userRole === "FREELANCER";
   const isActive =
-    contract.status === "ACTIVE" || contract.status === "IN_PROGRESS" || contract.status === "DELIVERED";
+    contract.status === "ACTIVE" ||
+    contract.status === "IN_PROGRESS" ||
+    contract.status === "DELIVERED";
   const isCompleted = contract.status === "COMPLETED";
   const isDraft = contract.status === "DRAFT";
-  const counterpartyId = isEmployer ? contract.freelancerId : contract.employerId;
-  const counterpartyName = isEmployer ? contract.freelancerName : contract.employerName;
+  const counterpartyId = isEmployer
+    ? contract.freelancerId
+    : contract.employerId;
+  const counterpartyName = isEmployer
+    ? contract.freelancerName
+    : contract.employerName;
   const myPartyId = isEmployer ? contract.employerId : contract.freelancerId;
   const secureChatHref = `/chat?user=${encodeURIComponent(counterpartyId)}`;
   const employerSigned = Boolean(contract.signatures?.employerSigned);
   const freelancerSigned = Boolean(contract.signatures?.freelancerSigned);
   const escrowHeld = contract.escrowedAmount ?? 0;
   const escrowRequired = contract.escrowRequiredAmount ?? contract.totalAmount;
-  const escrowRemaining = Math.max(0, Math.round((escrowRequired - escrowHeld) * 100) / 100);
+  const escrowRemaining = Math.max(
+    0,
+    Math.round((escrowRequired - escrowHeld) * 100) / 100,
+  );
   const refundRequest = contract.refundRequest;
-  const myRefundApproval = isEmployer ? refundRequest?.employerApproval : refundRequest?.freelancerApproval;
+  const myRefundApproval = isEmployer
+    ? refundRequest?.employerApproval
+    : refundRequest?.freelancerApproval;
   const refundRequestPending = refundRequest?.status === "PENDING";
   const refundRequestExecuted = refundRequest?.status === "EXECUTED";
   const refundRequestRejected = refundRequest?.status === "REJECTED";
   const walletCurrency =
-    contract.currency === "ETB" || contract.currency === "USD" ? contract.currency : walletBalance?.currency ?? "USD";
+    contract.currency === "ETB" || contract.currency === "USD"
+      ? contract.currency
+      : walletBalance?.currency ?? "USD";
   const walletCurrencyBalance =
     walletBalance?.byCurrency?.[walletCurrency] ??
-    (walletBalance?.currency === walletCurrency ? {
-      availableBalance: walletBalance.available,
-      balance: walletBalance.total,
-      currency: walletCurrency,
-      escrowHeld: 0,
-      pendingPayouts: walletBalance.pending,
-      holds: walletBalance.holds,
-    } : undefined);
+    (walletBalance?.currency === walletCurrency
+      ? {
+          availableBalance: walletBalance.available,
+          balance: walletBalance.total,
+          currency: walletCurrency,
+          escrowHeld: 0,
+          pendingPayouts: walletBalance.pending,
+          holds: walletBalance.holds,
+        }
+      : undefined);
   const walletAvailable = walletCurrencyBalance?.availableBalance;
   const canFundEscrow =
     isEmployer &&
@@ -144,7 +185,12 @@ export function ContractDetailView({
   const reviewCommentLength = reviewComment.trim().length;
 
   const contractReviews = useMemo(
-    () => reviews.filter((review) => normalizeReviewKey(review.contractId) === normalizeReviewKey(contract.id)),
+    () =>
+      reviews.filter(
+        (review) =>
+          normalizeReviewKey(review.contractId) ===
+          normalizeReviewKey(contract.id),
+      ),
     [reviews, contract.id],
   );
 
@@ -153,7 +199,9 @@ export function ContractDetailView({
     if (!targetKey) {
       return undefined;
     }
-    return contractReviews.find((review) => normalizeReviewKey(review.targetId) === targetKey);
+    return contractReviews.find(
+      (review) => normalizeReviewKey(review.targetId) === targetKey,
+    );
   }, [contractReviews, counterpartyId]);
 
   const receivedReview = useMemo(() => {
@@ -161,19 +209,37 @@ export function ContractDetailView({
     if (!myTargetKey) {
       return undefined;
     }
-    return contractReviews.find((review) => normalizeReviewKey(review.targetId) === myTargetKey);
+    return contractReviews.find(
+      (review) => normalizeReviewKey(review.targetId) === myTargetKey,
+    );
   }, [contractReviews, myPartyId]);
 
   const governanceItems = useMemo(
     () => [
       { label: "Payment model", value: contract.paymentModel ?? "MILESTONE" },
-      { label: "Escrow", value: contract.requiresEscrow === false ? "Optional" : contract.escrowProtectionLevel ?? "FULL" },
-      { label: "Dispute window", value: `${contract.disputeWindowDays ?? 7} days` },
+      {
+        label: "Escrow",
+        value:
+          contract.requiresEscrow === false
+            ? "Optional"
+            : contract.escrowProtectionLevel ?? "FULL",
+      },
+      {
+        label: "Dispute window",
+        value: `${contract.disputeWindowDays ?? 7} days`,
+      },
       { label: "Auto-release", value: `${contract.autoReleaseDays ?? 5} days` },
-      { label: "Agreement", value: contract.agreementEstablishedAt ? "Established" : "Draft negotiation" },
+      {
+        label: "Agreement",
+        value: contract.agreementEstablishedAt
+          ? "Established"
+          : "Draft negotiation",
+      },
       {
         label: "Escrow lock",
-        value: contract.escrowLockedAt ? new Date(contract.escrowLockedAt).toLocaleDateString() : "Pending lock",
+        value: contract.escrowLockedAt
+          ? new Date(contract.escrowLockedAt).toLocaleDateString()
+          : "Pending lock",
       },
     ],
     [contract],
@@ -184,7 +250,11 @@ export function ContractDetailView({
     try {
       await acceptTerms(contract.id);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Unable to activate contract agreement.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Unable to activate contract agreement.",
+      );
     } finally {
       setIsAccepting(false);
     }
@@ -196,7 +266,11 @@ export function ContractDetailView({
       await fundEscrowFromWallet(contract.id);
       await fetchWalletBalance();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Unable to fund escrow from wallet.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Unable to fund escrow from wallet.",
+      );
     } finally {
       setEscrowAction(null);
     }
@@ -205,11 +279,19 @@ export function ContractDetailView({
   const handleRefundRequest = async () => {
     setEscrowAction("request");
     try {
-      await requestContractRefund(contract.id, refundNote || undefined, escrowHeld);
+      await requestContractRefund(
+        contract.id,
+        refundNote || undefined,
+        escrowHeld,
+      );
       setRefundNote("");
       await fetchWalletBalance();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Unable to create escrow refund request.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Unable to create escrow refund request.",
+      );
     } finally {
       setEscrowAction(null);
     }
@@ -222,7 +304,11 @@ export function ContractDetailView({
       setRefundNote("");
       await fetchWalletBalance();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Unable to update escrow refund decision.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Unable to update escrow refund decision.",
+      );
     } finally {
       setEscrowAction(null);
     }
@@ -280,8 +366,14 @@ export function ContractDetailView({
         <div className="flex items-start justify-between border-b border-[var(--border)] p-6">
           <div className="min-w-0 flex-1 pr-4">
             <div className="mb-1 flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-bold leading-tight">{contract.jobTitle}</h2>
-              <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${status.color}`}>{status.label}</span>
+              <h2 className="text-lg font-bold leading-tight">
+                {contract.jobTitle}
+              </h2>
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-medium ${status.color}`}
+              >
+                {status.label}
+              </span>
               {linkedDispute ? (
                 <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
                   Dispute {linkedDispute.id}
@@ -290,10 +382,16 @@ export function ContractDetailView({
             </div>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Users className="h-4 w-4 flex-shrink-0" />
-              <span>{contract.employerName} ↔ {contract.freelancerName}</span>
+              <span>
+                {contract.employerName} ↔ {contract.freelancerName}
+              </span>
             </div>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2"
+            aria-label="Close"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -305,23 +403,33 @@ export function ContractDetailView({
                 <DollarSign className="h-3.5 w-3.5 text-green-600" />
                 Total
               </div>
-              <p className="font-bold text-green-600">{contract.currency} {contract.totalAmount.toLocaleString()}</p>
+              <p className="font-bold text-green-600">
+                {contract.currency} {contract.totalAmount.toLocaleString()}
+              </p>
             </div>
             <div className="rounded-xl bg-[var(--accent)] p-3 text-center">
               <div className="mb-1 flex items-center justify-center gap-1 text-xs text-muted-foreground">
                 <DollarSign className="h-3.5 w-3.5" />
                 Paid
               </div>
-              <p className="font-bold">{contract.currency} {contract.paidAmount.toLocaleString()}</p>
+              <p className="font-bold">
+                {contract.currency} {contract.paidAmount.toLocaleString()}
+              </p>
             </div>
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-center">
               <div className="mb-1 flex items-center justify-center gap-1 text-xs font-medium text-blue-600">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 Escrow
               </div>
-              <p className="font-bold text-blue-700">{contract.currency} {(contract.escrowedAmount ?? 0).toLocaleString()}</p>
+              <p className="font-bold text-blue-700">
+                {contract.currency}{" "}
+                {(contract.escrowedAmount ?? 0).toLocaleString()}
+              </p>
               <p className="mt-1 text-[11px] text-blue-600/80">
-                Required: {contract.currency} {(contract.escrowRequiredAmount ?? contract.totalAmount).toLocaleString()}
+                Required: {contract.currency}{" "}
+                {(
+                  contract.escrowRequiredAmount ?? contract.totalAmount
+                ).toLocaleString()}
               </p>
             </div>
             <div className="rounded-xl bg-[var(--accent)] p-3 text-center">
@@ -329,14 +437,21 @@ export function ContractDetailView({
                 <CheckCircle className="h-3.5 w-3.5" />
                 Milestones
               </div>
-              <p className="font-bold">{approvedCount}/{totalCount}</p>
+              <p className="font-bold">
+                {approvedCount}/{totalCount}
+              </p>
             </div>
           </div>
 
           <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
             {governanceItems.map((item) => (
-              <div key={item.label} className="rounded-2xl border border-[var(--border)] bg-[var(--accent)] p-4">
-                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{item.label}</p>
+              <div
+                key={item.label}
+                className="rounded-2xl border border-[var(--border)] bg-[var(--accent)] p-4"
+              >
+                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                  {item.label}
+                </p>
                 <p className="mt-2 text-sm font-semibold">{item.value}</p>
               </div>
             ))}
@@ -344,21 +459,30 @@ export function ContractDetailView({
 
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--accent)] p-4">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Signatures</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                Signatures
+              </p>
               <p className="mt-2 text-sm font-semibold">
-                Employer: {employerSigned ? "Signed" : "Pending"} • Freelancer: {freelancerSigned ? "Signed" : "Pending"}
+                Employer: {employerSigned ? "Signed" : "Pending"} • Freelancer:{" "}
+                {freelancerSigned ? "Signed" : "Pending"}
               </p>
               {contract.signatures?.contractHash ? (
                 <p className="mt-2 break-all text-xs text-muted-foreground">
-                  Agreement hash: {contract.signatures.contractHash.slice(0, 24)}...
+                  Agreement hash: {contract.signatures.contractHash.slice(0, 24)}
+                  ...
                 </p>
               ) : null}
             </div>
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--accent)] p-4">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Agreement Version</p>
-              <p className="mt-2 text-sm font-semibold">v{contract.agreementVersion ?? 1}</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                Agreement Version
+              </p>
+              <p className="mt-2 text-sm font-semibold">
+                v{contract.agreementVersion ?? 1}
+              </p>
               <p className="mt-2 text-xs text-muted-foreground">
-                Contract completion is blocked until every milestone is approved and held escrow reaches zero.
+                Contract completion is blocked until every milestone is approved
+                and held escrow reaches zero.
               </p>
             </div>
           </div>
@@ -372,14 +496,19 @@ export function ContractDetailView({
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--accent)] p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Escrow flow</p>
+                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                    Escrow flow
+                  </p>
                   <p className="mt-2 text-sm font-semibold">
-                    Escrow is funded from the employer wallet and locked before payout.
+                    Escrow is funded from the employer wallet and locked before
+                    payout.
                   </p>
                 </div>
                 <span
                   className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                    escrowRemaining <= 0 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                    escrowRemaining <= 0
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-amber-100 text-amber-700"
                   }`}
                 >
                   {escrowRemaining <= 0 ? "Fully funded" : "Funding required"}
@@ -387,26 +516,36 @@ export function ContractDetailView({
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] p-3">
                   <p className="text-xs text-muted-foreground">Held now</p>
-                  <p className="mt-1 font-semibold">{contract.currency} {escrowHeld.toLocaleString()}</p>
+                  <p className="mt-1 font-semibold">
+                    {contract.currency} {escrowHeld.toLocaleString()}
+                  </p>
                 </div>
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] p-3">
                   <p className="text-xs text-muted-foreground">Remaining</p>
-                  <p className="mt-1 font-semibold">{contract.currency} {escrowRemaining.toLocaleString()}</p>
+                  <p className="mt-1 font-semibold">
+                    {contract.currency} {escrowRemaining.toLocaleString()}
+                  </p>
                 </div>
               </div>
 
               <p className="mt-3 text-xs text-muted-foreground">
                 Wallet available for {walletCurrency}:{" "}
-                {walletAvailable === undefined ? "Loading..." : `${walletCurrency} ${walletAvailable.toLocaleString()}`}
+                {walletAvailable === undefined
+                  ? "Loading..."
+                  : `${walletCurrency} ${walletAvailable.toLocaleString()}`}
               </p>
 
               {canFundEscrow ? (
                 <button
                   onClick={handleFundEscrow}
-                  disabled={escrowAction === "fund" || (walletAvailable !== undefined && walletAvailable + 0.01 < escrowRemaining)}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] py-2 text-sm font-medium disabled:opacity-50"
+                  disabled={
+                    escrowAction === "fund" ||
+                    (walletAvailable !== undefined &&
+                      walletAvailable + 0.01 < escrowRemaining)
+                  }
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-solid)] py-2 text-sm font-medium disabled:opacity-50"
                 >
                   {escrowAction === "fund" ? (
                     <>
@@ -423,8 +562,9 @@ export function ContractDetailView({
               ) : null}
 
               <p className="mt-3 text-xs text-muted-foreground">
-                Refunds never move automatically. Held funds can go back only after both client and freelancer approve the
-                refund request, or when admin resolves the case.
+                Refunds never move automatically. Held funds can go back only
+                after both client and freelancer approve the refund request, or
+                when admin resolves the case.
               </p>
             </div>
           </div>
@@ -432,12 +572,16 @@ export function ContractDetailView({
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--accent)] p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Refund governance</p>
+                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                  Refund governance
+                </p>
                 <p className="mt-2 text-sm font-semibold">
-                  Escrow can return to the client only with dual approval or admin resolution.
+                  Escrow can return to the client only with dual approval or
+                  admin resolution.
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Current refundable balance: {contract.currency} {escrowHeld.toLocaleString()}
+                  Current refundable balance: {contract.currency}{" "}
+                  {escrowHeld.toLocaleString()}
                 </p>
               </div>
               {refundRequest ? (
@@ -460,46 +604,69 @@ export function ContractDetailView({
             {refundRequest ? (
               <>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <div className={`rounded-xl border p-3 text-sm ${getApprovalTone(refundRequest.employerApproval?.status)}`}>
-                    <p className="text-xs uppercase tracking-[0.12em]">Client approval</p>
-                    <p className="mt-1 font-semibold">{refundRequest.employerApproval?.status ?? "PENDING"}</p>
+                  <div
+                    className={`rounded-xl border p-3 text-sm ${getApprovalTone(refundRequest.employerApproval?.status)}`}
+                  >
+                    <p className="text-xs uppercase tracking-[0.12em]">
+                      Client approval
+                    </p>
+                    <p className="mt-1 font-semibold">
+                      {refundRequest.employerApproval?.status ?? "PENDING"}
+                    </p>
                     {refundRequest.employerApproval?.actedAt ? (
                       <p className="mt-1 text-xs opacity-80">
-                        {new Date(refundRequest.employerApproval.actedAt).toLocaleString()}
+                        {new Date(
+                          refundRequest.employerApproval.actedAt,
+                        ).toLocaleString()}
                       </p>
                     ) : null}
                   </div>
-                  <div className={`rounded-xl border p-3 text-sm ${getApprovalTone(refundRequest.freelancerApproval?.status)}`}>
-                    <p className="text-xs uppercase tracking-[0.12em]">Freelancer approval</p>
-                    <p className="mt-1 font-semibold">{refundRequest.freelancerApproval?.status ?? "PENDING"}</p>
+                  <div
+                    className={`rounded-xl border p-3 text-sm ${getApprovalTone(refundRequest.freelancerApproval?.status)}`}
+                  >
+                    <p className="text-xs uppercase tracking-[0.12em]">
+                      Freelancer approval
+                    </p>
+                    <p className="mt-1 font-semibold">
+                      {refundRequest.freelancerApproval?.status ?? "PENDING"}
+                    </p>
                     {refundRequest.freelancerApproval?.actedAt ? (
                       <p className="mt-1 text-xs opacity-80">
-                        {new Date(refundRequest.freelancerApproval.actedAt).toLocaleString()}
+                        {new Date(
+                          refundRequest.freelancerApproval.actedAt,
+                        ).toLocaleString()}
                       </p>
                     ) : null}
                   </div>
                 </div>
 
-                <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 text-sm">
+                <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] p-3 text-sm">
                   <p className="font-medium">
-                    Requested refund: {refundRequest.currency} {refundRequest.amount.toLocaleString()}
+                    Requested refund: {refundRequest.currency}{" "}
+                    {refundRequest.amount.toLocaleString()}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Requested by {refundRequest.requestedByRole?.toLowerCase() ?? "party"}
-                    {refundRequest.requestedAt ? ` on ${new Date(refundRequest.requestedAt).toLocaleString()}` : ""}
+                    {refundRequest.requestedAt
+                      ? ` on ${new Date(refundRequest.requestedAt).toLocaleString()}`
+                      : ""}
                   </p>
                   {refundRequest.note ? (
-                    <p className="mt-2 text-xs text-muted-foreground">{refundRequest.note}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {refundRequest.note}
+                    </p>
                   ) : null}
                   {refundRequest.resolutionNote ? (
-                    <p className="mt-2 text-xs text-muted-foreground">Resolution: {refundRequest.resolutionNote}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Resolution: {refundRequest.resolutionNote}
+                    </p>
                   ) : null}
                 </div>
               </>
             ) : null}
 
             {(canRequestRefund || canDecideRefund) && escrowHeld > 0 ? (
-              <div className="mt-4 space-y-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+              <div className="mt-4 space-y-3 rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] p-4">
                 <textarea
                   value={refundNote}
                   onChange={(event) => setRefundNote(event.target.value)}
@@ -515,7 +682,7 @@ export function ContractDetailView({
                   <button
                     onClick={handleRefundRequest}
                     disabled={escrowAction === "request"}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] py-2 text-sm font-medium disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-solid)] py-2 text-sm font-medium disabled:opacity-50"
                   >
                     {escrowAction === "request" ? (
                       <>
@@ -535,7 +702,9 @@ export function ContractDetailView({
                   <div className="grid gap-2 sm:grid-cols-2">
                     <button
                       onClick={() => handleRefundDecision(true)}
-                      disabled={escrowAction === "approve" || escrowAction === "reject"}
+                      disabled={
+                        escrowAction === "approve" || escrowAction === "reject"
+                      }
                       className="flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 py-2 text-sm font-medium text-emerald-700 disabled:opacity-50"
                     >
                       {escrowAction === "approve" ? (
@@ -552,7 +721,9 @@ export function ContractDetailView({
                     </button>
                     <button
                       onClick={() => handleRefundDecision(false)}
-                      disabled={escrowAction === "approve" || escrowAction === "reject"}
+                      disabled={
+                        escrowAction === "approve" || escrowAction === "reject"
+                      }
                       className="flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 py-2 text-sm font-medium text-red-700 disabled:opacity-50"
                     >
                       {escrowAction === "reject" ? (
@@ -574,8 +745,9 @@ export function ContractDetailView({
 
             {refundRequestPending && !canDecideRefund ? (
               <p className="mt-4 text-xs text-muted-foreground">
-                Waiting for the other party to confirm the refund request. If this stalls, open a dispute so admin can
-                make the final escrow decision.
+                Waiting for the other party to confirm the refund request. If
+                this stalls, open a dispute so admin can make the final escrow
+                decision.
               </p>
             ) : null}
           </div>
@@ -583,11 +755,16 @@ export function ContractDetailView({
           {totalCount > 0 ? (
             <div>
               <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
-                <span>{approvedCount} of {totalCount} milestones approved</span>
+                <span>
+                  {approvedCount} of {totalCount} milestones approved
+                </span>
                 <span className="font-medium">{Math.round(progressPct)}%</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-[var(--accent)]">
-                <div className="h-full rounded-full bg-green-500 transition-all duration-500" style={{ width: `${progressPct}%` }} />
+                <div
+                  className="h-full rounded-full bg-green-500 transition-all duration-500"
+                  style={{ width: `${progressPct}%` }}
+                />
               </div>
             </div>
           ) : null}
@@ -595,18 +772,22 @@ export function ContractDetailView({
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Calendar className="h-4 w-4" />
-              <span>Started {new Date(contract.startDate).toLocaleDateString()}</span>
+              <span>
+                Started {new Date(contract.startDate).toLocaleDateString()}
+              </span>
             </div>
             {contract.endDate ? (
               <div className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" />
-                <span>Due {new Date(contract.endDate).toLocaleDateString()}</span>
+                <span>
+                  Due {new Date(contract.endDate).toLocaleDateString()}
+                </span>
               </div>
             ) : null}
             {counterpartyId ? (
               <Link
                 href={secureChatHref}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-slate-700"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-solid)] px-3 py-1.5 text-xs font-medium text-slate-700"
               >
                 <CircleEllipsis className="h-3.5 w-3.5" />
                 Open secure chat with {counterpartyName}
@@ -620,7 +801,7 @@ export function ContractDetailView({
               {(isActive || isDraft) && isEmployer ? (
                 <button
                   onClick={() => setShowAddMilestone(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs"
+                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface-solid)] px-3 py-1.5 text-xs"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   {isDraft ? "Add Draft Milestone" : "Add Milestone"}
@@ -631,7 +812,9 @@ export function ContractDetailView({
             {overdueCount > 0 ? (
               <div className="mb-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                <span>{overdueCount} overdue milestone{overdueCount > 1 ? "s" : ""}</span>
+                <span>
+                  {overdueCount} overdue milestone{overdueCount > 1 ? "s" : ""}
+                </span>
               </div>
             ) : null}
 
@@ -646,8 +829,14 @@ export function ContractDetailView({
                   <MilestoneCard
                     key={milestone.id}
                     milestone={milestone}
-                    canSubmit={isFreelancer && isActive && MILESTONE_SUBMIT_STATUSES.includes(milestone.status)}
-                    canApprove={isEmployer && isActive && milestone.status === "SUBMITTED"}
+                    canSubmit={
+                      isFreelancer &&
+                      isActive &&
+                      MILESTONE_SUBMIT_STATUSES.includes(milestone.status)
+                    }
+                    canApprove={
+                      isEmployer && isActive && milestone.status === "SUBMITTED"
+                    }
                     onSubmit={() => setSubmitMilestoneTarget(milestone)}
                     onApprove={() => setApproveMilestoneTarget(milestone)}
                   />
@@ -672,14 +861,15 @@ export function ContractDetailView({
                     className="mt-0.5 h-4 w-4 rounded accent-primary"
                   />
                   <span className="text-sm">
-                    I have reviewed the end date, milestones, escrow lock, dispute window, and release conditions and
-                    accept the contract agreement.
+                    I have reviewed the end date, milestones, escrow lock,
+                    dispute window, and release conditions and accept the
+                    contract agreement.
                   </span>
                 </label>
                 <button
                   onClick={handleAcceptTerms}
                   disabled={!termsAccepted || isAccepting}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] py-2 text-sm font-medium disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-solid)] py-2 text-sm font-medium disabled:opacity-50"
                 >
                   {isAccepting ? (
                     <>
@@ -701,14 +891,19 @@ export function ContractDetailView({
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--accent)] p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Contract Reviews</p>
+                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                    Contract Reviews
+                  </p>
                   <p className="mt-2 text-sm font-semibold">
-                    Employer and freelancer can review each other once this contract is completed.
+                    Employer and freelancer can review each other once this
+                    contract is completed.
                   </p>
                 </div>
                 <span
                   className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                    submittedReview ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                    submittedReview
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-amber-100 text-amber-700"
                   }`}
                 >
                   {submittedReview ? "Your review submitted" : "Your review pending"}
@@ -716,20 +911,30 @@ export function ContractDetailView({
               </div>
 
               {submittedReview ? (
-                <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
-                  <p className="text-xs text-muted-foreground">Your review for {counterpartyName}</p>
+                <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] p-3">
+                  <p className="text-xs text-muted-foreground">
+                    Your review for {counterpartyName}
+                  </p>
                   <div className="mt-2 flex items-center justify-between gap-3">
-                    <AnimatedStarRating rating={submittedReview.rating} size="sm" animated={false} />
+                    <AnimatedStarRating
+                      rating={submittedReview.rating}
+                      size="sm"
+                      animated={false}
+                    />
                     <span className="text-xs text-muted-foreground">
                       {new Date(submittedReview.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{submittedReview.comment}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {submittedReview.comment}
+                  </p>
                 </div>
               ) : (
-                <div className="mt-4 space-y-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+                <div className="mt-4 space-y-3 rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] p-4">
                   <div>
-                    <p className="text-xs text-muted-foreground">Rate {counterpartyName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Rate {counterpartyName}
+                    </p>
                     <div className="mt-2">
                       <AnimatedStarRating
                         rating={reviewRating}
@@ -747,8 +952,12 @@ export function ContractDetailView({
                   />
                   <button
                     onClick={handleSubmitReview}
-                    disabled={isSubmittingReview || reviewCommentLength < 10 || !counterpartyId}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] py-2 text-sm font-medium disabled:opacity-50"
+                    disabled={
+                      isSubmittingReview ||
+                      reviewCommentLength < 10 ||
+                      !counterpartyId
+                    }
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-solid)] py-2 text-sm font-medium disabled:opacity-50"
                   >
                     {isSubmittingReview ? (
                       <>
@@ -763,15 +972,23 @@ export function ContractDetailView({
               )}
 
               {receivedReview ? (
-                <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
-                  <p className="text-xs text-muted-foreground">Review from {counterpartyName}</p>
+                <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] p-3">
+                  <p className="text-xs text-muted-foreground">
+                    Review from {counterpartyName}
+                  </p>
                   <div className="mt-2 flex items-center justify-between gap-3">
-                    <AnimatedStarRating rating={receivedReview.rating} size="sm" animated={false} />
+                    <AnimatedStarRating
+                      rating={receivedReview.rating}
+                      size="sm"
+                      animated={false}
+                    />
                     <span className="text-xs text-muted-foreground">
                       {new Date(receivedReview.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{receivedReview.comment}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {receivedReview.comment}
+                  </p>
                 </div>
               ) : (
                 <p className="mt-4 text-xs text-muted-foreground">
@@ -783,13 +1000,15 @@ export function ContractDetailView({
 
           {linkedDispute ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-              This contract is in dispute. Admin can message parties, apply restrictions, and settle escrow by full, partial,
-              or percentage allocation.
+              This contract is in dispute. Admin can message parties, apply
+              restrictions, and settle escrow by full, partial, or percentage
+              allocation.
             </div>
           ) : isActive ? (
             <div className="border-t border-[var(--border)] pt-3">
               <p className="mb-2 text-xs text-muted-foreground">
-                If delivery, quality, payment, or scope breaks down, open a real dispute for admin review.
+                If delivery, quality, payment, or scope breaks down, open a real
+                dispute for admin review.
               </p>
               <button
                 onClick={() => setShowDisputeModal(true)}
@@ -803,7 +1022,11 @@ export function ContractDetailView({
         </div>
       </div>
 
-      <AddMilestoneModal contractId={contract.id} isOpen={showAddMilestone} onClose={() => setShowAddMilestone(false)} />
+      <AddMilestoneModal
+        contractId={contract.id}
+        isOpen={showAddMilestone}
+        onClose={() => setShowAddMilestone(false)}
+      />
       {submitMilestoneTarget ? (
         <SubmitMilestoneModal
           contractId={contract.id}

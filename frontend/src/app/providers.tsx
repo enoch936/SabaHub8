@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import PageTransition from "@/components/animations/PageTransition";
 import MuiAppProvider from "@/components/mui/MuiAppProvider";
 import { FloatingChatPanel } from "@/components/chat/FloatingChatPanel";
+import { CallProvider } from "@/components/call/CallProvider";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -28,8 +29,10 @@ export default function Providers({ children }: { children: ReactNode }) {
       <ThemeProvider>
         <MuiAppProvider>
           <MotionConfig reducedMotion="user" transition={{ type: "spring", stiffness: 320, damping: 32 }}>
-            <PageTransition>{children}</PageTransition>
-            <FloatingChatPanel isOpen={isChatOpen} onToggle={() => setIsChatOpen(!isChatOpen)} />
+            <CallProvider>
+              <PageTransition>{children}</PageTransition>
+              <FloatingChatPanel isOpen={isChatOpen} onToggle={() => setIsChatOpen(!isChatOpen)} />
+            </CallProvider>
           </MotionConfig>
           <Toaster position="top-right" richColors />
         </MuiAppProvider>

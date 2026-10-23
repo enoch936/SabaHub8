@@ -136,7 +136,8 @@ export default function AdminChatOperationsWorkspace() {
           { label: "Unread Pressure", value: metrics.unread, icon: <MarkChatUnreadRoundedIcon />, color: "error" },
           { label: "Enterprise Groups", value: metrics.groupCount, icon: <GroupsRoundedIcon />, color: "accent" },
         ].map((metric) => (
-          <Grid key={metric.label} size={{ xs: 12, md: 4 }}>
+          <Grid 
+          key={metric.label} size={{ xs: 12, md: 4 }}>
             <MetricCard
               icon={metric.icon}
               label={metric.label}

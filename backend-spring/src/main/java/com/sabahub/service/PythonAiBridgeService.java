@@ -93,6 +93,14 @@ public class PythonAiBridgeService {
         return postForMap("/admin/reload", Map.of());
     }
 
+    public Optional<Map<String, Object>> rerankDiscovery(Map<String, Object> payload) {
+        return postForMap("/score/discovery/rerank", payload);
+    }
+
+    public Optional<List<Map<String, Object>>> rerankSocialFeed(Map<String, Object> payload) {
+        return postForList("/score/social/rerank", payload, "items");
+    }
+
     private Optional<Map<String, Object>> getForMap(String path) {
         if (!aiEngineProperties.shouldUsePythonBridge()) {
             return Optional.empty();

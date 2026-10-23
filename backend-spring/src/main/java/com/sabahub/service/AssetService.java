@@ -142,13 +142,21 @@ public class AssetService {
     }
 
     public Map<String, Object> getStorageAnalytics() {
-        List<Asset> all = repository.findAll();
-        long totalSize = all.stream().mapToLong(a -> a.getSize() != null ? a.getSize() : 0).sum();
+        return calculateAnalytics(repository.findAll(), 5368709120L); // 5GB default
+    }
+
+    public Map<String, Object> getStorageAnalyticsByOwner(String ownerId) {
+        // Individual users get 1GB default unless specified
+        return calculateAnalytics(repository.findAllByOwnerId(ownerId), 1073741824L);
+    }
+
+    private Map<String, Object> calculateAnalytics(List<Asset> assets, long defaultTotal) {
+        long totalSize = assets.stream().mapToLong(a -> a.getSize() != null ? a.getSize() : 0).sum();
 
         Map<String, Long> sizeByType = new HashMap<>();
         Map<String, Long> countByType = new HashMap<>();
 
-        for (Asset a : all) {
+        for (Asset a : assets) {
             String type = a.getResourceType() != null ? a.getResourceType() : "other";
             sizeByType.put(type, sizeByType.getOrDefault(type, 0L) + (a.getSize() != null ? a.getSize() : 0));
             countByType.put(type, countByType.getOrDefault(type, 0L) + 1);
@@ -156,10 +164,10 @@ public class AssetService {
 
         return Map.of(
                 "totalSize", totalSize,
-                "totalCount", (long) all.size(),
+                "totalCount", (long) assets.size(),
                 "sizeByType", sizeByType,
                 "countByType", countByType,
-                "storageTotal", 5368709120L // 5GB default
+                "storageTotal", defaultTotal
         );
     }
 

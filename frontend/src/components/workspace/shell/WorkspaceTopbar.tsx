@@ -33,9 +33,11 @@ import {
   Notifications,
   Search,
   Settings,
+  VideoCameraFront,
   Wallet,
 } from "@mui/icons-material";
 import RoleModeSwitch from "@/components/RoleModeSwitch";
+import LandingMegaMenu from "@/components/landing/LandingMegaMenu";
 import { ThemeIconButton } from "@/components/mui/ThemeToggle";
 import { WORKSPACE_HEADER_HEIGHT } from "@/components/workspace-shell";
 import { getWorkspaceSurfaceLabel } from "@/components/workspace/navigation/workspace-nav";
@@ -214,6 +216,10 @@ export default function WorkspaceTopbar({
             </Box>
           </Box>
 
+          <Box sx={{ display: { xs: "none", md: "block" }, ml: 1 }}>
+            <LandingMegaMenu />
+          </Box>
+
           <TextField
             size="small"
             placeholder="Search"
@@ -260,6 +266,25 @@ export default function WorkspaceTopbar({
                 "&:hover": { bgcolor: "var(--accent)" },
               }}
             />
+
+            <Tooltip title="Create Reel">
+              <IconButton
+                component={Link}
+                href="/social/reels"
+                className="soft-click"
+                sx={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: "14px",
+                  bgcolor: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  color: "#ec4899",
+                  "&:hover": { bgcolor: "rgba(236,72,153,0.1)" },
+                }}
+              >
+                <VideoCameraFront />
+              </IconButton>
+            </Tooltip>
 
             <Tooltip title="Messages">
               <IconButton

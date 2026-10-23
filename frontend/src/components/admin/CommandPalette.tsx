@@ -101,7 +101,6 @@ export function CommandPalette() {
             }}
             PaperProps={{
                 component: motion.div,
-                // @ts-ignore
                 initial: { opacity: 0, scale: 0.9, y: -20 },
                 animate: { opacity: 1, scale: 1, y: 0 },
                 exit: { opacity: 0, scale: 0.9, y: -20 },

@@ -16,6 +16,8 @@ import com.sabahub.service.WalletService;
 import com.sabahub.service.WalletCurrencyService;
 import com.sabahub.service.RateLimiter;
 import com.sabahub.config.RateLimitProperties;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -34,6 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 public class PaymentController {
@@ -47,6 +50,12 @@ public class PaymentController {
     private final WithdrawalRepository withdrawalRepository;
     private final AuditService auditService;
     private final WalletCurrencyService walletCurrencyService;
+
+    @Value("${payment.min-amount:10}")
+    private double paymentMinAmount;
+
+    @Value("${payment.max-amount:1000000}")
+    private double paymentMaxAmount;
 
     public PaymentController(WalletService walletService,
                              PaymentService paymentService,
@@ -80,8 +89,9 @@ public class PaymentController {
         }
 
         double amount = readAmount(body.get("amount"));
-        if (amount <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "amount_must_be_greater_than_zero"));
+        String amountError = validatePaymentAmount(amount);
+        if (amountError != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", amountError));
         }
         final String currency;
         try {
@@ -89,30 +99,53 @@ public class PaymentController {
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
+        if (!"USD".equals(currency)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "stripe_supports_usd_only"));
+        }
+        final String normalizedIdemKey;
+        try {
+            normalizedIdemKey = normalizeIdempotencyKey(idemKey);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
 
-        if (idemKey != null && !idemKey.isBlank()) {
-            var existing = transactionRepository.findByUserIdAndIdempotencyKey(me.getId(), idemKey);
+        Transaction tx = null;
+        if (normalizedIdemKey != null) {
+            var existing = transactionRepository.findByUserIdAndIdempotencyKey(me.getId(), normalizedIdemKey);
             if (existing.isPresent()) {
-                var tx0 = existing.get();
+                Transaction tx0 = existing.get();
                 Object checkoutUrl = tx0.getMetadata() == null ? null : tx0.getMetadata().get("checkoutUrl");
-                Map<String, Object> response = new LinkedHashMap<>();
-                response.put("transactionId", tx0.getId());
-                response.put("providerRef", tx0.getProviderRef());
-                response.put("checkoutUrl", checkoutUrl);
-                response.put("idempotent", true);
-                return ResponseEntity.ok(response);
+                boolean retryable = tx0.getStatus() == Transaction.Status.FAILED
+                        || checkoutUrl == null
+                        || String.valueOf(checkoutUrl).isBlank();
+                if (!retryable) {
+                    Map<String, Object> response = new LinkedHashMap<>();
+                    response.put("transactionId", tx0.getId());
+                    response.put("providerRef", tx0.getProviderRef());
+                    response.put("checkoutUrl", checkoutUrl);
+                    response.put("idempotent", true);
+                    return ResponseEntity.ok(response);
+                }
+                if ((tx0.getAmount() == null || Double.compare(tx0.getAmount(), amount) != 0)
+                        || (tx0.getCurrency() != null && !tx0.getCurrency().equalsIgnoreCase(currency))) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(Map.of("error", "idempotency_key_conflict"));
+                }
+                tx = tx0;
             }
         }
 
-        Transaction tx = new Transaction();
-        tx.setUserId(me.getId());
-        tx.setProvider(Transaction.Provider.STRIPE);
-        tx.setDirection(Transaction.Direction.IN);
+        if (tx == null) {
+            tx = new Transaction();
+            tx.setUserId(me.getId());
+            tx.setProvider(Transaction.Provider.STRIPE);
+            tx.setDirection(Transaction.Direction.IN);
+            tx.setIdempotencyKey(normalizedIdemKey);
+        }
         tx.setAmount(amount);
         tx.setCurrency(currency);
         tx.setStatus(Transaction.Status.PENDING);
         tx.setMetadata(Map.of("init", true, "provider", "STRIPE"));
-        tx.setIdempotencyKey(idemKey);
         transactionRepository.save(tx);
 
         String sessionReference = "sbh_str_" + tx.getId();
@@ -164,9 +197,10 @@ public class PaymentController {
         if (!rateLimiter.allow("chapa:init:" + me.getId(), limit, windowSeconds)) {
             return ResponseEntity.status(429).body(Map.of("error", "rate_limited"));
         }
-        double amount = ((Number) body.getOrDefault("amount", 0)).doubleValue();
-        if (amount <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "amount_must_be_greater_than_zero"));
+        double amount = readAmount(body.get("amount"));
+        String amountError = validatePaymentAmount(amount);
+        if (amountError != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", amountError));
         }
         final String currency;
         try {
@@ -174,35 +208,57 @@ public class PaymentController {
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
+        if (!"ETB".equals(currency)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "chapa_supports_etb_only"));
+        }
+        final String normalizedIdemKey;
+        try {
+            normalizedIdemKey = normalizeIdempotencyKey(idemKey);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
 
-        if (idemKey != null && !idemKey.isBlank()) {
-            var existing = transactionRepository.findByUserIdAndIdempotencyKey(me.getId(), idemKey);
+        Transaction tx = null;
+        if (normalizedIdemKey != null) {
+            var existing = transactionRepository.findByUserIdAndIdempotencyKey(me.getId(), normalizedIdemKey);
             if (existing.isPresent()) {
-                var tx0 = existing.get();
+                Transaction tx0 = existing.get();
                 Object checkoutUrl = tx0.getMetadata() == null ? null : tx0.getMetadata().get("checkoutUrl");
-                Object providerRef = tx0.getProviderRef();
-                Map<String, Object> response = new LinkedHashMap<>();
-                response.put("transactionId", tx0.getId());
-                response.put("idempotent", true);
-                if (providerRef != null) {
-                    response.put("providerRef", providerRef);
-                }
-                if (checkoutUrl != null) {
+                boolean retryable = tx0.getStatus() == Transaction.Status.FAILED
+                        || checkoutUrl == null
+                        || String.valueOf(checkoutUrl).isBlank();
+                if (!retryable) {
+                    Object providerRef = tx0.getProviderRef();
+                    Map<String, Object> response = new LinkedHashMap<>();
+                    response.put("transactionId", tx0.getId());
+                    response.put("idempotent", true);
+                    response.put("status", tx0.getStatus());
+                    if (providerRef != null) {
+                        response.put("providerRef", providerRef);
+                    }
                     response.put("checkoutUrl", checkoutUrl);
+                    return ResponseEntity.ok(response);
                 }
-                return ResponseEntity.ok(response);
+                if ((tx0.getAmount() == null || Double.compare(tx0.getAmount(), amount) != 0)
+                        || (tx0.getCurrency() != null && !tx0.getCurrency().equalsIgnoreCase(currency))) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(Map.of("error", "idempotency_key_conflict"));
+                }
+                tx = tx0;
             }
         }
 
-        Transaction tx = new Transaction();
-        tx.setUserId(me.getId());
-        tx.setProvider(Transaction.Provider.CHAPA);
-        tx.setDirection(Transaction.Direction.IN);
+        if (tx == null) {
+            tx = new Transaction();
+            tx.setUserId(me.getId());
+            tx.setProvider(Transaction.Provider.CHAPA);
+            tx.setDirection(Transaction.Direction.IN);
+            tx.setIdempotencyKey(normalizedIdemKey);
+        }
         tx.setAmount(amount);
         tx.setCurrency(currency);
         tx.setStatus(Transaction.Status.PENDING);
         tx.setMetadata(Map.of("init", true));
-        tx.setIdempotencyKey(idemKey);
         transactionRepository.save(tx);
 
         String txRef = "sbh_" + tx.getId();
@@ -268,6 +324,7 @@ public class PaymentController {
                 ));
             }
 
+            assertStripeSessionMatchesTransaction(tx, inspection);
             double amount = tx.getAmount() == null ? 0.0 : tx.getAmount();
             String currency = tx.getCurrency();
             Map<String, Object> result = settleInboundFundingTransaction(tx, amount, currency, inspection);
@@ -284,8 +341,9 @@ public class PaymentController {
 
     @PostMapping("/payments/chapa/finalize")
     public ResponseEntity<Map<String, Object>> finalizeChapa(@RequestBody Map<String, Object> body) {
+        User me = null;
         try {
-            User me = currentUserService.requireUser();
+            me = currentUserService.requireUser();
             Transaction tx = resolveOwnedFundingTransaction(me, Transaction.Provider.CHAPA, body);
             if (tx.getStatus() == Transaction.Status.SUCCESS) {
                 return ResponseEntity.ok(Map.of(
@@ -305,17 +363,13 @@ public class PaymentController {
                 ));
             }
 
-            double amount = firstPositiveNumber(
-                    tx.getAmount(),
-                    readAmount(verification.get("amount"))
-            );
-            String currency = normalizeCurrency(
-                    valueAsText(verification.get("currency")),
-                    tx.getCurrency() == null ? "ETB" : tx.getCurrency()
-            );
+            assertChapaVerificationMatchesTransaction(tx, verification);
+            double amount = tx.getAmount() == null ? 0.0 : tx.getAmount();
+            String currency = tx.getCurrency();
             Map<String, Object> result = settleInboundFundingTransaction(tx, amount, currency, verification);
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException ex) {
+            log.warn("Chapa finalize rejected: {}", ex.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         } catch (IllegalStateException ex) {
             if ("forbidden".equals(ex.getMessage())) {
@@ -331,18 +385,22 @@ public class PaymentController {
     @PostMapping("/payments/chapa/webhook")
     public ResponseEntity<Map<String, Object>> chapaWebhook(
             @RequestHeader(name = "X-Chapa-Signature", required = false) String signature,
-            @RequestHeader(name = "Idempotency-Key", required = false) String idemKey,
-            @RequestBody Map<String, Object> payload,
+            @RequestBody String rawPayload,
             HttpServletRequest request) {
         int limit = rateLimitProperties.getWebhookPerMinutePerIp();
         int windowSeconds = rateLimitProperties.getWindowSeconds();
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isBlank()) ip = request.getRemoteAddr();
+        String ip = clientIp(request);
         if (!rateLimiter.allow("chapa:webhook:" + ip, limit, windowSeconds)) {
             return ResponseEntity.status(429).body(Map.of("error", "rate_limited"));
         }
-        if (!paymentService.verifyChapaSignature(payload, signature)) {
+        if (!paymentService.verifyChapaSignature(rawPayload, signature)) {
             return ResponseEntity.status(401).body(Map.of("error", "invalid_signature"));
+        }
+        final Map<String, Object> payload;
+        try {
+            payload = paymentService.parseJsonMap(rawPayload);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
         Map<String, Object> data = payload.get("data") instanceof Map<?, ?>
             ? (Map<String, Object>) payload.get("data")
@@ -362,8 +420,7 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "transaction_not_successful"));
         }
 
-        var existing = transactionRepository.findByProviderAndProviderRef(Transaction.Provider.CHAPA, providerRef)
-                .or(() -> (idemKey != null && !idemKey.isBlank()) ? transactionRepository.findByIdempotencyKey(idemKey) : java.util.Optional.empty());
+        var existing = transactionRepository.findByProviderAndProviderRef(Transaction.Provider.CHAPA, providerRef);
         if (existing.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "transaction_not_initialized"));
         }
@@ -371,27 +428,23 @@ public class PaymentController {
         if (tx.getUserId() == null || tx.getUserId().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "transaction_user_not_found"));
         }
-
-        double amount = firstPositiveNumber(
-                tx.getAmount(),
-                readAmount(payload.get("amount")),
-                readAmount(data.get("amount")),
-                readAmount(verification.get("amount"))
-        );
-        final String currency;
-        try {
-            currency = normalizeCurrency(
-                    firstNonBlank(
-                            valueAsText(payload.get("currency")),
-                            valueAsText(data.get("currency")),
-                            valueAsText(verification.get("currency"))
-                    ),
-                    tx.getCurrency() == null ? WalletCurrencyService.ETB : tx.getCurrency()
-            );
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        if (tx.getStatus() == Transaction.Status.SUCCESS) {
+            return ResponseEntity.ok(Map.of(
+                    "ok", true,
+                    "transactionId", tx.getId(),
+                    "providerRef", tx.getProviderRef(),
+                    "status", tx.getStatus().name(),
+                    "idempotent", true
+            ));
         }
 
+        try {
+            assertChapaVerificationMatchesTransaction(tx, verification);
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
+        double amount = tx.getAmount() == null ? 0.0 : tx.getAmount();
+        String currency = tx.getCurrency();
         Map<String, Object> result = settleInboundFundingTransaction(tx, amount, currency, payload);
         return ResponseEntity.ok(result);
     }
@@ -403,8 +456,7 @@ public class PaymentController {
             HttpServletRequest request) {
         int limit = rateLimitProperties.getWebhookPerMinutePerIp();
         int windowSeconds = rateLimitProperties.getWindowSeconds();
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isBlank()) ip = request.getRemoteAddr();
+        String ip = clientIp(request);
         if (!rateLimiter.allow("stripe:webhook:" + ip, limit, windowSeconds)) {
             return ResponseEntity.status(429).body(Map.of("error", "rate_limited"));
         }
@@ -418,7 +470,10 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", ex.getMessage()));
         }
 
-        if (!"checkout.session.completed".equals(event.getType())
+        boolean failedEvent = "checkout.session.async_payment_failed".equals(event.getType())
+                || "checkout.session.expired".equals(event.getType());
+        if (!failedEvent
+                && !"checkout.session.completed".equals(event.getType())
                 && !"checkout.session.async_payment_succeeded".equals(event.getType())) {
             return ResponseEntity.ok(Map.of("received", true, "ignored", true));
         }
@@ -431,11 +486,32 @@ public class PaymentController {
         String providerRef = session.getId();
         Transaction tx = transactionRepository.findByProviderAndProviderRef(Transaction.Provider.STRIPE, providerRef)
                 .orElse(null);
+        if (failedEvent) {
+            if (tx != null && tx.getStatus() == Transaction.Status.PENDING) {
+                tx.setStatus(Transaction.Status.FAILED);
+                Map<String, Object> metadata = tx.getMetadata() == null
+                        ? new LinkedHashMap<>() : new LinkedHashMap<>(tx.getMetadata());
+                metadata.put("failureEvent", event.getType());
+                metadata.put("failedAt", Instant.now().toString());
+                tx.setMetadata(metadata);
+                transactionRepository.save(tx);
+            }
+            return ResponseEntity.ok(Map.of("received", true, "status", "failed"));
+        }
         if (tx == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "transaction_not_initialized"));
         }
         if (tx.getUserId() == null || tx.getUserId().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "transaction_user_not_found"));
+        }
+        if (tx.getStatus() == Transaction.Status.SUCCESS) {
+            return ResponseEntity.ok(Map.of(
+                    "ok", true,
+                    "transactionId", tx.getId(),
+                    "providerRef", tx.getProviderRef(),
+                    "status", tx.getStatus().name(),
+                    "idempotent", true
+            ));
         }
 
         Map<String, Object> inspection = paymentService.inspectStripeCheckoutSession(providerRef);
@@ -443,16 +519,13 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "stripe_payment_not_completed"));
         }
 
-        double amount = firstPositiveNumber(tx.getAmount());
-        final String currency;
         try {
-            currency = normalizeCurrency(
-                    valueAsText(inspection.get("currency")),
-                    tx.getCurrency() == null ? WalletCurrencyService.USD : tx.getCurrency()
-            );
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+            assertStripeSessionMatchesTransaction(tx, inspection);
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
         }
+        double amount = tx.getAmount() == null ? 0.0 : tx.getAmount();
+        String currency = tx.getCurrency();
         Map<String, Object> result = settleInboundFundingTransaction(tx, amount, currency, inspection);
         return ResponseEntity.ok(result);
     }
@@ -481,10 +554,10 @@ public class PaymentController {
         if (!rateLimiter.allow("local:request:" + me.getId(), limit, windowSeconds)) {
             return ResponseEntity.status(429).body(Map.of("error", "rate_limited"));
         }
-        Object amountValue = body.getOrDefault("amount", 0);
-        double amount = amountValue instanceof Number ? ((Number) amountValue).doubleValue() : 0.0;
-        if (amount <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "amount_must_be_greater_than_zero"));
+        double amount = readAmount(body.get("amount"));
+        String amountError = validatePaymentAmount(amount);
+        if (amountError != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", amountError));
         }
 
         final String currency;
@@ -498,9 +571,18 @@ public class PaymentController {
         if (referenceId.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "reference_id_required"));
         }
+        if (referenceId.length() > 128 || !referenceId.matches("[A-Za-z0-9._:-]+")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "invalid_reference_id"));
+        }
+        final String normalizedIdemKey;
+        try {
+            normalizedIdemKey = normalizeIdempotencyKey(idemKey);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
 
-        if (idemKey != null && !idemKey.isBlank()) {
-            var existing = transactionRepository.findByUserIdAndIdempotencyKey(me.getId(), idemKey);
+        if (normalizedIdemKey != null) {
+            var existing = transactionRepository.findByUserIdAndIdempotencyKey(me.getId(), normalizedIdemKey);
             if (existing.isPresent()) {
                 var tx0 = existing.get();
                 return ResponseEntity.ok(Map.of("transactionId", tx0.getId(), "idempotent", true));
@@ -516,7 +598,7 @@ public class PaymentController {
         tx.setStatus(Transaction.Status.PENDING);
         tx.setProviderRef(referenceId);
         tx.setMetadata(body);
-        tx.setIdempotencyKey(idemKey);
+        tx.setIdempotencyKey(normalizedIdemKey);
         transactionRepository.save(tx);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "transactionId", tx.getId(),
@@ -659,9 +741,6 @@ public class PaymentController {
             metadata.put("reviewNote", adminNote);
         }
         tx.setMetadata(metadata);
-        if (idemKey != null && !idemKey.isBlank()) {
-            tx.setIdempotencyKey(idemKey);
-        }
         transactionRepository.save(tx);
 
         if (approved) {
@@ -979,6 +1058,12 @@ public class PaymentController {
         if (tx.getUserId() == null || tx.getUserId().isBlank()) {
             throw new IllegalStateException("transaction_user_not_found");
         }
+        if (tx.getDirection() != Transaction.Direction.IN) {
+            throw new IllegalStateException("invalid_transaction_direction");
+        }
+        if (tx.getProviderRef() == null || tx.getProviderRef().isBlank()) {
+            throw new IllegalStateException("invalid_transaction_reference");
+        }
         if (amount <= 0) {
             amount = tx.getAmount() == null ? 0.0 : tx.getAmount();
         }
@@ -1010,6 +1095,81 @@ public class PaymentController {
                 "walletCredited", true,
                 "ledgerEntryId", entry.getId()
         );
+    }
+
+    private String clientIp(HttpServletRequest request) {
+        String remote = request.getRemoteAddr();
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded == null || forwarded.isBlank() || remote == null) {
+            return remote == null ? "unknown" : remote;
+        }
+        boolean trustedProxy = remote.matches("127\\..*|10\\..*|192\\.168\\..*|172\\.(1[6-9]|2[0-9]|3[01])\\..*|::1");
+        if (!trustedProxy) {
+            return remote;
+        }
+        int comma = forwarded.indexOf(',');
+        String first = comma >= 0 ? forwarded.substring(0, comma) : forwarded;
+        first = first.trim();
+        return first.isEmpty() ? remote : first;
+    }
+
+    private String validatePaymentAmount(double amount) {
+        if (!Double.isFinite(amount) || amount <= 0) {
+            return "amount_must_be_greater_than_zero";
+        }
+        if (amount < paymentMinAmount) {
+            return "amount_below_minimum";
+        }
+        if (amount > paymentMaxAmount) {
+            return "amount_above_maximum";
+        }
+        return null;
+    }
+
+    private String normalizeIdempotencyKey(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        String key = raw.trim();
+        if (key.length() > 128 || !key.matches("[A-Za-z0-9._:-]+")) {
+            throw new IllegalArgumentException("invalid_idempotency_key");
+        }
+        return key;
+    }
+
+    private void assertChapaVerificationMatchesTransaction(Transaction tx, Map<String, Object> verification) {
+        double txAmount = tx.getAmount() == null ? 0.0 : tx.getAmount();
+        if (txAmount <= 0) {
+            throw new IllegalStateException("invalid_transaction_amount");
+        }
+        double verifiedAmount = readAmount(verification.get("amount"));
+        if (verifiedAmount > 0 && Math.abs(verifiedAmount - txAmount) > 0.01) {
+            throw new IllegalStateException("chapa_amount_mismatch");
+        }
+        String txCurrency = tx.getCurrency() == null ? "" : tx.getCurrency().trim().toUpperCase();
+        String verifiedCurrency = valueAsText(verification.get("currency")).toUpperCase();
+        if (!verifiedCurrency.isBlank() && !txCurrency.isBlank() && !txCurrency.equals(verifiedCurrency)) {
+            throw new IllegalStateException("chapa_currency_mismatch");
+        }
+    }
+
+    private void assertStripeSessionMatchesTransaction(Transaction tx, Map<String, Object> inspection) {
+        if (tx.getAmount() == null || tx.getAmount() <= 0) {
+            throw new IllegalStateException("invalid_transaction_amount");
+        }
+        String txCurrency = tx.getCurrency() == null ? "" : tx.getCurrency().trim().toUpperCase();
+        String sessionCurrency = valueAsText(inspection.get("currency")).toUpperCase();
+        if (txCurrency.isBlank() || !txCurrency.equals(sessionCurrency)) {
+            throw new IllegalStateException("stripe_currency_mismatch");
+        }
+        long expectedMinor = paymentService.toMinorUnits(java.math.BigDecimal.valueOf(tx.getAmount()), txCurrency);
+        Object rawAmount = inspection.get("amountTotal");
+        if (!(rawAmount instanceof Number number)) {
+            throw new IllegalStateException("stripe_amount_missing");
+        }
+        if (number.longValue() != expectedMinor) {
+            throw new IllegalStateException("stripe_amount_mismatch");
+        }
     }
 
     private double readAmount(Object raw) {

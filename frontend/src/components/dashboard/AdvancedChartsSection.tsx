@@ -153,12 +153,12 @@ const GeoVisualization = () => {
           backgroundSize: "20px 20px",
         }}
       />
-      {locations.map((loc) => (
+      {locations.map((loc, index) => (
         <motion.div
           key={loc.name}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{ type: "spring", damping: 12, stiffness: 200, delay: Math.random() }}
+          transition={{ type: "spring", damping: 12, stiffness: 200, delay: index * 0.1 }}
           style={{
             position: "absolute",
             top: loc.top,

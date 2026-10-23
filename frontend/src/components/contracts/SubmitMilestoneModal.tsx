@@ -2,7 +2,14 @@
 
 import { useRef, useState, type DragEvent, type FormEvent } from "react";
 import { AnimatePresence } from "framer-motion";
-import { AlertCircle, FileText, Paperclip, Send, Trash2, X } from "lucide-react";
+import {
+  AlertCircle,
+  FileText,
+  Paperclip,
+  Send,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useContractStore } from "@/lib/contractStore";
 import type { Milestone } from "@/lib/types";
 
@@ -124,10 +131,18 @@ export function SubmitMilestoneModal({
     setSubmitError(null);
 
     try {
-      await submitMilestone(contractId, milestone.id, notes.trim() || undefined);
+      await submitMilestone(
+        contractId,
+        milestone.id,
+        notes.trim() || undefined,
+      );
       handleClose();
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Failed to submit milestone. Please try again.");
+      setSubmitError(
+        err instanceof Error
+          ? err.message
+          : "Failed to submit milestone. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -143,7 +158,12 @@ export function SubmitMilestoneModal({
                 <Send className="h-5 w-5 text-primary" />
                 <h2 className="font-semibold">Submit Milestone</h2>
               </div>
-              <button type="button" onClick={handleClose} className="rounded-lg p-1.5" aria-label="Close">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="rounded-lg p-1.5"
+                aria-label="Close"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -152,18 +172,27 @@ export function SubmitMilestoneModal({
               <div className="rounded-xl border border-[var(--border)] bg-[var(--accent)] p-3">
                 <p className="text-sm font-medium">{milestone.title}</p>
                 {milestone.description ? (
-                  <p className="mt-0.5 text-xs text-muted-foreground">{milestone.description}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {milestone.description}
+                  </p>
                 ) : null}
                 <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="font-semibold text-green-600">${milestone.amount.toLocaleString()}</span>
+                  <span className="font-semibold text-green-600">
+                    ${milestone.amount.toLocaleString()}
+                  </span>
                   <span>·</span>
-                  <span>Due {new Date(milestone.dueDate).toLocaleDateString()}</span>
+                  <span>
+                    Due {new Date(milestone.dueDate).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
 
               <div>
                 <label className="mb-1 block text-sm font-medium">
-                  Submission Notes <span className="font-normal text-muted-foreground">(optional)</span>
+                  Submission Notes{" "}
+                  <span className="font-normal text-muted-foreground">
+                    (optional)
+                  </span>
                 </label>
                 <textarea
                   value={notes}
@@ -176,7 +205,10 @@ export function SubmitMilestoneModal({
 
               <div>
                 <label className="mb-1 block text-sm font-medium">
-                  Attachments <span className="font-normal text-muted-foreground">(up to 5 files, 10 MB each)</span>
+                  Attachments{" "}
+                  <span className="font-normal text-muted-foreground">
+                    (up to 5 files, 10 MB each)
+                  </span>
                 </label>
                 <div
                   onDragOver={(event) => {
@@ -187,14 +219,19 @@ export function SubmitMilestoneModal({
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
                   className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-5 transition-colors ${
-                    isDragging ? "border-primary bg-primary/5" : "border-[var(--border)]"
+                    isDragging
+                      ? "border-primary bg-primary/5"
+                      : "border-[var(--border)]"
                   }`}
                 >
                   <Paperclip className="h-5 w-5 text-muted-foreground" />
                   <p className="text-center text-sm text-muted-foreground">
-                    Drag &amp; drop files here, or <span className="font-medium text-primary">browse</span>
+                    Drag &amp; drop files here, or{" "}
+                    <span className="font-medium text-primary">browse</span>
                   </p>
-                  <p className="text-xs text-muted-foreground">PDF, images, ZIP, DOCX, TXT</p>
+                  <p className="text-xs text-muted-foreground">
+                    PDF, images, ZIP, DOCX, TXT
+                  </p>
                 </div>
                 <input
                   ref={fileInputRef}
@@ -225,12 +262,16 @@ export function SubmitMilestoneModal({
                   {files.map((file) => (
                     <li
                       key={file.name}
-                      className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2.5"
+                      className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-solid)] p-2.5"
                     >
                       <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{file.name}</p>
-                        <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
+                        <p className="truncate text-sm font-medium">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatBytes(file.size)}
+                        </p>
                       </div>
                       <button
                         type="button"
@@ -246,7 +287,8 @@ export function SubmitMilestoneModal({
               ) : null}
 
               <p className="text-xs text-muted-foreground">
-                Submitting will change the milestone status to <span className="font-medium">SUBMITTED</span> and notify the
+                Submitting will change the milestone status to{" "}
+                <span className="font-medium">SUBMITTED</span> and notify the
                 employer for review.
               </p>
 
@@ -262,7 +304,7 @@ export function SubmitMilestoneModal({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] py-2 text-sm disabled:opacity-60"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-solid)] py-2 text-sm disabled:opacity-60"
                 >
                   {isSubmitting ? (
                     <>

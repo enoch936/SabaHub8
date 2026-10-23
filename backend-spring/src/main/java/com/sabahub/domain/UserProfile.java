@@ -81,6 +81,9 @@ public class UserProfile {
     private Long contractsCompletedCount;
     private Double totalEarnings;
     private Long successRate;
+    
+    // Social Status
+    private Boolean hasActiveStories;
 
     public UserProfile() {}
 
@@ -243,4 +246,7 @@ public class UserProfile {
 
     public Long getSuccessRate() { return successRate; }
     public void setSuccessRate(Long successRate) { this.successRate = successRate; }
+
+    public Boolean getHasActiveStories() { return hasActiveStories; }
+    public void setHasActiveStories(Boolean hasActiveStories) { this.hasActiveStories = hasActiveStories; }
 }

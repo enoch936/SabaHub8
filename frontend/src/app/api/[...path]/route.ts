@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 /**
  * Generic API proxy for all backend endpoints
  * Forwards requests to backend API at localhost:8080 to avoid CORS issues
@@ -52,14 +55,22 @@ async function proxy(request: Request, urls: string[]) {
   }
 
   let lastError: unknown = null;
+  const attemptedUrls: string[] = [];
+
   for (const url of urls) {
+    attemptedUrls.push(url);
     try {
       const resp = await fetch(url, {
         method: request.method,
         headers,
         body: body ?? undefined,
+        // Add a reasonable timeout to prevent hanging
+        signal: AbortSignal.timeout(30000),
+        // Disable cache to ensure fresh proxying
+        cache: 'no-store',
       });
 
+      // If we got a response (even an error code from backend), return it
       const respHeaders = new Headers(resp.headers);
       // fetch() transparently decompresses the backend body, so forwarding
       // Content-Encoding/Content-Length makes the browser try to decode plain
@@ -77,11 +88,28 @@ async function proxy(request: Request, urls: string[]) {
       });
     } catch (error) {
       lastError = error;
-      console.error(`Proxy error for ${url}:`, error);
+      console.warn(`Proxy attempt failed for ${url}: ${error instanceof Error ? error.message : String(error)}`);
+      // Try next candidate
     }
   }
 
-  return new Response(JSON.stringify({ error: "Backend unavailable", details: String(lastError) }), {
+  const finalErrorMsg = `Proxy total failure for ${request.method} ${request.url}. Attempted: ${attemptedUrls.join(", ")}. Last error: ${lastError instanceof Error ? lastError.stack || lastError.message : String(lastError)}\n`;
+  console.error(finalErrorMsg);
+  
+  // Log to a file we can read
+  try {
+    const logPath = path.join(process.cwd(), "..", "proxy-errors.log");
+    fs.appendFileSync(logPath, `${new Date().toISOString()} - ${finalErrorMsg}`);
+  } catch (e) {
+    console.error("Failed to write to proxy-errors.log:", e);
+  }
+
+  return new Response(JSON.stringify({ 
+    error: "Backend unavailable", 
+    message: "The proxy server could not reach the backend service.",
+    details: lastError instanceof Error ? lastError.message : String(lastError),
+    attempted: attemptedUrls
+  }), {
     status: 502,
     headers: {
       "Content-Type": "application/json",

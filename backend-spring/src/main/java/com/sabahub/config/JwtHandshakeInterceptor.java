@@ -26,25 +26,44 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     @Override
     public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response,
                                    @NonNull WebSocketHandler wsHandler, @NonNull Map<String, Object> attributes) {
+        // Check Authorization header first
+        String token = null;
         List<String> authHeaders = request.getHeaders().get("Authorization");
-        if (authHeaders == null || authHeaders.isEmpty()) {
-            return true; // allow connect; message send will fail if unauthenticated
+        if (authHeaders != null && !authHeaders.isEmpty()) {
+            String header = authHeaders.get(0);
+            if (header != null && header.startsWith("Bearer ")) {
+                token = header.substring(7);
+            }
+        }
+        
+        // Check query parameter if not in header
+        if (token == null) {
+            String query = request.getURI().getQuery();
+            if (query != null && query.contains("token=")) {
+                String[] params = query.split("&");
+                for (String param : params) {
+                    if (param.startsWith("token=")) {
+                        token = param.substring(6);
+                        try {
+                            token = java.net.URLDecoder.decode(token, "UTF-8");
+                        } catch (Exception ignored) {}
+                        break;
+                    }
+                }
+            }
         }
 
-        String header = authHeaders.get(0);
-        if (header == null || !header.startsWith("Bearer ")) {
-            return true;
+        // Extract user from token if found
+        if (token != null && !token.isEmpty()) {
+            try {
+                String email = jwtService.extractSubject(token);
+                var userDetails = userDetailsService.loadUserByUsername(email);
+                attributes.put("wsUser", userDetails);
+            } catch (Exception ignored) {
+                // ignore invalid token
+            }
         }
-
-        String token = header.substring(7);
-        try {
-            String email = jwtService.extractSubject(token);
-            var userDetails = userDetailsService.loadUserByUsername(email);
-            attributes.put("wsUser", userDetails);
-        } catch (Exception ignored) {
-            // ignore invalid token
-        }
-        return true;
+        return true; // allow connect; message send will fail if unauthenticated
     }
 
     @Override

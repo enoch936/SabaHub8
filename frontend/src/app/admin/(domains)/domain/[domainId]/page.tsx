@@ -6,7 +6,7 @@ import AdminDataManagementWorkspace from "@/components/admin/AdminDataManagement
 import AdminDevopsInfrastructureWorkspace from "@/components/admin/AdminDevopsInfrastructureWorkspace";
 import AdminDomainWorkspace from "@/components/admin/AdminDomainWorkspace";
 import AdminFinanceWorkspace from "@/components/admin/AdminFinanceWorkspace";
-import AdminJobModerationWorkspace from "@/components/admin/AdminJobModerationWorkspace";
+import AdminMarketplaceOrchestrationWorkspace from "@/components/admin/AdminJobModerationWorkspace";
 import AdminOperationalDomainConsole from "@/components/admin/AdminOperationalDomainConsole";
 import AdminPlatformControl from "@/components/admin/AdminPlatformControl";
 import AdminProposalWorkspace from "@/components/admin/AdminProposalWorkspace";
@@ -34,7 +34,7 @@ export default async function AdminDomainPage({ params, searchParams }: PageProp
     return <AdminUserManagementWorkspace />;
   }
   if (domainId === "content-moderation-marketplace-governance") {
-    return <AdminJobModerationWorkspace />;
+    return <AdminMarketplaceOrchestrationWorkspace />;
   }
   if (domainId === "ai-governance-model-management") {
     return <AdminAIModelOperationsWorkspace />;

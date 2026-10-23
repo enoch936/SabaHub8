@@ -36,3 +36,14 @@ export function formatPrice(value?: number, currency?: string) {
     maximumFractionDigits: 0,
   }).format(value);
 }
+
+/**
+ * Format an entity with name and ID for enterprise display
+ * Example: John Doe (#USR-1024)
+ */
+export function formatEntityId(name: string | null | undefined, id: string | null | undefined, prefix: string = "USR") {
+  if (!name && !id) return "Unknown";
+  if (!name) return id ? `#${prefix}-${id}` : "Unknown";
+  if (!id) return name;
+  return `${name} (#${prefix}-${id})`;
+}

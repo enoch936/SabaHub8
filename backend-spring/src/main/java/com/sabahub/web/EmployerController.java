@@ -358,6 +358,19 @@ public class EmployerController {
         }
     }
 
+    @GetMapping("/global-search")
+    @PreAuthorize("hasAnyRole('EMPLOYER', 'FREELANCER')")
+    public ResponseEntity<?> globalSearch(
+            @RequestParam(name = "q", required = false, defaultValue = "") String q,
+            @RequestParam(name = "limit", required = false, defaultValue = "20") int limit) {
+        try {
+            return ResponseEntity.ok(marketplaceSearchService.globalSearch(q, limit));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
     // ==================== Helper Methods ====================
 
     private String getCurrentUserId() {

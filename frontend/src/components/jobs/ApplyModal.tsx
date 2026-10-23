@@ -1,7 +1,134 @@
-"use client"; import { useState } from 'react';
-import { X } from 'lucide-react';
-import { toast } from 'sonner';
-import { useJobStore } from '@/lib/jobStore';
-import type { Job } from '@/lib/types'; interface ApplyModalProps { job: Job | null; onClose: () => void;
-} export function ApplyModal({ job, onClose }: ApplyModalProps) { const applyToJob = useJobStore((s) => s.applyToJob); const [coverLetter, setCoverLetter] = useState(''); const [bidAmount, setBidAmount] = useState(''); const [timelineDays, setTimelineDays] = useState('30'); const [isSubmitting, setIsSubmitting] = useState(false); if (!job) return null; const handleSubmit = async (e: React.FormEvent) => { e.preventDefault(); if (!coverLetter.trim() || !bidAmount) { toast.error('Please fill in all required fields'); return; } setIsSubmitting(true); try { await applyToJob(job.id, { coverLetter, bidAmount: parseFloat(bidAmount), timelineDays: parseInt(timelineDays), }); onClose(); } finally { setIsSubmitting(false); } }; return ( <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35"> <div className="sheet-panel w-full max-w-lg max-h-[90vh] overflow-y-auto"> <div className="flex items-center justify-between p-6 border-b border-[var(--border)]"> <div> <h2 className="font-semibold">Apply to Job</h2> <p className="text-sm text-muted-foreground truncate">{job.title}</p> </div> <button onClick={onClose} className="p-2 rounded-lg border border-transparent hover:border-slate-300/70"> <X className="w-5 h-5" /> </button> </div> <form onSubmit={handleSubmit} className="p-6 space-y-4"> <div> <label className="block text-sm font-medium mb-1">Cover Letter *</label> <textarea value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)} placeholder="Describe your experience and why you're the best fit..." rows={5} className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none" required /> </div> <div className="grid grid-cols-2 gap-4"> <div> <label className="block text-sm font-medium mb-1">Bid Amount (USD) *</label> <div className="relative"> <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span> <input type="number" value={bidAmount} onChange={(e) => setBidAmount(e.target.value)} placeholder="0" min="1" className="w-full pl-7 pr-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-primary" required /> </div> </div> <div> <label className="block text-sm font-medium mb-1">Timeline (days)</label> <input type="number" value={timelineDays} onChange={(e) => setTimelineDays(e.target.value)} min="1" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-primary" /> </div> </div> <div className="flex gap-3 pt-2"> <button type="button" onClick={onClose} className="flex-1 px-4 py-2 rounded-lg border border-[var(--border)] text-sm hover:border-slate-300"> Cancel </button> <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm hover:border-slate-300 disabled:opacity-50" > {isSubmitting ? 'Submitting...' : 'Submit Application'} </button> </div> </form> </div> </div> );
+"use client";
+import { useState } from "react";
+import { X } from "lucide-react";
+import { toast } from "sonner";
+import { useJobStore } from "@/lib/jobStore";
+import type { Job } from "@/lib/types";
+interface ApplyModalProps {
+  job: Job | null;
+  onClose: () => void;
+}
+export function ApplyModal({ job, onClose }: ApplyModalProps) {
+  const applyToJob = useJobStore((s) => s.applyToJob);
+  const [coverLetter, setCoverLetter] = useState("");
+  const [bidAmount, setBidAmount] = useState("");
+  const [timelineDays, setTimelineDays] = useState("30");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  if (!job) return null;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!coverLetter.trim() || !bidAmount) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await applyToJob(job.id, {
+        coverLetter,
+        bidAmount: parseFloat(bidAmount),
+        timelineDays: parseInt(timelineDays),
+      });
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35">
+      {" "}
+      <div className="sheet-panel w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        {" "}
+        <div className="flex items-center justify-between p-6 border-b border-[var(--border)]">
+          {" "}
+          <div>
+            {" "}
+            <h2 className="font-semibold">Apply to Job</h2>{" "}
+            <p className="text-sm text-muted-foreground truncate">
+              {job.title}
+            </p>{" "}
+          </div>{" "}
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg border border-transparent hover:border-slate-300/70"
+          >
+            {" "}
+            <X className="w-5 h-5" />{" "}
+          </button>{" "}
+        </div>{" "}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {" "}
+          <div>
+            {" "}
+            <label className="block text-sm font-medium mb-1">
+              Cover Letter *
+            </label>{" "}
+            <textarea
+              value={coverLetter}
+              onChange={(e) => setCoverLetter(e.target.value)}
+              placeholder="Describe your experience and why you're the best fit..."
+              rows={5}
+              className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              required
+            />{" "}
+          </div>{" "}
+          <div className="grid grid-cols-2 gap-4">
+            {" "}
+            <div>
+              {" "}
+              <label className="block text-sm font-medium mb-1">
+                Bid Amount (USD) *
+              </label>{" "}
+              <div className="relative">
+                {" "}
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                  $
+                </span>{" "}
+                <input
+                  type="number"
+                  value={bidAmount}
+                  onChange={(e) => setBidAmount(e.target.value)}
+                  placeholder="0"
+                  min="1"
+                  className="w-full pl-7 pr-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />{" "}
+              </div>{" "}
+            </div>{" "}
+            <div>
+              {" "}
+              <label className="block text-sm font-medium mb-1">
+                Timeline (days)
+              </label>{" "}
+              <input
+                type="number"
+                value={timelineDays}
+                onChange={(e) => setTimelineDays(e.target.value)}
+                min="1"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />{" "}
+            </div>{" "}
+          </div>{" "}
+          <div className="flex gap-3 pt-2">
+            {" "}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 rounded-lg border border-[var(--border)] text-sm hover:border-slate-300"
+            >
+              {" "}
+              Cancel{" "}
+            </button>{" "}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface-solid)] text-sm hover:border-slate-300 disabled:opacity-50"
+            >
+              {" "}
+              {isSubmitting ? "Submitting..." : "Submit Application"}{" "}
+            </button>{" "}
+          </div>{" "}
+        </form>{" "}
+      </div>{" "}
+    </div>
+  );
 }

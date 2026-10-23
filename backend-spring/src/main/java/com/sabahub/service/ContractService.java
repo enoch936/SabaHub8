@@ -359,6 +359,7 @@ public class ContractService {
         contract.setDisputeWindowDays(contract.getDisputeWindowDays() == null ? 7 : contract.getDisputeWindowDays());
         contract.setAutoReleaseDays(contract.getAutoReleaseDays() == null ? 5 : contract.getAutoReleaseDays());
         contract.setAdminReviewRequired(contract.getAdminReviewRequired() == null ? Boolean.TRUE : contract.getAdminReviewRequired());
+        contract.setAvailable(contract.getAvailable() == null ? Boolean.TRUE : contract.getAvailable());
         contract.setAgreementVersion(safeInt(contract.getAgreementVersion(), 1));
         contract.setAgreementEstablishedAt(null);
         contract.setEscrowLockedAt(newDraft ? null : contract.getEscrowLockedAt());

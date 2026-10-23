@@ -15,6 +15,7 @@ import com.sabahub.repository.ProjectRepository;
 import com.sabahub.repository.ProposalRepository;
 import com.sabahub.repository.UserRepository;
 import com.sabahub.service.CurrentUserService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/freelancer/workspace")
+@PreAuthorize("hasRole('FREELANCER')")
 public class FreelancerWorkspaceController {
 
     private static final DateTimeFormatter MONTH_LABEL_FORMAT = DateTimeFormatter.ofPattern("MMM yyyy");

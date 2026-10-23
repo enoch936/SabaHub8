@@ -58,6 +58,19 @@ public class ProposalController {
         }
     }
 
+    // Employer lets AI rank proposals and accepts the highest-ranked eligible proposal
+    @PostMapping("/employer/jobs/{jobId}/proposals/accept-top-ranked")
+    @PreAuthorize("hasRole('EMPLOYER')")
+    public ResponseEntity<?> acceptTopRankedProposal(@PathVariable String jobId) {
+        try {
+            return ResponseEntity.ok(proposalService.acceptTopRankedProposal(jobId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage() == null ? "Bad request" : e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage() == null ? "Forbidden" : e.getMessage()));
+        }
+    }
+
     // Employer rejects proposal (unaccept before contract)
     @PostMapping("/employer/proposals/{proposalId}/reject")
     @PreAuthorize("hasRole('EMPLOYER')")

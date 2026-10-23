@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { ApplyModal } from "@/components/jobs/ApplyModal";
 import { JobCardGrid } from "@/components/jobs/JobCardGrid";
+import { JobCategoryBar } from "@/components/jobs/JobCategoryBar";
 import { JobFilterSidebar } from "@/components/jobs/JobFilterSidebar";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
 import { createThread } from "@/lib/api";
@@ -296,6 +297,11 @@ export default function JobsWorkspace() {
           {headerActions}
         </div>
       )}
+
+      <JobCategoryBar
+        selectedCategory={filters.categories?.[0] ?? "technical"}
+        onCategoryChange={(categoryId) => runJobQuery({ categories: [categoryId], page: 1 })}
+      />
 
       <div className={`grid gap-3 ${filtersOpen ? "xl:grid-cols-[280px_minmax(0,1fr)]" : "grid-cols-1"}`}>
         {filtersOpen ? (

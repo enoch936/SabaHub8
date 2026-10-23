@@ -13,4 +13,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py model_runtime.py taxonomy_engine.py train_models.py ./
 
 EXPOSE 8090
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8090"]
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8090}"]

@@ -357,32 +357,12 @@ def fraud_score(payload: FraudPayload) -> Dict[str, Any]:
 
 @app.post("/assist/chatbot")
 def assist_chatbot(payload: ChatPayload) -> Dict[str, Any]:
-    intent = runtime.classify_intent(payload.prompt)
-    prompt_l = payload.prompt.strip().lower()
-
-    answer = payload.localAnswer or "Ask a specific platform workflow question."
-    actions = ["Open AI dashboard", "Review recommendations", "Run fraud check"]
-    confidence = 0.62
-
-    if intent:
-        confidence = max(confidence, float(intent.get("confidence", 0.0)))
-        if intent["intent"] in {"proposal_help", "proposal"} or "proposal" in prompt_l:
-            answer = "Use skill-specific examples, quantifiable outcomes, and tailor every proposal to the job scope."
-            actions = ["Open proposals page", "Improve proposal template", "Attach portfolio evidence"]
-        elif intent["intent"] in {"payment_help", "payment"} or "payment" in prompt_l or "invoice" in prompt_l:
-            answer = "Use escrow milestones, verify deliverables before release, and keep payment evidence for audits."
-            actions = ["Check wallet", "Review escrow milestones", "Run risk check"]
-        elif "job" in prompt_l or "match" in prompt_l:
-            answer = "Improve profile skill coverage and category alignment to boost recommendation and match scores."
-            actions = ["Update profile skills", "Open AI recommendations", "Adjust category preferences"]
-
-    return {
-        "answer": answer,
-        "suggestedActions": actions,
-        "confidence": round(confidence, 4),
-        "engine": "python-local-nlp",
-        "externalAiApiUsed": False,
-    }
+    return runtime.collaborative_chat_assist(
+        prompt=payload.prompt,
+        context_type=payload.contextType,
+        context_id=payload.contextId,
+        local_answer=payload.localAnswer,
+    )
 
 
 @app.post("/admin/assist")

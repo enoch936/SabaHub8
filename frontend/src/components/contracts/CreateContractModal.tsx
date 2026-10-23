@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent, type ReactElement } from "react";
+import {
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactElement,
+} from "react";
 import { AnimatePresence } from "framer-motion";
 import { AlertCircle, FileText, X } from "lucide-react";
 import { useContractStore } from "@/lib/contractStore";
@@ -28,7 +33,10 @@ const initialForm = {
   terms: "",
 };
 
-export function CreateContractModal({ isOpen, onClose }: CreateContractModalProps): ReactElement {
+export function CreateContractModal({
+  isOpen,
+  onClose,
+}: CreateContractModalProps): ReactElement {
   const { createContract } = useContractStore();
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,7 +44,11 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
 
   const setField =
     (key: keyof typeof form) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    (
+      event: ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >,
+    ) => {
       setForm((current) => ({ ...current, [key]: event.target.value }));
     };
 
@@ -145,7 +157,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
               ) : null}
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Job Title *</label>
+                <label className="mb-1 block text-sm font-medium">
+                  Job Title *
+                </label>
                 <input
                   type="text"
                   value={form.jobTitle}
@@ -157,7 +171,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Freelancer Name *</label>
+                  <label className="mb-1 block text-sm font-medium">
+                    Freelancer Name *
+                  </label>
                   <input
                     type="text"
                     value={form.freelancerName}
@@ -167,7 +183,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Freelancer Email / ID</label>
+                  <label className="mb-1 block text-sm font-medium">
+                    Freelancer Email / ID
+                  </label>
                   <input
                     type="text"
                     value={form.freelancerId}
@@ -179,7 +197,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Employer / Company Name</label>
+                <label className="mb-1 block text-sm font-medium">
+                  Employer / Company Name
+                </label>
                 <input
                   type="text"
                   value={form.employerName}
@@ -191,7 +211,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Total Amount</label>
+                  <label className="mb-1 block text-sm font-medium">
+                    Total Amount
+                  </label>
                   <input
                     type="number"
                     min="0"
@@ -203,7 +225,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Currency</label>
+                  <label className="mb-1 block text-sm font-medium">
+                    Currency
+                  </label>
                   <select
                     value={form.currency}
                     onChange={setField("currency")}
@@ -220,7 +244,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Start Date *</label>
+                  <label className="mb-1 block text-sm font-medium">
+                    Start Date *
+                  </label>
                   <input
                     type="date"
                     value={form.startDate}
@@ -244,7 +270,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Payment Model</label>
+                  <label className="mb-1 block text-sm font-medium">
+                    Payment Model
+                  </label>
                   <select
                     value={form.paymentModel}
                     onChange={setField("paymentModel")}
@@ -256,7 +284,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Escrow Protection</label>
+                  <label className="mb-1 block text-sm font-medium">
+                    Escrow Protection
+                  </label>
                   <select
                     value={form.escrowProtectionLevel}
                     onChange={setField("escrowProtectionLevel")}
@@ -270,7 +300,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Dispute Window (days)</label>
+                  <label className="mb-1 block text-sm font-medium">
+                    Dispute Window (days)
+                  </label>
                   <input
                     type="number"
                     min="1"
@@ -280,7 +312,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Auto-Release (days)</label>
+                  <label className="mb-1 block text-sm font-medium">
+                    Auto-Release (days)
+                  </label>
                   <input
                     type="number"
                     min="1"
@@ -292,7 +326,9 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Terms &amp; Conditions *</label>
+                <label className="mb-1 block text-sm font-medium">
+                  Terms &amp; Conditions *
+                </label>
                 <textarea
                   value={form.terms}
                   onChange={setField("terms")}
@@ -303,8 +339,10 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Contract is created as <span className="font-medium">DRAFT</span>. Full escrow lock is required before
-                the agreement can activate, and milestones must finish on or before the contract end date.
+                Contract is created as{" "}
+                <span className="font-medium">DRAFT</span>. Full escrow lock is
+                required before the agreement can activate, and milestones must
+                finish on or before the contract end date.
               </p>
 
               <div className="flex gap-3 pt-1">
@@ -319,7 +357,7 @@ export function CreateContractModal({ isOpen, onClose }: CreateContractModalProp
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] py-2 text-sm hover:border-slate-300/80 disabled:opacity-60"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-solid)] py-2 text-sm hover:border-slate-300/80 disabled:opacity-60"
                 >
                   {isSubmitting ? (
                     <>

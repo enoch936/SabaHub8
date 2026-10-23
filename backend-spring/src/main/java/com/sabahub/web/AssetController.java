@@ -42,6 +42,12 @@ public class AssetController {
         return service.getStorageAnalytics();
     }
 
+    @GetMapping("/assets/usage")
+    public java.util.Map<String, Object> getUsage() {
+        var me = currentUserService.requireUser();
+        return service.getStorageAnalyticsByOwner(me.getId());
+    }
+
     @GetMapping("/assets/{id}")
     public Asset get(@PathVariable String id) {
         return service.get(id).orElseThrow(() -> new NoSuchElementException("Asset not found"));

@@ -257,8 +257,8 @@ export default function AdminAuditLogWorkspace() {
                 align: "right",
                 render: (_, item) => (
                   <SoftButton
-                    variant="outline"
-                    size="sm"
+                    variant="outlined"
+                    size="small"
                     leftIcon={<VisibilityRoundedIcon sx={{ fontSize: 16 }} />}
                     onClick={() => setSelectedLog(item)}
                   >

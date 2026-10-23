@@ -64,7 +64,7 @@ export function ChartContainer({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: alpha(theme.palette.background.default, 0.3),
+          backgroundColor: isDark ? alpha(theme.palette.background.default, 0.5) : alpha(theme.palette.background.default, 0.3),
           borderRadius: "12px",
           overflow: "hidden",
         }}

@@ -23,7 +23,19 @@ export function connectWs(): Promise<void> {
   if (connected) return Promise.resolve();
   if (connectPromise) return connectPromise;
 
-  ensureClient();
+  // Check for auth token in multiple locations
+  const token = typeof window !== "undefined" ? 
+    (localStorage.getItem("auth_token") || 
+     sessionStorage.getItem("auth_token") || 
+     localStorage.getItem("token") ||
+     sessionStorage.getItem("token")) : null;
+
+  // Silently skip connection if no token found (user not authenticated)
+  if (!token) {
+    return Promise.resolve();
+  }
+
+  ensureClient(token);
   if (client && !client.active) {
     client.activate();
   }
@@ -91,6 +103,10 @@ export function subscribeLiveActivities(onMessage: (body: Record<string, unknown
   return registerSubscription(`/topic/live-activities`, onMessage);
 }
 
+export function subscribeCallSignals(onMessage: (body: Record<string, unknown>) => void): Subscription | null {
+  return registerSubscription(`/user/queue/calls`, onMessage);
+}
+
 export function sendStreamChat(streamId: string, payload: Record<string, unknown>) {
   if (!client || !connected) return;
   client.publish({ destination: `/app/streams/${streamId}/chat.send`, body: JSON.stringify(payload) });
@@ -111,44 +127,53 @@ export function sendStreamSignal(streamId: string, payload: Record<string, unkno
   client.publish({ destination: `/app/streams/${streamId}/signal.publish`, body: JSON.stringify(payload) });
 }
 
-function ensureClient() {
+export function sendCallSignal(payload: Record<string, unknown>) {
+  if (!client || !connected) return;
+  client.publish({ destination: `/app/calls/signal`, body: JSON.stringify(payload) });
+}
+
+function ensureClient(token?: string) {
   if (client) return;
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+  const authToken = token || (typeof window !== "undefined" ? 
+    (localStorage.getItem("auth_token") || 
+     sessionStorage.getItem("auth_token") || 
+     localStorage.getItem("token") ||
+     sessionStorage.getItem("token")) : null);
 
-  // NOTE: In Codespaces, port 8080 must be set to "Public" visibility in the Ports panel
-  // Otherwise WebSocket connections will fail with 302 redirect
-  const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
-  const protocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss" : "ws";
+  const params = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+  const configuredWsUrl = process.env.NEXT_PUBLIC_WS_URL?.trim();
 
   let wsUrl: string;
-  if (isLocalhost) {
-    wsUrl = `ws://localhost:8080/ws`;
+  if (configuredWsUrl) {
+    wsUrl = `${configuredWsUrl.replace(/\/$/, "")}${params}`;
   } else {
-    const host = typeof window !== "undefined" ? window.location.hostname : "";
-    const wsHost = host.replace(/-3000\./, "-8080.");
-    wsUrl = `${protocol}://${wsHost}/ws`;
+    // Local development: backend runs on port 8080 on the same host.
+    const protocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss" : "ws";
+    const hostname = typeof window !== "undefined" ? window.location.hostname : "localhost";
+    wsUrl = `${protocol}://${hostname}:8080/ws${params}`;
   }
 
   client = new Client({
     brokerURL: wsUrl,
-    connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+    connectHeaders: authToken ? { Authorization: `Bearer ${authToken}` } : {},
     reconnectDelay: 10000,
     onConnect: () => {
       connected = true;
+      console.debug("WebSocket connected");
       restoreSubscriptions();
       const resolver = resolveConnect;
       resolveConnect = null;
       if (resolver) resolver();
     },
     onStompError: (frame) => {
-      console.warn("WebSocket STOMP error (port 8080 must be public in Codespaces):", frame.headers?.message);
+      console.debug("WebSocket STOMP error:", frame.headers?.message);
     },
     onWebSocketClose: () => {
       connected = false;
     },
-    onWebSocketError: () => {
-      console.warn("WebSocket connection error - check that port 8080 is public in Codespaces");
+    onWebSocketError: (error) => {
+      console.debug("WebSocket connection error - will retry", error);
     },
   });
 }

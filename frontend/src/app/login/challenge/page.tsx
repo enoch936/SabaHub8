@@ -4,7 +4,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, startTransition, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Mail, ShieldCheck, Smartphone } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Mail, ShieldCheck, Smartphone } from "lucide-react";
 import {
   AuthFlowShell,
   AuthStatusBanner,
@@ -95,6 +95,7 @@ export default function LoginChallengePage() {
   const [emailOtp, setEmailOtp] = useState("");
   const [phoneOtp, setPhoneOtp] = useState("");
   const [authenticatorCode, setAuthenticatorCode] = useState("");
+  const [showPin, setShowPin] = useState(false);
   const [pinCode, setPinCode] = useState("");
   const [recoveryCode, setRecoveryCode] = useState("");
   const [ready, setReady] = useState(false);
@@ -363,7 +364,7 @@ export default function LoginChallengePage() {
             {methodUsesPin ? (
               <AuthTextField
                 label="Security PIN / passcode"
-                type="password"
+                type={showPin ? "text" : "password"}
                 value={pinCode}
                 onChange={(event) => {
                   setPinCode(event.target.value.replace(/[^\d]/g, "").slice(0, 8));
@@ -374,6 +375,16 @@ export default function LoginChallengePage() {
                 autoComplete="current-password"
                 placeholder="Enter your security PIN"
                 autoFocus={!methodUsesEmail && !methodUsesPhone && !methodUsesAuthenticator}
+                suffix={
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center rounded-full p-1 transition-colors hover:text-slate-900"
+                    onClick={() => setShowPin((current) => !current)}
+                    aria-label={showPin ? "Hide PIN" : "Show PIN"}
+                  >
+                    {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                }
               />
             ) : null}
 

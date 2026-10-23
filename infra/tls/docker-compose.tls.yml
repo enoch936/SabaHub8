@@ -1,0 +1,24 @@
+services:
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: sabahub-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SABAHUB_SITE_ADDRESS: ${SABAHUB_SITE_ADDRESS:-localhost}
+      SABAHUB_TLS_EMAIL: ${SABAHUB_TLS_EMAIL:-admin@sabahub.local}
+      SABAHUB_FRONTEND: ${SABAHUB_FRONTEND:-host.docker.internal:3000}
+      SABAHUB_BACKEND: ${SABAHUB_BACKEND:-host.docker.internal:8080}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - sabahub_caddy_data:/data
+      - sabahub_caddy_config:/config
+
+volumes:
+  sabahub_caddy_data:
+  sabahub_caddy_config:

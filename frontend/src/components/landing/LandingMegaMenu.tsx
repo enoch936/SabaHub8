@@ -179,7 +179,7 @@ export default function LandingMegaMenu() {
                           key={section.id}
                           type="button"
                           className={clsx(
-                            "flex w-full items-center justify-between rounded-[1.15rem] px-4 py-3 text-left transition-all active:scale-95 cursor-pointer",
+                            "flex w-full items-center justify-between rounded-[1.15rem] px-4 py-3 text-left transition-[background-color,box-shadow,color] cursor-pointer",
                             active ? "bg-white text-slate-950 shadow-md" : "text-slate-700 hover:bg-gray-100",
                           )}
                           onMouseEnter={() => setActiveRootId(section.id)}
@@ -259,7 +259,7 @@ export default function LandingMegaMenu() {
                                 <Link
                                   key={leaf.id}
                                   href={leaf.href}
-                                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-gray-100 hover:border-slate-300 active:scale-95"
+                                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-[background-color,box-shadow,border-color] hover:bg-gray-100 hover:border-slate-300"
                                   onClick={(e) => {
                                     if (isTouchDevice()) {
                                       e.preventDefault();
@@ -437,7 +437,7 @@ export function LandingMegaMenuMobile({ onNavigate }: LandingMegaMenuMobileProps
                               <Link
                                 key={subgroup.id}
                                 href={subgroup.href}
-                                className="flex items-center justify-between rounded-[0.9rem] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-gray-100 active:scale-95"
+                                className="flex items-center justify-between rounded-[0.9rem] bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-[background-color] hover:bg-gray-100"
                                 onClick={(e) => {
                                   if (isTouchDevice()) {
                                     e.preventDefault();
@@ -453,7 +453,7 @@ export function LandingMegaMenuMobile({ onNavigate }: LandingMegaMenuMobileProps
                             ))}
                             <Link
                               href={section.href}
-                              className="inline-flex items-center gap-2 px-1 pt-1 text-sm font-semibold text-slate-900 hover:bg-gray-100 rounded-md px-2 py-1 transition active:scale-95"
+                              className="inline-flex items-center gap-2 px-1 pt-1 text-sm font-semibold text-slate-900 hover:bg-gray-100 rounded-md px-2 py-1 transition"
                               onClick={(e) => {
                                 if (isTouchDevice()) {
                                   e.preventDefault();
