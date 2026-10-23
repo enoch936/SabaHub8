@@ -23,27 +23,6 @@ const API_BASE_CANDIDATES = Array.from(
   ),
 );
 
-function shouldRetryAcrossHosts(method: string): boolean {
-  const upper = method.toUpperCase();
-  return upper === "GET" || upper === "HEAD" || upper === "OPTIONS";
-}
-
-async function selectReachableBase(candidates: string[]): Promise<string> {
-  for (const base of candidates) {
-    try {
-      const healthUrl = `${base.replace(/\/$/, "")}/actuator/health`;
-      const resp = await fetch(healthUrl, {
-        method: "GET",
-        signal: AbortSignal.timeout(1500),
-      });
-      if (resp.ok) return base;
-    } catch {
-      // Continue checking next candidate.
-    }
-  }
-  return candidates[0];
-}
-
 function buildTargetUrl(apiBase: string, pathParts?: string[]) {
   const path = Array.isArray(pathParts) ? pathParts.join("/") : "";
   return `${apiBase.replace(/\/$/, "")}/api/auth/${path}`.replace(
@@ -140,10 +119,7 @@ export async function POST(
   ctx: { params: Promise<{ path?: string[] }> },
 ) {
   const { path } = await ctx.params;
-  const base = await selectReachableBase(API_BASE_CANDIDATES);
-  const urls = shouldRetryAcrossHosts(request.method)
-    ? API_BASE_CANDIDATES.map((candidate) => buildTargetUrl(candidate, path))
-    : [buildTargetUrl(base, path)];
+  const urls = API_BASE_CANDIDATES.map((candidate) => buildTargetUrl(candidate, path));
   return proxy(request, urls);
 }
 
@@ -152,10 +128,7 @@ export async function PUT(
   ctx: { params: Promise<{ path?: string[] }> },
 ) {
   const { path } = await ctx.params;
-  const base = await selectReachableBase(API_BASE_CANDIDATES);
-  const urls = shouldRetryAcrossHosts(request.method)
-    ? API_BASE_CANDIDATES.map((candidate) => buildTargetUrl(candidate, path))
-    : [buildTargetUrl(base, path)];
+  const urls = API_BASE_CANDIDATES.map((candidate) => buildTargetUrl(candidate, path));
   return proxy(request, urls);
 }
 
@@ -164,10 +137,7 @@ export async function PATCH(
   ctx: { params: Promise<{ path?: string[] }> },
 ) {
   const { path } = await ctx.params;
-  const base = await selectReachableBase(API_BASE_CANDIDATES);
-  const urls = shouldRetryAcrossHosts(request.method)
-    ? API_BASE_CANDIDATES.map((candidate) => buildTargetUrl(candidate, path))
-    : [buildTargetUrl(base, path)];
+  const urls = API_BASE_CANDIDATES.map((candidate) => buildTargetUrl(candidate, path));
   return proxy(request, urls);
 }
 
@@ -176,9 +146,6 @@ export async function DELETE(
   ctx: { params: Promise<{ path?: string[] }> },
 ) {
   const { path } = await ctx.params;
-  const base = await selectReachableBase(API_BASE_CANDIDATES);
-  const urls = shouldRetryAcrossHosts(request.method)
-    ? API_BASE_CANDIDATES.map((candidate) => buildTargetUrl(candidate, path))
-    : [buildTargetUrl(base, path)];
+  const urls = API_BASE_CANDIDATES.map((candidate) => buildTargetUrl(candidate, path));
   return proxy(request, urls);
 }
