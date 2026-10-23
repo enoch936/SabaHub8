@@ -32,7 +32,7 @@ async function selectReachableBase(candidates: string[]): Promise<string> {
       const healthUrl = `${base.replace(/\/$/, "")}/actuator/health`;
       const resp = await fetch(healthUrl, {
         method: "GET",
-        signal: AbortSignal.timeout(1500),
+        signal: AbortSignal.timeout(5000),
       });
       if (resp.ok) return base;
     } catch {
@@ -74,7 +74,7 @@ async function proxy(request: Request, urls: string[]) {
   let lastError: unknown = null;
   for (const url of urls) {
     try {
-      const resp = await fetch(url, init);
+      const resp = await fetch(url, { ...init, signal: AbortSignal.timeout(30000) });
       const respHeaders = new Headers(resp.headers);
       // fetch() transparently decompresses the backend body, so forwarding
       // Content-Encoding/Content-Length makes the browser try to decode plain
