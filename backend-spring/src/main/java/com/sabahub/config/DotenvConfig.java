@@ -47,9 +47,10 @@ public class DotenvConfig implements ApplicationContextInitializer<ConfigurableA
 
             // Add to Spring environment with high priority
             ConfigurableEnvironment environment = applicationContext.getEnvironment();
-            environment.getPropertySources().addFirst(
-                    new MapPropertySource("dotenvProperties", dotenvProperties)
-            );
+            // Add .env only if no environment variable is set (lower precedence than env vars)
+            environment.getPropertySources().addLast(
+                      new MapPropertySource("dotenvProperties", dotenvProperties)
+              );
 
             log.info("✅ Loaded {} properties from .env file", dotenvProperties.size());
             
