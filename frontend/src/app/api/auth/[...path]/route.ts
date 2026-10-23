@@ -37,6 +37,10 @@ async function proxy(request: Request, urls: string[]) {
   // Strip Origin to avoid triggering backend CORS on server-to-server call
   headers.delete("origin");
   headers.delete("Origin");
+  headers.delete("expect");
+  headers.delete("Expect");
+  headers.delete("connection");
+  headers.delete("transfer-encoding");
 
   const init: RequestInit = {
     method: request.method,

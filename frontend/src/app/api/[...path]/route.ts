@@ -38,6 +38,9 @@ async function proxy(request: Request, urls: string[]) {
   headers.delete("host");
   headers.delete("connection");
   headers.delete("content-length");
+  headers.delete("expect");
+  headers.delete("Expect");
+  headers.delete("transfer-encoding");
 
   // Ensure we pass the real client IP info through (optional, but useful).
   if (!headers.has("x-forwarded-host") && request.headers.get("host")) {

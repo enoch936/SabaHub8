@@ -38,6 +38,10 @@ async function proxy(request: Request, urls: string[]) {
   headers.delete("host");
   headers.delete("origin");
   headers.delete("Origin");
+  headers.delete("expect");
+  headers.delete("Expect");
+  headers.delete("connection");
+  headers.delete("transfer-encoding");
 
   const init: RequestInit = {
     method: request.method,
