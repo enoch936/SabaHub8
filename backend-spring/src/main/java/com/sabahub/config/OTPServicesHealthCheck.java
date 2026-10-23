@@ -54,26 +54,16 @@ public class OTPServicesHealthCheck {
             log.warn("   → Get credentials at: https://www.twilio.com/console");
         }
         
-        // Overall Status (strict mode: both providers are mandatory)
+        // Overall Status: require at least one delivery channel (email or SMS).
         log.info("-".repeat(80));
         if (emailConfigured && smsConfigured) {
-            log.info("✅ OTP System Status: FULLY OPERATIONAL (Email + SMS)");
+            log.info("? OTP System Status: FULLY OPERATIONAL (Email + SMS)");
+        } else if (emailConfigured || smsConfigured) {
+            log.warn("??  OTP System Status: OPERATIONAL with a single delivery channel");
         } else {
-            StringBuilder missing = new StringBuilder();
-            if (!emailConfigured) {
-                missing.append("SMTP (spring.mail.username / spring.mail.password)");
-            }
-            if (!smsConfigured) {
-                if (missing.length() > 0) {
-                    missing.append(", ");
-                }
-                missing.append("Twilio Verify (twilio.account-sid / twilio.auth-token / twilio.verify-service-sid)");
-            }
-
-            String errorMessage = "OTP strict startup check failed. Missing required configuration: " + missing;
-            log.error("❌ OTP System Status: STARTUP BLOCKED");
-            log.error("   → {}", errorMessage);
-            log.error("   → Refusing to boot until both SMTP and Twilio are configured.");
+            String errorMessage = "OTP startup check failed: neither SMTP nor Twilio Verify is configured";
+            log.error("? OTP System Status: STARTUP BLOCKED");
+            log.error("   ? {}", errorMessage);
             log.info("=".repeat(80));
             throw new IllegalStateException(errorMessage);
         }
