@@ -3977,6 +3977,7 @@ export async function adminListJobs(status?: string) {
 }
 
 export const adminListProjects = adminListJobs;
+export type Project = Job;
 
 export async function adminPatchJob(id: string, patch: Partial<Job>) {
   const { data } = await api.patch(`/admin/jobs/${id}`, patch);

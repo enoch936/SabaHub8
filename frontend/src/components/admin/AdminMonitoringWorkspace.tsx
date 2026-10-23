@@ -102,7 +102,7 @@ export default function AdminMonitoringWorkspace() {
 
       {/* Resource Gauges */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <GaugeCard 
             label="CPU Load" 
             value={metrics?.cpuUsage || 0} 
@@ -111,7 +111,7 @@ export default function AdminMonitoringWorkspace() {
             detail={`${Math.round(metrics?.cpuUsage || 0)}% utilized across all cores`}
           />
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <GaugeCard 
             label="Memory (JVM)" 
             value={metrics?.memoryPercentage || 0} 
@@ -121,7 +121,7 @@ export default function AdminMonitoringWorkspace() {
             detail={`${formatBytes(metrics?.memoryUsed || 0)} of ${formatBytes(metrics?.memoryMax || 0)} used`}
           />
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <GaugeCard 
             label="Disk I/O" 
             value={metrics?.diskPercentage || 0} 
@@ -135,7 +135,7 @@ export default function AdminMonitoringWorkspace() {
 
       {/* Performance & Network */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <GlassCard sx={{ p: 0, overflow: 'hidden' }}>
             <Box sx={{ p: 2.5, borderBottom: `1px solid var(--border)` }}>
               <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -157,7 +157,7 @@ export default function AdminMonitoringWorkspace() {
           </GlassCard>
         </Grid>
         
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <GlassCard sx={{ p: 3, height: '100%' }}>
             <Typography variant="subtitle2" fontWeight={800} gutterBottom sx={{ opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Network & Services</Typography>
             <Stack spacing={3} sx={{ mt: 2 }}>

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
-  Button,
   CardContent,
   Chip,
   Dialog,
@@ -33,7 +32,7 @@ import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
-import SoftButton from "@/components/mui/SoftButton";
+import Button from "@/components/mui/SoftButton";
 import { GlassCard, GlassCardHeader } from "./GlassCard";
 import { DataTable, type TableColumn } from "./DataTable";
 import SoftTextField from "@/components/mui/SoftTextField";
@@ -761,8 +760,8 @@ export default function AdminJobModerationWorkspace() {
                   return (
                     <Stack direction="row" spacing={0.8} justifyContent="flex-end" useFlexGap flexWrap="wrap">
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="outlined"
+                        size="small"
                         leftIcon={<VisibilityRoundedIcon sx={{ fontSize: 16 }} />}
                         onClick={() => openReview(job)}
                         disabled={busy}
@@ -770,8 +769,8 @@ export default function AdminJobModerationWorkspace() {
                         Review
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="outlined"
+                        size="small"
                         color="success"
                         onClick={() => void changeStatus(job, "OPEN")}
                         disabled={busy || normalizedStatus === "OPEN"}
@@ -779,16 +778,16 @@ export default function AdminJobModerationWorkspace() {
                         Open
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="outlined"
+                        size="small"
                         onClick={() => void changeStatus(job, "DRAFT")}
                         disabled={busy || normalizedStatus === "DRAFT"}
                       >
                         Draft
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="outlined"
+                        size="small"
                         color="warning"
                         onClick={() => void changeStatus(job, "CLOSED")}
                         disabled={busy || normalizedStatus === "CLOSED"}
@@ -796,8 +795,8 @@ export default function AdminJobModerationWorkspace() {
                         Close
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="outlined"
+                        size="small"
                         color="danger"
                         leftIcon={<CloseRoundedIcon sx={{ fontSize: 16 }} />}
                         onClick={() => void changeStatus(job, "CANCELLED")}

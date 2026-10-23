@@ -74,7 +74,7 @@ export interface TableColumn<T> {
 }
 
 export interface DataTableProps<T> {
-  columns: any[];
+  columns: TableColumn<T>[];
   data: T[];
   rowKey: keyof T;
   loading?: boolean;

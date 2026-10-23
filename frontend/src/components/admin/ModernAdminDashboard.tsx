@@ -176,7 +176,7 @@ export function ModernAdminDashboard() {
         {/* Top-Level KPI Cards */}
         <Grid container spacing={2.5} mb={5}>
           {data.headlineMetrics.map((metric, idx) => (
-            <Grid item xs={12} sm={6} lg={3} key={metric.id}>
+            <Grid key={metric.id} size={{ xs: 12, sm: 6, lg: 3 }}>
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -196,7 +196,7 @@ export function ModernAdminDashboard() {
           ))}
           
           {/* Supplemental KPIs */}
-          <Grid item xs={12} sm={6} lg={3}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
              <MetricCard
                icon={<StorageRoundedIcon />}
                label="Server Load"
@@ -206,7 +206,7 @@ export function ModernAdminDashboard() {
                size="small"
              />
           </Grid>
-          <Grid item xs={12} sm={6} lg={3}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
              <MetricCard
                icon={<SmartToyRoundedIcon />}
                label="AI Request Volume"
@@ -220,7 +220,7 @@ export function ModernAdminDashboard() {
 
         <Grid container spacing={3} mb={5}>
           {/* Main Visualizations */}
-          <Grid item xs={12} lg={8}>
+          <Grid size={{ xs: 12, lg: 8 }}>
             <ChartContainer 
               title="Marketplace Dynamics & Flow" 
               subtitle="Real-time stream of engagement and revenue"
@@ -239,7 +239,7 @@ export function ModernAdminDashboard() {
           </Grid>
 
           {/* AI Insights Sidebar */}
-          <Grid item xs={12} lg={4}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             <GlassCard sx={{ height: '100%' }}>
               <GlassCardHeader 
                 title="AI Platform Insights" 
@@ -274,7 +274,7 @@ export function ModernAdminDashboard() {
         </Grid>
 
         <Grid container spacing={3} mb={5}>
-           <Grid item xs={12} md={6} lg={4}>
+           <Grid size={{ xs: 12, md: 6, lg: 4 }}>
               <ChartContainer title="Global Traffic Distribution" subtitle="Active users by primary regions">
                  <ModernGeoChart 
                    data={[
@@ -286,7 +286,7 @@ export function ModernAdminDashboard() {
                  />
               </ChartContainer>
            </Grid>
-           <Grid item xs={12} md={6} lg={8}>
+           <Grid size={{ xs: 12, md: 6, lg: 8 }}>
               <ChartContainer title="System Activity Heatmap" subtitle="Inference and request intensity (Last 24 Hours)">
                  <ModernHeatmap
                    xLabels={["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"]}
@@ -318,12 +318,12 @@ export function ModernAdminDashboard() {
 
         <Grid container spacing={3}>
           {/* Activity Stream */}
-          <Grid item xs={12} md={5}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <ActivityFeed maxItems={10} />
           </Grid>
 
           {/* Detailed Distribution & Funnel */}
-          <Grid item xs={12} md={7}>
+          <Grid size={{ xs: 12, md: 7 }}>
             <Stack spacing={3}>
               <ChartGrid columns={2} gap={3}>
                 <ChartContainer title="User Distribution" height={280}>
