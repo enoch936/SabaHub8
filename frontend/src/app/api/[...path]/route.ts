@@ -54,6 +54,12 @@ async function proxy(request: Request, urls: string[]) {
       });
 
       const respHeaders = new Headers(resp.headers);
+      // fetch() transparently decompresses the backend body, so forwarding
+      // Content-Encoding/Content-Length makes the browser try to decode plain
+      // bytes again (ERR_CONTENT_DECODING_FAILED).
+      respHeaders.delete("content-encoding");
+      respHeaders.delete("content-length");
+      respHeaders.delete("transfer-encoding");
       respHeaders.set("Access-Control-Allow-Origin", "*");
       respHeaders.set("Access-Control-Allow-Headers", "*");
       respHeaders.set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
